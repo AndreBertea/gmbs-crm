@@ -650,6 +650,72 @@ export type GetDistinctParams = Omit<GetAllParams, "offset" | "limit" | "fields"
   limit?: number;
 };
 
+const applyInterventionFilters = <T>(query: T, params?: GetAllParams): T => {
+  if (!params) {
+    return query;
+  }
+
+  type Builder = {
+    in: (column: string, values: string[]) => Builder;
+    eq: (column: string, value: string | null) => Builder;
+    gte: (column: string, value: string) => Builder;
+    lte: (column: string, value: string) => Builder;
+    ilike: (column: string, pattern: string) => Builder;
+    is: (column: string, value: null) => Builder;
+  };
+
+  let builder = query as unknown as Builder;
+
+  if (params.statut) {
+    if (Array.isArray(params.statut) && params.statut.length > 0) {
+      builder = builder.in("statut_id", params.statut);
+    } else if (typeof params.statut === "string") {
+      builder = builder.eq("statut_id", params.statut);
+    }
+  }
+
+  if (params.agence) {
+    if (Array.isArray(params.agence) && params.agence.length > 0) {
+      builder = builder.in("agence_id", params.agence);
+    } else if (typeof params.agence === "string") {
+      builder = builder.eq("agence_id", params.agence);
+    }
+  }
+
+  if (params.metier) {
+    if (Array.isArray(params.metier) && params.metier.length > 0) {
+      builder = builder.in("metier_id", params.metier);
+    } else if (typeof params.metier === "string") {
+      builder = builder.eq("metier_id", params.metier);
+    }
+  }
+
+  // ⚠️ TODO: Le filtre artisan nécessite un JOIN avec intervention_artisans
+  // Pour l'instant, il est ignoré car artisan n'est pas une colonne directe
+
+  const userFilter = (params as { user?: string | string[] | null })?.user;
+  if (Array.isArray(userFilter) && userFilter.length > 0) {
+    builder = builder.in("assigned_user_id", userFilter);
+  } else if (typeof userFilter === "string") {
+    builder = builder.eq("assigned_user_id", userFilter);
+  } else if (userFilter === null) {
+    builder = builder.is("assigned_user_id", null);
+  }
+
+  if (params.startDate) {
+    builder = builder.gte("date", params.startDate);
+  }
+  if (params.endDate) {
+    builder = builder.lte("date", params.endDate);
+  }
+
+  if (params.search) {
+    builder = builder.ilike("contexte_intervention", `%${params.search}%`);
+  }
+
+  return builder as unknown as T;
+};
+
 export const interventionsApiV2 = {
   // Récupérer toutes les interventions (ULTRA-OPTIMISÉ)
   async getAll(params?: GetAllParams): Promise<PaginatedResponse<InterventionView>> {
@@ -688,53 +754,32 @@ export const interventionsApiV2 = {
       .select(fullSelect, { count: "exact" })
       .order(sortColumn, { ascending });
 
-    if (params?.statut) {
-      if (Array.isArray(params.statut)) {
-        query = query.in("statut_id", params.statut);
-      } else {
-        query = query.eq("statut_id", params.statut);
-      }
-    }
-    if (params?.agence) {
-      if (Array.isArray(params.agence)) {
-        query = query.in("agence_id", params.agence);
-      } else {
-        query = query.eq("agence_id", params.agence);
-      }
-    }
-    if (params?.metier) {
-      if (Array.isArray(params.metier)) {
-        query = query.in("metier_id", params.metier);
-      } else {
-        query = query.eq("metier_id", params.metier);
-      }
-    }
-    // ⚠️ TODO: Le filtre artisan nécessite un JOIN avec intervention_artisans
-    // Pour l'instant, on ignore ce filtre car artisan n'est pas une colonne de interventions
-    // if (params?.artisan) {
-    //   // Nécessiterait : .select("*, intervention_artisans!inner(artisan_id)")
-    // }
-    if (params?.user) {
-      if (Array.isArray(params.user)) {
-        query = query.in("assigned_user_id", params.user);
-      } else {
-        query = query.eq("assigned_user_id", params.user);
-      }
-    }
-    if (params?.startDate) {
-      query = query.gte("date", params.startDate);  // ⚠️ Colonne réelle = 'date'
-    }
-    if (params?.endDate) {
-      query = query.lte("date", params.endDate);    // ⚠️ Colonne réelle = 'date'
-    }
-    if (params?.search) {
-      // Recherche basique sur contexte + client
-      query = query.ilike("contexte_intervention", `%${params.search}%`);
-    }
+    query = applyInterventionFilters(query, params);
 
-    query = query.range(offset, offset + limit - 1);
+    const { data, error, count, status } = await query.range(offset, offset + limit - 1);
 
-    const { data, error, count } = await query;
+    if (status === 416) {
+      // La plage demandée dépasse le nombre de résultats disponibles (ex: offset trop grand)
+      const countQuery = applyInterventionFilters(
+        supabase.from("interventions").select("*", { count: "exact", head: true }),
+        params,
+      );
+      const { count: fallbackCount, error: countError } = await countQuery;
+
+      if (countError) {
+        throw countError;
+      }
+
+      return {
+        data: [],
+        pagination: {
+          total: fallbackCount ?? 0,
+          limit,
+          offset,
+          hasMore: false,
+        },
+      };
+    }
 
     if (error) throw error;
 

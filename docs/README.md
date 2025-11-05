@@ -6,7 +6,25 @@ Bienvenue dans la documentation du CRM GMBS. Cette documentation couvre tous les
 
 ## 🎯 Accès rapide
 
-### 🔥 Nouveauté : Synchronisation Google Sheets
+### 🔥 Nouveauté : Livrable Interventions & Artisans (05/11/2025)
+
+📖 **[Documentation complète du livrable Spécifications Interventions & Artisans](./livrable-2025-11-04/README.md)**
+
+**Documents disponibles** :
+- 📋 [Résumé exécutif](./livrable-2025-11-04/RESUME_EXECUTIF_LIVRABLE_2025-11-04.md) - Vue d'ensemble en 30 secondes, 21 tâches analysées
+- 📜 [Règles métier](./livrable-2025-11-04/BUSINESS_RULES_2025-11-04.md) - 18 règles métier documentées avec exemples de code
+- 📊 [Classification des tâches](./livrable-2025-11-04/ANALYSE_CLASSIFICATION_TACHES_2025-11-04.md) - Détails techniques et estimations
+- 🔄 [Workflows & Diagrammes](./livrable-2025-11-04/WORKFLOW_REGLES_METIER.md) - 10 workflows visuels + 5 scénarios de test
+
+**Périmètre** :
+- ✅ 10 modifications BDD complexes (15-20 jours)
+- ✅ 11 implémentations simples UI/UX (10-12 jours)
+- ✅ Workflow acomptes complet avec automatisations
+- ✅ Gestion des devis et duplications
+- ✅ Règles de validation agences et dates
+- ✅ **Durée totale estimée : 7-8 semaines**
+
+### 🔥 Synchronisation Google Sheets
 
 📖 **[Documentation complète de la synchronisation bidirectionnelle CRM ↔ Google Sheets](./INDEX_SYNC_GOOGLE_SHEETS.md)**
 
@@ -178,17 +196,37 @@ Bienvenue dans la documentation du CRM GMBS. Cette documentation couvre tous les
 ### 📊 Product Owner / Manager
 
 ```
-1. Synchronisation Google Sheets (Résumé)
+1. Livrable Interventions & Artisans (Nouveau !)
+   └─> /livrable-2025-11-04/README.md
+   └─> /livrable-2025-11-04/RESUME_EXECUTIF_LIVRABLE_2025-11-04.md
+
+2. Synchronisation Google Sheets (Résumé)
    └─> /SYNC_GOOGLE_SHEETS_RESUME.md
 
-2. TODO principal
+3. TODO principal
    └─> /ToDo.md
 
-3. UI Cleanup 2025
+4. UI Cleanup 2025
    └─> /UI_CLEANUP_2025.md
 
-4. Workflow extraction devis
+5. Workflow extraction devis
    └─> /guide/WORKFLOW_EXTRACTION_DEVIS.md
+```
+
+### 📝 Implémentation d'une nouvelle fonctionnalité (Livrable 05/11/2025)
+
+```
+1. Consulter l'index du livrable
+   └─> /livrable-2025-11-04/INDEX_LIVRABLE_2025-11-04.md
+
+2. Lire la règle métier concernée
+   └─> /livrable-2025-11-04/BUSINESS_RULES_2025-11-04.md
+
+3. Voir le workflow visuel
+   └─> /livrable-2025-11-04/WORKFLOW_REGLES_METIER.md
+
+4. Consulter les détails techniques
+   └─> /livrable-2025-11-04/ANALYSE_CLASSIFICATION_TACHES_2025-11-04.md
 ```
 
 ---
@@ -304,6 +342,15 @@ Bienvenue dans la documentation du CRM GMBS. Cette documentation couvre tous les
 
 ## 🔄 Mises à jour récentes
 
+### 5 novembre 2025
+- ✨ **Ajout** : Documentation complète livrable Interventions & Artisans
+  - 📋 Résumé exécutif avec vue d'ensemble en 30 secondes
+  - 📜 18 règles métier documentées avec exemples de code
+  - 📊 21 tâches analysées et classées par complexité
+  - 🔄 10 workflows visuels avec diagrammes Mermaid
+  - 🧪 5 scénarios de test critiques
+  - ⏱️ Estimations détaillées : 7-8 semaines (33-41 jours)
+
 ### 30 octobre 2025
 - ✨ **Ajout** : Documentation complète synchronisation Google Sheets
   - Résumé exécutif
@@ -327,7 +374,7 @@ Bienvenue dans la documentation du CRM GMBS. Cette documentation couvre tous les
 
 ---
 
-**Dernière mise à jour** : 30 octobre 2025  
+**Dernière mise à jour** : 5 novembre 2025  
 **Maintenu par** : L'équipe CRM GMBS
 
 ---
