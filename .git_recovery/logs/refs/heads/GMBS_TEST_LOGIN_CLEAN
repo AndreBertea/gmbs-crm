@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 fde202c4803f2c28b6f4242c42c1916a10469548 BarBar-DD <andre.bertea92@gmail.com> 1756204422 +0200	branch: Created from HEAD
+fde202c4803f2c28b6f4242c42c1916a10469548 d5c6034c94f8183b77669e18f6e8d17becd5b614 BarBar-DD <andre.bertea92@gmail.com> 1756204453 +0200	reset: moving to HEAD~1
+d5c6034c94f8183b77669e18f6e8d17becd5b614 ba71c2c6be2bdd4b03f7d223133359eae422a1d5 BarBar-DD <andre.bertea92@gmail.com> 1756204464 +0200	commit: 🔧 Fix GLB loading for Vercel: Update paths to /3d/, add error handling and proper headers
+ba71c2c6be2bdd4b03f7d223133359eae422a1d5 555167a385febf37bb9df4ab7a5e88cc108698b3 BarBar-DD <andre.bertea92@gmail.com> 1756204479 +0200	commit: 📦 Add GLB files to /public/3d/ for Vercel deployment
+555167a385febf37bb9df4ab7a5e88cc108698b3 ba71c2c6be2bdd4b03f7d223133359eae422a1d5 BarBar-DD <andre.bertea92@gmail.com> 1756204528 +0200	reset: moving to HEAD~1
+ba71c2c6be2bdd4b03f7d223133359eae422a1d5 1055f6bf6badbdd9f2e0609a87fecca3afd6bc2a BarBar-DD <andre.bertea92@gmail.com> 1756204600 +0200	commit: 📝 Add GLB files to .gitignore for Vercel deployment
+1055f6bf6badbdd9f2e0609a87fecca3afd6bc2a f1f1d0367b941c6bbf603a92e92f5c8e7cff8181 BarBar-DD <andre.bertea92@gmail.com> 1756204644 +0200	commit: 📦 Add small GLB files (G, M, B) for Vercel deployment
+f1f1d0367b941c6bbf603a92e92f5c8e7cff8181 1055f6bf6badbdd9f2e0609a87fecca3afd6bc2a BarBar-DD <andre.bertea92@gmail.com> 1756204657 +0200	reset: moving to HEAD~1
+1055f6bf6badbdd9f2e0609a87fecca3afd6bc2a 597ec3f07414929bf85939f32c632ef218c154a1 BarBar-DD <andre.bertea92@gmail.com> 1756204853 +0200	commit: 🔧 Fix Vercel deployment: correct GLB paths and add error handling

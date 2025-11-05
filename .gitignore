@@ -1,0 +1,67 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules/
+**/node_modules/
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+
+.DS_Store
+package-lock.json
+
+# dossier de test pour les font et le bg
+/shader-showcase
+
+# macos
+.DS_Store
+
+# package lock
+package-lock.json
+
+# Keep docs tracked (uncomment next line to ignore)
+# /docs
+.cursorrules
+.cursorfile
+
+# Scripts tracked (uncomment next line to ignore)
+# /scripts
+
+# Never commit credentials files
+/supabase/functions/credentials.json
+credentials.json
+
+# Données sensibles
+/data
+
+# Configuration personnelle
+.vscode/
+
+# Python Virtual environment
+.crm_env/
+
+# Legacy files and folders
+/legacy
+
+# Geocoding logs

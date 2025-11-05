@@ -1,0 +1,14 @@
+0000000000000000000000000000000000000000 92fa3ca0ab02db573ee2c5bcfaeb0564e179da0f BarBar-DD <andre.bertea92@gmail.com> 1756043613 +0200	branch: Created from HEAD
+92fa3ca0ab02db573ee2c5bcfaeb0564e179da0f 64f8d3a05f860e33d7e1534f0b5d74fcb2979f81 BarBar-DD <andre.bertea92@gmail.com> 1756043684 +0200	commit: test prod
+64f8d3a05f860e33d7e1534f0b5d74fcb2979f81 987296116fd45884e5bc27ada89bd30d1f472899 BarBar-DD <andre.bertea92@gmail.com> 1756044073 +0200	commit: fix: Correction des types TypeScript pour résoudre le blocage de la page Interventions
+987296116fd45884e5bc27ada89bd30d1f472899 a8dd61b74005c581db13cf244c49267ae0379ebc BarBar-DD <andre.bertea92@gmail.com> 1756045484 +0200	commit: [TODO:refactor-artisans] Refactorisation complète du fichier artisans/page.tsx avec optimisations et corrections + [TODO:selection-multiple] Ajout fonctionnalité sélection multiple page interventions avec thème bleuté et actions en masse
+a8dd61b74005c581db13cf244c49267ae0379ebc 00cb4994614d07134339df2a3e047b10968fc890 BarBar-DD <andre.bertea92@gmail.com> 1756063541 +0200	commit: wip: before stabilization
+6943eb3675b7c670a35297ffd267b66ea038b980 f8293dde25723887b23a175522aca06f6272c725 BarBar-DD <andre.bertea92@gmail.com> 1756134778 +0200	commit: chore: Ajout .gitignore pour fichiers 3D volumineux
+f8293dde25723887b23a175522aca06f6272c725 6943eb3675b7c670a35297ffd267b66ea038b980 BarBar-DD <andre.bertea92@gmail.com> 1756134883 +0200	reset: moving to 6943eb3
+6943eb3675b7c670a35297ffd267b66ea038b980 45bfb14f03481fa57435d1bb22da0fa00aafb162 BarBar-DD <andre.bertea92@gmail.com> 1756164767 +0200	commit: feat: Refactor login page with 3-layer structure and improved animations
+45bfb14f03481fa57435d1bb22da0fa00aafb162 144632011aec9ec6192c73ba226bcc046d2d28b7 BarBar-DD <andre.bertea92@gmail.com> 1756165007 +0200	commit: feat: Clean up unused files and keep only essential 3D assets
+144632011aec9ec6192c73ba226bcc046d2d28b7 748c6aca866261dc2330f9eca9dd3a3007121e37 BarBar-DD <andre.bertea92@gmail.com> 1756165058 +0200	commit: feat: Add Git LFS support for 3D assets
+748c6aca866261dc2330f9eca9dd3a3007121e37 a8dd61b74005c581db13cf244c49267ae0379ebc BarBar-DD <andre.bertea92@gmail.com> 1756165096 +0200	reset: moving to HEAD~5
+a8dd61b74005c581db13cf244c49267ae0379ebc 16e91f09bb8464c8c015f572dda8c984fa50c914 BarBar-DD <andre.bertea92@gmail.com> 1756165103 +0200	commit: feat: Refactor login page with 3-layer structure and improved animations
+16e91f09bb8464c8c015f572dda8c984fa50c914 a8dd61b74005c581db13cf244c49267ae0379ebc BarBar-DD <andre.bertea92@gmail.com> 1756165390 +0200	reset: moving to HEAD~1
+a8dd61b74005c581db13cf244c49267ae0379ebc 05651a167719f8dff551968d649f1a2db3c1bc5d BarBar-DD <andre.bertea92@gmail.com> 1756165496 +0200	commit: feat: Refactor login page with 3-layer structure and improved animations

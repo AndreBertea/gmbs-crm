@@ -1,0 +1,10 @@
+{
+  "name": "pull-sheets",
+  "version": "1.0.0",
+  "description": "Pull data from Google Sheets to Supabase",
+  "main": "index.ts",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "googleapis": "^128.0.0"
+  }
+}

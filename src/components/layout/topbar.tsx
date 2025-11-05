@@ -1,0 +1,598 @@
+"use client"
+
+import * as React from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Search, Bell, Calendar, FileText, Plus, X } from "lucide-react"
+import { AvatarStatus } from "@/components/layout/avatar-status"
+import { usePathname } from "next/navigation"
+import useModal from "@/hooks/useModal"
+import { useInterventionReminders } from "@/hooks/useInterventionReminders"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase-client"
+import { normalizeReminderIdentifier } from "@/contexts/RemindersContext"
+import { useUniversalSearch } from "@/hooks/useUniversalSearch"
+import { UniversalSearchResults } from "@/components/search/UniversalSearchResults"
+
+type ReminderFilter = "all" | "my_reminders" | "mentions"
+
+type DisplayReminder = {
+  reminderId: string
+  interventionId: string
+  note: string | null
+  dueDate: string | null
+  mentionedUserIds: string[]
+  ownerId: string | null
+  ownerName: string
+  ownerEmail?: string | null
+  createdAt: string | null
+  isLegacy: boolean
+  legacyMentions: string[]
+}
+
+export default function Topbar() {
+  const pathname = usePathname()
+  const { open: openModal } = useModal()
+  const {
+    reminders,
+    reminderRecords,
+    reminderNotes,
+    reminderMentions,
+    reminderDueDates,
+    refreshReminders,
+    removeReminder,
+  } = useInterventionReminders()
+  const [reminderFilter, setReminderFilter] = React.useState<ReminderFilter>("all")
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null)
+  const [currentUserIdentifiers, setCurrentUserIdentifiers] = React.useState<string[]>([])
+  const [isMounted, setIsMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  React.useEffect(() => {
+    refreshReminders()
+  }, [refreshReminders])
+
+  React.useEffect(() => {
+    const channel = supabase
+      .channel("intervention_reminders_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "intervention_reminders",
+        },
+        () => {
+          refreshReminders()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [refreshReminders])
+
+  const allReminders = React.useMemo<DisplayReminder[]>(() => {
+    const remote = Array.from(reminderRecords.entries()).map(([interventionId, reminder]) => {
+      const ownerNameParts = [reminder.user?.firstname, reminder.user?.lastname].filter(Boolean)
+      const ownerName = ownerNameParts.length > 0
+        ? ownerNameParts.join(" ")
+        : reminder.user?.email ?? "Utilisateur"
+
+      return {
+        reminderId: reminder.id,
+        interventionId,
+        note: reminder.note ?? null,
+        dueDate: reminder.due_date ?? null,
+        mentionedUserIds: reminder.mentioned_user_ids ?? [],
+        ownerId: reminder.user_id ?? null,
+        ownerName,
+        ownerEmail: reminder.user?.email ?? null,
+        createdAt: reminder.created_at ?? null,
+        isLegacy: false,
+        legacyMentions: [],
+      } satisfies DisplayReminder
+    })
+
+    const legacy = Array.from(reminders)
+      .filter((interventionId) => !reminderRecords.has(interventionId))
+      .map((interventionId) => {
+        return {
+          reminderId: `legacy-${interventionId}`,
+          interventionId,
+          note: reminderNotes.get(interventionId) ?? null,
+          dueDate: reminderDueDates.get(interventionId) ?? null,
+          mentionedUserIds: [],
+          ownerId: currentUserId,
+          ownerName: "Vous",
+          ownerEmail: undefined,
+          createdAt: null,
+          isLegacy: true,
+          legacyMentions: reminderMentions.get(interventionId) ?? [],
+        } satisfies DisplayReminder
+      })
+
+    const combined = [...remote, ...legacy]
+    combined.sort((a, b) => {
+      const aTime = a.createdAt ? Date.parse(a.createdAt) : 0
+      const bTime = b.createdAt ? Date.parse(b.createdAt) : 0
+      return bTime - aTime
+    })
+    return combined
+  }, [reminderRecords, reminders, reminderNotes, reminderDueDates, reminderMentions, currentUserId])
+
+  const allRemindersCount = allReminders.length
+
+  const myRemindersCount = React.useMemo(() => {
+    return allReminders.filter((reminder) => {
+      if (reminder.isLegacy) return true
+      if (!currentUserId) return false
+      return reminder.ownerId === currentUserId
+    }).length
+  }, [allReminders, currentUserId])
+
+  const mentionsCount = React.useMemo(() => {
+    return allReminders.filter((reminder) => {
+      if (reminder.isLegacy) {
+        if (currentUserIdentifiers.length === 0) return false
+        return reminder.legacyMentions.some((mention) => currentUserIdentifiers.includes(mention))
+      }
+      if (!currentUserId) return false
+      return reminder.mentionedUserIds.includes(currentUserId) && reminder.ownerId !== currentUserId
+    }).length
+  }, [allReminders, currentUserId, currentUserIdentifiers])
+
+  const filteredReminders = React.useMemo(() => {
+    switch (reminderFilter) {
+      case "my_reminders":
+        return allReminders.filter((reminder) => {
+          if (reminder.isLegacy) return true
+          if (!currentUserId) return false
+          return reminder.ownerId === currentUserId
+        })
+      case "mentions":
+        return allReminders.filter((reminder) => {
+          if (reminder.isLegacy) {
+            if (currentUserIdentifiers.length === 0) return false
+            return reminder.legacyMentions.some((mention) => currentUserIdentifiers.includes(mention))
+          }
+          if (!currentUserId) return false
+          return reminder.mentionedUserIds.includes(currentUserId) && reminder.ownerId !== currentUserId
+        })
+      default:
+        return allReminders
+    }
+  }, [allReminders, reminderFilter, currentUserId, currentUserIdentifiers])
+
+  const openEntityModal = React.useCallback(
+    (id: string, type: "intervention" | "artisan") => {
+      openModal(id, { content: type })
+    },
+    [openModal],
+  )
+
+  const handleOpenReminder = React.useCallback(
+    (interventionId: string) => {
+      openEntityModal(interventionId, "intervention")
+    },
+    [openEntityModal],
+  )
+
+  const handleDeleteReminder = React.useCallback(
+    async (interventionId: string) => {
+      await removeReminder(interventionId)
+      await refreshReminders()
+    },
+    [refreshReminders, removeReminder],
+  )
+
+  // Page title from route
+  const title = React.useMemo(() => {
+    if (!pathname) return ""
+    const seg = pathname.split("/").filter(Boolean)[0] || "dashboard"
+    const map: Record<string, string> = {
+      dashboard: "Dashboard",
+      interventions: "Interventions",
+      artisans: "Artisans",
+      settings: "Settings",
+    }
+    return map[seg] || seg.charAt(0).toUpperCase() + seg.slice(1)
+  }, [pathname])
+  React.useEffect(() => {
+    let cancelled = false
+    const resolveCurrentUser = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        if (!token) {
+          if (!cancelled) {
+            setCurrentUserId(null)
+            setCurrentUserIdentifiers([])
+          }
+          return
+        }
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!response.ok) {
+          throw new Error("Unable to fetch current user")
+        }
+        const payload = await response.json()
+        const user = payload?.user ?? null
+        const identifiers = new Set<string>()
+        if (user?.code_gestionnaire) {
+          identifiers.add(normalizeReminderIdentifier(user.code_gestionnaire))
+        }
+        if (user?.username) {
+          identifiers.add(normalizeReminderIdentifier(user.username))
+        }
+        if (user?.email) {
+          const local = String(user.email).split("@")[0]
+          if (local) {
+            identifiers.add(normalizeReminderIdentifier(local))
+          }
+        }
+        if (!cancelled) {
+          setCurrentUserId(user?.id ?? null)
+          setCurrentUserIdentifiers(Array.from(identifiers))
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn("[Topbar] Unable to resolve current user for reminders", error)
+          setCurrentUserId(null)
+          setCurrentUserIdentifiers([])
+        }
+      }
+    }
+
+    resolveCurrentUser()
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      resolveCurrentUser()
+    })
+
+    return () => {
+      cancelled = true
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
+
+  // Show New Intervention button on Interventions page
+  const isInterventions = pathname?.startsWith("/interventions")
+  const showNewInterventionBtn = isInterventions
+
+  // Search reveal on hover; pin on click
+  const [searchPinned, setSearchPinned] = React.useState(false)
+  const [searchHovering, setSearchHovering] = React.useState(false)
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null)
+  const searchContainerRef = React.useRef<HTMLDivElement | null>(null)
+  const [resultsVisible, setResultsVisible] = React.useState(false)
+  const {
+    query: searchQuery,
+    setQuery: setSearchQuery,
+    results: universalResults,
+    isSearching: isUniversalSearching,
+    error: universalSearchError,
+    clearSearch,
+  } = useUniversalSearch()
+  const searchOpen = searchPinned || searchHovering
+  const trimmedSearchQuery = React.useMemo(() => searchQuery.trim(), [searchQuery])
+  const shouldShowDropdown =
+    searchOpen &&
+    resultsVisible &&
+    (trimmedSearchQuery.length >= 2 ||
+      isUniversalSearching ||
+      Boolean(universalResults) ||
+      Boolean(universalSearchError))
+
+  const handleSearchInputChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const { value } = event.target
+      setSearchQuery(value)
+      // Dès qu'on tape, on épingle la recherche pour qu'elle reste dépliée
+      setSearchPinned(true)
+      setSearchHovering(true)
+      if (value.trim().length >= 2) {
+        setResultsVisible(true)
+      } else {
+        setResultsVisible(false)
+      }
+    },
+    [setSearchQuery],
+  )
+
+  const handleSearchFocus = React.useCallback(() => {
+    // Épingler à la mise au focus pour garder l'entrée ouverte pendant la saisie
+    setSearchPinned(true)
+    setSearchHovering(true)
+    if (trimmedSearchQuery.length >= 2) {
+      setResultsVisible(true)
+    }
+  }, [trimmedSearchQuery])
+
+  const onSearchIconClick = React.useCallback(() => {
+    setSearchPinned((pinned) => {
+      const next = !pinned
+      if (next) {
+        setSearchHovering(true)
+        if (trimmedSearchQuery.length >= 2) {
+          setResultsVisible(true)
+        }
+        requestAnimationFrame(() => searchInputRef.current?.focus())
+      } else {
+        setResultsVisible(false)
+        clearSearch()
+      }
+      return next
+    })
+  }, [clearSearch, trimmedSearchQuery])
+
+  const onSearchBlur = React.useCallback(() => {
+    if (!searchPinned) setSearchHovering(false)
+  }, [searchPinned])
+
+  const onEsc = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Escape") {
+        clearSearch()
+        setResultsVisible(false)
+        if (searchPinned) setSearchPinned(false)
+        setSearchHovering(false)
+        ;(e.target as HTMLInputElement).blur()
+      }
+    },
+    [clearSearch, searchPinned],
+  )
+
+  React.useEffect(() => {
+    if (!searchOpen) {
+      setResultsVisible(false)
+    }
+  }, [searchOpen])
+
+  React.useEffect(() => {
+    if (trimmedSearchQuery.length >= 2 && searchOpen) {
+      setResultsVisible(true)
+    }
+  }, [trimmedSearchQuery, searchOpen])
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (!searchContainerRef.current) return
+      if (searchContainerRef.current.contains(event.target as Node)) return
+      // Fermer complètement la recherche au clic extérieur
+      setResultsVisible(false)
+      setSearchPinned(false)
+      setSearchHovering(false)
+      clearSearch()
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("touchstart", handleClickOutside)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("touchstart", handleClickOutside)
+    }
+  }, [clearSearch])
+
+  // Cmd/Ctrl+K opens extended search and focuses input
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().includes("MAC")
+      if ((isMac ? e.metaKey : e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault()
+        setSearchPinned(true)
+        setSearchHovering(true)
+        if (trimmedSearchQuery.length >= 2) {
+          setResultsVisible(true)
+        }
+        requestAnimationFrame(() => searchInputRef.current?.focus())
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [trimmedSearchQuery])
+
+  const handleSearchItemClick = React.useCallback(
+    (id: string, type: "artisan" | "intervention") => {
+      // Close search dropdown
+      setResultsVisible(false)
+      setSearchPinned(false)
+      setSearchHovering(false)
+      clearSearch()
+
+      openEntityModal(id, type)
+    },
+    [clearSearch, openEntityModal],
+  )
+
+  const handleCloseSearch = React.useCallback(() => {
+    setResultsVisible(false)
+    setSearchPinned(false)
+    setSearchHovering(false)
+    clearSearch()
+  }, [clearSearch])
+
+  return (
+    <div className="border-b bg-background shadow-sm">
+      <div className="flex h-16 items-center px-4">
+        {/* Left: title + new intervention button */}
+        <div className="flex flex-1 items-center gap-2">
+          <div className="text-2xl font-semibold tracking-tight select-none">{title}</div>
+          {showNewInterventionBtn ? (
+            <Button
+              size="sm"
+              className="ml-4"
+              onClick={() => openModal("new", { content: "new-intervention" })}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvelle intervention
+            </Button>
+          ) : null}
+        </div>
+
+        {/* Right: search (hover reveal) + notifications + avatar */}
+        <div className="flex items-center gap-3">
+          <div
+            ref={searchContainerRef}
+            className="relative flex items-center"
+            onMouseEnter={() => setSearchHovering(true)}
+            onMouseLeave={() => !searchPinned && setSearchHovering(false)}
+          >
+            <Button variant="ghost" size="icon" onClick={onSearchIconClick} aria-label="Rechercher">
+              <Search className="h-4 w-4" />
+            </Button>
+            <div className={`overflow-hidden transition-all duration-200 ease-out ${searchOpen ? 'w-72 opacity-100 ml-1' : 'w-0 opacity-0 ml-0'}`}>
+              <Input
+                autoComplete="off"
+                placeholder="Rechercher..."
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                onFocus={handleSearchFocus}
+                onBlur={onSearchBlur}
+                onKeyDown={onEsc}
+                aria-expanded={shouldShowDropdown}
+                ref={searchInputRef}
+              />
+            </div>
+            {shouldShowDropdown ? (
+              <UniversalSearchResults
+                results={universalResults}
+                isSearching={isUniversalSearching}
+                error={universalSearchError}
+                query={searchQuery}
+                onItemClick={handleSearchItemClick}
+                onClose={handleCloseSearch}
+              />
+            ) : null}
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
+                <Bell className="h-4 w-4" />
+                {isMounted && allRemindersCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                    {allRemindersCount > 99 ? "99+" : allRemindersCount}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-96">
+              <div className="flex gap-1 border-b p-2">
+                <Button
+                  variant={reminderFilter === "all" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setReminderFilter("all")}
+                >
+                  Tous ({allRemindersCount})
+                </Button>
+                <Button
+                  variant={reminderFilter === "my_reminders" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setReminderFilter("my_reminders")}
+                >
+                  Mes rappels ({myRemindersCount})
+                </Button>
+                <Button
+                  variant={reminderFilter === "mentions" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setReminderFilter("mentions")}
+                >
+                  Mentions ({mentionsCount})
+                </Button>
+              </div>
+              <div className="max-h-[400px] overflow-y-auto">
+                {filteredReminders.map((reminder) => {
+                  const shortId = reminder.interventionId.slice(0, 8)
+                  const mentionCount = reminder.isLegacy
+                    ? reminder.legacyMentions.length
+                    : reminder.mentionedUserIds.length
+                  const isMention = reminder.isLegacy
+                    ? reminder.legacyMentions.some((mention) => currentUserIdentifiers.includes(mention))
+                    : currentUserId
+                      ? reminder.mentionedUserIds.includes(currentUserId) && reminder.ownerId !== currentUserId
+                      : false
+                  const dueDateLabel = reminder.dueDate
+                    ? new Date(reminder.dueDate).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : null
+
+                  return (
+                    <div
+                      key={reminder.reminderId}
+                      className={cn(
+                        "cursor-pointer border-b p-3 transition-colors hover:bg-muted/50",
+                        isMention && "bg-primary/5",
+                      )}
+                      onClick={() => handleOpenReminder(reminder.interventionId)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
+                            <span>Intervention #{shortId}</span>
+                            {isMention && (
+                              <Badge
+                                variant="outline"
+                                className="px-2 py-0 text-[10px] font-medium uppercase tracking-wide text-primary border-primary/40 bg-primary/10"
+                              >
+                                Mention
+                              </Badge>
+                            )}
+                          </div>
+                          {reminder.note && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <FileText className="h-3 w-3" />
+                              <span className="line-clamp-2 break-words">{reminder.note}</span>
+                            </div>
+                          )}
+                          {dueDateLabel && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              <span>{dueDateLabel}</span>
+                            </div>
+                          )}
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <span>Par {reminder.ownerName}</span>
+                            {mentionCount > 0 && <span>• {mentionCount} mention(s)</span>}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-red-500"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            void handleDeleteReminder(reminder.interventionId)
+                          }}
+                          aria-label="Supprimer le rappel"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+                {filteredReminders.length === 0 && (
+                  <div className="p-8 text-center text-sm text-muted-foreground">
+                    Aucun rappel
+                  </div>
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <AvatarStatus />
+        </div>
+      </div>
+    </div>
+  )
+}

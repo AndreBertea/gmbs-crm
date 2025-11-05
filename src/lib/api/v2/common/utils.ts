@@ -1,0 +1,322 @@
+// ===== UTILITAIRES COMMUNS POUR L'API V2 =====
+// Fonctions partagées entre toutes les APIs
+
+import { supabase } from "../../../supabase-client";
+
+const DEFAULT_FUNCTIONS_URL = "http://127.0.0.1:54321/functions/v1";
+
+/**
+ * Construit l'URL des Edge Functions en prenant en compte les variations possibles
+ * de NEXT_PUBLIC_SUPABASE_URL (avec ou sans /rest/v1 et slash final).
+ */
+export const getSupabaseFunctionsUrl = (): string => {
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!rawUrl) {
+    return DEFAULT_FUNCTIONS_URL;
+  }
+
+  const sanitized = rawUrl.replace(/\/$/, "");
+  if (sanitized.endsWith("/rest/v1")) {
+    return sanitized.replace(/\/rest\/v1$/, "/functions/v1");
+  }
+
+  return `${sanitized}/functions/v1`;
+};
+
+export const SUPABASE_FUNCTIONS_URL = getSupabaseFunctionsUrl();
+
+// Headers communs pour toutes les requêtes
+export const getHeaders = async () => {
+  const { data: session } = await supabase.auth.getSession();
+  const token = session?.session?.access_token;
+  
+  return {
+    Authorization: `Bearer ${token || ''}`,
+    "Content-Type": "application/json",
+  };
+};
+
+// Gestionnaire d'erreurs centralisé
+export const handleResponse = async (response: Response) => {
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errorText}`);
+  }
+  return response.json();
+};
+
+// Fonction pour convertir un fichier en base64
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Retirer le préfixe "data:image/jpeg;base64," par exemple
+      const base64 = result.split(",")[1];
+      resolve(base64);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+// Fonction pour obtenir la taille d'un fichier en format lisible
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+// Fonction pour valider un type MIME
+export const isValidMimeType = (mimeType: string): boolean => {
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+  ];
+  return allowedTypes.includes(mimeType);
+};
+
+// Fonction pour générer un mot de passe sécurisé
+export const generateSecurePassword = (length: number = 12): string => {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+};
+
+// Fonction pour valider un email
+export const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Fonction pour valider un nom d'utilisateur
+export const isValidUsername = (username: string): boolean => {
+  const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
+  return usernameRegex.test(username);
+};
+
+// Fonction pour générer un code gestionnaire unique
+export const generateUniqueCodeGestionnaire = async (firstname: string, lastname: string): Promise<string> => {
+  const baseCode = `${firstname.charAt(0).toUpperCase()}${lastname.charAt(0).toUpperCase()}`;
+  let code = baseCode;
+  let counter = 1;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("users")
+      .select("code_gestionnaire")
+      .eq("code_gestionnaire", code)
+      .single();
+
+    if (error && error.code === 'PGRST116') {
+      // Code n'existe pas, on peut l'utiliser
+      break;
+    } else if (error) {
+      throw error;
+    }
+
+    // Code existe, essayer avec un numéro
+    code = `${baseCode}${counter}`;
+    counter++;
+  }
+
+  return code;
+};
+
+// Fonction pour construire l'affichage d'un utilisateur
+export const buildUserDisplay = (user?: any) => {
+  if (!user) {
+    return {
+      username: null as string | null,
+      fullName: null as string | null,
+      code: null as string | null,
+      color: null as string | null,
+    };
+  }
+
+  const fullName = `${user.firstname ?? ""} ${user.lastname ?? ""}`.trim();
+
+  return {
+    username: user.username ?? null,
+    fullName: fullName || user.username || null,
+    code: user.code_gestionnaire ?? null,
+    color: user.color ?? null,
+  };
+};
+
+// Fonction pour mapper un enregistrement d'intervention
+export const mapInterventionRecord = (item: any, refs: any): any => {
+  const userInfo = buildUserDisplay(refs.usersById?.get(item.assigned_user_id ?? ""));
+  const agency = item.agence_id ? refs.agenciesById?.get(item.agence_id) : undefined;
+  const statusRelationship = item.status ?? item.intervention_statuses ?? null;
+  const status =
+    statusRelationship ??
+    (item.statut_id ? refs.interventionStatusesById?.get(item.statut_id) : undefined);
+  const normalizedStatus = status
+    ? {
+        id: status.id,
+        code: status.code,
+        label: status.label,
+        color: status.color,
+        sort_order: status.sort_order ?? null,
+      }
+    : undefined;
+  const statusCode = normalizedStatus?.code ?? item.statut ?? item.statusValue ?? null;
+  const metier = item.metier_id ? refs.metiersById?.get(item.metier_id) : undefined;
+  const tenantId = item.tenant_id ?? item.client_id ?? null;
+  const ownerId = item.owner_id ?? null;
+
+  return {
+    ...item,
+    tenant_id: tenantId,
+    owner_id: ownerId,
+    client_id: item.client_id ?? tenantId,
+    status: normalizedStatus,
+    statusLabel: normalizedStatus?.label ?? item.statusLabel ?? null,
+    artisans: Array.isArray(item.artisans) ? item.artisans : [],
+    costs: Array.isArray(item.costs) ? item.costs : [],
+    payments: Array.isArray(item.payments) ? item.payments : [],
+    attachments: Array.isArray(item.attachments) ? item.attachments : [],
+    coutIntervention: item.cout_intervention ?? item.coutIntervention ?? null,
+    coutSST: item.cout_sst ?? item.coutSST ?? null,
+    coutMateriel: item.cout_materiel ?? item.coutMateriel ?? null,
+    marge: item.marge ?? null,
+    agence: agency?.label ?? item.agence ?? item.agence_id ?? null,
+    agenceLabel: agency?.label ?? null,
+    agenceCode: agency?.code ?? null,
+    contexteIntervention: item.contexte_intervention ?? item.contexteIntervention ?? null,
+    consigneIntervention: item.consigne_intervention ?? item.consigneIntervention ?? null,
+    consigneDeuxiemeArtisanIntervention: item.consigne_second_artisan ?? item.consigneDeuxiemeArtisanIntervention ?? null,
+    commentaireAgent: item.commentaire_agent ?? item.commentaireAgent ?? null,
+    latitudeAdresse: typeof item.latitude === "number" ? item.latitude.toString() : item.latitudeAdresse ?? null,
+    longitudeAdresse: typeof item.longitude === "number" ? item.longitude.toString() : item.longitudeAdresse ?? null,
+    codePostal: item.code_postal ?? item.codePostal ?? null,
+    dateIntervention: item.date_intervention ?? item.dateIntervention ?? item.date ?? null,
+    prenomClient: item.prenom_client ?? item.prenomClient ?? null,
+    nomClient: item.nom_client ?? item.nomClient ?? null,
+    attribueA: userInfo.code ?? userInfo.username ?? undefined,
+    assignedUserName: userInfo.fullName ?? undefined,
+    assignedUserCode: userInfo.code,
+    assignedUserColor: userInfo.color ?? null,
+    statut: statusCode,
+    statusValue: statusCode,
+    statusColor: normalizedStatus?.color ?? null,
+    numeroSST: item.numero_sst ?? item.numeroSST ?? null,
+    pourcentageSST: item.pourcentage_sst ?? item.pourcentageSST ?? null,
+    commentaire: item.commentaire ?? item.commentaire_agent ?? null,
+    demandeIntervention: item.demande_intervention ?? item.demandeIntervention ?? null,
+    demandeDevis: item.demande_devis ?? item.demandeDevis ?? null,
+    demandeTrustPilot: item.demande_trust_pilot ?? item.demandeTrustPilot ?? null,
+    metier: metier?.code ?? item.metier ?? item.metier_id ?? null,
+    type: item.type ?? null,
+    typeDeuxiemeArtisan: item.type_deuxieme_artisan ?? item.typeDeuxiemeArtisan ?? null,
+    datePrevue: item.date_prevue ?? item.datePrevue ?? null,
+    datePrevueDeuxiemeArtisan: item.date_prevue_deuxieme_artisan ?? item.datePrevueDeuxiemeArtisan ?? null,
+    telLoc: item.tel_loc ?? item.telLoc ?? null,
+    locataire: item.locataire ?? null,
+    emailLocataire: item.email_locataire ?? item.emailLocataire ?? null,
+    telephoneClient: item.telephone_client ?? item.telephoneClient ?? null,
+    telephone2Client: item.telephone2_client ?? item.telephone2Client ?? null,
+    emailClient: item.email_client ?? item.emailClient ?? null,
+    prenomProprietaire: item.prenom_proprietaire ?? item.prenomProprietaire ?? null,
+    nomProprietaire: item.nom_proprietaire ?? item.nomProprietaire ?? null,
+    telephoneProprietaire: item.telephone_proprietaire ?? item.telephoneProprietaire ?? null,
+    emailProprietaire: item.email_proprietaire ?? item.emailProprietaire ?? null,
+    pieceJointeIntervention: item.piece_jointe_intervention ?? item.pieceJointeIntervention ?? [],
+    pieceJointeCout: item.piece_jointe_cout ?? item.pieceJointeCout ?? [],
+    pieceJointeDevis: item.piece_jointe_devis ?? item.pieceJointeDevis ?? [],
+    pieceJointePhotos: item.piece_jointe_photos ?? item.pieceJointePhotos ?? [],
+    pieceJointeFactureGMBS: item.piece_jointe_facture_gmbs ?? item.pieceJointeFactureGMBS ?? [],
+    pieceJointeFactureArtisan: item.piece_jointe_facture_artisan ?? item.pieceJointeFactureArtisan ?? [],
+    pieceJointeFactureMateriel: item.piece_jointe_facture_materiel ?? item.pieceJointeFactureMateriel ?? [],
+  };
+};
+
+// Fonction pour mapper un enregistrement d'artisan
+export const mapArtisanRecord = (item: any, refs: any): any => {
+  const userInfo = buildUserDisplay(refs.usersById?.get(item.gestionnaire_id ?? ""));
+
+  return {
+    ...item,
+    metiers: Array.isArray(item.metiers) ? item.metiers : [],
+    zones: Array.isArray(item.zones) ? item.zones : [],
+    attribueA: userInfo.code ?? userInfo.username ?? undefined,
+    gestionnaireUsername: userInfo.username ?? undefined,
+    gestionnaireName: userInfo.fullName ?? undefined,
+    statutArtisan: item.statut_id ?? item.statutArtisan ?? null,
+    statutInactif: item.is_active === false,
+    commentaire: item.suivi_relances_docs ?? item.commentaire ?? null,
+    statutDossier: item.statut_dossier ?? item.statutDossier ?? null,
+    zoneIntervention: Array.isArray(item.zones) && item.zones.length ? Number(item.zones[0]) : item.zoneIntervention ?? null,
+    date: item.date_ajout ?? item.date ?? null,
+  };
+};
+
+// Constantes exportées
+export const INTERVENTION_STATUS = [
+  "Demandé",
+  "Devis_Envoyé",
+  "Accepté",
+  "En_cours",
+  "Visite_Technique",
+  "Terminé",
+  "Annulé",
+  "Refusé",
+  "STAND_BY",
+  "SAV",
+];
+
+export const INTERVENTION_METIERS = [
+  "Vitrerie",
+  "Bricolage",
+  "Plomberie",
+  "Électricité",
+  "Couvreur",
+  "Menuiserie",
+  "Chauffage",
+  "Dépannage",
+];
+
+export const DOCUMENT_TYPES = {
+  intervention: [
+    "devis",
+    "photos",
+    "facture_gmbs",
+    "facture_artisan",
+    "facture_materiel",
+    "rapport_intervention",
+    "plan",
+    "schema",
+    "autre",
+  ],
+  artisan: [
+    "certificat",
+    "assurance",
+    "siret",
+    "kbis",
+    "photo_profil",
+    "portfolio",
+    "autre",
+  ],
+};
+
+export const COMMENT_TYPES = [
+  "general",
+  "technique",
+  "commercial",
+  "interne",
+  "client",
+  "artisan",
+  "urgent",
+  "suivi",
+];

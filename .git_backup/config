@@ -1,0 +1,78 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+	ignorecase = true
+	precomposeunicode = true
+	compression = 9
+[remote "origin"]
+	url = git@github.com:AndreBertea/CRM_template.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+	vscode-merge-base = origin/main
+	vscode-merge-base = origin/main
+[branch "GMBS"]
+	remote = origin
+	vscode-merge-base = origin/GMBS
+	merge = refs/heads/GMBS
+[branch "GMBS-theme-set"]
+	remote = origin
+	merge = refs/heads/GMBS-theme-set
+	vscode-merge-base = origin/GMBS-theme-set
+[branch "GMBS_TEST"]
+	vscode-merge-base = origin/GMBS
+	remote = origin
+	merge = refs/heads/GMBS_TEST
+[http]
+	postBuffer = 524288000
+	maxRequestBuffer = 100M
+	lowSpeedLimit = 0
+	lowSpeedTime = 999999
+[lfs]
+	repositoryformatversion = 0
+[lfs "https://github.com/AndreBertea/CRM_template.git/info/lfs"]
+	access = basic
+[branch "GMBS_TEST_CLEAN"]
+	vscode-merge-base = origin/GMBS_TEST
+[branch "GMBS_TEST_LOGIN"]
+	vscode-merge-base = origin/main
+	vscode-merge-base = origin/main
+	vscode-merge-base = origin/main
+[branch "GMBS_TEST_LOGIN_CLEAN"]
+	vscode-merge-base = origin/main
+[branch "GMBS_TEST_LOGIN_FIXED"]
+	vscode-merge-base = origin/main
+	vscode-merge-base = origin/main
+[branch "GMBS_DEMO"]
+	vscode-merge-base = origin/main
+	remote = origin
+	merge = refs/heads/GMBS_DEMO
+[branch "GMBS_DEV_to_PROD"]
+	remote = origin
+	vscode-merge-base = origin/main
+	merge = refs/heads/GMBS_DEV_to_PROD
+[branch "interventions"]
+	vscode-merge-base = origin/GMBS_DEMO
+	remote = origin
+	merge = refs/heads/interventions
+[branch "GMBS_PROD"]
+	vscode-merge-base = origin/GMBS_DEV_to_PROD
+	remote = origin
+	merge = refs/heads/GMBS_PROD
+[branch "interventionV2"]
+	vscode-merge-base = origin/interventions
+[branch "feat/interventions-create"]
+	vscode-merge-base = origin/interventions
+	remote = origin
+	merge = refs/heads/feat/interventions-create
+[branch "feat/inter/ia"]
+	remote = origin
+	vscode-merge-base = origin/feat/interventions-create
+	vscode-merge-base = origin/feat/interventions-create
+	vscode-merge-base = origin/feat/interventions-create
+	vscode-merge-base = origin/feat/interventions-create
+	vscode-merge-base = origin/feat/interventions-create
+	merge = refs/heads/feat/inter/ia

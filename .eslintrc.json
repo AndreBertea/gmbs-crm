@@ -1,0 +1,13 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-restricted-imports": ["error", {
+      "patterns": [
+        { "group": ["@/src/*"], "message": "N'utilise jamais @/src — utilise @/ direct." },
+        { "group": ["../*", "../../*", "../../../*"], "message": "Utilise l'alias @/ pour les imports cross-feature." }
+      ]
+    }]
+  }
+}
+
+

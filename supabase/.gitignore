@@ -1,0 +1,10 @@
+# Supabase
+.branches
+.temp
+.env.keys
+.env.local
+.env.*.local
+
+# Node modules in functions
+functions/*/node_modules/
+functions/*/package-lock.json

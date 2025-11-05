@@ -1,0 +1,2 @@
+0000000000000000000000000000000000000000 d5c6034c94f8183b77669e18f6e8d17becd5b614 BarBar-DD <andre.bertea92@gmail.com> 1756202463 +0200	branch: Created from HEAD
+d5c6034c94f8183b77669e18f6e8d17becd5b614 fde202c4803f2c28b6f4242c42c1916a10469548 BarBar-DD <andre.bertea92@gmail.com> 1756204404 +0200	commit: 🔧 Fix GLB loading for Vercel: Move files to /public/3d/, remove LFS tracking, add error handling and proper headers

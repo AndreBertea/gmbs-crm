@@ -1,0 +1,77 @@
+// ===== API DONNÉES DE RÉFÉRENCE =====
+// Pour récupérer les statuts, agences, métiers, etc.
+
+import { supabase } from './supabase-client';
+
+export interface ReferenceData {
+  interventionStatuses: Array<{ id: string; code: string; label: string; color: string; sort_order: number | null }>;
+  artisanStatuses: Array<{ id: string; code: string; label: string; color: string }>;
+  agencies: Array<{ id: string; code: string; label: string }>;
+  metiers: Array<{ id: string; code: string; label: string }>;
+  users: Array<{ id: string; username: string; firstname: string; lastname: string; code_gestionnaire: string; color: string | null }>;
+}
+
+export const referenceApi = {
+  // Récupérer toutes les données de référence
+  async getAll(): Promise<ReferenceData> {
+    const [interventionStatuses, artisanStatuses, agencies, metiers, users] = await Promise.all([
+      supabase.from('intervention_statuses').select('id, code, label, color, sort_order').eq('is_active', true).order('sort_order'),
+      supabase.from('artisan_statuses').select('id, code, label, color').eq('is_active', true).order('sort_order'),
+      supabase.from('agencies').select('id, code, label').eq('is_active', true).order('label'),
+      supabase.from('metiers').select('id, code, label').eq('is_active', true).order('label'),
+      supabase.from('users').select('id, username, firstname, lastname, code_gestionnaire, color').order('username')
+    ]);
+
+    return {
+      interventionStatuses: interventionStatuses.data || [],
+      artisanStatuses: artisanStatuses.data || [],
+      agencies: agencies.data || [],
+      metiers: metiers.data || [],
+      users: users.data || []
+    };
+  },
+
+  // Récupérer les statuts d'intervention
+  async getInterventionStatuses() {
+    const { data, error } = await supabase
+      .from('intervention_statuses')
+      .select('id, code, label, color, sort_order')
+      .order('sort_order');
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Récupérer les agences
+  async getAgencies() {
+    const { data, error } = await supabase
+      .from('agencies')
+      .select('id, code, label')
+      .order('label');
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Récupérer les métiers
+  async getMetiers() {
+    const { data, error } = await supabase
+      .from('metiers')
+      .select('id, code, label')
+      .order('label');
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Récupérer les utilisateurs
+  async getUsers() {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, firstname, lastname, code_gestionnaire, color')
+      .order('username');
+    
+    if (error) throw error;
+    return data || [];
+  }
+};

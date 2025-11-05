@@ -1,0 +1,97 @@
+"use client"
+
+import * as React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Home,
+  Users,
+  Settings,
+  FileText,
+} from "lucide-react"
+import { useInterface } from "@/contexts/interface-context"
+import { t } from "@/config/domain"
+
+type NavItem = { type: "link"; name: string; href: string; icon: React.ComponentType<{ className?: string }> } | { type: "spacer" }
+
+const navigation: NavItem[] = [
+  { type: "link", name: t("dashboard"), href: "/dashboard", icon: Home },
+  { type: "spacer" },
+  { type: "link", name: t("deals"), href: "/interventions", icon: FileText },
+  { type: "link", name: t("contacts"), href: "/artisans", icon: Users },
+  { type: "spacer" },
+  { type: "link", name: "Paramètres", href: "/settings", icon: Settings },
+]
+
+export function AppSidebar() {
+  const pathname = usePathname()
+  // Source sidebar mode from Interface context to reflect Settings → Interface choices
+  const { sidebarMode } = useInterface()
+
+  const collapses = sidebarMode === "collapsed" || sidebarMode === "hybrid"
+  const expandOnHover = sidebarMode === "hybrid"
+
+  return (
+    <div
+      className={cn(
+        "relative group/sidebar flex min-h-screen flex-col bg-transparent transition-[width] duration-200 ease-out",
+        sidebarMode === "expanded" ? "w-64" : "w-16",
+        // Hybrid expands only on hover (not focus) to avoid sticking open after click
+        expandOnHover && "hover:w-64"
+      )}
+      data-mode={sidebarMode}
+      aria-label="Application Sidebar"
+    >
+      <div className="flex h-44 items-center px-9">
+        <h1
+          className={cn(
+            "text-lg font-semibold whitespace-nowrap transition-opacity duration-200",
+            collapses ? "opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100" : "opacity-100"
+          )}
+        >
+          GMBS CRM
+        </h1>
+        {/* Icon placeholder to keep height/alignment when collapsed */}
+      </div>
+      <nav className={cn("flex-1 space-y-1 p-2 py-5 rounded-r-lg border-r bg-background")}>
+        {navigation.map((item, idx) => {
+          if (item.type === "spacer") {
+            return <div key={`sp-${idx}`} className="h-0" aria-hidden="true" />
+          }
+          const isActive = pathname === item.href
+          const Icon = item.icon
+          return (
+            <div key={item.name}>
+              <Link href={item.href} className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full gap-3",
+                    sidebarMode === "expanded" && "justify-start",
+                    sidebarMode === "hybrid" && "justify-start",
+                    sidebarMode === "collapsed" && "justify-center",
+                    isActive && "bg-secondary"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span
+                    className={cn(
+                      "text-sm transition-opacity duration-200",
+                      sidebarMode === "expanded" ? "opacity-100" : "opacity-0",
+                      sidebarMode === "hybrid" && "group-hover/sidebar:opacity-100",
+                      sidebarMode === "collapsed" && "hidden"
+                    )}
+                  >
+                    {item.name}
+                  </span>
+                </Button>
+              </Link>
+            </div>
+          )
+        })}
+      </nav>
+    </div>
+  )
+}

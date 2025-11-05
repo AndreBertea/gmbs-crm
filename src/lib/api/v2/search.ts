@@ -1,0 +1,655 @@
+import { supabase } from "@/lib/supabase-client"
+import type {
+  ArtisanSearchRecord,
+  GroupedSearchResults,
+  InterventionSearchRecord,
+  SearchContext,
+  SearchResult,
+  SearchScore,
+  SearchResultsGroup,
+} from "@/types/search"
+
+const DEFAULT_ARTISAN_LIMIT = 3
+const DEFAULT_INTERVENTION_LIMIT = 5
+const DIACRITICS_REGEX = /[\u0300-\u036f]/g
+
+const normalizeString = (value: string | null | undefined): string => {
+  if (!value) return ""
+  return value
+    .normalize("NFD")
+    .replace(DIACRITICS_REGEX, "")
+    .toLowerCase()
+    .trim()
+}
+
+const sanitizePhone = (value: string | null | undefined): string => {
+  if (!value) return ""
+  return value.replace(/\D+/g, "")
+}
+
+const escapeIlike = (value: string): string => {
+  return value.replace(/[%_]/g, (match) => `\\${match}`)
+}
+
+const performanceNow = () => {
+  if (typeof performance !== "undefined" && typeof performance.now === "function") {
+    return performance.now()
+  }
+  return Date.now()
+}
+
+const getPrimaryMetier = (record: ArtisanSearchRecord) => {
+  const primary = record.metiers.find((entry) => entry.is_primary)
+  return primary?.metier ?? record.metiers[0]?.metier ?? null
+}
+
+const getPrimaryArtisanFromIntervention = (
+  intervention: Pick<InterventionSearchRecord, "intervention_artisans">,
+) => {
+  const primary = intervention.intervention_artisans.find((entry) => entry.is_primary)
+  return primary?.artisan ?? intervention.intervention_artisans[0]?.artisan ?? null
+}
+
+const computeInitials = (...parts: Array<string | null | undefined>) => {
+  const available = parts.filter((part) => part && part.trim().length > 0) as string[]
+  if (!available.length) return null
+  return available
+    .map((part) => part.trim()[0]?.toUpperCase() ?? "")
+    .join("")
+    .slice(0, 2)
+}
+
+const incrementScore = (currentMax: number, candidate: number) => {
+  return candidate > currentMax ? candidate : currentMax
+}
+
+export function detectSearchContext(query: string): SearchContext {
+  const trimmed = query.trim()
+  if (!trimmed) return "mixed"
+  if (/^INT-/i.test(trimmed)) return "intervention"
+  if (/^\d{5,}$/.test(trimmed)) return "intervention"
+  if (/^[A-Z]{2,4}$/i.test(trimmed)) return "artisan"
+  const digits = trimmed.replace(/\s/g, "")
+  if (/^0[1-9]/.test(digits)) return "intervention"
+  if (/^\d{5}$/.test(trimmed)) return "intervention"
+  return "mixed"
+}
+
+export function scoreArtisan(artisan: ArtisanSearchRecord, query: string): SearchScore {
+  const normalizedQuery = normalizeString(query)
+  const digitsQuery = sanitizePhone(query)
+  const matchedFields = new Set<string>()
+  let score = 0
+
+  if (!normalizedQuery && !digitsQuery) {
+    return { score: 0, matchedFields: [] }
+  }
+
+  const code = artisan.numero_associe
+  if (code) {
+    const normalizedCode = normalizeString(code)
+    if (normalizedCode === normalizedQuery && normalizedQuery.length > 0) {
+      score = incrementScore(score, 100)
+      matchedFields.add("code")
+    } else if (normalizedCode.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 85)
+      matchedFields.add("code")
+    }
+  }
+
+  const company = artisan.raison_sociale
+  if (company) {
+    const normalizedCompany = normalizeString(company)
+    if (normalizedCompany.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 75)
+      matchedFields.add("company")
+    } else if (normalizedCompany.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 60)
+      matchedFields.add("company")
+    }
+  }
+
+  const parts = [artisan.prenom, artisan.nom].filter((part) => Boolean(part)) as string[]
+  if (parts.length > 0) {
+    const fullName = normalizeString(parts.join(" "))
+    if (fullName.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 75)
+      matchedFields.add("name")
+    } else if (fullName.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 60)
+      matchedFields.add("name")
+    }
+  }
+
+  const telephoneVariants = [artisan.telephone, artisan.telephone2].map(sanitizePhone).filter(Boolean)
+  for (const phone of telephoneVariants) {
+    if (!phone || !digitsQuery) continue
+    if (phone === digitsQuery) {
+      score = incrementScore(score, 70)
+      matchedFields.add("telephone")
+    } else if (phone.startsWith(digitsQuery) || phone.includes(digitsQuery)) {
+      score = incrementScore(score, 60)
+      matchedFields.add("telephone")
+    }
+  }
+
+  const email = artisan.email
+  if (email) {
+    const normalizedEmail = normalizeString(email)
+    if (normalizedEmail.includes(normalizedQuery) && normalizedQuery.length > 1) {
+      score = incrementScore(score, 65)
+      matchedFields.add("email")
+    }
+  }
+
+  const metier = getPrimaryMetier(artisan)
+  if (metier?.label) {
+    const normalizedMetier = normalizeString(metier.label)
+    if (normalizedMetier.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 65)
+      matchedFields.add("metier")
+    } else if (normalizedMetier.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 55)
+      matchedFields.add("metier")
+    }
+  }
+
+  if (matchedFields.size > 1) {
+    score = Math.min(100, score + matchedFields.size * 2)
+  }
+
+  return { score, matchedFields: [...matchedFields] }
+}
+
+export function scoreIntervention(intervention: InterventionSearchRecord, query: string): SearchScore {
+  const normalizedQuery = normalizeString(query)
+  const digitsQuery = sanitizePhone(query)
+  const matchedFields = new Set<string>()
+  let score = 0
+  const contact = intervention.tenant ?? intervention.clients ?? null
+
+  if (!normalizedQuery && !digitsQuery) {
+    return { score: 0, matchedFields: [] }
+  }
+
+  const idInter = intervention.id_inter
+  if (idInter) {
+    const normalizedId = normalizeString(idInter)
+    if (normalizedId === normalizedQuery && normalizedQuery.length > 0) {
+      score = incrementScore(score, 100)
+      matchedFields.add("interventionId")
+    } else if (normalizedId.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 90)
+      matchedFields.add("interventionId")
+    } else if (normalizedId.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 80)
+      matchedFields.add("interventionId")
+    }
+  }
+
+  const telephoneCandidates = [contact?.telephone, contact?.telephone2]
+  for (const phone of telephoneCandidates) {
+    const sanitized = sanitizePhone(phone)
+    if (!sanitized || !digitsQuery) continue
+    if (sanitized === digitsQuery) {
+      score = incrementScore(score, 95)
+      matchedFields.add("telephone")
+    } else if (sanitized.includes(digitsQuery)) {
+      score = incrementScore(score, 70)
+      matchedFields.add("telephone")
+    }
+  }
+
+  const clientNameParts = [contact?.firstname, contact?.lastname].filter(
+    (part) => Boolean(part),
+  ) as string[]
+  if (clientNameParts.length > 0) {
+    const clientFullName = normalizeString(clientNameParts.join(" "))
+    if (clientFullName === normalizedQuery && normalizedQuery.length > 0) {
+      score = incrementScore(score, 85)
+      matchedFields.add("client")
+    } else if (clientFullName.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 75)
+      matchedFields.add("client")
+    } else if (clientFullName.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 65)
+      matchedFields.add("client")
+    }
+  }
+
+  const address = intervention.adresse
+  if (address) {
+    const normalizedAddress = normalizeString(address)
+    if (normalizedAddress.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 60)
+      matchedFields.add("address")
+    }
+  }
+
+  const city = intervention.ville
+  if (city) {
+    const normalizedCity = normalizeString(city)
+    if (normalizedCity === normalizedQuery && normalizedQuery.length > 0) {
+      score = incrementScore(score, 70)
+      matchedFields.add("city")
+    } else if (normalizedCity.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 65)
+      matchedFields.add("city")
+    }
+  }
+
+  const postal = intervention.code_postal
+  if (postal) {
+    const normalizedPostal = normalizeString(postal)
+    if (normalizedPostal === normalizedQuery && normalizedQuery.length > 0) {
+      score = incrementScore(score, 80)
+      matchedFields.add("postal")
+    }
+  }
+
+  const commentaire = intervention.commentaire_agent
+  if (commentaire) {
+    const normalizedComment = normalizeString(commentaire)
+    if (normalizedComment.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 50)
+      matchedFields.add("comments")
+    }
+  }
+
+  const consigne = intervention.consigne_intervention
+  if (consigne) {
+    const normalizedConsigne = normalizeString(consigne)
+    if (normalizedConsigne.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 50)
+      matchedFields.add("notes")
+    }
+  }
+
+  const assignedUserCode = intervention.assigned_user?.code_gestionnaire ?? intervention.assigned_user?.username
+  if (assignedUserCode) {
+    const normalizedUserCode = normalizeString(assignedUserCode)
+    if (normalizedUserCode === normalizedQuery && normalizedQuery.length > 0) {
+      score = incrementScore(score, 80)
+      matchedFields.add("assignedUser")
+    } else if (normalizedUserCode.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 70)
+      matchedFields.add("assignedUser")
+    }
+  }
+
+  const primaryArtisan = getPrimaryArtisanFromIntervention(intervention)
+  if (primaryArtisan?.numero_associe) {
+    const normalizedPrimaryCode = normalizeString(primaryArtisan.numero_associe)
+    if (normalizedPrimaryCode === normalizedQuery && normalizedQuery.length > 0) {
+      score = incrementScore(score, 80)
+      matchedFields.add("assignedArtisan")
+    } else if (normalizedPrimaryCode.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 70)
+      matchedFields.add("assignedArtisan")
+    }
+  }
+
+  const metier = intervention.metier?.label
+  if (metier) {
+    const normalizedMetier = normalizeString(metier)
+    if (normalizedMetier.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 60)
+      matchedFields.add("metier")
+    }
+  }
+
+  if (matchedFields.size > 1) {
+    score = Math.min(100, score + matchedFields.size * 2)
+  }
+
+  return { score, matchedFields: [...matchedFields] }
+}
+
+const buildArtisanQuery = (query: string, limit: number) => {
+  const trimmed = query.trim()
+  if (!trimmed) return null
+
+  const pattern = escapeIlike(trimmed)
+  const normalizedDigits = sanitizePhone(trimmed)
+  
+  // PostgREST .or() syntax: "column.operator.pattern,column2.operator.pattern"
+  const orFilters = [
+    `numero_associe.ilike.*${pattern}*`,
+    `plain_nom.ilike.*${pattern}*`,
+    `raison_sociale.ilike.*${pattern}*`,
+    `prenom.ilike.*${pattern}*`,
+    `nom.ilike.*${pattern}*`,
+    `email.ilike.*${pattern}*`,
+  ]
+  
+  if (normalizedDigits) {
+    orFilters.push(`telephone.ilike.*${normalizedDigits}*`)
+    orFilters.push(`telephone2.ilike.*${normalizedDigits}*`)
+  } else {
+    orFilters.push(`telephone.ilike.*${pattern}*`)
+    orFilters.push(`telephone2.ilike.*${pattern}*`)
+  }
+
+  const baseLimit = Math.max(limit * 3, limit + 3)
+
+  return supabase
+    .from("artisans")
+    .select(
+      `
+        id,
+        prenom,
+        nom,
+        plain_nom,
+        raison_sociale,
+        email,
+        telephone,
+        telephone2,
+        numero_associe,
+        statut_id,
+        is_active,
+        status:artisan_statuses (
+          id,
+          code,
+          label,
+          color
+        ),
+        metiers:artisan_metiers (
+          is_primary,
+          metier:metiers (
+            id,
+            code,
+            label
+          )
+        )
+      `,
+      { count: "exact" },
+    )
+    .or(orFilters.join(","))
+    .order("numero_associe", { ascending: true })
+    .limit(baseLimit)
+}
+
+const fetchActiveInterventionCounts = async (artisanIds: string[]) => {
+  if (artisanIds.length === 0) return new Map<string, number>()
+
+  const { data, error } = await supabase
+    .from("intervention_artisans")
+    .select(
+      `
+        artisan_id,
+        intervention_id,
+        interventions!inner (
+          id,
+          is_active
+        )
+      `,
+    )
+    .in("artisan_id", artisanIds)
+    .eq("interventions.is_active", true)
+
+  if (error) {
+    console.warn("[universalSearch] Unable to fetch artisan intervention counts", error)
+    return new Map<string, number>()
+  }
+
+  const counts = new Map<string, Set<string>>()
+  for (const row of data ?? []) {
+    const artisanId = row.artisan_id
+    const interventionId = row.intervention_id
+    if (!artisanId || !interventionId) continue
+    if (!counts.has(artisanId)) {
+      counts.set(artisanId, new Set<string>())
+    }
+    counts.get(artisanId)?.add(interventionId)
+  }
+
+  const finalCounts = new Map<string, number>()
+  counts.forEach((set, key) => {
+    finalCounts.set(key, set.size)
+  })
+  return finalCounts
+}
+
+const searchArtisans = async (
+  query: string,
+  limit: number,
+): Promise<SearchResultsGroup<ArtisanSearchRecord>> => {
+  const builder = buildArtisanQuery(query, limit)
+  if (!builder) {
+    return {
+      items: [],
+      total: 0,
+      hasMore: false,
+    }
+  }
+
+  const { data, error, count } = await builder
+  if (error) {
+    throw error
+  }
+
+  const scored = (data ?? []).map((record) => {
+    const score = scoreArtisan(record as ArtisanSearchRecord, query)
+    return {
+      record: {
+        ...(record as ArtisanSearchRecord),
+      },
+      score,
+    }
+  })
+
+  const filtered = scored
+    .filter((entry) => entry.score.score > 0)
+    .sort((a, b) => {
+      if (b.score.score !== a.score.score) {
+        return b.score.score - a.score.score
+      }
+      const codeA = normalizeString(a.record.numero_associe ?? "")
+      const codeB = normalizeString(b.record.numero_associe ?? "")
+      return codeA.localeCompare(codeB)
+    })
+    .slice(0, limit)
+
+  const artisanIds = filtered.map((entry) => entry.record.id)
+  const counts = await fetchActiveInterventionCounts(artisanIds)
+
+  const items: Array<SearchResult<ArtisanSearchRecord>> = filtered.map((entry) => {
+    const activeCount = counts.get(entry.record.id) ?? 0
+    return {
+      type: "artisan",
+      data: {
+        ...entry.record,
+        activeInterventionCount: activeCount,
+      },
+      score: entry.score.score,
+      matchedFields: entry.score.matchedFields,
+    }
+  })
+
+  const total = count ?? items.length
+  return {
+    items,
+    total,
+    hasMore: total > items.length,
+  }
+}
+
+const searchInterventions = async (
+  query: string,
+  limit: number,
+): Promise<SearchResultsGroup<InterventionSearchRecord>> => {
+  const trimmed = query.trim()
+  if (!trimmed) {
+    return {
+      items: [],
+      total: 0,
+      hasMore: false,
+    }
+  }
+
+  const pattern = escapeIlike(trimmed)
+  
+  // PostgREST .or() syntax: "column.operator.pattern"
+  // Only search on direct columns, not relations (PostgREST limitation with .or())
+  const orFilters = [
+    `id_inter.ilike.*${pattern}*`,
+    `contexte_intervention.ilike.*${pattern}*`,
+    `adresse.ilike.*${pattern}*`,
+    `ville.ilike.*${pattern}*`,
+    `code_postal.ilike.*${pattern}*`,
+    `commentaire_agent.ilike.*${pattern}*`,
+    `consigne_intervention.ilike.*${pattern}*`,
+  ]
+
+  // Fetch more results since we'll filter/score with relations client-side
+  const baseLimit = Math.max(limit * 5, limit + 10)
+  const { data, error, count } = await supabase
+    .from("interventions")
+    .select(
+      `
+        id,
+        id_inter,
+        agence_id,
+        statut_id,
+        metier_id,
+        assigned_user_id,
+        contexte_intervention,
+        consigne_intervention,
+        commentaire_agent,
+        adresse,
+        code_postal,
+        ville,
+        date,
+        date_prevue,
+        due_date,
+        tenant:tenants (
+          id,
+          firstname,
+          lastname,
+          telephone,
+          telephone2,
+          email,
+          adresse,
+          code_postal,
+          ville
+        ),
+        status:intervention_statuses (
+          id,
+          code,
+          label,
+          color
+        ),
+        metier:metiers (
+          id,
+          code,
+          label
+        ),
+        assigned_user:users (
+          id,
+          firstname,
+          lastname,
+          username,
+          code_gestionnaire,
+          color
+        ),
+        intervention_artisans (
+          is_primary,
+          role,
+          artisan:artisans (
+            id,
+            prenom,
+            nom,
+            numero_associe
+          )
+        )
+      `,
+      { count: "exact" },
+    )
+    .or(orFilters.join(","))
+    .order("date", { ascending: false, nullsLast: true })
+    .limit(baseLimit)
+
+  if (error) {
+    throw error
+  }
+
+  const scored = (data ?? []).map((record) => {
+    const typedRecord: InterventionSearchRecord = {
+      ...(record as unknown as InterventionSearchRecord),
+    }
+    typedRecord.primaryArtisan = getPrimaryArtisanFromIntervention(typedRecord)
+    const score = scoreIntervention(typedRecord, query)
+    return {
+      record: typedRecord,
+      score,
+    }
+  })
+
+  const filtered = scored
+    .filter((entry) => entry.score.score > 0)
+    .sort((a, b) => {
+      if (b.score.score !== a.score.score) {
+        return b.score.score - a.score.score
+      }
+      const labelA = normalizeString(a.record.status?.label ?? "")
+      const labelB = normalizeString(b.record.status?.label ?? "")
+      return labelA.localeCompare(labelB)
+    })
+    .slice(0, limit)
+
+  const items: Array<SearchResult<InterventionSearchRecord>> = filtered.map((entry) => ({
+    type: "intervention",
+    data: entry.record,
+    score: entry.score.score,
+    matchedFields: entry.score.matchedFields,
+  }))
+
+  const total = count ?? items.length
+  return {
+    items,
+    total,
+    hasMore: total > items.length,
+  }
+}
+
+export async function universalSearch(
+  query: string,
+  options?: {
+    artisanLimit?: number
+    interventionLimit?: number
+  },
+): Promise<GroupedSearchResults> {
+  const trimmed = query.trim()
+  const context = detectSearchContext(trimmed)
+
+  if (trimmed.length < 2) {
+    return {
+      artisans: { items: [], total: 0, hasMore: false },
+      interventions: { items: [], total: 0, hasMore: false },
+      context,
+      searchTime: 0,
+    }
+  }
+
+  const artisanLimit =
+    options?.artisanLimit ?? (context === "artisan" ? Math.max(DEFAULT_ARTISAN_LIMIT, 5) : DEFAULT_ARTISAN_LIMIT)
+  const interventionLimit =
+    options?.interventionLimit ??
+    (context === "intervention" ? Math.max(DEFAULT_INTERVENTION_LIMIT, 8) : DEFAULT_INTERVENTION_LIMIT)
+
+  const start = performanceNow()
+
+  const [artisanResults, interventionResults] = await Promise.all([
+    context === "intervention" ? searchArtisans(trimmed, Math.min(artisanLimit, 3)) : searchArtisans(trimmed, artisanLimit),
+    context === "artisan" ? searchInterventions(trimmed, Math.min(interventionLimit, 5)) : searchInterventions(trimmed, interventionLimit),
+  ])
+
+  const searchTime = Math.round(performanceNow() - start)
+
+  return {
+    artisans: artisanResults,
+    interventions: interventionResults,
+    context,
+    searchTime,
+  }
+}

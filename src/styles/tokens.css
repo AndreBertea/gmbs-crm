@@ -1,0 +1,56 @@
+/* Status & UI tokens centralized */
+:root {
+  /* Status background/text (HSL) */
+  --status-demanded-bg: 210 40% 98%;
+  --status-demanded-fg: 215 16% 35%;
+  --status-quote-bg: 210 40% 96%;
+  --status-quote-fg: 221 39% 28%;
+  --status-accepted-bg: 142 76% 97%;
+  --status-accepted-fg: 142 50% 32%;
+  --status-inprogress-bg: 48 96% 96%;
+  --status-inprogress-fg: 32 95% 44%;
+  --status-techvisit-bg: 199 89% 96%;
+  --status-techvisit-fg: 199 84% 35%;
+  --status-done-bg: 151 81% 95%;
+  --status-done-fg: 160 84% 24%;
+  --status-cancelled-bg: 0 93% 95%;
+  --status-cancelled-fg: 0 72% 45%;
+  --status-refused-bg: 343 76% 96%;
+  --status-refused-fg: 343 72% 40%;
+  --status-standby-bg: 28 100% 96%;
+  --status-standby-fg: 28 85% 45%;
+  --status-sav-bg: 252 95% 96%;
+  --status-sav-fg: 252 83% 45%;
+
+  /* Unified main hues (for bg-.../15 utilities) */
+  --status-demanded: var(--status-demanded-fg);
+  --status-quote: var(--status-quote-fg);
+  --status-accepted: var(--status-accepted-fg);
+  --status-inprogress: var(--status-inprogress-fg);
+  --status-techvisit: var(--status-techvisit-fg);
+  --status-done: var(--status-done-fg);
+  --status-cancelled: var(--status-cancelled-fg);
+  --status-refused: var(--status-refused-fg);
+  --status-standby: var(--status-standby-fg);
+  --status-sav: var(--status-sav-fg);
+
+  /* Card radius and shadows for parity */
+  --card-radius: 0.75rem;
+  --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --radius-xl: 1rem;
+}
+
+.status-chip {
+  @apply text-xs rounded-full px-2 py-0.5 border;
+}
+
+.status-Demandé { background-color: hsl(var(--status-demanded-bg)); color: hsl(var(--status-demanded-fg)); }
+.status-Devis_Envoyé { background-color: hsl(var(--status-quote-bg)); color: hsl(var(--status-quote-fg)); }
+.status-Accepté { background-color: hsl(var(--status-accepted-bg)); color: hsl(var(--status-accepted-fg)); }
+.status-En_cours { background-color: hsl(var(--status-inprogress-bg)); color: hsl(var(--status-inprogress-fg)); }
+.status-Visite_Technique { background-color: hsl(var(--status-techvisit-bg)); color: hsl(var(--status-techvisit-fg)); }
+.status-Terminé { background-color: hsl(var(--status-done-bg)); color: hsl(var(--status-done-fg)); }
+.status-Annulé { background-color: hsl(var(--status-cancelled-bg)); color: hsl(var(--status-cancelled-fg)); }
+.status-Refusé { background-color: hsl(var(--status-refused-bg)); color: hsl(var(--status-refused-fg)); }
+.status-STAND_BY { background-color: hsl(var(--status-standby-bg)); color: hsl(var(--status-standby-fg)); }
+.status-SAV { background-color: hsl(var(--status-sav-bg)); color: hsl(var(--status-sav-fg)); }

@@ -1,0 +1,411 @@
+// ===== API USERS V2 =====
+// Gestion complète des utilisateurs avec authentification Supabase
+
+import { supabase } from "../../supabase-client";
+import type {
+    BulkOperationResult,
+    CreateUserData,
+    PaginatedResponse,
+    UpdateUserData,
+    User,
+    UserQueryParams,
+    UserStats,
+} from "./common/types";
+
+export const usersApi = {
+  // Récupérer tous les utilisateurs avec leurs rôles
+  async getAll(params?: UserQueryParams): Promise<PaginatedResponse<User>> {
+    let query = supabase
+      .from("users")
+      .select(`
+        *,
+        user_roles!inner(
+          role_id,
+          roles!inner(
+            id,
+            name,
+            description
+          )
+        )
+      `, { count: "exact" })
+      .order("created_at", { ascending: false });
+
+    // Appliquer les filtres si nécessaire
+    if (params?.status) {
+      query = query.eq("status", params.status);
+    }
+
+    // Pagination
+    const limit = params?.limit || 100;
+    const offset = params?.offset || 0;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    const transformedData = (data || []).map((item) => ({
+      ...item,
+      roles: item.user_roles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [],
+    }));
+
+    return {
+      data: transformedData,
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: offset + limit < (count || 0),
+      },
+    };
+  },
+
+  // Récupérer un utilisateur par ID
+  async getById(id: string): Promise<User> {
+    const { data, error } = await supabase
+      .from("users")
+      .select(`
+        *,
+        user_roles!inner(
+          role_id,
+          roles!inner(
+            id,
+            name,
+            description
+          )
+        )
+      `)
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    return {
+      ...data,
+      roles: data.user_roles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [],
+    };
+  },
+
+  // Créer un utilisateur complet (auth + profile)
+  async create(data: CreateUserData): Promise<User> {
+    // 1. Créer l'utilisateur dans Supabase Auth
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: {
+        name: data.firstname,
+        prenom: data.lastname,
+      },
+    });
+
+    if (authError) throw authError;
+    if (!authUser.user) throw new Error("Failed to create auth user");
+
+    const userId = authUser.user.id;
+
+    // 2. Créer le profil dans public.users avec le même ID
+    const { data: profileData, error: profileError } = await supabase
+      .from("users")
+      .insert({
+        id: userId, // Même ID que auth.users
+        username: data.username,
+        email: data.email,
+        firstname: data.firstname,
+        lastname: data.lastname,
+        color: data.color,
+        code_gestionnaire: data.code_gestionnaire,
+        status: "offline",
+        token_version: 0,
+      })
+      .select()
+      .single();
+
+    if (profileError) {
+      // Si le profil échoue, supprimer l'utilisateur auth
+      await supabase.auth.admin.deleteUser(userId);
+      throw profileError;
+    }
+
+    // 3. Assigner les rôles si spécifiés
+    if (data.roles && data.roles.length > 0) {
+      await this.assignRoles(userId, data.roles);
+    }
+
+    // 4. Récupérer l'utilisateur complet avec ses rôles
+    return await this.getById(userId);
+  },
+
+  // Modifier un utilisateur
+  async update(id: string, data: UpdateUserData): Promise<User> {
+    // 1. Mettre à jour l'utilisateur dans Supabase Auth si nécessaire
+    if (data.email || data.password) {
+      const updateData: any = {};
+      if (data.email) updateData.email = data.email;
+      if (data.password) updateData.password = data.password;
+
+      const { error: authError } = await supabase.auth.admin.updateUserById(id, updateData);
+      if (authError) throw authError;
+    }
+
+    // 2. Mettre à jour le profil dans public.users
+    const profileUpdateData: any = {};
+    if (data.username !== undefined) profileUpdateData.username = data.username;
+    if (data.firstname !== undefined) profileUpdateData.firstname = data.firstname;
+    if (data.lastname !== undefined) profileUpdateData.lastname = data.lastname;
+    if (data.color !== undefined) profileUpdateData.color = data.color;
+    if (data.code_gestionnaire !== undefined) profileUpdateData.code_gestionnaire = data.code_gestionnaire;
+    if (data.status !== undefined) profileUpdateData.status = data.status;
+
+    if (Object.keys(profileUpdateData).length > 0) {
+      const { error: profileError } = await supabase
+        .from("users")
+        .update(profileUpdateData)
+        .eq("id", id);
+
+      if (profileError) throw profileError;
+    }
+
+    // 3. Mettre à jour les rôles si spécifiés
+    if (data.roles !== undefined) {
+      await this.updateRoles(id, data.roles);
+    }
+
+    // 4. Récupérer l'utilisateur mis à jour
+    return await this.getById(id);
+  },
+
+  // Supprimer un utilisateur (soft delete)
+  async delete(id: string): Promise<{ message: string; data: User }> {
+    // 1. Soft delete dans public.users
+    const { data: userData, error: profileError } = await supabase
+      .from("users")
+      .update({ 
+        is_active: false,
+        status: "offline",
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (profileError) throw profileError;
+
+    // 2. Supprimer l'utilisateur de Supabase Auth
+    const { error: authError } = await supabase.auth.admin.deleteUser(id);
+    if (authError) throw authError;
+
+    return {
+      message: "User deleted successfully",
+      data: userData,
+    };
+  },
+
+  // Assigner des rôles à un utilisateur
+  async assignRoles(userId: string, roleNames: string[]): Promise<void> {
+    // Récupérer les IDs des rôles
+    const { data: roles, error: rolesError } = await supabase
+      .from("roles")
+      .select("id, name")
+      .in("name", roleNames);
+
+    if (rolesError) throw rolesError;
+
+    const roleIds = roles?.map(role => role.id) || [];
+
+    if (roleIds.length === 0) {
+      throw new Error("No valid roles found");
+    }
+
+    // Supprimer les rôles existants
+    await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId);
+
+    // Ajouter les nouveaux rôles
+    const userRoles = roleIds.map(roleId => ({
+      user_id: userId,
+      role_id: roleId,
+    }));
+
+    const { error: assignError } = await supabase
+      .from("user_roles")
+      .insert(userRoles);
+
+    if (assignError) throw assignError;
+  },
+
+  // Mettre à jour les rôles d'un utilisateur
+  async updateRoles(userId: string, roleNames: string[]): Promise<void> {
+    await this.assignRoles(userId, roleNames);
+  },
+
+  // Récupérer les permissions d'un utilisateur
+  async getUserPermissions(userId: string): Promise<string[]> {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select(`
+        roles!inner(
+          role_permissions!inner(
+            permissions!inner(
+              key
+            )
+          )
+        )
+      `)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+
+    const permissions = new Set<string>();
+    data?.forEach((userRole: any) => {
+      userRole.roles?.role_permissions?.forEach((rp: any) => {
+        if (rp.permissions?.key) {
+          permissions.add(rp.permissions.key);
+        }
+      });
+    });
+
+    return Array.from(permissions);
+  },
+
+  // Vérifier si un utilisateur a une permission
+  async hasPermission(userId: string, permission: string): Promise<boolean> {
+    const permissions = await this.getUserPermissions(userId);
+    return permissions.includes(permission);
+  },
+
+  // Récupérer les utilisateurs par rôle
+  async getUsersByRole(roleName: string): Promise<User[]> {
+    const { data, error } = await supabase
+      .from("users")
+      .select(`
+        *,
+        user_roles!inner(
+          role_id,
+          roles!inner(
+            id,
+            name,
+            description
+          )
+        )
+      `)
+      .eq("user_roles.roles.name", roleName);
+
+    if (error) throw error;
+
+    return (data || []).map((item) => ({
+      ...item,
+      roles: item.user_roles?.map((ur: any) => ur.roles?.name).filter(Boolean) || [],
+    }));
+  },
+
+  // Synchroniser un utilisateur existant (pour migration)
+  async syncUser(authUserId: string, profileData: {
+    username: string;
+    firstname?: string;
+    lastname?: string;
+    color?: string;
+    code_gestionnaire?: string;
+    roles?: string[];
+  }): Promise<User> {
+    // 1. Vérifier que l'utilisateur existe dans auth.users
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(authUserId);
+    if (authError || !authUser.user) {
+      throw new Error("Auth user not found");
+    }
+
+    // 2. Créer ou mettre à jour le profil dans public.users
+    const { data: profileDataResult, error: profileError } = await supabase
+      .from("users")
+      .upsert({
+        id: authUserId, // Même ID que auth.users
+        username: profileData.username,
+        email: authUser.user.email,
+        firstname: profileData.firstname,
+        lastname: profileData.lastname,
+        color: profileData.color,
+        code_gestionnaire: profileData.code_gestionnaire,
+        status: "offline",
+        token_version: 0,
+      })
+      .select()
+      .single();
+
+    if (profileError) throw profileError;
+
+    // 3. Assigner les rôles si spécifiés
+    if (profileData.roles && profileData.roles.length > 0) {
+      await this.assignRoles(authUserId, profileData.roles);
+    }
+
+    // 4. Récupérer l'utilisateur complet
+    return await this.getById(authUserId);
+  },
+
+  // Récupérer les statistiques des utilisateurs
+  async getStats(): Promise<UserStats> {
+    const { data: users, error } = await supabase
+      .from("users")
+      .select(`
+        status,
+        user_roles!inner(
+          roles!inner(
+            name
+          )
+        ),
+        last_seen_at
+      `);
+
+    if (error) throw error;
+
+    const stats = {
+      total: users?.length || 0,
+      by_status: {} as Record<string, number>,
+      by_role: {} as Record<string, number>,
+      active_today: 0,
+    };
+
+    const today = new Date().toISOString().split('T')[0];
+
+    users?.forEach((user: any) => {
+      // Par statut
+      const status = user.status || 'offline';
+      stats.by_status[status] = (stats.by_status[status] || 0) + 1;
+
+      // Par rôle
+      user.user_roles?.forEach((ur: any) => {
+        const roleName = ur.roles?.name;
+        if (roleName) {
+          stats.by_role[roleName] = (stats.by_role[roleName] || 0) + 1;
+        }
+      });
+
+      // Actif aujourd'hui
+      if (user.last_seen_at && user.last_seen_at.startsWith(today)) {
+        stats.active_today++;
+      }
+    });
+
+    return stats;
+  },
+
+  // Créer plusieurs utilisateurs en lot
+  async createBulk(users: CreateUserData[]): Promise<BulkOperationResult> {
+    const results = { success: 0, errors: 0, details: [] as any[] };
+
+    for (const user of users) {
+      try {
+        const result = await this.create(user);
+        results.success++;
+        results.details.push({ item: user, success: true, data: result });
+      } catch (error: any) {
+        results.errors++;
+        results.details.push({ item: user, success: false, error: error.message });
+      }
+    }
+
+    return results;
+  },
+};

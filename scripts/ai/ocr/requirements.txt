@@ -1,0 +1,59 @@
+# ========================================
+# Requirements pour extraction de devis
+# ========================================
+# 
+# Installation:
+#   pip install -r requirements.txt
+#   
+#   OU avec uv (10-100x plus rapide):
+#   uv pip install -r requirements.txt
+
+# ========================================
+# Core LangChain
+# ========================================
+langchain==0.2.16
+langchain-core==0.2.38
+langchain-community==0.2.16
+
+# ========================================
+# OCR
+# ========================================
+pytesseract==0.3.10
+Pillow==10.3.0
+
+# ========================================
+# Providers LLM
+# ========================================
+
+# Ollama (Local, gratuit) ⭐ Recommandé
+# Installation Ollama: https://ollama.ai/download
+# Pas de package pip nécessaire pour Ollama
+
+# Groq (API gratuite, rapide)
+langchain-groq==0.1.9
+
+# Hugging Face (API gratuite)
+huggingface-hub==0.23.4
+
+# OpenAI (Payant mais précis)
+langchain-openai==0.1.22
+
+# ========================================
+# Validation & Parsing
+# ========================================
+pydantic==2.8.2
+pydantic-core==2.20.1
+
+# ========================================
+# Utilitaires
+# ========================================
+# JSON parsing
+jsonschema==4.23.0
+
+# HTTP requests
+requests==2.32.3
+httpx==0.27.0
+
+# Environment variables
+python-dotenv==1.0.1
+

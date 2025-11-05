@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 93e816c4c7296f46c672c721ab83a24048dde6a9 BarBar-DD <andre.bertea92@gmail.com> 1755555510 +0200	branch: Created from origin/GMBS
+93e816c4c7296f46c672c721ab83a24048dde6a9 a531eb2fba1c6e77e2086780760d7cbffb017a2a BarBar-DD <andre.bertea92@gmail.com> 1755980514 +0200	reset: moving to main
+a531eb2fba1c6e77e2086780760d7cbffb017a2a 18736894ff46ec959851a53f7200960254b3c19c BarBar-DD <andre.bertea92@gmail.com> 1755980766 +0200	commit: vercel.json a rendre true si on veut simuler le deployement pour prod et test
+03ded9f6547802e5e4e400c48cd26ac98b9c628d f53fa2ece888a48a743771942192adf3e7890db6 BarBar-DD <andre.bertea92@gmail.com> 1755989192 +0200	commit: [TODO:2.1] Interface Utilisateur Core - Pages Principales GMBS

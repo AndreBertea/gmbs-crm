@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 a2e919978bcf8aead943b092d1a667a0b3c52406 BarBar-DD <andre.bertea92@gmail.com> 1755553836 +0200	clone: from https://github.com/AndreBertea/CRM_template.git
+a2e919978bcf8aead943b092d1a667a0b3c52406 fed282529db8e23ac374a0a5571f95c350c07a26 BarBar-DD <andre.bertea92@gmail.com> 1755555258 +0200	commit: gitignore
+fed282529db8e23ac374a0a5571f95c350c07a26 5d89b539da8e95899013ae724c437a3412e0d46f BarBar-DD <andre.bertea92@gmail.com> 1755563527 +0200	commit: Mise à jour pnpm-lock.yaml pour résoudre l'erreur de déploiement Vercel
+5d89b539da8e95899013ae724c437a3412e0d46f e4159f12cda352822c0983b8fb875f924530b6a4 BarBar-DD <andre.bertea92@gmail.com> 1755563531 +0200	pull --rebase (finish): refs/heads/main onto 16848f051719e169e7ce67df3ac024c46b87636e
+e4159f12cda352822c0983b8fb875f924530b6a4 1e32f7540e91ef2a77c41c4339137f5501a06963 BarBar-DD <andre.bertea92@gmail.com> 1755563703 +0200	commit: Correction .gitignore: ne plus ignorer package.json et supprimer package-lock.json
+1e32f7540e91ef2a77c41c4339137f5501a06963 82dc0ce79e38b9a4a44decda856972155176e77e BarBar-DD <andre.bertea92@gmail.com> 1755619129 +0200	commit: correctif des icones de la sidebar qui saute en hybride
+82dc0ce79e38b9a4a44decda856972155176e77e 1ec579011b09e4e44aaec92a6aac34d2a9ab48ff BarBar-DD <andre.bertea92@gmail.com> 1755814489 +0200	commit: theme correct
+1ec579011b09e4e44aaec92a6aac34d2a9ab48ff a531eb2fba1c6e77e2086780760d7cbffb017a2a BarBar-DD <andre.bertea92@gmail.com> 1755980292 +0200	commit: some exclusion

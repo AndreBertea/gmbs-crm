@@ -1,0 +1,186 @@
+"use client"
+
+import * as React from "react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import Link from "next/link"
+import { LogOut, Settings as SettingsIcon, User as UserIcon } from "lucide-react"
+import { supabase } from '@/lib/supabase-client'
+
+type Me = {
+  id: string
+  firstname?: string | null
+  lastname?: string | null
+  prenom?: string | null
+  name?: string | null
+  email: string | null
+  status: string | null
+  color: string | null
+  code_gestionnaire?: string | null
+  username?: string | null
+}
+
+export function AvatarStatus() {
+  const [me, setMe] = React.useState<Me | null>(null)
+  const [loading, setLoading] = React.useState(true)
+
+  const load = React.useCallback(async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession()
+      const token = session?.session?.access_token
+      const res = await fetch('/api/auth/me', { cache: 'no-store', headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      const j = await res.json()
+      setMe(j?.user || null)
+    } catch {
+      setMe(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => { load() }, [load])
+
+  const status = (me?.status || 'offline') as 'connected' | 'busy' | 'dnd' | 'offline'
+  const label = status === 'connected' ? 'En ligne' : status === 'busy' ? 'Occupé' : status === 'dnd' ? 'Ne pas déranger' : 'Hors ligne'
+  const statusColorClass = status === 'connected' ? 'bg-green-500' : status === 'busy' ? 'bg-orange-500' : status === 'dnd' ? 'bg-red-500' : 'bg-gray-400'
+
+  async function setStatus(next: 'connected' | 'busy' | 'dnd' | 'offline') {
+    const { data: session } = await supabase.auth.getSession()
+    const token = session?.session?.access_token
+    await fetch('/api/auth/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ status: next }) })
+    setMe((m) => (m ? { ...m, status: next } : m))
+  }
+
+  async function logout() {
+    try {
+      await setStatus('offline')
+    } catch (error) {
+      console.warn('[avatar-status] Failed to set offline status before logout', error)
+    }
+    await supabase.auth.signOut()
+    await fetch('/api/auth/session', { method: 'DELETE' })
+    window.location.href = '/login'
+  }
+
+  const userColor = me?.color || undefined
+  const borderColor = userColor || '#e5e7eb'
+  const bgColor = userColor || undefined
+  const textColor = userColor ? '#ffffff' : '#1f2937'
+  const displayName = React.useMemo(() => {
+    if (!me) return ''
+    const first = me.firstname ?? me.prenom
+    const last = me.lastname ?? me.name
+    const full = [first, last].filter(Boolean).join(' ').trim()
+    if (full) return full
+    if (me.email) return String(me.email)
+    return ''
+  }, [me])
+  const initials = React.useMemo(() => {
+    const first = me?.firstname ?? me?.prenom
+    const last = me?.lastname ?? me?.name
+    if (first || last) {
+      return ((first?.[0] || '') + (last?.[0] || '')).toUpperCase() || 'U'
+    }
+    if (me?.email) {
+      const local = String(me.email).split('@')[0] || ''
+      return (local.slice(0, 2) || 'U').toUpperCase()
+    }
+    return 'U'
+  }, [me])
+
+  return (
+    <div className="flex items-center gap-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="relative h-9 w-9 rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring border-4 grid place-items-center font-semibold text-xs uppercase select-none"
+            style={{ borderColor: borderColor || '#e5e7eb', background: bgColor, color: textColor }}
+            aria-label={displayName || 'Profil'}
+            title={displayName || ''}
+          >
+            {initials}
+            <span
+              aria-label={`Status ${label}`}
+              className={`absolute -bottom-0 -right-0 h-2.5 w-2.5 rounded-full ring-2 ring-background ${statusColorClass}`}
+            />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuLabel>
+            <div className="flex items-center gap-2">
+              <div
+                className="relative h-9 w-9 rounded-full border-4 grid place-items-center font-semibold text-xs uppercase select-none"
+                style={{ borderColor: borderColor || '#e5e7eb', background: bgColor, color: textColor }}
+              >
+                {initials}
+                <span
+                  aria-label={`Status ${label}`}
+                  className={`absolute -bottom-0 -right-0 h-2.5 w-2.5 rounded-full ring-2 ring-background ${statusColorClass}`}
+                />
+              </div>
+              <div className="text-xs">
+                <div className="font-medium">{displayName || '—'}</div>
+                <div className="text-muted-foreground">{me?.email || ''}</div>
+              </div>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Statut</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={() => setStatus('connected')}>
+            <div className="flex items-center gap-2 w-full">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />
+              <span className="flex-1">En ligne</span>
+              {status === 'connected' && (
+                <span className="ml-auto border rounded px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700 border-green-200">Actuel</span>
+              )}
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setStatus('busy')}>
+            <div className="flex items-center gap-2 w-full">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-orange-500" />
+              <span className="flex-1">Occupé</span>
+              {status === 'busy' && (
+                <span className="ml-auto border rounded px-1.5 py-0.5 text-[10px] bg-orange-50 text-orange-800 border-orange-200">Actuel</span>
+              )}
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setStatus('dnd')}>
+            <div className="flex items-center gap-2 w-full">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
+              <span className="flex-1">Ne pas déranger</span>
+              {status === 'dnd' && (
+                <span className="ml-auto border rounded px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200">Actuel</span>
+              )}
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setStatus('offline')}>
+            <div className="flex items-center gap-2 w-full">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-gray-400" />
+              <span className="flex-1">Hors ligne</span>
+              {status === 'offline' && (
+                <span className="ml-auto border rounded px-1.5 py-0.5 text-[10px] bg-gray-50 text-gray-700 border-gray-200">Actuel</span>
+              )}
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/settings/profile" className="flex items-center gap-2">
+              <UserIcon className="h-4 w-4" />
+              Profil
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings/interface" className="flex items-center gap-2">
+              <SettingsIcon className="h-4 w-4" />
+              Paramètres
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-red-600 focus:bg-red-50" onSelect={logout}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Se déconnecter
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}

@@ -1,0 +1,468 @@
+// ===== API ARTISANS V2 =====
+// Gestion complète des artisans
+
+import { referenceApi } from "../../reference-api";
+import { supabase } from "../../supabase-client";
+import type {
+  Artisan,
+  ArtisanQueryParams,
+  BulkOperationResult,
+  CreateArtisanData,
+  PaginatedResponse,
+  UpdateArtisanData,
+} from "./common/types";
+import {
+  SUPABASE_FUNCTIONS_URL,
+  getHeaders,
+  handleResponse,
+  mapArtisanRecord,
+} from "./common/utils";
+
+// Cache pour les données de référence
+type ReferenceCache = {
+  data: any;
+  fetchedAt: number;
+  usersById: Map<string, any>;
+};
+
+const REFERENCE_CACHE_DURATION = 5 * 60 * 1000;
+let referenceCache: ReferenceCache | null = null;
+let referenceCachePromise: Promise<ReferenceCache> | null = null;
+
+async function getReferenceCache(): Promise<ReferenceCache> {
+  const now = Date.now();
+  if (referenceCache && now - referenceCache.fetchedAt < REFERENCE_CACHE_DURATION) {
+    return referenceCache;
+  }
+
+  if (referenceCachePromise) {
+    return referenceCachePromise;
+  }
+
+  referenceCachePromise = (async () => {
+    const data = await referenceApi.getAll();
+    const cache: ReferenceCache = {
+      data,
+      fetchedAt: Date.now(),
+      usersById: new Map(data.users.map((user: any) => [user.id, user])),
+    };
+    referenceCache = cache;
+    referenceCachePromise = null;
+    return cache;
+  })();
+
+  try {
+    return await referenceCachePromise;
+  } catch (error) {
+    referenceCachePromise = null;
+    throw error;
+  }
+}
+
+export const artisansApi = {
+  // Récupérer tous les artisans (ULTRA-OPTIMISÉ)
+  async getAll(params?: ArtisanQueryParams): Promise<PaginatedResponse<Artisan>> {
+    // Version ultra-rapide : requête simple sans joins complexes
+    let query = supabase
+      .from("artisans")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false });
+
+    // Appliquer les filtres si nécessaire
+    if (params?.statut) {
+      query = query.eq("statut_id", params.statut);
+    }
+    if (params?.gestionnaire) {
+      query = query.eq("gestionnaire_id", params.gestionnaire);
+    }
+
+    // Pagination
+    const limit = params?.limit || 100;
+    const offset = params?.offset || 0;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    const refs = await getReferenceCache();
+
+    const transformedData = (data || []).map((item) =>
+      mapArtisanRecord(item, refs)
+    );
+
+    return {
+      data: transformedData,
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: offset + limit < (count || 0),
+      },
+    };
+  },
+
+  // Récupérer un artisan par ID
+  async getById(id: string, include?: string[]): Promise<Artisan> {
+    const searchParams = new URLSearchParams();
+    if (include) searchParams.append("include", include.join(","));
+
+    const url = `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${id}${
+      searchParams.toString() ? `?${searchParams.toString()}` : ""
+    }`;
+
+    const headers = await getHeaders();
+    const response = await fetch(url, {
+      headers,
+    });
+    const raw = await handleResponse(response);
+    const refs = await getReferenceCache();
+    const record = raw?.data ?? raw;
+    return mapArtisanRecord(record, refs);
+  },
+
+  // Créer un artisan
+  async create(data: CreateArtisanData): Promise<Artisan> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+      }
+    );
+    const raw = await handleResponse(response);
+    const refs = await getReferenceCache();
+    return mapArtisanRecord(raw, refs);
+  },
+
+  // Upsert un artisan (créer ou mettre à jour) via Edge Function
+  async upsert(data: CreateArtisanData): Promise<Artisan> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/upsert`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+      }
+    );
+    return handleResponse(response);
+  },
+
+  // Upsert direct via Supabase (pour import en masse)
+  async upsertDirect(data: CreateArtisanData): Promise<Artisan> {
+    // Déterminer la contrainte unique à utiliser
+    let onConflict = 'email';
+    if (!data.email && data.siret) {
+      onConflict = 'siret';
+    }
+
+    const { data: result, error } = await supabase
+      .from('artisans')
+      .upsert(data, {
+        onConflict,
+        ignoreDuplicates: false
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(`Erreur lors de l'upsert de l'artisan: ${error.message}`);
+
+    const refs = await getReferenceCache();
+    return mapArtisanRecord(result, refs);
+  },
+
+  // Modifier un artisan
+  async update(id: string, data: UpdateArtisanData): Promise<Artisan> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${id}`,
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(data),
+      }
+    );
+    const raw = await handleResponse(response);
+    const refs = await getReferenceCache();
+    const record = raw?.data ?? raw;
+    return mapArtisanRecord(record, refs);
+  },
+
+  // Supprimer un artisan (soft delete)
+  async delete(id: string): Promise<{ message: string; data: Artisan }> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${id}`,
+      {
+        method: "DELETE",
+        headers,
+      }
+    );
+    return handleResponse(response);
+  },
+
+  // Créer un document pour un artisan
+  async createDocument(data: {
+    artisan_id: string;
+    kind: string;
+    url: string;
+    filename: string;
+    created_at?: string;
+    updated_at?: string;
+  }): Promise<any> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${data.artisan_id}/documents`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+      }
+    );
+    return handleResponse(response);
+  },
+
+  // Créer une association métier-artisan
+  async createArtisanMetier(data: {
+    artisan_id: string;
+    metier_id: string;
+    is_primary?: boolean;
+  }): Promise<any> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${data.artisan_id}/metiers`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+      }
+    );
+    return handleResponse(response);
+  },
+
+  // Créer une association zone-artisan
+  async createArtisanZone(data: {
+    artisan_id: string;
+    zone_id: string;
+  }): Promise<any> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${data.artisan_id}/zones`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+      }
+    );
+    return handleResponse(response);
+  },
+
+  // Assigner un métier à un artisan
+  async assignMetier(
+    artisanId: string,
+    metierId: string,
+    isPrimary: boolean = false
+  ): Promise<any> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${artisanId}/metiers`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          metier_id: metierId,
+          is_primary: isPrimary,
+        }),
+      }
+    );
+    return handleResponse(response);
+  },
+
+  // Assigner une zone à un artisan
+  async assignZone(artisanId: string, zoneId: string): Promise<any> {
+    const headers = await getHeaders();
+    const response = await fetch(
+      `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${artisanId}/zones`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          zone_id: zoneId,
+        }),
+      }
+    );
+    return handleResponse(response);
+  },
+
+  // Insérer plusieurs métiers pour un artisan
+  async insertArtisanMetiers(
+    metiers: Array<{
+      artisan_id: string;
+      metier_id: string;
+      is_primary?: boolean;
+    }>
+  ): Promise<BulkOperationResult> {
+    const results = { success: 0, errors: 0, details: [] as any[] };
+
+    for (const metier of metiers) {
+      try {
+        const result = await this.createArtisanMetier(metier);
+        results.success++;
+        results.details.push({ item: metier, success: true, data: result });
+      } catch (error: any) {
+        results.errors++;
+        results.details.push({ item: metier, success: false, error: error.message });
+      }
+    }
+
+    return results;
+  },
+
+  // Insérer plusieurs zones pour un artisan
+  async insertArtisanZones(
+    zones: Array<{
+      artisan_id: string;
+      zone_id: string;
+    }>
+  ): Promise<BulkOperationResult> {
+    const results = { success: 0, errors: 0, details: [] as any[] };
+
+    for (const zone of zones) {
+      try {
+        const result = await this.createArtisanZone(zone);
+        results.success++;
+        results.details.push({ item: zone, success: true, data: result });
+      } catch (error: any) {
+        results.errors++;
+        results.details.push({ item: zone, success: false, error: error.message });
+      }
+    }
+
+    return results;
+  },
+
+  // Créer plusieurs artisans en lot
+  async createBulk(artisans: CreateArtisanData[]): Promise<BulkOperationResult> {
+    const results = { success: 0, errors: 0, details: [] as any[] };
+
+    for (const artisan of artisans) {
+      try {
+        const result = await this.create(artisan);
+        results.success++;
+        results.details.push({ item: artisan, success: true, data: result });
+      } catch (error: any) {
+        results.errors++;
+        results.details.push({ item: artisan, success: false, error: error.message });
+      }
+    }
+
+    return results;
+  },
+
+  // Récupérer les artisans par gestionnaire
+  async getByGestionnaire(gestionnaireId: string, params?: ArtisanQueryParams): Promise<PaginatedResponse<Artisan>> {
+    return this.getAll({ ...params, gestionnaire: gestionnaireId });
+  },
+
+  // Récupérer les artisans par statut
+  async getByStatus(statusId: string, params?: ArtisanQueryParams): Promise<PaginatedResponse<Artisan>> {
+    return this.getAll({ ...params, statut: statusId });
+  },
+
+  // Récupérer les artisans par métier
+  async getByMetier(metierId: string, params?: ArtisanQueryParams): Promise<PaginatedResponse<Artisan>> {
+    return this.getAll({ ...params, metier: metierId });
+  },
+
+  // Récupérer les artisans par zone
+  async getByZone(zoneId: string, params?: ArtisanQueryParams): Promise<PaginatedResponse<Artisan>> {
+    return this.getAll({ ...params, zone: zoneId });
+  },
+
+  // Rechercher par plain_nom (pour la recherche SST)
+  async searchByPlainNom(searchTerm: string, params?: ArtisanQueryParams): Promise<PaginatedResponse<Artisan>> {
+    let query = supabase
+      .from("artisans")
+      .select("*", { count: "exact" })
+      .eq("plain_nom", searchTerm) // Recherche exacte d'abord
+      .order("created_at", { ascending: false });
+
+    // Appliquer les autres filtres
+    if (params?.statut) {
+      query = query.eq("statut_id", params.statut);
+    }
+    if (params?.gestionnaire) {
+      query = query.eq("gestionnaire_id", params.gestionnaire);
+    }
+
+    // Pagination
+    const limit = params?.limit || 100;
+    const offset = params?.offset || 0;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    const refs = await getReferenceCache();
+
+    const transformedData = (data || []).map((item) =>
+      mapArtisanRecord(item, refs)
+    );
+
+    return {
+      data: transformedData,
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: offset + limit < (count || 0),
+      },
+    };
+  },
+
+  // Rechercher des artisans par nom/prénom
+  async searchByName(searchTerm: string, params?: ArtisanQueryParams): Promise<PaginatedResponse<Artisan>> {
+    let query = supabase
+      .from("artisans")
+      .select("*", { count: "exact" })
+      .or(`prenom.ilike.%${searchTerm}%,nom.ilike.%${searchTerm}%,raison_sociale.ilike.%${searchTerm}%`)
+      .order("created_at", { ascending: false });
+
+    // Appliquer les autres filtres
+    if (params?.statut) {
+      query = query.eq("statut_id", params.statut);
+    }
+    if (params?.gestionnaire) {
+      query = query.eq("gestionnaire_id", params.gestionnaire);
+    }
+
+    // Pagination
+    const limit = params?.limit || 100;
+    const offset = params?.offset || 0;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    const refs = await getReferenceCache();
+
+    const transformedData = (data || []).map((item) =>
+      mapArtisanRecord(item, refs)
+    );
+
+    return {
+      data: transformedData,
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: offset + limit < (count || 0),
+      },
+    };
+  },
+};

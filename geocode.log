@@ -1,0 +1,1508 @@
+[dotenv@17.2.3] injecting env (20) from .env.local -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+🚀 Starting artisan geocoding…
+   Supabase URL:        http://127.0.0.1:54321
+   Using OpenCage:      yes
+   Batch size:          50
+   Concurrency:         3 parallel requests
+   Delay between calls: 1000 ms
+   Log file:            scripts/geocode-failed-artisans.txt
+
+🔄 Processing batch of 50 artisans…
+⚠️  bouigue rourene abdel: no address available, marking as failed.
+⚠️  Amsam: no address available, marking as failed.
+⚠️  BA service 27: no address available, marking as failed.
+✅ Rabiche entreprise: 47.293200, 5.004600 (opencage)
+✅ souclean: 47.733075, 7.307005 (opencage)
+✅ BatiElec: 47.742680, 7.335567 (opencage)
+✅ Menuiserie Biyi: 44.754400, -0.531300 (opencage)
+✅ EURL Benoit Bechet: 48.978200, 2.007400 (opencage)
+✅ BENMEZIANE Karim idf: 49.100000, 12.250000 (opencage)
+✅ ELE TECHNOLOGIES: 43.703100, 7.266100 (opencage)
+✅ LA COURSE: 49.025400, 2.216900 (opencage)
+✅ Bilal Founoune: 36.263800, -89.485800 (opencage)
+✅ clean et confort: 43.664200, 1.499400 (opencage)
+✅ Botnari ion: 43.454300, 6.427800 (opencage)
+✅ Multi services à votres service: 45.533890, 3.290830 (opencage)
+✅ Allo Mario 35: 48.112000, -1.674300 (opencage)
+✅ Bouissa Ahmed: 45.148700, 5.749300 (opencage)
+✅ logiservices 66: 42.697600, 2.895400 (opencage)
+✅ D-Pro: 49.119100, 6.172700 (opencage)
+✅ PB multiservices: 48.684400, 6.185000 (opencage)
+✅ Thierry Plomberie (NAZE): 45.166700, 5.716700 (opencage)
+✅ JPB: 48.803000, 2.266900 (opencage)
+✅ JB MULTISERVICES: 50.452400, 2.619600 (opencage)
+✅ DP Confort & Services: 46.195200, 6.224300 (opencage)
+✅ PJF entretien rénovation: 43.976500, 4.690200 (opencage)
+✅ SB multiservices: 49.483300, 1.050000 (opencage)
+✅ La brigade du nettoyage: 45.433300, 4.400000 (opencage)
+✅ Yasso Nett & multiservices: 45.433300, 4.400000 (opencage)
+✅ eirl bonnetti Frédéric: 45.552700, 5.911600 (opencage)
+✅ TCS services: 50.366700, 3.466700 (opencage)
+✅ BM PLOMBERIE: 49.319800, 2.445800 (opencage)
+✅ GilB Plomberie: 47.347700, 0.549600 (opencage)
+✅ Mafteabatiment: 45.688700, 5.046600 (opencage)
+✅ aaz depanage: 49.323500, -0.373500 (opencage)
+✅ FENETRES FOURNIER: 48.909200, 2.137500 (opencage)
+✅ CPC: 48.805700, 2.188600 (opencage)
+✅ KNB Plomberie: 47.318100, -2.189000 (opencage)
+✅ Kaméléon nettoyage: 41.445600, -100.156700 (opencage)
+✅ corsica plomb: 44.594300, -75.323700 (opencage)
+✅ 3b elec: 48.142000, -1.339600 (opencage)
+✅ bernard lemetayer: 47.666700, -2.750000 (opencage)
+✅ IB-Bat: 48.953500, 2.315100 (opencage)
+✅ XAB montage: 46.252600, 6.000600 (opencage)
+✅ Altheq: 50.345600, 3.549600 (opencage)
+✅ GIZEM stores: 47.596300, 7.368900 (opencage)
+✅ Nicko Peinture: 43.296174, 5.369953 (opencage)
+✅ SpC plomberie: 49.312400, 1.029500 (opencage)
+✅ AB + Services: 50.292900, 3.580500 (opencage)
+✅ protech: 50.438000, 2.853200 (opencage)
+✅ pcr 92: 48.934099, 2.263423 (opencage)
+📊 Progress: 47 réussis, 3 échecs | 24.5 artisans/sec | 2.0s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Boyers Multiservices (serrure, plomberie, volet roulant): no address available, marking as failed.
+⚠️  BCM menuiserie (fenetre, volet, parquet ectt): no address available, marking as failed.
+⚠️  salopart: no address available, marking as failed.
+⚠️  Briot Georges: no address available, marking as failed.
+⚠️  Bruno Cramette: no address available, marking as failed.
+⚠️  Dorkel Aménagements et Elevement: no address available, marking as failed.
+⚠️  second oeuvre lc: no address available, marking as failed.
+⚠️  artisan capello: no address available, marking as failed.
+⚠️  Art letal concept: no address available, marking as failed.
+✅ C3SAM: 45.755000, 4.788100 (opencage)
+✅ Carot Xavier: 45.440147, 4.387306 (opencage)
+✅ MBelec: 43.585320, 6.948165 (opencage)
+✅ bhm multiservice: 44.855900, -0.518400 (opencage)
+✅ SRL SfB: 46.316700, 2.600000 (opencage)
+✅ VB multiservices 52: 48.095500, 5.230600 (opencage)
+✅ SINAY MENAGE MULTISERVICES: 43.833300, 4.350000 (opencage)
+✅ BRABANT ELECTRICITÉ: 47.795200, -114.302000 (opencage)
+✅ MD PEINTURE: 47.604800, 7.577800 (opencage)
+✅ net+ charentes: 40.930100, -80.361100 (opencage)
+✅ T H B STORES/REPAR'STORES: 49.016700, 2.100000 (opencage)
+✅ lisa eclat: 37.019400, -4.561200 (opencage)
+✅ BCC entrtien et services: 50.694200, 3.174600 (opencage)
+✅ Total closing menuiserie: 43.610900, 3.877200 (opencage)
+✅ brms: 48.881700, 2.382200 (opencage)
+✅ Carrer Entreprise: 49.224600, 3.839800 (opencage)
+✅ Brie Yann: 44.840400, -0.580500 (opencage)
+✅ Les outils de julien: 44.832500, -0.633800 (opencage)
+✅ AQUAGAZ: 48.768500, 2.418700 (opencage)
+✅ cami bujar chere (lucien): 47.316700, 5.016700 (opencage)
+✅ micro service 23: 45.918700, 2.285800 (opencage)
+✅ SARL ABTB PLomberie et chauffage: 49.092900, 1.463300 (opencage)
+✅ Homme Demain (repond plus prend pas les rdv): 48.408358, -4.487114 (opencage)
+✅ SAS MVR Carlier: 50.371400, 3.556100 (opencage)
+✅ B.G Service Plomberie: 48.884700, 2.856800 (opencage)
+✅ OKBAT: 50.350000, 3.533300 (opencage)
+✅ BRYAN SALLAZ: 49.900000, 2.300000 (opencage)
+✅ Bvs sani et deco: 46.993600, -1.823500 (opencage)
+✅ Les 5 C: 50.692400, 2.357400 (opencage)
+✅ May Service: 45.750000, 5.150000 (opencage)
+✅ callaghan james: 46.166700, -1.150000 (opencage)
+✅ sml peinture société fermé: 47.741300, -2.915000 (opencage)
+✅ BRAS MENUISERIE: 48.798100, 2.606800 (opencage)
+✅ TB services 16: 45.633300, 0.266700 (opencage)
+✅ Camda 52: 48.095500, 5.230600 (opencage)
+✅ BRAHIM MEZIANE: 49.119100, 6.172700 (opencage)
+⚠️  peinture et merveilles: no match found after 1 attempts, marking as failed.
+✅ Multi Main Services: 40.042500, -96.990700 (opencage)
+✅ Marchal Sebastien: 50.650000, 3.033300 (opencage)
+✅ BOUVIER SANDY: 48.551600, 2.365300 (opencage)
+✅ jusqu' à 45 KM: 50.366700, 3.066700 (opencage)
+📊 Progress: 87 réussis, 13 échecs | 29.0 artisans/sec | 3.5s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Rspm: no address available, marking as failed.
+⚠️  Clean’Up & Co: no address available, marking as failed.
+⚠️  SOS BRICOLAGE: no address available, marking as failed.
+⚠️  jcp: no address available, marking as failed.
+⚠️  Idealys Rénovation: no address available, marking as failed.
+⚠️  ASN PLOMBERIE CHAUFFAGE: no address available, marking as failed.
+⚠️  Christelle: no address available, marking as failed.
+⚠️  Christian Berlioz 73: no address available, marking as failed.
+⚠️  michel baly / 06 65 71 19 01 Viville josephine: no address available, marking as failed.
+⚠️  Piller Christian: no address available, marking as failed.
+⚠️  IBA SO'CLEAN: no address available, marking as failed.
+⚠️  Eco energie 62 boulogne sur mer: no address available, marking as failed.
+⚠️  claudin charly: no address available, marking as failed.
+✅ Castel Assainissement Ets: 50.723900, 3.161200 (opencage)
+✅ ECM ELEC: 44.883500, -0.646900 (opencage)
+✅ Damien Chatelain: 47.476600, -1.762800 (opencage)
+✅ chekir 72: 48.000000, 0.200000 (opencage)
+✅ F2: 48.760000, 6.131600 (opencage)
+✅ JMC hydro chauffage: 45.827800, 6.203800 (opencage)
+✅ GROSSE GROSSE MERDE TRES GROSSE MEME: 45.779700, 3.086300 (opencage)
+✅ RIDOSTORES: 48.849800, 2.562700 (opencage)
+✅ Cédric ATTAIECH 31: 43.554000, 1.534100 (opencage)
+✅ 3 CL: 48.408700, 1.529700 (opencage)
+✅ L'O service: 48.463100, 7.481000 (opencage)
+✅ BENA PEINTURE: 48.866700, 2.416700 (opencage)
+✅ ACF: 49.073500, 1.668700 (opencage)
+✅ Abnor Gaz EI: 49.443100, 1.099300 (opencage)
+✅ benef elec 94: 48.958300, 2.341700 (opencage)
+✅ NAZE: 45.650000, 0.083300 (opencage)
+✅ HF Salam Nettoyage: 49.185900, -0.359100 (opencage)
+✅ AC solutions: 45.770600, 3.196100 (opencage)
+✅ Multi ch: 49.493800, 0.107700 (opencage)
+✅ Clelia Serrurerie 59: 50.633000, 3.058600 (opencage)
+✅ Charles Pichard / Merci charles: 33.273330, 35.193890 (opencage)
+✅ METS CONCEPT BTP: 49.443100, 1.099300 (opencage)
+✅ NAZE: 45.738000, 0.241100 (opencage)
+✅ repar porte: 43.270800, 5.382100 (opencage)
+✅ SAS SURFACES CREATION (menteur): 46.329100, 6.262700 (opencage)
+✅ DELEPINE CEDRIC: 48.604700, -1.894000 (opencage)
+✅ cm femremture: 50.419800, 2.780700 (opencage)
+✅ SL BATIMENT: 43.513900, 1.081500 (opencage)
+✅ cisse installation 75: 48.881700, 2.382200 (opencage)
+✅ dokteur stores et volets: 48.066700, -0.766700 (opencage)
+✅ Elsass Propreté: 47.201800, 4.906000 (opencage)
+✅ delhommel decoration: 48.066700, -0.766700 (opencage)
+✅ chris services: 43.678322, 7.182264 (opencage)
+✅ LC INSTALLATEUR THERMIQUE: 47.217300, -1.553400 (opencage)
+✅ KD RENOV: 48.783300, 2.333300 (opencage)
+✅ cazin: 50.613300, 2.960000 (opencage)
+✅ Spirit clean services 34: 43.610900, 3.877200 (opencage)
+📊 Progress: 124 réussis, 26 échecs | 29.4 artisans/sec | 5.1s
+
+🔄 Processing batch of 50 artisans…
+⚠️  CM ELEC trop lent: no address available, marking as failed.
+⚠️  Clemente capote: no address available, marking as failed.
+⚠️  Compagnie des deboucheurs: no address available, marking as failed.
+⚠️  A brifer (espace, menag e multi): no address available, marking as failed.
+⚠️  Diamand Nettoyage: no address available, marking as failed.
+⚠️  cousin espace vert (menuisier): no address available, marking as failed.
+⚠️  Hydrana: no address available, marking as failed.
+⚠️  bati reneuf: no address available, marking as failed.
+⚠️  FER plomberie 84: no address available, marking as failed.
+⚠️  HAKKOUM: no address available, marking as failed.
+⚠️  Dahnoa: no address available, marking as failed.
+⚠️  Damian Augustinov: no address available, marking as failed.
+⚠️  Damien Navarro ami alhem mehdi: no address available, marking as failed.
+⚠️  Eldan Sanitaire: no address available, marking as failed.
+⚠️  Dartant Sylver: no address available, marking as failed.
+⚠️  DB multiservices: no address available, marking as failed.
+✅ dms menuiserie: 45.518400, 5.547200 (opencage)
+✅ Pierre Constantin: 43.604464, 1.444243 (opencage)
+✅ DBmultiservices: 45.831500, 1.257800 (opencage)
+✅ SHDF: 48.105560, -3.493330 (opencage)
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":2082,"reset":1761782400},"result
+✅ dc wash: 49.417100, 2.331200 (opencage)
+✅ candidat via site internet: 45.382595, 4.288731 (opencage)
+✅ danh services: 43.833300, 4.350000 (opencage)
+✅ ELEC 35: 48.650000, -2.016700 (opencage)
+✅ Tout au carré: 48.774100, 2.017800 (opencage)
+✅ AMM multiservice: 42.606500, 3.002000 (opencage)
+✅ Daim Abdou: 48.008023, 0.203857 (nominatim)
+✅ Cormier Damien: 46.640100, 0.167800 (opencage)
+✅ DRAGON D'EAU: 43.703100, 7.266100 (opencage)
+✅ CortesMichel: 43.893200, 5.113500 (opencage)
+✅ dms: 43.604300, 1.443700 (opencage)
+✅ DSG CLIM: 43.254300, 5.405700 (opencage)
+✅ DBK: 47.633300, 6.866700 (opencage)
+✅ Daniel Momier: 45.702500, 4.871500 (opencage)
+✅ Coulat Amandine: 43.604300, 1.443700 (opencage)
+✅ Deka propreté: 49.185900, -0.359100 (opencage)
+✅ ACC'Elec: 45.198400, 5.682700 (opencage)
+✅ COCUSSE JIMMY: 46.316700, 2.600000 (opencage)
+✅ f: 46.837600, 0.203700 (opencage)
+✅ GROSSE MERDE: 45.939900, 2.840600 (opencage)
+✅ TCK nettoyage: 49.443100, 1.099300 (opencage)
+✅ cohan joel: 48.237000, -3.314400 (opencage)
+✅ D.M Electricité: 50.609800, 3.018700 (opencage)
+✅ LD entreprise: 50.716700, 1.616700 (opencage)
+✅ Clemente Enzo ONIRI: 48.793900, 2.493200 (opencage)
+✅ ATT SOUVENT CHERE ACNI MULTISERVICE (peintre): 43.423300, 6.773500 (opencage)
+✅ Clean net: 48.533300, 2.666700 (opencage)
+✅ Clément Murienne: 45.249200, 5.852500 (opencage)
+✅ Clément Fillodeau 49: 47.700000, -0.666700 (opencage)
+⚠️  Fast elec: no match found after 1 attempts, marking as failed.
+📊 Progress: 157 réussis, 43 échecs | 28.8 artisans/sec | 6.9s
+
+🔄 Processing batch of 50 artisans…
+⚠️  DECHOZ: no address available, marking as failed.
+⚠️  Delente Dominique: no address available, marking as failed.
+⚠️  volet roulant / portail / meneuiserie PVC: no address available, marking as failed.
+⚠️  DR Multis: no address available, marking as failed.
+⚠️  Eco therm 42: no address available, marking as failed.
+⚠️  Performance plombier 90: no address available, marking as failed.
+⚠️  DH plomberie: no address available, marking as failed.
+⚠️  al: no address available, marking as failed.
+⚠️  dim strasbourg: no address available, marking as failed.
+⚠️  dimitri crainet: no address available, marking as failed.
+✅ davelec: 43.511670, -1.204170 (opencage)
+✅ KARIM DELVILLE: 50.692400, 2.357400 (opencage)
+✅ services or: 46.616700, 0.483300 (opencage)
+✅ duval dépannage: 48.066700, -0.833300 (opencage)
+✅ sarl denoyelle conception: 50.455900, 1.613100 (opencage)
+✅ L tech: 47.651900, 7.377100 (opencage)
+✅ Franck multiservice 17000 La rochelle: 46.166700, -1.150000 (opencage)
+✅ CRISTAL: 48.583400, 7.743000 (opencage)
+✅ SATINA SERVICES ménage+nuisible: 45.736300, 4.868700 (opencage)
+✅ Jusq'A Z: 48.876300, 2.318300 (opencage)
+✅ sg plomberie service: 50.350000, 3.533300 (opencage)
+✅ Mavi-electricité: 47.535300, 7.217400 (opencage)
+✅ François Multiservices: 48.436900, 1.463600 (opencage)
+✅ DOM ELECTRIQUE: 48.883300, 2.500000 (opencage)
+✅ SOUAP: 50.633000, 3.058600 (opencage)
+✅ A vos cotés: 49.250000, 4.033300 (opencage)
+✅ David nettoyage saint etienne: 45.433300, 4.400000 (opencage)
+✅ group securite: 48.883500, 2.321900 (opencage)
+✅ Didier serrurier 76: 49.493800, 0.107700 (opencage)
+✅ Micazo: 48.889800, 2.158600 (opencage)
+✅ ABD Plomberie: 49.036400, 2.076100 (opencage)
+✅ David Emmanuel 24: 45.263600, 0.437600 (opencage)
+✅ D Elec 06 SASU: 43.703100, 7.266100 (opencage)
+✅ Diasso Carl 80: 49.900000, 2.300000 (opencage)
+✅ DB MULTISERVICES: 47.244500, -1.935600 (opencage)
+✅ DL DEPANNAGES: 50.705600, 1.575700 (opencage)
+✅ srd plomberie 69: 45.971400, 4.662300 (opencage)
+✅ Laurent et Alicen: 47.383300, 0.683300 (opencage)
+✅ dd plomberie chauffage: 47.400000, 0.666700 (opencage)
+✅ Tourne et vis: 47.531000, -0.527800 (opencage)
+✅ ACTIVE PLOMBERIE: 46.054600, 6.487900 (opencage)
+✅ DGMS multiservice: 46.303600, 4.743300 (opencage)
+✅ DEPANNAGE DIDIER: 44.096100, 1.013100 (opencage)
+✅ DAVID MARQUES / Menage et nuisible: 47.881800, 1.869500 (opencage)
+✅ MULTI REPARATION: 44.810100, -0.641300 (opencage)
+✅ David Stephan: 48.220300, 6.339300 (opencage)
+✅ tony delorme: 36.219530, -95.029680 (opencage)
+✅ David Perin 55: 49.061500, 5.121500 (opencage)
+✅ DESCHAMPS PLOMBERIE DEPANNAGE: 49.494517, 0.118718 (opencage)
+✅ RS METZ NORD(REPAR'STORES: 49.066700, 6.150000 (opencage)
+📊 Progress: 197 réussis, 53 échecs | 29.1 artisans/sec | 8.6s
+
+🔄 Processing batch of 50 artisans…
+⚠️  GDS Elagage: no address available, marking as failed.
+⚠️  DLC habitat: no address available, marking as failed.
+⚠️  lavonet63: no address available, marking as failed.
+⚠️  0,366666: no address available, marking as failed.
+⚠️  Dorbeau Olivier: no address available, marking as failed.
+⚠️  Ducroux Fabrice jardinage essentiellement et bricole: no address available, marking as failed.
+⚠️  Serge Multiservices: no address available, marking as failed.
+⚠️  Durot laurent: no address available, marking as failed.
+⚠️  Start etude: no address available, marking as failed.
+✅ ASONO DECO: 45.707300, 4.590500 (opencage)
+✅ admir renov home: 49.066700, 6.150000 (opencage)
+✅ DE FRANCQUEVILLE GREGOIRE: 49.900000, 2.300000 (opencage)
+✅ glanz nettoyage: 47.760700, 7.296099 (opencage)
+✅ s khayato: 48.841200, 2.387600 (opencage)
+✅ Driss Machtoune 33: 25.558400, -80.458200 (opencage)
+✅ F.D. MULTI SERVICES & DEPANNAGE: 43.632800, 1.394000 (opencage)
+✅ entreprise djoumessi: 44.960831, -0.500285 (opencage)
+✅ DOUICHI YOUSSEF(YD PLOMBERIE): 45.761200, 4.851800 (opencage)
+✅ alex electricité: 48.953900, 4.367200 (opencage)
+✅ Dutil Plomberie: 43.300000, -0.366700 (opencage)
+✅ Dogan ertugrul: 45.779700, 3.086300 (opencage)
+✅ Eco'Thib 76: 49.443100, 1.099300 (opencage)
+✅ Dupont noé 78: 48.925800, 2.445300 (opencage)
+✅ Br Multiservices: 48.819000, 7.613800 (opencage)
+✅ ACDC24  DUBREUIL PASCAL: 45.250000, 0.250000 (opencage)
+✅ élec'eau prest'eau: 41.824600, -5.964200 (opencage)
+✅ Doré: 47.248800, 6.018200 (opencage)
+✅ A3EME grosse merde et mytho: 46.583300, 0.333300 (opencage)
+✅ Claude multiservice 10: 48.300000, 4.083300 (opencage)
+✅ AM'ELEC: 44.817400, -0.343600 (opencage)
+✅ BEKA astuce plomberie CAROTTE PAS DE NOUVELLE: 48.896700, 2.256700 (opencage)
+✅ Vicent débara: 48.791600, 2.647500 (opencage)
+✅ Eco detect: 47.217300, -1.553400 (opencage)
+✅ Julien ménage à domicile: 43.283300, -0.366700 (opencage)
+✅ Fides: 48.788900, 1.899000 (opencage)
+✅ Halvare Nettoyage: 46.195200, 6.224300 (opencage)
+✅ CRBD BATIMENTS: 50.900000, 2.216700 (opencage)
+✅ nettoyage 38: 45.179600, 5.617200 (opencage)
+✅ reparstore 26: 44.933300, 4.900000 (opencage)
+✅ HOME ENERGIE SERVICE: 43.479900, 1.384100 (opencage)
+✅ Adryan: 48.883500, 2.321900 (opencage)
+✅ Le coup de main d'Edmond: 43.610900, 3.877200 (opencage)
+✅ depanex DEPANNAGE PLOMBERIE: 45.748460, 4.846710 (opencage)
+✅ Mafteabatiment: 45.766700, 4.883300 (opencage)
+✅ O' KLIMA ENERGIES: 48.112000, -1.674300 (opencage)
+✅ JARDINAGE SERVICES: 47.933300, -4.016700 (opencage)
+✅ multiserive 33: 44.804800, -0.595400 (opencage)
+✅ CLEIL MENUISERIE (plaquiste, peinture): 50.433000, 2.827900 (opencage)
+✅ 300€ pour remplacer une bonde dévacuation + Joint de douche: 43.948300, 4.808900 (opencage)
+✅ SANICONFORT 80: 50.002000, 2.261200 (opencage)
+📊 Progress: 238 réussis, 62 échecs | 29.4 artisans/sec | 10.2s
+
+🔄 Processing batch of 50 artisans…
+⚠️  EB plomberie: no address available, marking as failed.
+⚠️  Emmanuel Fayolle Multiservices: no address available, marking as failed.
+⚠️  Enderess geoffroy: no address available, marking as failed.
+⚠️  EB carrelage: no address available, marking as failed.
+⚠️  sj-multiservices: no address available, marking as failed.
+⚠️  Akservices: no address available, marking as failed.
+⚠️  Etienne TOULLEC: no address available, marking as failed.
+⚠️  Eyal: no address available, marking as failed.
+⚠️  Labarre Multi services: no address available, marking as failed.
+⚠️  Albati +: no address available, marking as failed.
+⚠️  De La Vega (long): no address available, marking as failed.
+⚠️  thomas fabien: no address available, marking as failed.
+✅ Renov batiment france: 45.767900, 4.850600 (opencage)
+✅ Luemba concept batiment: 45.611300, 4.795900 (opencage)
+✅ WARME ERIC MULTI-SERVICES: 44.832500, -0.633800 (opencage)
+✅ Electricité de Ferney-Voltaire: 46.258600, 6.110600 (opencage)
+✅ Platrerie PIOLI: 48.095500, 5.230600 (opencage)
+✅ ERIC SERVICES: 43.632800, 1.394000 (opencage)
+✅ Grosse merde: 49.630000, 4.429400 (opencage)
+✅ ENC CHAUFFAGE: 43.666700, 6.916700 (opencage)
+✅ hydracles: 43.610900, 3.877200 (opencage)
+✅ AD2K RENOV: 47.110100, 5.260400 (opencage)
+✅ ABS 01 RAVALEMENT FACADE: 51.500000, 10.500000 (opencage)
+✅ ALLO PETITS TRAVAUX: 49.081300, -0.381400 (opencage)
+✅ Devarenne plomberie chauffage: 43.794010, 7.565710 (opencage)
+✅ Escot Edouard: 48.083300, 7.366700 (opencage)
+✅ Haute Lande Carrelage: 44.149000, -0.741200 (opencage)
+✅ SP menuiserie confort: 45.496200, 4.906400 (opencage)
+✅ ERMS: 43.470382, 3.083787 (opencage)
+✅ Elj al aeddine 49: 47.466700, -0.550000 (opencage)
+✅ Class'fermeture: 41.291700, -96.171100 (opencage)
+✅ MADAME BECKY ENABULELE: 44.810100, -0.641300 (opencage)
+✅ ACKER ELECTRICITE: 43.290700, 5.438400 (opencage)
+✅ Assistance Chauffage St Marc: 47.236916, -2.293579 (opencage)
+✅ Tout en Ain coup de main: 46.275601, 6.091894 (opencage)
+✅ SPEED'EAU: 43.174000, 6.527100 (opencage)
+✅ ELM PLOMBERIE: 43.610900, 3.877200 (opencage)
+✅ FAVRE Emmanuel: 43.174000, 6.527100 (opencage)
+✅ Emc nettoyage: 45.620184, 5.152234 (opencage)
+✅ ERIS ELEC: 48.684400, 6.185000 (opencage)
+✅ DE LA CAVE AU GRENIER: 42.697600, 2.895400 (opencage)
+✅ ETIENNE Alexis Paris 20: 48.864600, 2.398400 (opencage)
+✅ ENNOUARI Mohammed 95: 48.822100, 1.986800 (opencage)
+✅ cbs2o: 49.639800, -1.616400 (opencage)
+✅ DI MENNO DI BUCCHIANICO FABIO: 43.516700, 4.983300 (opencage)
+✅ elec sud: 44.034800, 4.997200 (opencage)
+✅ Game over: 45.985000, 4.382000 (opencage)
+✅ ennani yassine 93: 48.916700, 2.383300 (opencage)
+✅ Bip bip energies: 33.273330, 35.193890 (opencage)
+✅ Ets Renard 59: 50.351200, 3.484200 (opencage)
+📊 Progress: 276 réussis, 74 échecs | 29.4 artisans/sec | 11.9s
+
+🔄 Processing batch of 50 artisans…
+⚠️  MF Multiservices: no address available, marking as failed.
+⚠️  kanté 77: no address available, marking as failed.
+⚠️  Mr Fayolle (menuisier): no address available, marking as failed.
+⚠️  FB SANITAIRE: no address available, marking as failed.
+⚠️  Feray Emilien: no address available, marking as failed.
+⚠️  Deutekk (volet, menuiserie, portail....): no address available, marking as failed.
+⚠️  lf multiservices: no address available, marking as failed.
+⚠️  Makeda home services: no address available, marking as failed.
+⚠️  florian (menuisier): no address available, marking as failed.
+⚠️  flo3 services: no address available, marking as failed.
+⚠️  Bricolage: no address available, marking as failed.
+⚠️  Foulquier Benjamin: no address available, marking as failed.
+⚠️  Francis: no address available, marking as failed.
+⚠️  Franck peinture: no address available, marking as failed.
+⚠️  vitre O net 85: no address available, marking as failed.
+⚠️  Frederic Berger: no address available, marking as failed.
+✅ HDF Nuisibles: 39.768100, -89.855000 (opencage)
+✅ ff nettoyage: 45.650000, 0.150000 (opencage)
+✅ FATEH KEBBI: 48.950000, 2.250000 (opencage)
+✅ ACC A contre-courant sas: 49.277100, 6.231400 (opencage)
+✅ RENOV AZ 07: 44.632000, 4.356800 (opencage)
+✅ NAZE: 47.535238, -2.728532 (opencage)
+✅ Yas Men: 43.703100, 7.266100 (opencage)
+✅ FJH: 45.363900, 5.592100 (opencage)
+✅ DSA Solutions: 45.779700, 3.086300 (opencage)
+✅ Sf Service Plombier Chauffagiste: 49.250000, 4.033300 (opencage)
+✅ Aminelectro: 48.112000, -1.674300 (opencage)
+✅ AF- elec: 50.748400, 3.156800 (opencage)
+✅ Entreprise ABR: 46.166700, -1.150000 (opencage)
+✅ VOLETS STORES FRANCK SCHAERER(REPAR'STORES: 48.738100, 6.002500 (opencage)
+✅ enculé: 48.892000, 2.206700 (opencage)
+✅ Alu Verre 73: 45.513400, 6.138800 (opencage)
+✅ nettoyage clean: 43.604300, 1.443700 (opencage)
+✅ FOLIOT ELECTRICITE: 49.493800, 0.107700 (opencage)
+✅ Francis Presson: 43.300000, -0.366700 (opencage)
+✅ Franck Perceval 57: 49.132900, 6.202400 (opencage)
+✅ Frazao nettoyage: 45.433300, 4.400000 (opencage)
+✅ CONCEPT ENERGIE +: 49.354800, 2.544600 (opencage)
+✅ ELECTRIQUE SERVICES: 48.550000, 6.050000 (opencage)
+✅ Mortazeau: 47.516700, 6.800000 (opencage)
+✅ ALLO SOS MIROITERIE -ASMC: 47.217600, -1.648400 (opencage)
+✅ TF multiservice: 45.433300, 4.400000 (opencage)
+⚠️  les doigts de fay: no match found after 1 attempts, marking as failed.
+✅ Entreprise Fatalot: 48.418200, 5.044400 (opencage)
+✅ FM SERVICES: 43.640520, 5.084813 (opencage)
+✅ Batirenov: 47.588400, 7.562500 (opencage)
+✅ Nettoyageamel: 47.283300, -2.200000 (opencage)
+✅ MONSIEUR CYRIL RAMADE: 46.111170, 5.972670 (opencage)
+✅ LEFORTIER FLORIAN: 47.750000, -3.366700 (opencage)
+✅ fj plomberie: 47.831520, 1.968518 (opencage)
+📊 Progress: 309 réussis, 91 échecs | 29.0 artisans/sec | 13.8s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Fg chronodep: no address available, marking as failed.
+⚠️  Gautier rochette: no address available, marking as failed.
+⚠️  Gelin Pierre 76: no address available, marking as failed.
+⚠️  Gildas le boucher: no address available, marking as failed.
+⚠️  Gilles basset: no address available, marking as failed.
+⚠️  Goegan Fabrice: no address available, marking as failed.
+⚠️  NAZE A MORT: no address available, marking as failed.
+✅ ANTI NUISIBLE IDF: 51.676670, 4.793060 (opencage)
+✅ GILLES PERCHOC: 48.400000, -4.483300 (opencage)
+✅ Geot Multiservices: 49.443100, 1.099300 (opencage)
+✅ lauh'nettoyage: 48.589500, 2.451000 (opencage)
+✅ pika-pika: 47.687600, -114.140400 (opencage)
+✅ TG Multiservices: 50.002000, 2.261200 (opencage)
+✅ Gaultier Sols (pasu eu de reponse sur inter en cours): 47.383300, 0.683300 (opencage)
+✅ GP Multiservice: 48.787200, 2.403300 (opencage)
+✅ JO STORE LH(REPAR'STORES): 49.824300, 0.556300 (opencage)
+✅ KJ ENERGIES: 49.250000, 4.033300 (opencage)
+✅ NE REPOND JAMAIS: 42.697600, 2.895400 (opencage)
+✅ GASHI: 47.779500, 7.282300 (opencage)
+✅ Artisan Godiche: 50.457000, 2.947200 (opencage)
+✅ La rochelle nettoyage: 46.166700, -1.150000 (opencage)
+✅ GONZELEC: 50.136400, 3.433100 (opencage)
+✅ Reparstore: 43.562400, 7.127800 (opencage)
+✅ Domadapte: 43.968400, 4.796300 (opencage)
+✅ AZZED SERVICES: 43.703100, 7.266100 (opencage)
+✅ Georges Schelcher 68: 47.588400, 7.562500 (opencage)
+✅ Free Dom 28€ht de lheure: 50.200000, 3.916700 (opencage)
+✅ ARES MULTISYSTÈMES: 39.395800, -88.253000 (opencage)
+✅ PGM: 49.230700, -0.255600 (opencage)
+✅ GALLON OLIVIER: 43.610900, 3.877200 (opencage)
+✅ AG PLOMBERIE: 45.526300, 4.260200 (opencage)
+✅ JFG Rénovation: 50.682200, 3.244300 (opencage)
+✅ GH Plomberie climatisation: 43.310800, 3.475800 (opencage)
+✅ REPOND PAS: 43.961200, 4.860100 (opencage)
+✅ SG MULTISERVICE: 43.432900, 6.735200 (opencage)
+✅ GARGOWITZ Francis 60: 49.356900, 2.788000 (opencage)
+✅ SDBS: 46.195200, 6.224300 (opencage)
+✅ BG peinture: 46.909800, -1.089300 (opencage)
+✅ gimenez david 87 pourri comprend rien: 45.831500, 1.257800 (opencage)
+✅ Top menuiserie: 43.290700, 5.438400 (opencage)
+✅ GK Services: 49.253900, 8.338600 (opencage)
+✅ gaetan de cobecq: 50.345600, 3.549600 (opencage)
+✅ MLG PAYSAGE: 46.583300, 0.333300 (opencage)
+✅ RO SERVICE 51: 49.250000, 4.033300 (opencage)
+✅ Gomez Alban EI: 49.505000, 0.235700 (opencage)
+✅ GEVORG MAZHANGULYAN: 44.808400, -0.548100 (opencage)
+✅ Allo Multiservice: 49.772865, 4.791354 (opencage)
+✅ askip qlq de chez nous lui a mal parler: 38.561400, -6.338100 (opencage)
+✅ XAC: 49.559906, 0.121699 (opencage)
+✅ gl innnov: 44.839105, -0.581427 (opencage)
+📊 Progress: 352 réussis, 98 échecs | 27.5 artisans/sec | 16.3s
+
+🔄 Processing batch of 50 artisans…
+⚠️  tbn.entreprise.g@gmail.com: no address available, marking as failed.
+⚠️  greg: no address available, marking as failed.
+⚠️  Greg kozlak: no address available, marking as failed.
+⚠️  gl peinture: no address available, marking as failed.
+⚠️  Guelil Mustapha: no address available, marking as failed.
+⚠️  Alexandre Guerin: no address available, marking as failed.
+⚠️  Jgfermeture21: no address available, marking as failed.
+⚠️  AGP: no address available, marking as failed.
+⚠️  GDS: no address available, marking as failed.
+⚠️  BRICOMEN SERVICES: no address available, marking as failed.
+⚠️  AD plombier: no address available, marking as failed.
+⚠️  Hamrouni Anys: no address available, marking as failed.
+⚠️  GUIGMA SOLUTIONS ENERGIES: no address available, marking as failed.
+✅ Gourdon et Fils Sarl: 45.741800, -0.091400 (opencage)
+✅ BONS TUYAUX BORDELAIS: 44.840400, -0.580500 (opencage)
+✅ HAMMADI RIDHA: 49.185900, -0.359100 (opencage)
+✅ EI grollaud ken: 46.424100, 0.188100 (opencage)
+✅ HYGEE Nettoyage: 47.531000, -0.527800 (opencage)
+✅ MI2P: 45.750000, 1.200000 (opencage)
+✅ Esus Menuiserie: 45.433300, 4.400000 (opencage)
+✅ chez Toi C'est Clins / MULTISERVICES: 47.217300, -1.553400 (opencage)
+✅ GM ENERGIE: 43.948300, 4.808900 (opencage)
+✅ Fluide plomberie: 43.283300, -0.266700 (opencage)
+✅ haim lumiere: 43.270800, 5.382100 (opencage)
+✅ Gregory abrassart: 48.939481, 2.743413 (opencage)
+✅ Hamani plomberie: 43.633300, 3.900000 (opencage)
+✅ HADJ Sahaouri walid 75: 49.650000, 11.950000 (opencage)
+✅ Service Élagage: 48.857400, 2.379500 (opencage)
+✅ Dépanne Gaz Service: 45.612500, 5.145600 (opencage)
+✅ HZ PLOMBERIE: 50.391700, 3.668100 (opencage)
+✅ H2E 95: 48.966700, 2.250000 (opencage)
+✅ GT PLOMBERIE: 47.226300, 1.935800 (opencage)
+✅ Arcade nettoyage: 45.219900, 5.790100 (opencage)
+✅ AGELEC: 44.754400, -0.531300 (opencage)
+✅ L'electricien: 47.412500, 0.982700 (opencage)
+✅ nettoye du hurepoix: 48.578300, 2.224200 (opencage)
+✅ taki services: 38.999100, -3.369900 (opencage)
+✅ Conciergerie de l'exelence: 49.900000, 2.300000 (opencage)
+✅ Naturamhaus: 47.750000, -3.366700 (opencage)
+✅ bat elec 31: 43.693800, 1.434400 (opencage)
+✅ ENTREPRISE ARNAUD: 44.581600, 4.727100 (opencage)
+✅ Dépanantes: 47.217300, -1.553400 (opencage)
+✅ h2mexpertise: 43.254300, 5.405700 (opencage)
+✅ GUILLAUME LEFEBVRE: 49.113324, -0.377043 (opencage)
+✅ BKM Electricité: 48.702900, 2.413600 (opencage)
+✅ GRUEL: 48.427300, -1.192100 (opencage)
+✅ GUY PINEL MULTISERVICES (pas réno): 45.683300, 0.166700 (opencage)
+✅ Les traveaux de ferdinand: 45.761200, 4.851800 (opencage)
+✅ EH CREATION: 45.450992, 4.389619 (opencage)
+✅ Brillant peinture: 46.583300, 0.333300 (opencage)
+📊 Progress: 389 réussis, 111 échecs | 26.8 artisans/sec | 18.6s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Hassan ALLALI: no address available, marking as failed.
+⚠️  Mor HASSAN: no address available, marking as failed.
+⚠️  Kasaha et les seniors: no address available, marking as failed.
+⚠️  Herek SULEYMAN: no address available, marking as failed.
+⚠️  BATI'AD: no address available, marking as failed.
+⚠️  allo bassin services: no address available, marking as failed.
+⚠️  Nettoyage MIM: no address available, marking as failed.
+⚠️  AlloMyHouse: no address available, marking as failed.
+⚠️  Bricolage et conseil: no address available, marking as failed.
+⚠️  HP PLOMBERIE: no address available, marking as failed.
+✅ BTH SERRURES: 43.610900, 3.877200 (opencage)
+✅ HetL Propreté rep pas: 49.250000, 4.033300 (opencage)
+✅ Thermikal: 50.333300, 3.233300 (opencage)
+✅ HUGO DELETRAZ: 45.900000, 6.116700 (opencage)
+✅ Nuisible 66: 42.744900, 2.919300 (opencage)
+✅ BHUBmulti service): 40.153600, -90.166100 (opencage)
+✅ Hermann Pierre 68: 40.852400, -99.161100 (opencage)
+✅ Nana clean: 43.667400, 4.031000 (opencage)
+✅ Humbert Dépann' 25: 47.211100, 6.067400 (opencage)
+✅ Multiservice: 45.838100, 3.216900 (opencage)
+✅ bh energie 44: 47.283300, -2.200000 (opencage)
+✅ ATELIER DES PETITS TRAVAUX: 47.531000, -0.527800 (opencage)
+✅ L.v.s: 47.750000, 7.333300 (opencage)
+✅ Store et fermeture: 48.583400, 7.743000 (opencage)
+✅ DELIV'EASY: 45.733300, 4.916700 (opencage)
+✅ GH OHM: 43.292800, 5.570700 (opencage)
+✅ Hervé GARDIN: 47.316700, 5.016700 (opencage)
+✅ Helfried josue: 50.633000, 3.058600 (opencage)
+✅ Facilite services: 46.093060, 5.483060 (opencage)
+✅ Héberé Claire 16: 45.683300, 0.233300 (opencage)
+✅ Techsanit: 50.694200, 3.174600 (opencage)
+✅ Claudia H: 50.633000, 3.058600 (opencage)
+✅ Assirem Services: 48.894400, 2.409300 (opencage)
+✅ DH chauffage sanitaire: 48.746100, 7.629200 (opencage)
+✅ Adra Rénovation: 38.986300, -3.929100 (opencage)
+✅ HM PEINTURE PRO: 45.781800, 4.920900 (opencage)
+✅ EMS Plomberie: 49.413400, 1.061500 (opencage)
+✅ RVzeplombier: 43.316700, -0.400000 (opencage)
+✅ Hawa kone: 48.633300, 2.450000 (opencage)
+✅ Heinrich Patrice: 43.601900, 6.448300 (opencage)
+✅ Herter Michel: 43.176100, 5.926700 (opencage)
+✅ 29/10/2025: 48.881700, 2.382200 (opencage)
+✅ H.E.G électricité générale: 43.576600, 7.019100 (opencage)
+✅ etsc plomberie: 43.100000, 5.850000 (opencage)
+✅ STS SANI'THERM SERVICES: 43.109341, 0.728887 (opencage)
+✅ FH Peinture renovation: 48.620300, 6.107000 (opencage)
+✅ Services nelco: 49.101300, 2.132400 (opencage)
+✅ HAUT DE FRANCE ENERGIE / Gérant Franck Boetto: 50.633000, 3.058600 (opencage)
+⚠️  henrye damien: no match found after 1 attempts, marking as failed.
+✅ Hicham 69: 45.757814, 4.832011 (opencage)
+📊 Progress: 428 réussis, 122 échecs | 25.1 artisans/sec | 21.9s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Ismael el hajjioui: no address available, marking as failed.
+⚠️  NMNS: no address available, marking as failed.
+⚠️  am services: no address available, marking as failed.
+⚠️  Francois Jackel: no address available, marking as failed.
+⚠️  Jaffres Christian: no address available, marking as failed.
+⚠️  Jamal Orléans 45: no address available, marking as failed.
+⚠️  Jardin Christopher 14: no address available, marking as failed.
+⚠️  Jardonnet: no address available, marking as failed.
+⚠️  Jean jacque renaud: no address available, marking as failed.
+⚠️  JEAN LUC GREMEAUX: no address available, marking as failed.
+⚠️  Jean Patrice / /: no address available, marking as failed.
+⚠️  JT SATED: no address available, marking as failed.
+⚠️  Amor: no address available, marking as failed.
+⚠️  ATTENTE première facture / TOP PROFIL: no address available, marking as failed.
+⚠️  jj store assitance: no address available, marking as failed.
+⚠️  Matyzen: no address available, marking as failed.
+⚠️  Jerome Rosado: no address available, marking as failed.
+✅ KOP 44: 47.217300, -1.553400 (opencage)
+✅ Rectif menuiserie: 44.974800, 5.026400 (opencage)
+✅ jpc rénov: 49.132900, 6.202400 (opencage)
+✅ ucn plomberie: 45.673060, 4.822500 (opencage)
+✅ Jessy Bourmaud 44: 47.217300, -1.553400 (opencage)
+✅ Reparstore Avignon: 43.893600, 4.947500 (opencage)
+✅ immoune: 49.443100, 1.099300 (opencage)
+✅ Jardin Déborah 14: 48.918200, -0.211900 (opencage)
+✅ BAK ELLEC: 48.773164, 2.521631 (opencage)
+✅ Jack Marchand: 46.077200, 2.079300 (opencage)
+✅ M.K SANI-EST: 48.607500, 7.749300 (opencage)
+✅ ID menuiserie: 46.400000, 0.333300 (opencage)
+✅ J.C CLIMATIQUE ET THERMIQUE: 43.254300, 5.405700 (opencage)
+✅ MLA: 43.318600, 5.408400 (opencage)
+✅ jessycleaning: 42.697600, 2.895400 (opencage)
+✅ manque décharge partenariat: 48.021453, -0.667354 (opencage)
+✅ Ngan Marseille et Var: 43.248800, 5.590200 (opencage)
+✅ Instalpro13: 43.318600, 5.408400 (opencage)
+✅ mon pti menuisier: 47.177600, -1.621400 (opencage)
+✅ MONSIEUR JEAN PHILIPPE BILLET: 50.465500, 2.352700 (opencage)
+✅ Jérémy Cauret 54: 49.471564, 5.822744 (opencage)
+✅ salopart de menteur: 48.606400, -2.036400 (opencage)
+✅ Jessica hoxha: 45.165300, 5.763400 (opencage)
+✅ batard: 47.761300, -3.339700 (opencage)
+✅ Jessy plomberie 76: 49.355600, 1.006500 (opencage)
+✅ Le plombier: 47.283300, -2.200000 (opencage)
+✅ PCJV VARELA: 49.360300, 2.244600 (opencage)
+✅ C2L POMPE A CHALEUR ET CLIMATISATION: 49.302000, 1.900800 (opencage)
+✅ Jacques Garliotte: 47.181400, -1.549700 (opencage)
+✅ AJ multiservices 60: 49.329800, 2.328500 (opencage)
+✅ ALEAU PLOMBIER CHAUFFAGISTE: 49.900000, 2.300000 (opencage)
+✅ UNIENERGY: 49.256700, 2.484800 (opencage)
+⚠️  AN84: no match found after 1 attempts, marking as failed.
+📊 Progress: 460 réussis, 140 échecs | 23.8 artisans/sec | 25.2s
+
+🔄 Processing batch of 50 artisans…
+⚠️  jf elec: no address available, marking as failed.
+⚠️  ACROS SERVICE: no address available, marking as failed.
+⚠️  GAD ELEC: no address available, marking as failed.
+⚠️  aj elec 40: no address available, marking as failed.
+⚠️  Jorge Cifuentes: no address available, marking as failed.
+⚠️  JG ESPACE: no address available, marking as failed.
+⚠️  JB peinture: no address available, marking as failed.
+✅ Elec'Eau Presto Dépannages: 43.604464, 1.444243 (opencage)
+✅ Manific Services: 45.779700, 3.086300 (opencage)
+✅ les plombiers du coeur: 45.563800, 5.894400 (opencage)
+✅ BATIJU 91: 48.558100, 2.190800 (opencage)
+✅ Too Home: 43.833300, 4.350000 (opencage)
+✅ JIMMY BIZET: 48.927515, 2.181337 (opencage)
+✅ JM plomberie: 48.528500, 2.589400 (opencage)
+✅ Jordan Multiservice: 50.488800, 3.351300 (opencage)
+✅ LES COMPAGNONS DE LA COUTELLERIE: 43.549400, 3.705600 (opencage)
+✅ K.A: 50.633000, 3.058600 (opencage)
+✅ Point Nettoyage: 47.531000, -0.527800 (opencage)
+✅ ab plomberie: 45.772600, 4.803300 (opencage)
+✅ LJ multi services: 42.726400, 2.982400 (opencage)
+✅ Plombier Express Dépannage: 48.950000, 2.250000 (opencage)
+✅ L'ATELIER DU BRICOLEUR: 47.055900, -1.376800 (opencage)
+✅ Central'tech CLIMATISATION: 47.466700, -0.550000 (opencage)
+✅ NUL: 49.185900, -0.359100 (opencage)
+✅ O P'tit Soin: 47.112100, -2.088900 (opencage)
+✅ JC PLOMBERIE: 43.359800, 5.334200 (opencage)
+✅ JD CLIM CHAUFFAGE 59: 50.424700, 3.386600 (opencage)
+✅ Jlombard: 48.112000, -1.674300 (opencage)
+✅ Julien Gaonach: 42.606500, 3.002000 (opencage)
+✅ Barbarclean: 48.732200, 2.449300 (opencage)
+✅ AJ Solutions: 43.833300, 4.350000 (opencage)
+✅ OUESTHERM: 47.666700, -2.750000 (opencage)
+✅ VALORIS MULTISERVICES: 46.910160, 7.140880 (opencage)
+✅ Julien Allavena: 43.828800, 5.786900 (opencage)
+✅ un plan un projet: 45.779700, 3.086300 (opencage)
+✅ jusselmne multi services: 48.702400, 0.854400 (opencage)
+✅ MONSIEUR JONATAN GRADINA: 45.433300, 4.400000 (opencage)
+⚠️  STE MK SANITAIRE: no match found after 1 attempts, marking as failed.
+✅ DJO'SERVICE Multiservices: 45.914200, 6.647400 (opencage)
+✅ FERNANDES ELECTRICITE: 47.205519, -1.658757 (opencage)
+✅ Walid.J Multiservices: 43.300000, -0.366700 (opencage)
+✅ GLA solution serrurerie: 49.900000, 2.300000 (opencage)
+✅ Kamel Nasseri Nuisible: 37.104150, -113.584120 (opencage)
+✅ Kamil Boufhal: 43.300000, -0.366700 (opencage)
+✅ Sarl jmml rénovation: 47.911300, 1.864800 (opencage)
+✅ EASY BRICO: 48.800000, 2.133300 (opencage)
+✅ KANDASAMY SATHYAN: 43.565700, 1.297500 (opencage)
+✅ MONSIEUR JONATHAN BENAIS: 42.810760, 0.710500 (opencage)
+✅ JOSEPH KALADJIAN: 45.496200, 4.906400 (opencage)
+✅ fred multi service: 49.360200, 6.262800 (opencage)
+📊 Progress: 502 réussis, 148 échecs | 23.9 artisans/sec | 27.2s
+
+🔄 Processing batch of 50 artisans…
+⚠️  BK peinture et decoration: no address available, marking as failed.
+⚠️  Karim serrure 91: no address available, marking as failed.
+⚠️  Kes Mk decor: no address available, marking as failed.
+⚠️  RK energie: no address available, marking as failed.
+⚠️  fk blaind 80: no address available, marking as failed.
+⚠️  hmplomberie: no address available, marking as failed.
+⚠️  KLAVB SERVICES: no address available, marking as failed.
+⚠️  Kraemer Olivier: no address available, marking as failed.
+⚠️  Kutz Alain: no address available, marking as failed.
+⚠️  La compagnie des déboucheurs lille: no address available, marking as failed.
+⚠️  La petite fait: no address available, marking as failed.
+⚠️  LK elec: no address available, marking as failed.
+⚠️  brico - D: no address available, marking as failed.
+⚠️  laurent edouard: no address available, marking as failed.
+✅ khachikyan rima: 49.250000, 4.033300 (opencage)
+✅ KHALID EL MANSOURI EDDAGHMOUMI: 48.612900, 2.377700 (opencage)
+✅ Standing service: 48.112600, 2.402800 (opencage)
+✅ ks multi service: 49.493800, 0.107700 (opencage)
+✅ multiservice 45: 47.911300, 1.864800 (opencage)
+✅ Homme adom': 49.132900, 6.202400 (opencage)
+✅ KHALIL MEJRI aka chams: 47.266100, -0.179200 (opencage)
+✅ Easylife Multiservice: 48.112000, -1.674300 (opencage)
+✅ Easy Services Est: 47.750000, 7.333300 (opencage)
+✅ KHALED BOUANANE: 50.633000, 3.058600 (opencage)
+✅ Scc 33: 44.840400, -0.580500 (opencage)
+✅ Reparestore inexistant ce mec: 45.473600, 4.525400 (opencage)
+✅ brico net 38: 45.273600, 5.921600 (opencage)
+✅ DTEH 16: 45.550000, 0.050000 (opencage)
+✅ Lambert Multi-Services: 46.640100, 0.167800 (opencage)
+✅ kn menuiserie: 45.062400, 5.758800 (opencage)
+✅ Nettoie bien: 48.112000, -1.674300 (opencage)
+✅ As du ménage: 44.981200, -0.602500 (opencage)
+⚠️  Batiment Lagrain: no match found after 1 attempts, marking as failed.
+✅ sonobay: 50.446400, 2.904800 (opencage)
+✅ LAMUSE: 48.964600, 1.901200 (opencage)
+✅ GL Menuiseries 14: 49.185900, -0.359100 (opencage)
+✅ KEVIN RICK: 48.791000, 7.833300 (opencage)
+✅ IMMO CONCEPT: 49.250000, 3.983300 (opencage)
+✅ Posaltaix: 43.638332, 5.580606 (opencage)
+✅ Multi services solutions: 45.802700, 1.212100 (opencage)
+✅ Urban Plomberie: 49.443100, 1.099300 (opencage)
+✅ AMG multiservices et Menage: 43.450000, 6.683300 (opencage)
+✅ Ferm'sur: 48.704300, 6.210000 (opencage)
+✅ service azur pro: 43.716646, 7.290170 (opencage)
+✅ TJS (NE PAS ENVOYER SUR OQORO): 43.300000, -0.366700 (opencage)
+✅ KQM-ELEC: 49.130400, 6.123800 (opencage)
+✅ L'étoile plomberie chauffage: 48.400000, -4.483300 (opencage)
+✅ FROID ELECTRICITE CONSEIL: 45.766700, 4.883300 (opencage)
+✅ Good Clim: 43.317100, 6.468800 (opencage)
+✅ JFL SERVICE: 48.938200, 2.125500 (opencage)
+📊 Progress: 537 réussis, 163 échecs | 24.8 artisans/sec | 28.3s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Cofral 3D Nuisibles: no address available, marking as failed.
+⚠️  LBN TOITURE: no address available, marking as failed.
+⚠️  Leija Tony 57: no address available, marking as failed.
+⚠️  Abc ménage: no address available, marking as failed.
+⚠️  Leman: no address available, marking as failed.
+⚠️  Lemoine anthony: no address available, marking as failed.
+⚠️  Lemoine construction: no address available, marking as failed.
+⚠️  Atlantic stores et fenetres: no address available, marking as failed.
+⚠️  lob services a la personne: no address available, marking as failed.
+⚠️  Ad ménage: no address available, marking as failed.
+⚠️  FM pro services: no address available, marking as failed.
+⚠️  LC Dépannage: no address available, marking as failed.
+⚠️  Attente première facture / TOP PROFIL: no address available, marking as failed.
+⚠️  lnv menuiserie 06: no address available, marking as failed.
+⚠️  Longuet Jordan: no address available, marking as failed.
+✅ Lau bricoleur: 45.563800, 5.894400 (opencage)
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1680,"reset":1761782400},"result
+✅ Loic Perret 76: 49.445400, 1.093897 (nominatim)
+✅ BATIMTEC: 47.902900, 1.903900 (opencage)
+✅ azmultiservices: 49.165300, 4.025800 (opencage)
+✅ LEILA Nasr 25: 47.206900, 6.005500 (opencage)
+✅ PML muenuiserie: 49.410000, 1.237400 (opencage)
+✅ Lemarié Fabrice services 37: 47.273000, 0.851800 (opencage)
+✅ aavs: 43.793200, 7.232900 (opencage)
+✅ ld services: 50.548700, 3.027300 (opencage)
+✅ Batisphere Energie: 47.466700, -0.550000 (opencage)
+✅ Bk pose multiservices: 48.024200, -1.745900 (opencage)
+✅ CAS maconnerie: 43.833300, 4.350000 (opencage)
+✅ JL Dépannage: 47.034500, -0.120300 (opencage)
+✅ D&E: 46.550515, 0.368311 (opencage)
+✅ electricite: 47.933300, -4.016700 (opencage)
+✅ Lopez Badia Alexis 42 (plus a son compte): 45.433300, 4.400000 (opencage)
+✅ Lm Plomberie: 47.297400, -1.387600 (opencage)
+✅ LIFA SERVICES: 50.633000, 3.058600 (opencage)
+✅ Microservices: 49.230200, 0.996000 (opencage)
+✅ Lembrouk Sofiane 44: 47.283300, -2.200000 (opencage)
+✅ EUZENAT PEINTURE: 43.167430, 1.120280 (opencage)
+✅ Neves services: 47.881800, 1.869500 (opencage)
+✅ Lebesne Corentin 76: 49.933300, 1.083300 (opencage)
+✅ Lesaffre Charles: 43.212400, 5.545100 (opencage)
+✅ RLC Bois: 47.750000, -3.366700 (opencage)
+✅ Repond pas fait pas les devis: 48.263610, -4.194720 (opencage)
+✅ logan levebre: 49.097500, 1.382100 (opencage)
+✅ Lemiere Bertrand: 50.625800, 2.982800 (opencage)
+✅ l'ouverture francaise: 48.916700, 2.283300 (opencage)
+✅ DBN ELEC 59: 50.723900, 3.161200 (opencage)
+✅ ART RENO 76: 49.597700, 1.254400 (opencage)
+✅ LD peinture 76: 49.413400, 1.061500 (opencage)
+✅ MOUHSSINE LAMLI: 43.318600, 5.408400 (opencage)
+✅ BAFRA: 47.886200, 2.057500 (opencage)
+✅ BATIFLASH: 48.911285, 2.391363 (opencage)
+📊 Progress: 572 réussis, 178 échecs | 24.9 artisans/sec | 30.2s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Noxia 5d: no address available, marking as failed.
+⚠️  alvea: no address available, marking as failed.
+⚠️  LBR Multi services: no address available, marking as failed.
+⚠️  Luciano pereira: no address available, marking as failed.
+⚠️  Ludovic Trupin: no address available, marking as failed.
+⚠️  BPC PLOMBERIECHAUFFAGE: no address available, marking as failed.
+⚠️  Dépannage Time: no address available, marking as failed.
+⚠️  Maher Kalai: no address available, marking as failed.
+⚠️  AM renovation: no address available, marking as failed.
+⚠️  ciec: no address available, marking as failed.
+⚠️  Martin MIRANDA 33: no address available, marking as failed.
+⚠️  Martin Vivola: no address available, marking as failed.
+✅ SARL Marval: 51.320640, 4.855960 (opencage)
+✅ Habitat Services: 40.448700, -6.441800 (opencage)
+✅ Help confort: 45.862500, 6.045600 (opencage)
+✅ BATIA SARL: 48.917900, -115.212900 (opencage)
+✅ My renov: 43.610900, 3.877200 (opencage)
+✅ Dépannage confiance: 49.900000, 2.300000 (opencage)
+✅ Muller Stores: 47.823100, 7.359400 (opencage)
+✅ plombier urbain: 48.841200, 2.387600 (opencage)
+✅ Pichon Ludovic: 46.195200, 6.224300 (opencage)
+✅ Marc Bouteille: 46.302100, -0.512900 (opencage)
+✅ Muti services 51: 49.250000, 4.033300 (opencage)
+✅ MJ plomberie 35: 48.112000, -1.674300 (opencage)
+✅ plumo services: 43.833300, 4.350000 (opencage)
+✅ als rénovation: 43.703789, 7.287784 (opencage)
+✅ Eden Vert 3d 42: 45.433300, 4.400000 (opencage)
+✅ Pimentel et pimentel sarl: 48.865500, 2.342600 (opencage)
+✅ M Plomberie Chauffage: 49.900500, 3.628000 (opencage)
+✅ MADAME LAETITIA FREYTAG: 43.604300, 1.443700 (opencage)
+✅ malezieux: 48.658500, 6.207100 (opencage)
+✅ Mohammadou kalifa DIABY: 32.767300, -96.777600 (opencage)
+✅ lpm-gb33: 44.840400, -0.580500 (opencage)
+✅ Marinho Philippe: 45.779700, 3.086300 (opencage)
+✅ genuis elec: 43.610900, 3.877200 (opencage)
+✅ MONSIEUR LUDOVIC MOULAI: 43.717300, 4.784600 (opencage)
+✅ Le serrurier marseillais: 43.254300, 5.405700 (opencage)
+✅ AU ptit bricoleur: 48.095500, 5.230600 (opencage)
+✅ J-C SERVICES: 43.176100, 5.926700 (opencage)
+✅ ADAM dépannage: 45.779700, 3.086300 (opencage)
+✅ ep renov: 47.531000, -0.527800 (opencage)
+✅ mmb serrurier: 48.689700, 2.511900 (opencage)
+✅ MHS Plomberie: 45.736300, 4.868700 (opencage)
+✅ BLS PLOMBERIE: 47.205064, -1.656502 (opencage)
+✅ LUCAS LE BIHAN / ELEC ET CLIM: 44.099400, 5.024100 (opencage)
+⚠️  Ms Plomberie: no match found after 1 attempts, marking as failed.
+✅ eco sète electricité 34: 43.402800, 3.692800 (opencage)
+✅ ELEC IN TIME: 48.884600, 2.269700 (opencage)
+✅ BM PEINTURE: 47.386200, 0.748500 (opencage)
+✅ EMC DEPANNAGE: 49.443100, 1.099300 (opencage)
+📊 Progress: 609 réussis, 191 échecs | 25.7 artisans/sec | 31.1s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Le ménage en rose: no address available, marking as failed.
+⚠️  Pose2Baies (con et chère): no address available, marking as failed.
+⚠️  Matthieu Racine: no address available, marking as failed.
+⚠️  Matthieu: no address available, marking as failed.
+⚠️  Max multiservices: no address available, marking as failed.
+⚠️  Max Noirmoutier: no address available, marking as failed.
+⚠️  Maxime Donfut: no address available, marking as failed.
+⚠️  MAZ ELECTRICITE: no address available, marking as failed.
+⚠️  MDE: no address available, marking as failed.
+⚠️  Medhi Boukezzouh: no address available, marking as failed.
+⚠️  Meleck Jason 77: no address available, marking as failed.
+⚠️  AC DC ELEC 69: no address available, marking as failed.
+⚠️  KAIKO: no address available, marking as failed.
+⚠️  Ronan rp service: no address available, marking as failed.
+⚠️  Meunier verveynne: no address available, marking as failed.
+⚠️  Seven Rénovation (elec, menuiserie, placo, peinture): no address available, marking as failed.
+⚠️  Libery clean: no address available, marking as failed.
+⚠️  Michel Bourmaud: no address available, marking as failed.
+✅ SARL A2M: 43.833300, 4.350000 (opencage)
+✅ Id-Home: 48.112000, -1.674300 (opencage)
+✅ RENOVATION A NOTRE FACON 76: 49.493800, 0.107700 (opencage)
+✅ Chauffage service 86: 46.510800, 0.349800 (opencage)
+✅ Retfab Solution: 48.850300, 2.145200 (opencage)
+✅ WUMBU LOSHIMA MICHAU / Ménage et multi: 49.354800, 2.544600 (opencage)
+✅ MENDES GONCLAVES EUCLIDES MICHEL: 50.670100, 2.970200 (opencage)
+✅ Menard Anthony 66: 42.697600, 2.895400 (opencage)
+✅ multijob: 37.398500, -76.294100 (opencage)
+✅ MG MULTISERVICE: 45.745250, -87.064580 (opencage)
+✅ MP MULTI SERVICES: 44.855900, -0.518400 (opencage)
+✅ Mazieras Christophe: 43.054400, -0.433000 (opencage)
+✅ AM Services: 47.281500, 4.677700 (opencage)
+✅ Matthieu Texier: 42.856600, -5.667700 (opencage)
+✅ eminence services: 43.703100, 7.266100 (opencage)
+✅ MG Services: 45.625400, -0.514200 (opencage)
+✅ ML PLOMBERIE: 47.226300, 1.935800 (opencage)
+✅ Nant'artisans: 47.217600, -1.648400 (opencage)
+✅ MS PLOMBERIE: 45.006800, -0.618200 (opencage)
+✅ mms plomberie chauffage: 47.911300, 1.864800 (opencage)
+✅ CONCEPT PLOMBERIE: 43.823577, 5.785556 (opencage)
+✅ ALLO ARTISAN DU VERRE: 45.702500, 4.871500 (opencage)
+✅ MESSI LUX PRESTATIONS DE SERVICES: 48.583400, 7.743000 (opencage)
+✅ DESS ENERGIES VOLEUR !!!!!!: 48.950000, 2.250000 (opencage)
+✅ BATI RENOVATION: 48.583400, 7.743000 (opencage)
+✅ Maxrenov: 32.955500, -98.021000 (opencage)
+✅ HTF Services: 47.466700, -0.550000 (opencage)
+⚠️  lkm: no match found after 1 attempts, marking as failed.
+✅ Home Cleaner: 43.737900, 4.180700 (opencage)
+✅ Bricolight 69: 45.688700, 5.046600 (opencage)
+✅ CMpropreté: 48.684400, 6.185000 (opencage)
+⚠️  MC'SERVICES: no match found after 1 attempts, marking as failed.
+📊 Progress: 639 réussis, 211 échecs | 25.8 artisans/sec | 32.9s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Mickael Breton: no address available, marking as failed.
+⚠️  AM: no address available, marking as failed.
+⚠️  MILADI Seyfeddine 77: no address available, marking as failed.
+⚠️  BMS: no address available, marking as failed.
+⚠️  Rouen Miroiterie: no address available, marking as failed.
+⚠️  pro élec systeme: no address available, marking as failed.
+⚠️  GROSSE MERDE: no address available, marking as failed.
+⚠️  avs: no address available, marking as failed.
+⚠️  MJ Amenagement: no address available, marking as failed.
+⚠️  Abaca: no address available, marking as failed.
+✅ Mickael Espaces Verts: 43.333300, -0.416700 (opencage)
+✅ BM2A: 44.840400, -0.580500 (opencage)
+✅ Mille renovation constrcution: 43.295500, 5.400600 (opencage)
+✅ M&M SERVICES ET NETTOYAGE: 45.589702, 5.915275 (opencage)
+✅ ELEC HAMDI: 47.293200, 5.004600 (opencage)
+✅ PROSECURE 83: 43.098200, 5.884700 (opencage)
+✅ c'est une grosse merde: 48.044200, 1.651900 (opencage)
+✅ MONSIEUR MOHAMED RAHOUTI: 48.557500, 7.682500 (opencage)
+✅ AngieService: 48.940100, -0.503400 (opencage)
+✅ MONSIEUR GABRIEL CHAUVIRE 49: 47.531000, -0.527800 (opencage)
+✅ AMS CONSEIL: 48.990000, 2.258000 (opencage)
+✅ MK PLOMBERIE: 45.480900, 4.431700 (opencage)
+✅ CHACHA Help Service: 28.118800, -16.576000 (opencage)
+✅ CLINIQUE DU RADIATEUR A GAZ: 45.736300, 4.868700 (opencage)
+✅ AMAN SERVICES: 45.526300, 4.260200 (opencage)
+✅ MALET MULTISERVICES: 45.513400, 6.138800 (opencage)
+✅ Moghnie fouad: 43.278900, 5.415200 (opencage)
+✅ MONSIEUR LAURENT GONCALVES 54: 48.684400, 6.185000 (opencage)
+✅ KABALA ENERGIE: 44.832400, -0.514100 (opencage)
+✅ MMY SERRURIER: 48.906800, 2.506500 (opencage)
+✅ SM ENERGIE: 49.094400, 6.151700 (opencage)
+✅ REPOND JAMAIS AU TEL: 43.610900, 3.877200 (opencage)
+✅ MA-Plomberie: 49.493800, 0.107700 (opencage)
+✅ Montalacci: 48.821000, 2.277200 (opencage)
+✅ TK NUISIBLES IDF: 48.883500, 2.321900 (opencage)
+✅ MICKAEL TOURETTE: 46.045100, 0.392600 (opencage)
+✅ MONSIEUR PIERROT: 48.864200, 2.443200 (opencage)
+✅ ATOUT-fer: 42.606500, 3.002000 (opencage)
+✅ Multi martin services / Cauchois Martin 72: 48.207200, 0.214300 (opencage)
+✅ STP OBER 67: 48.463100, 7.481000 (opencage)
+✅ Nettoyage belko: 43.610900, 3.877200 (opencage)
+✅ MOHAMMED LALMI: 48.580800, 7.687700 (opencage)
+✅ Sf Elec Sf Elag: 46.790900, -2.082200 (opencage)
+✅ MONSIEUR MATHIEU CHAUFRAY: 49.194200, -0.580300 (opencage)
+✅ Modugno Joris 38: 45.273600, 5.921600 (opencage)
+✅ entreprise moreno: 43.791100, 5.038700 (opencage)
+✅ Miroiterie Pasca Ioan: 48.988000, 1.811800 (opencage)
+✅ MORENO Plomberie: 43.300000, -0.366700 (opencage)
+✅ MOHAMED KHEZAMI: 48.528500, 2.589400 (opencage)
+✅ Miguel Elec 94: 48.841200, 2.387600 (opencage)
+📊 Progress: 679 réussis, 221 échecs | 26.0 artisans/sec | 34.6s
+
+🔄 Processing batch of 50 artisans…
+⚠️  renov pro idf: no address available, marking as failed.
+⚠️  Mous.multiservices: no address available, marking as failed.
+⚠️  MR Deah: no address available, marking as failed.
+⚠️  Mr durand florian: no address available, marking as failed.
+⚠️  ACI HABITAT: no address available, marking as failed.
+⚠️  Le ménage en rose: no address available, marking as failed.
+⚠️  Mr Mazo: no address available, marking as failed.
+⚠️  GROSSE MERDE: no address available, marking as failed.
+⚠️  GK nettoyage: no address available, marking as failed.
+⚠️  GCE GÉNIE CLIMATIQUE ENTREPRISE: no address available, marking as failed.
+⚠️  nalbant safak: no address available, marking as failed.
+⚠️  NMSERVICE: no address available, marking as failed.
+⚠️  Nejia Hameur: no address available, marking as failed.
+⚠️  PAS INTERESSER: no address available, marking as failed.
+✅ SAFTEC: 43.610900, 3.877200 (opencage)
+✅ Occitan elec services: 32.701100, -84.494900 (opencage)
+✅ Nantois romain: 49.466700, 1.183300 (opencage)
+✅ Home nettoyage 13: 8.412680, -74.529000 (opencage)
+✅ KM PLOMBERIE: 43.961200, 4.860100 (opencage)
+✅ Mb Services: 43.833300, 4.350000 (opencage)
+✅ Chaud Froid: 48.528900, 7.715200 (opencage)
+✅ ESCROC: 43.833300, 4.350000 (opencage)
+✅ Muhamad Asamatta: 48.883200, 1.921500 (opencage)
+✅ EM ENERGIE: 49.250000, 4.033300 (opencage)
+✅ Allo Clear: 43.693800, 1.434400 (opencage)
+✅ NAJJAR AHMED(H&Z PLOMBERIE): 48.900200, 2.309500 (opencage)
+✅ LN Propreté: 44.840400, -0.580500 (opencage)
+✅ GROSSE MERDE: 50.694200, 3.174600 (opencage)
+✅ ASPC: 46.195200, 6.224300 (opencage)
+✅ NM Plomberie: 43.640700, 5.095400 (opencage)
+✅ clean services 87: 45.831500, 1.257800 (opencage)
+✅ j profi services: 50.639264, 3.067463 (opencage)
+✅ P Plomberie: 49.185900, -0.359100 (opencage)
+✅ Muca Denis: 42.810760, 0.710500 (opencage)
+✅ am plomberie: 43.510400, 1.388300 (opencage)
+✅ Nassir El Yahyaoui: 43.604300, 1.443700 (opencage)
+✅ VSD services: 48.446900, 1.489200 (opencage)
+✅ Objectif propreté et services: 48.802400, 2.293500 (opencage)
+✅ Alpes thermo: 46.195200, 6.224300 (opencage)
+✅ MJIA consulting (plomberie elec ...): 45.487100, 4.547500 (opencage)
+✅ SAS EMV Murielle CHAMOT: 46.104500, 5.996800 (opencage)
+✅ Somme dépannage rénovation: 49.900000, 2.300000 (opencage)
+✅ mounier propreté: 45.445300, 4.336200 (opencage)
+✅ em plomberie: 43.703100, 7.266100 (opencage)
+✅ MNP Ménage parfait: 45.761100, 4.826800 (opencage)
+✅ l'ile aux traveaux: 44.633300, -1.066700 (opencage)
+✅ RAPID ELEC: 48.823200, 1.954100 (opencage)
+✅ Amira Services: 48.881700, 2.382200 (opencage)
+✅ ACCESS P.R.P: 48.533300, 2.666700 (opencage)
+✅ CLIMA TECH 83: 43.119500, 6.139000 (opencage)
+📊 Progress: 715 réussis, 235 échecs | 26.7 artisans/sec | 35.6s
+
+🔄 Processing batch of 50 artisans…
+⚠️  ND MULTISERVICES: no address available, marking as failed.
+⚠️  Expert Multi-Services E.M.S: no address available, marking as failed.
+⚠️  Nicolas Plomberie: no address available, marking as failed.
+⚠️  Patty's Cleaning Services: no address available, marking as failed.
+⚠️  Nourelec: no address available, marking as failed.
+⚠️  TOTAL Store: no address available, marking as failed.
+⚠️  Normand David: no address available, marking as failed.
+⚠️  Nouari Lilian: no address available, marking as failed.
+⚠️  Nmax: no address available, marking as failed.
+⚠️  mu et mu: no address available, marking as failed.
+⚠️  Paris Ouest Protection: no address available, marking as failed.
+⚠️  Removo dijon - les volets dijonnais: no address available, marking as failed.
+✅ Chevarin: 48.112000, -1.674300 (opencage)
+✅ conceptclimplomberie: 41.308700, -72.927100 (opencage)
+✅ RENOV ELEC: 45.433300, 4.400000 (opencage)
+✅ ELOQUENCE: 49.194200, -0.580300 (opencage)
+✅ stores alpins: 44.600000, 6.150000 (opencage)
+✅ Abdelhanin: 48.708200, 6.169600 (opencage)
+✅ Pascal Multiservice: 50.531100, 2.988600 (opencage)
+✅ ABC30: 43.768600, 4.427500 (opencage)
+✅ The City Plumber: 50.548700, 3.027300 (opencage)
+✅ JLT multiservices: 50.433000, 2.827900 (opencage)
+✅ OVP: 44.981200, -0.602500 (opencage)
+✅ NT-SERVICES: 45.489170, 4.810000 (opencage)
+✅ Pascal Meunier: 48.429500, 1.473800 (opencage)
+✅ assure coup de pouce: 48.571100, 1.939500 (opencage)
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1477,"reset":1761782400},"result
+✅ MSE SERVICE EXPRESS: 49.066200, 2.458100 (opencage)
+✅ O'CHRONO PROTECT SERRURERIE: 49.046400, 3.093900 (opencage)
+✅ Compagnie des déboucheurs: 48.861878, 2.337414 (nominatim)
+✅ FASS ELEC: 48.976706, 1.541244 (opencage)
+✅ oz'tout faire multi services: 47.883300, 1.770600 (opencage)
+✅ MONSIEUR PATRICK-OLIVIER CHLOUS: 47.273000, 0.851800 (opencage)
+✅ Patrice AVIVAR 42: 45.559800, 4.665700 (opencage)
+✅ stan peinture: 48.650000, 6.183300 (opencage)
+✅ Radical anti nuisible: 43.610900, 3.877200 (opencage)
+✅ le coup de pat: 47.273500, 5.121200 (opencage)
+✅ G et M Chauff: 49.181500, 6.994000 (opencage)
+✅ Aid'n Assist ANA: 48.583400, 7.743000 (opencage)
+✅ Energicohm: 48.300000, 4.083300 (opencage)
+✅ BLA.PLOMBERIE.CHAUFFAGE: 48.671000, 6.150800 (opencage)
+✅ OTMANI: 44.933300, 4.900000 (opencage)
+✅ clean and co: 43.344500, 5.380000 (opencage)
+✅ UDM BAT 54: 48.684400, 6.185000 (opencage)
+✅ Ouai agency: 48.929000, 1.936200 (opencage)
+✅ Olivier testan: 43.140700, 6.338600 (opencage)
+✅ DP CREATION: 43.610900, 3.877200 (opencage)
+✅ OCM: 43.204026, 2.409359 (opencage)
+✅ Pascal Choquet assitance: 48.112000, -1.674300 (opencage)
+✅ An PLOMBERERIE: 33.844400, -84.474100 (opencage)
+✅ apjmenuiserie: 49.266344, 3.986093 (opencage)
+📊 Progress: 753 réussis, 247 échecs | 27.2 artisans/sec | 36.8s
+
+🔄 Processing batch of 50 artisans…
+⚠️  PATRICK LESCUR: no address available, marking as failed.
+⚠️  Patrickservices 54: no address available, marking as failed.
+⚠️  Payen Kevin: no address available, marking as failed.
+⚠️  Pepion 45: no address available, marking as failed.
+⚠️  MP Multiservices: no address available, marking as failed.
+⚠️  INSECTUM: no address available, marking as failed.
+⚠️  PROPRETE MULTI SERVICES: no address available, marking as failed.
+⚠️  Marc Pétillon: no address available, marking as failed.
+⚠️  sos depannage elec cotentin: no address available, marking as failed.
+⚠️  TERANGA HTM: no address available, marking as failed.
+⚠️  Entreprise Saunier serrurerie, plomberie, peoiintrue, revetement mur et sol, vitrerie: no address available, marking as failed.
+⚠️  Imagin: no address available, marking as failed.
+✅ Libe-lune: 45.755000, 4.788100 (opencage)
+✅ Centre services: 50.902200, 2.222900 (opencage)
+✅ PAUL RÉNOVATION: 43.407800, 5.924100 (opencage)
+✅ ACTI. VITRERIE: 48.929000, 2.049500 (opencage)
+✅ Mickaela ménage seulement: 44.049400, 4.777400 (opencage)
+✅ AEB+: 48.583400, 7.743000 (opencage)
+✅ Philippe Roussaud Serrurier: 46.583300, 0.333300 (opencage)
+✅ I'nett: 50.573900, 2.936300 (opencage)
+✅ Eric plomberie: 49.417000, 2.803200 (opencage)
+✅ Plessis services 14: 49.185900, -0.359100 (opencage)
+✅ Paulo Lydia 22: 47.316700, 5.016700 (opencage)
+✅ Poletti chaufage et sanitaire: 50.683300, 2.900000 (opencage)
+✅ Pierre Gazel: 43.637500, 5.640100 (opencage)
+✅ ALEX MULTI-SERVICE: 46.522000, -1.084800 (opencage)
+✅ Acelec42: 45.108500, 3.842500 (opencage)
+✅ a votre service elec 37: 47.386200, 0.748500 (opencage)
+✅ PRO HABITAT / Jean-Pierre LUCIA: 43.278900, 5.415200 (opencage)
+✅ Mohamed Bouhassoune 77: 48.745300, 2.464700 (opencage)
+✅ CEDAT: 43.966700, 4.533300 (opencage)
+✅ LA RENOV': 48.533300, 2.666700 (opencage)
+✅ Philippe Elec: 50.378500, 3.212800 (opencage)
+✅ PG MULTI-SERVICE: 39.867200, -105.004100 (opencage)
+✅ FUITES ASSISTANCE GIRONDE: 44.483300, -0.250000 (opencage)
+✅ AP-NETTOYAGE: 31.312800, -89.306900 (opencage)
+✅ L'atelier d'olivier: 33.544600, -86.929200 (opencage)
+✅ az therm: 47.750000, -3.366700 (opencage)
+✅ Plombier trav'eaux rénove: 47.283300, -2.200000 (opencage)
+✅ PRP: 47.328800, 1.457600 (opencage)
+✅ THP PLOMBERIE CONFORT: 44.911300, -0.390500 (opencage)
+✅ PLU YANN 35: 48.000000, 0.200000 (opencage)
+✅ Pierre multiservices: 48.848600, 2.437700 (opencage)
+✅ Cambo: 43.316700, -0.400000 (opencage)
+✅ PETRUNYAK Taras 92: 48.919400, 2.274800 (opencage)
+✅ TECNICLIM 77: 48.533300, 2.666700 (opencage)
+✅ multiservice: 45.165300, 5.763400 (opencage)
+✅ Elior: 49.498300, 1.154300 (opencage)
+✅ assistance dépannage rapide: 50.633000, 3.058600 (opencage)
+✅ Poirier Bertrand: 48.604700, -1.894000 (opencage)
+📊 Progress: 791 réussis, 259 échecs | 27.4 artisans/sec | 38.4s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Ad'net&innov: no address available, marking as failed.
+⚠️  SERVICES ENERGIES: no address available, marking as failed.
+⚠️  RAYMOND ELEC brest / NUL: no address available, marking as failed.
+⚠️  fuito: no address available, marking as failed.
+⚠️  Reda El Azouzi: no address available, marking as failed.
+⚠️  mr energies bordeaux: no address available, marking as failed.
+⚠️  neuilly et alentours: no address available, marking as failed.
+⚠️  Repar store melun: no address available, marking as failed.
+⚠️  repar'store: no address available, marking as failed.
+⚠️  Repar'store Brest: no address available, marking as failed.
+⚠️  reparstore: no address available, marking as failed.
+⚠️  Repar'stores Gradignan: no address available, marking as failed.
+⚠️  Orléans Répar'stores: no address available, marking as failed.
+⚠️  reparstore 06: no address available, marking as failed.
+✅ GP.MULTISERVICES: 45.766700, 4.883300 (opencage)
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1417,"reset":1761782400},"result
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1412,"reset":1761782400},"result
+✅ SP PEINTURE RENOVATION: 48.400000, -4.483300 (opencage)
+✅ Exeprece Propre: 43.098200, 5.884700 (opencage)
+✅ RB ACTION PROPRETE: 43.610900, 3.877200 (opencage)
+✅ th clean: 43.299056, 5.400591 (opencage)
+✅ Casanet: 46.093060, 5.483060 (opencage)
+✅ Repar store Nimes: 43.833300, 4.350000 (opencage)
+✅ MPJS: 49.185900, -0.359100 (opencage)
+✅ EFT Électricité: 48.098000, 7.303100 (opencage)
+✅ Elec gmr: 48.272800, 4.183500 (opencage)
+✅ CLEAR AND CLEAN 73: 45.552700, 5.911600 (opencage)
+✅ Composites Tech 13: 43.344500, 5.380000 (opencage)
+✅ repar store nantes: 42.547672, -1.355495 (nominatim)
+✅ PROD FERMETURES: 40.122500, -123.860400 (opencage)
+✅ Repar store 42: 45.665700, 4.029900 (opencage)
+✅ QTA electricité: 43.636300, 2.318800 (opencage)
+✅ Chasseur de fuite: 48.866700, 2.416700 (opencage)
+✅ BETTER PLACE: 44.450660, 7.858940 (opencage)
+✅ raphael et fils plomberie: 43.270800, 5.382100 (opencage)
+✅ R E B I A I D A H O U: 43.302100, 5.401400 (opencage)
+✅ rs multiservices: 32.930200, -80.002700 (opencage)
+✅ Raina Johan 06: 43.551300, 7.012800 (opencage)
+✅ Repar'stores saint nazaire: 47.276887, -2.240769 (opencage)
+✅ Regnat Daniel 76: 49.577100, 0.421100 (opencage)
+✅ RAIS SAMY: 48.841200, 2.387600 (opencage)
+✅ LA GOUTTE D EAU: 45.166700, 5.716700 (opencage)
+✅ Espace Bois et Nuances: 46.172800, 1.784900 (opencage)
+✅ RACHIDI BRAHIM: 48.900200, 2.309500 (opencage)
+✅ JR peinture 67: 48.518304, 7.717212 (opencage)
+✅ WHATEVERBUSINESS: 48.876300, 2.318300 (opencage)
+✅ TLF D'OC: 43.473800, 6.564500 (opencage)
+✅ MONSIEUR OLIVIER RENARD 58: 46.950000, 3.183300 (opencage)
+✅ REGELEC 34: 43.610900, 3.877200 (opencage)
+✅ Clairblue: 47.217300, -1.553400 (opencage)
+✅ Repar store 68: 48.111095, 7.363623 (nominatim)
+⚠️  atlantic home energie: no match found after 1 attempts, marking as failed.
+📊 Progress: 826 réussis, 274 échecs | 26.4 artisans/sec | 41.6s
+
+🔄 Processing batch of 50 artisans…
+⚠️  reparstore 91: no address available, marking as failed.
+⚠️  reparstore chartres: no address available, marking as failed.
+⚠️  Reparstore delville les rouens: no address available, marking as failed.
+⚠️  dijon Reparstore: no address available, marking as failed.
+⚠️  MTP Reparstore: no address available, marking as failed.
+⚠️  reparstore Perpignan: no address available, marking as failed.
+⚠️  reparstore pontoise: no address available, marking as failed.
+⚠️  Répar'stores Comines Tourcoing: no address available, marking as failed.
+⚠️  Resida Dibra: no address available, marking as failed.
+⚠️  Bricoi europe electricite: no address available, marking as failed.
+⚠️  ricaudrepart: no address available, marking as failed.
+⚠️  BIP BIP PLOMBERIE: no address available, marking as failed.
+⚠️  ROme didier: no address available, marking as failed.
+⚠️  Roth Alexandre: no address available, marking as failed.
+⚠️  Sarl Laeti'clean: no address available, marking as failed.
+⚠️  Dépannage plomberie 25: no address available, marking as failed.
+⚠️  Bellum Bestia: no address available, marking as failed.
+⚠️  Mario plomberie: no address available, marking as failed.
+⚠️  De verre et de glace: no address available, marking as failed.
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1398,"reset":1761782400},"result
+✅ Reparstore garche 92: 42.636457, -1.548956 (nominatim)
+✅ S.A.S La Goutte d’Eau: 44.832500, -0.633800 (opencage)
+✅ Romero Mathieu 67: 48.921900, 7.974500 (opencage)
+✅ TSAFACK ROMEO WILLIAMS(RT PLOMBIER CHAUFFAGE: 45.766700, 4.883300 (opencage)
+✅ r clean: 42.697600, 2.895400 (opencage)
+✅ Keypro conciergerie 17: 46.166700, -1.150000 (opencage)
+✅ ASPR PLOMBERIE CHAUFFAGE: 45.973330, 4.810830 (opencage)
+✅ ACCORD PLOMBERIE SUD: 47.281670, 8.450230 (opencage)
+✅ EI Ronceray Pierrick: 48.226200, -1.246900 (opencage)
+✅ AS plomberie chauffages: 40.632100, 17.936100 (opencage)
+✅ BEL ELEC 16: 45.650000, 0.150000 (opencage)
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1368,"reset":1761782400},"result
+✅ SY peinture: 47.845100, 2.031600 (opencage)
+✅ l'artians plombier: 48.583400, 7.743000 (opencage)
+✅ RK PLOMBERIE: 49.166300, -0.416600 (opencage)
+✅ LPDR: 48.892500, 2.344400 (opencage)
+✅ La menuiserie de Ronan: 48.845113, -1.483688 (opencage)
+✅ Artisans du logis positif: 46.188200, -1.063500 (opencage)
+✅ RBM PLOMBERIE: 48.998100, 1.631300 (opencage)
+✅ DPS recherche de fuite: 49.610300, 0.354700 (opencage)
+✅ ECO-DECO-RENOV: 48.778987, 2.041462 (opencage)
+✅ EK Plomberie: 43.833300, 4.350000 (opencage)
+✅ sparklean: 43.604300, 1.443700 (opencage)
+✅ JDT: 46.553100, 0.341900 (opencage)
+✅ RJ multiservices: 48.193300, 1.739100 (opencage)
+✅ MR MULTI SERVICE: 50.753300, 3.121300 (opencage)
+✅ LRF nettoyages: 47.390000, 0.670700 (opencage)
+✅ renov isol 33: 44.840400, -0.580500 (opencage)
+⚠️  jerem renov: no match found after 1 attempts, marking as failed.
+✅ Mayer: 49.265761, 0.981932 (opencage)
+✅ reparstore Pierre BRENAS: 47.386653, 0.688599 (nominatim)
+⚠️  SAS BRESTOVCI: no match found after 1 attempts, marking as failed.
+📊 Progress: 855 réussis, 295 échecs | 25.1 artisans/sec | 45.9s
+
+🔄 Processing batch of 50 artisans…
+⚠️  PEAU DE PEINTURE: no address available, marking as failed.
+⚠️  MITOMANE: no address available, marking as failed.
+⚠️  SMG elec: no address available, marking as failed.
+⚠️  SMDK ELEC: no address available, marking as failed.
+⚠️  Ban Amor Sami: no address available, marking as failed.
+⚠️  Saoudi Sofiane: no address available, marking as failed.
+⚠️  Sautejeau: no address available, marking as failed.
+⚠️  sbeastien multiservice: no address available, marking as failed.
+⚠️  Sébastien Corbel: no address available, marking as failed.
+⚠️  cornec sebastien: no address available, marking as failed.
+⚠️  Martin Peinture: no address available, marking as failed.
+⚠️  seb elec 37: no address available, marking as failed.
+✅ lherm plomberie: 43.459500, 1.245300 (opencage)
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1351,"reset":1761782400},"result
+✅ SZ PLOMBERIE: 48.684400, 6.185000 (opencage)
+✅ Acces et fermeture: 45.761100, 4.826800 (opencage)
+✅ le plombier du hdf: 51.024720, 2.390830 (opencage)
+✅ SC multiservices: 45.831500, 1.257800 (opencage)
+✅ satisfait service 64: 39.036100, -94.572200 (opencage)
+✅ Atelier paca: 43.562400, 7.127800 (opencage)
+✅ BRS etanchéité: 47.248800, 6.018200 (opencage)
+✅ svp services 67: 48.583400, 7.743000 (opencage)
+✅ SARL Beaudout Eddie: 45.250000, 0.250000 (opencage)
+✅ Multi services urban: 47.466700, -0.550000 (opencage)
+✅ CPR Bat: 48.934100, 2.435800 (opencage)
+✅ expert hygiene: 48.861878, 2.337414 (nominatim)
+✅ START AUTO 33: 44.874900, -0.517800 (opencage)
+✅ SAMUEL LAMBERGER: 45.834700, 1.327600 (opencage)
+✅ GS: 43.554000, 1.534100 (opencage)
+✅ SEB MULTI SERVICES: 42.697600, 2.895400 (opencage)
+✅ DISD platrerie peinture: 45.770600, 3.196100 (opencage)
+✅ Mas plomberie: 43.604300, 1.443700 (opencage)
+✅ Marine multiservices: 45.176800, 5.693900 (opencage)
+✅ NKS Multi services: 48.689100, 6.245900 (opencage)
+✅ atlas service de nettoyage: 48.463700, 1.877500 (opencage)
+✅ MONSIEUR SAMIR SAIB: 45.397707, 4.327900 (opencage)
+✅ Sarah Sharobeem: 47.902900, 1.903900 (opencage)
+✅ sebastien hody 66: 42.566500, 2.903100 (opencage)
+✅ 2hr habitat rénovation trop long: 48.622200, 7.755500 (opencage)
+✅ Sassi Maroua 69: 45.702500, 4.871500 (opencage)
+✅ C.S MULTISERVICES: 43.270800, 5.382100 (opencage)
+✅ L'artizan: 48.000000, 0.200000 (opencage)
+✅ A Tous Services: 46.093100, 6.216900 (opencage)
+✅ polymade: 46.006200, 5.998600 (opencage)
+✅ SAPIC MULTISERVICES: 47.400000, -0.550000 (opencage)
+✅ SABERT PLOMBERIE: 44.981200, -0.602500 (opencage)
+✅ pro-pose deckert: 48.539118, 7.783541 (opencage)
+✅ tima: 50.633000, 3.058600 (opencage)
+✅ NET-ECO: 48.822900, 2.217600 (opencage)
+✅ SAMIR YOUSFI: 48.812500, 2.048600 (opencage)
+⚠️  Uni'verre: no match found after 1 attempts, marking as failed.
+📊 Progress: 892 réussis, 308 échecs | 24.8 artisans/sec | 48.4s
+
+🔄 Processing batch of 50 artisans…
+⚠️  Steven Derrien: no address available, marking as failed.
+⚠️  Suarez: no address available, marking as failed.
+⚠️  Alsacace volets roulants: no address available, marking as failed.
+⚠️  niort la rochelle: no address available, marking as failed.
+⚠️  Tamerni yakine: no address available, marking as failed.
+⚠️  Sanichauffe pro: no address available, marking as failed.
+✅ S V Chauffage: 48.066700, -0.766700 (opencage)
+✅ SULEYMAN CUMUR: 48.983300, 2.416700 (opencage)
+✅ Sud fuite (recherche de fuite caméra ect...): 43.929800, 2.148000 (opencage)
+✅ Mister Home Multiservices: 44.933300, 1.233300 (opencage)
+✅ ENTREPRISE RIVIERE: 28.067000, -82.778400 (opencage)
+✅ Skart renov: 48.751500, 2.511600 (opencage)
+✅ h2z eau: 49.466700, 1.183300 (opencage)
+✅ SKN SERVICE ( société FERMÉ): 48.633300, 2.450000 (opencage)
+✅ JS carrelage alsace: 48.370600, 7.593700 (opencage)
+✅ Sylvain LODS 27: 49.083200, 1.207300 (opencage)
+✅ Docteur nuisible 3D: 48.938700, 2.461400 (opencage)
+✅ S.T SERVICES & CO: 48.879200, 2.138400 (opencage)
+✅ EI.SMAD4NET / DJAVGARAT CHEIKHOVA: 47.217300, -1.553400 (opencage)
+✅ ERA PROPRE: 47.248800, 6.018200 (opencage)
+✅ ARYA HABITAT 37: 47.383300, 0.683300 (opencage)
+✅ Rémy artisan: 48.841200, 2.300300 (opencage)
+✅ Stéphane Galati: 47.947900, 7.380900 (opencage)
+✅ TECHNI'GAZ76: 49.493800, 0.107700 (opencage)
+✅ duboy multiservice: 44.879800, -0.612200 (opencage)
+✅ JÉROME SYLVESTRE: 46.583300, 0.333300 (opencage)
+✅ Rapide plomberie: 43.620500, 4.069200 (opencage)
+✅ KYAN PLOMBERIE (chere): 46.349900, 6.619600 (opencage)
+✅ STORE 2000: 48.832200, 2.356100 (opencage)
+✅ Soraya Bachiri: 49.512100, 4.300900 (opencage)
+✅ Serrure Et Clef 68: 47.588400, 7.562500 (opencage)
+✅ SP eco-propreté: 38.520050, -89.983990 (opencage)
+✅ reso renov et solution: 47.318200, -2.075400 (opencage)
+✅ INTER ELECT 37: 47.383300, 0.683300 (opencage)
+✅ Sylvain Kuchta: 43.237300, 6.071100 (opencage)
+✅ SEVENO CEDRIC: 48.634800, 2.308300 (opencage)
+✅ Techplus: 45.775600, 3.063100 (opencage)
+✅ L'ATELIER DES BRUYERES: 45.736900, 4.796900 (opencage)
+✅ SERRURERIE 06 - HYGIENE PRO: 43.551300, 7.012800 (opencage)
+✅ Top nettoyage: 45.831500, 1.257800 (opencage)
+✅ SCM 73 MULTI SERVICE: 45.612800, 6.436500 (opencage)
+✅ TD plomberie ITS: 45.758100, 5.067200 (opencage)
+✅ KS renov 57: 49.094400, 6.151700 (opencage)
+✅ NET-EXPERT42: 45.433300, 4.400000 (opencage)
+✅ Stankovic Tomislav: 48.938549, 2.463148 (opencage)
+✅ Gard Eau Chaud et Froid: 43.833300, 4.350000 (opencage)
+✅ eurl surhomme réno: 49.371400, 2.450800 (opencage)
+✅ Sani depanne: 47.588400, 7.562500 (opencage)
+⚠️  setila plomberie: no match found after 1 attempts, marking as failed.
+⚠️  STÉPHANE DÉPANNAGE: no match found after 1 attempts, marking as failed.
+📊 Progress: 934 réussis, 316 échecs | 23.8 artisans/sec | 52.6s
+
+🔄 Processing batch of 50 artisans…
+⚠️  eddy Vignier: no address available, marking as failed.
+⚠️  Vincent Bruille: no address available, marking as failed.
+⚠️  VuKovic Danilo: no address available, marking as failed.
+⚠️  Walid Ayari: no address available, marking as failed.
+⚠️  Walter Heraut IDF: no address available, marking as failed.
+⚠️  France Depann: no address available, marking as failed.
+⚠️  WB.Multi Renov': no address available, marking as failed.
+⚠️  domo-services: no address available, marking as failed.
+⚠️  k y propreté: no address available, marking as failed.
+✅ MONSIEUR THIERRY MARTIN: 47.955200, 2.302300 (opencage)
+✅ Vignon Maxime: 48.246500, -1.725000 (opencage)
+✅ ADR CLIM: 43.948300, 4.808900 (opencage)
+✅ Yannick Decroi: 47.150000, 23.866670 (opencage)
+✅ Pearlclean83 PEINTURE ET MENAGE: 43.116700, 5.933300 (opencage)
+✅ Lou WINTERSTEIN: 47.316700, 5.016700 (opencage)
+✅ Yevhenii KHLODNIAK: 45.900000, 6.100000 (opencage)
+✅ ADRIBAT 59: 50.100600, 3.634000 (opencage)
+✅ Compagny des deboucheurs: 46.942500, 5.014500 (opencage)
+✅ Yeta Renov: 49.016700, 2.100000 (opencage)
+✅ KD SERRURERIE: 48.545300, 1.173100 (opencage)
+✅ SARL VINCENT DUGAST: 48.400000, -4.483300 (opencage)
+✅ PROXIMIX MULTISERVICES: 48.118570, -1.754660 (opencage)
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1167,"reset":1761782400},"result
+✅ VSTP 71: 46.339300, 4.830500 (opencage)
+✅ SG Multiservices: 47.587800, 7.445500 (opencage)
+✅ TECHASTRAL: 48.924300, 2.212800 (opencage)
+✅ Xavier Novkovic: 45.585600, 5.243100 (opencage)
+✅ l'effet plombier 66: 42.524200, 2.833400 (opencage)
+✅ Océa nettoyage: 49.132900, 6.202400 (opencage)
+✅ YANN ENERGIES: 43.448500, 3.754000 (opencage)
+✅ Menuiserie Dema: 43.758600, 7.318800 (opencage)
+✅ MULTI PRO ELEC: 43.604300, 1.443700 (opencage)
+✅ SARL SOS VOLETS BEARN: 43.416700, -0.550000 (opencage)
+✅ Le jardin ensoleillé: 49.586100, 0.983600 (opencage)
+✅ MONSIEUR VINCENT MICHALAK: 48.885400, 2.434800 (opencage)
+✅ Aquaservice: 48.003000, 7.512700 (opencage)
+✅ Confort travaux: 43.288900, 5.364800 (opencage)
+✅ SAINT SERVICES: 48.976700, 2.327200 (opencage)
+✅ Harmony service: 48.778890, 6.354720 (opencage)
+✅ DMZ FACILITY/SOAPPY: 48.853700, 2.549000 (opencage)
+✅ Prozalys service (FAIT PAS LES INTER REP PAS AU TEL): 49.409700, 1.090100 (opencage)
+✅ WISSEM BEN ABDALLAH: 50.366700, 3.066700 (opencage)
+✅ vitet antoine 17: 46.166700, -1.150000 (opencage)
+✅ Yacine BENNIA 93/ IDF: 48.879900, 2.420600 (opencage)
+✅ Cpm confort: 48.940236, 2.583228 (opencage)
+✅ Viollet Jonathan: 45.650000, 0.150000 (opencage)
+✅ vincent ghestem: 45.920300, 6.687700 (opencage)
+✅ THERMOCEANE: 47.255536, -2.271971 (opencage)
+✅ Yaiche 54: 48.693722, 6.183410 (opencage)
+✅ fabio vairelle: 46.936083, 32.059165 (nominatim)
+⚠️  Menage BLV: no match found after 1 attempts, marking as failed.
+📊 Progress: 974 réussis, 326 échecs | 22.6 artisans/sec | 57.4s
+
+🔄 Processing batch of 50 artisans…
+⚠️  542b84b2-59cf-4551-929d-0128526f2f71: no address available, marking as failed.
+⚠️  a8224a97-6abe-4adc-be10-37fcc8024b86: no address available, marking as failed.
+⚠️  34f41ff3-3999-4f0c-b008-f1bbea7b769c: no address available, marking as failed.
+⚠️  40e89247-5a21-442b-b560-da8edededb42: no address available, marking as failed.
+⚠️  cde457df-7ad1-4bf1-aa6d-2732b8539397: no address available, marking as failed.
+⚠️  66ca7068-3863-4567-b3c4-d1657d0f6f90: no address available, marking as failed.
+⚠️  f8e5b21d-48f9-4dd5-b5c9-06b2a0c4864c: no address available, marking as failed.
+⚠️  38cff77a-0b26-4eeb-b3f4-5231645ec8c8: no address available, marking as failed.
+⚠️  b7ce62fa-7ed7-4b9d-a8e8-0ad9dafbe07f: no address available, marking as failed.
+⚠️  e7ac60a6-8bf2-42ba-962a-4c833ea9f5ed: no address available, marking as failed.
+⚠️  c5169c8e-9179-48de-ba27-2ccfeb5d3305: no address available, marking as failed.
+⚠️  e8acb454-1bfa-4bb3-9fb4-59134157e1a8: no address available, marking as failed.
+⚠️  979c9191-2874-489f-b858-e00ee367e376: no address available, marking as failed.
+⚠️  e0b79b2a-8c96-48d5-82b3-87461c5f197e: no address available, marking as failed.
+⚠️  6e58d7d0-4b29-4d7c-9558-f0ca01d0fd8d: no address available, marking as failed.
+⚠️  81727e3d-a118-4826-828d-4845ee820d7b: no address available, marking as failed.
+⚠️  d942d772-25bf-4e86-9d7e-10bf3ad3f302: no address available, marking as failed.
+⚠️  55520401-66f2-45ef-9e4b-4f5c0bb14830: no address available, marking as failed.
+⚠️  7cd2fbd0-1531-4437-a889-847d5837a584: no address available, marking as failed.
+⚠️  4b2c3f01-dcf5-48e9-984d-8a99d782aeb0: no address available, marking as failed.
+⚠️  dff404bd-acb5-4212-ae90-6e7783cb617b: no address available, marking as failed.
+⚠️  2d6ba2d6-218b-4c52-8621-c1f26c75f53e: no address available, marking as failed.
+⚠️  b4ad9965-e1f0-4ea1-96c4-677b6fd6fcb8: no address available, marking as failed.
+⚠️  80fcbbed-3164-415e-869b-361e5c1bff4b: no address available, marking as failed.
+⚠️  f3cd91fd-87ca-499d-8447-c523170d362c: no address available, marking as failed.
+⚠️  6696c8ae-57da-4b69-9f15-6f0f895b07dd: no address available, marking as failed.
+⚠️  1dae21f8-4abe-4e0a-9d1d-45598ad2e698: no address available, marking as failed.
+⚠️  d1b1b4b9-012f-4675-a231-03ccf6abe28d: no address available, marking as failed.
+⚠️  1489c963-4dc5-4c03-9bb3-d23062e0f436: no address available, marking as failed.
+⚠️  37fd5fc8-1600-453b-8ad8-fa4b25ee8b47: no address available, marking as failed.
+⚠️  97be0c4e-7a3f-4a2a-84d6-c60835adf194: no address available, marking as failed.
+⚠️  da689e4d-4d54-48ff-b57c-df91f5b85cf0: no address available, marking as failed.
+⚠️  71e446b3-44cb-4a79-8470-aaa928e50ce4: no address available, marking as failed.
+⚠️  c2e22e9d-16ef-406c-9eeb-e0d8b949e27a: no address available, marking as failed.
+⚠️  af2efa8d-388b-47d8-afa3-11312b8a572d: no address available, marking as failed.
+⚠️  726df1e5-59d9-40bd-a2d7-bd201c130cc4: no address available, marking as failed.
+⚠️  9e3b48dc-0aaa-4816-9fcd-75a3804b49f7: no address available, marking as failed.
+⚠️  b133350e-fc7a-42db-a706-0d769c74f7b3: no address available, marking as failed.
+⚠️  e8bd2ff7-e977-400b-ad4a-cc7fd76f491b: no address available, marking as failed.
+⚠️  8f3d8553-a7e4-468b-a279-8fcde2807636: no address available, marking as failed.
+⚠️  dba9e506-9769-4c1e-a6a5-c24874661dba: no address available, marking as failed.
+⚠️  ebbe358e-9ae2-49a4-844f-53794eac3db3: no address available, marking as failed.
+⚠️  223460a0-6564-4df4-a5d8-65b8adec3a9d: no address available, marking as failed.
+⚠️  cf099cbd-c3f0-4570-8b16-63d74dc3bbce: no address available, marking as failed.
+⚠️  e61d22bc-7d9d-40b1-a2bb-fb4f0c8b3863: no address available, marking as failed.
+⚠️  5165a3e2-b055-43ca-a958-e327e3db5f51: no address available, marking as failed.
+⚠️  aba63706-74eb-453d-b60b-c2885335f9ec: no address available, marking as failed.
+⚠️  11dbb1cd-729d-4282-8642-4b2ed9b97394: no address available, marking as failed.
+✅ Yilmaz Elec: 48.003000, 7.512700 (opencage)
+✅ PLB blot: 47.286500, -2.030500 (opencage)
+📊 Progress: 976 réussis, 374 échecs | 22.9 artisans/sec | 59.0s
+
+🔄 Processing batch of 50 artisans…
+⚠️  31e84ce9-d75a-41e6-8d79-cac15058062c: no address available, marking as failed.
+⚠️  d632c850-97b1-4b48-af5f-e9f614a54d64: no address available, marking as failed.
+⚠️  35d21243-a34b-45b1-8097-c678eb5b73cf: no address available, marking as failed.
+⚠️  a0710b55-34fd-473b-bbd9-9c931da0fe9d: no address available, marking as failed.
+⚠️  d662d084-6aa9-4f77-a212-5251776c5045: no address available, marking as failed.
+⚠️  c6fe911a-2cbb-4098-bba2-1ca62ebc9a78: no address available, marking as failed.
+⚠️  c69e9bca-61be-48db-a773-35ccb130496f: no address available, marking as failed.
+⚠️  15393b45-d2de-4c1d-800b-855891722872: no address available, marking as failed.
+⚠️  636c0d15-0aa6-4210-addf-803c4b69d121: no address available, marking as failed.
+⚠️  561d81ac-bb57-4de1-9942-b5851fbd5551: no address available, marking as failed.
+⚠️  1ec8776b-1e71-45dc-86c1-f4f2705f96d5: no address available, marking as failed.
+⚠️  47a881fb-ebed-4e38-8801-9ec43864b79e: no address available, marking as failed.
+⚠️  ec2c7241-1919-4293-97ac-6161c99e420e: no address available, marking as failed.
+⚠️  a22ca977-65b4-43fb-861b-96c17efc7a5a: no address available, marking as failed.
+⚠️  2200402e-55ad-4383-9be7-da77d3026d2c: no address available, marking as failed.
+⚠️  78bd18b4-d849-463e-892d-56fa4e94c725: no address available, marking as failed.
+⚠️  75968854-836a-4133-baab-d8d9392b6b02: no address available, marking as failed.
+⚠️  49881c69-5a16-4597-b2ee-54c268e6ed51: no address available, marking as failed.
+⚠️  de0bc8ec-599f-40b5-a304-0df0532bb38c: no address available, marking as failed.
+⚠️  61fbf894-ab41-40f2-9dcc-ccde486fbae1: no address available, marking as failed.
+⚠️  6cb10644-f101-4de1-a17f-83bc7e2ed041: no address available, marking as failed.
+⚠️  684aa6d5-5c81-41dc-a35c-7e6f255473e1: no address available, marking as failed.
+⚠️  e3f1c16d-5462-4092-8c2b-36117cc018ba: no address available, marking as failed.
+⚠️  19ce3b0a-28ae-457d-9b84-080b487271ed: no address available, marking as failed.
+⚠️  f9bae3e1-0b3c-47e3-9ca5-70e2519680b7: no address available, marking as failed.
+⚠️  65504835-3832-4984-81aa-8468c991f396: no address available, marking as failed.
+⚠️  ba321474-8c75-4be8-8798-ec86bea4c547: no address available, marking as failed.
+⚠️  26aa94c1-7e88-4330-8fab-0a3a72314ce1: no address available, marking as failed.
+⚠️  48bbc9b9-a9fc-4f18-b7f8-ed2e84ad5e99: no address available, marking as failed.
+⚠️  d5519e6d-ef9d-44d4-afb0-593dcc49003a: no address available, marking as failed.
+⚠️  2824ffed-94c3-49da-b623-a15c8f6a1806: no address available, marking as failed.
+⚠️  853a733e-c2d0-4bbb-bcf3-4dfe9ba6b6fa: no address available, marking as failed.
+⚠️  f685c1c2-ffc6-425c-8053-066b745266bc: no address available, marking as failed.
+⚠️  18ef66ce-87a8-4ae2-bd74-9ed15412734c: no address available, marking as failed.
+⚠️  ce728905-6a7b-4864-a9ee-480493fd665d: no address available, marking as failed.
+⚠️  a076ba95-fbb7-4789-b93c-1da2c2e558de: no address available, marking as failed.
+⚠️  58b8ac1f-f518-42b0-a743-af109f6cc579: no address available, marking as failed.
+⚠️  836daa4f-01bf-4539-9733-07ca936e31b8: no address available, marking as failed.
+⚠️  49416b99-21d2-43f1-baca-cf1b74984699: no address available, marking as failed.
+⚠️  bb223f14-89f2-491a-b32f-219687ea7146: no address available, marking as failed.
+⚠️  0677eb18-559b-44b0-a1f4-1d122de2eea7: no address available, marking as failed.
+⚠️  00e5f5a8-a5f6-42eb-a281-931d05b1ed4b: no address available, marking as failed.
+⚠️  69f2859b-da65-46e3-a042-e05256144c9d: no address available, marking as failed.
+⚠️  55f0179f-87ff-4a3b-a8a9-fb0a3646e7af: no address available, marking as failed.
+⚠️  7a498ece-eb01-48e9-9a47-54dbbcc60854: no address available, marking as failed.
+⚠️  71b30888-dcc1-4913-b920-5c9a1a55774f: no address available, marking as failed.
+⚠️  956abfda-ed45-4bd1-8015-e7953df484b2: no address available, marking as failed.
+⚠️  33082452-323f-40da-a422-dfc8fa432c75: no address available, marking as failed.
+[geocode] OpenCage failed (400): {"documentation":"https://opencagedata.com/api","licenses":[{"name":"see attribution guide","url":"https://opencagedata.com/credits"}],"rate":{"limit":2500,"remaining":1131,"reset":1761782400},"result
+✅ EH CREATION: 45.450992, 4.389619 (opencage)
+✅ fabio vairelle: 46.936083, 32.059165 (nominatim)
+📊 Progress: 978 réussis, 422 échecs | 23.0 artisans/sec | 60.8s
+
+
+✨ Terminé en 60.8s !
+   ✅ 978 artisans géocodés avec succès
+   ❌ 422 artisans en échec (voir scripts/geocode-failed-artisans.txt)

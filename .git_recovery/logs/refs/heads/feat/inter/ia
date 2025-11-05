@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 bdec37d060f1289e0328d4eb85c2d2728bb56b6e BarBar-DD <andre.bertea92@gmail.com> 1758627582 +0200	branch: Created from HEAD
+bdec37d060f1289e0328d4eb85c2d2728bb56b6e b220b0d30d3a63d0322c1d8a2313e964fc76ac3c BarBar-DD <andre.bertea92@gmail.com> 1758640296 +0200	commit: feat(ai): module IA global avec actions et vues persistées
+b220b0d30d3a63d0322c1d8a2313e964fc76ac3c 720d6b52ebddabc27272ade7c06dc40c5137fc57 BarBar-DD <andre.bertea92@gmail.com> 1758641286 +0200	commit: docs: ajout README complet du module IA global
+720d6b52ebddabc27272ade7c06dc40c5137fc57 69eb85aaa608faf53a1de2cc8431a885d0ea1c4f BarBar-DD <andre.bertea92@gmail.com> 1758727412 +0200	commit: fix: Corriger le mode fullpage pour qu'il prenne vraiment tout l'écran
+69eb85aaa608faf53a1de2cc8431a885d0ea1c4f 720d6b52ebddabc27272ade7c06dc40c5137fc57 BarBar-DD <andre.bertea92@gmail.com> 1758727774 +0200	reset: moving to HEAD~1
+720d6b52ebddabc27272ade7c06dc40c5137fc57 fb901dbd6eddfbdd01c0991b62335bc067f526dd BarBar-DD <andre.bertea92@gmail.com> 1758727778 +0200	commit: fix: fullpage mode covers full screen

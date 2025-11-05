@@ -1,0 +1,2833 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "@/styles/tokens.css";
+
+/* === Glass Effect (scoped and optimized) === */
+.theme-glass {
+  background-color: var(--glass-bg, #0a0a0a);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px) saturate(1.08);
+  -webkit-backdrop-filter: blur(10px) saturate(1.08);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px) saturate(1.12);
+  -webkit-backdrop-filter: blur(12px) saturate(1.12);
+}
+
+@supports not ((backdrop-filter: blur(2px))) {
+  .glass-panel, .glass-strong {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-gradient, [data-animated-bg="true"], .theme-glass {
+    animation: none !important;
+    background-position: center !important;
+  }
+}
+
+/* Hide scrollbars for nicer chat scrolling while keeping scrollability */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Hide scrollbars for view tabs navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Styles spécifiques pour le scroll horizontal dans les contenus riches */
+.chat-content-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+.chat-content-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.chat-content-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-content-scroll::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.chat-content-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Animation pour les gradients dynamiques */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@layer base {
+  :root {
+    /* Table responsive height - ajustez selon vos besoins */
+    --table-view-offset: 200px; /* Espace pour header, tabs, filtres, padding */
+    
+    /* Surface neutrals */
+    --bg-dark-hsl: 210 6% 92%;
+    --bg-hsl: 210 6% 96%;
+    --bg-light-hsl: 210 10% 99%;
+
+    --bg-dark: oklch(0.92 0.01 240);
+    --bg: oklch(0.96 0.01 240);
+    --bg-light: oklch(0.99 0.004 240);
+
+    /* Text */
+    --text-hsl: 220 15% 14%;
+    --text-muted-hsl: 220 10% 40%;
+    --text: oklch(0.18 0.03 260);
+    --text-muted: oklch(0.45 0.02 260);
+
+    /* Borders & highlights */
+    --border-hsl: 210 10% 96%;
+    --highlight-hsl: 210 12% 97%;
+    --border: oklch(0.96 0.004 240);
+    --highlight: oklch(0.97 0.004 240);
+
+    /* Accent */
+    --accent-hsl: 270 75% 36%;
+    --accent-color: oklch(0.55 0.21 300);
+    --accent-color-light: oklch(0.78 0.18 300);
+
+    /* Semantic */
+    --success: oklch(0.68 0.18 130);
+    --success-bg: oklch(0.92 0.04 130);
+    --success-hsl: 134 63% 44%;
+    --success-bg-hsl: 132 56% 90%;
+
+    --error: oklch(0.55 0.23 20);
+    --error-bg: oklch(0.92 0.06 20);
+    --error-hsl: 12 88% 54%;
+    --error-bg-hsl: 12 80% 94%;
+
+    --warning: oklch(0.72 0.20 85);
+    --warning-bg: oklch(0.94 0.05 85);
+    --warning-hsl: 40 92% 58%;
+    --warning-bg-hsl: 40 92% 92%;
+
+    --info: oklch(0.60 0.19 240);
+    --info-bg: oklch(0.91 0.04 240);
+    --info-hsl: 222 84% 56%;
+    --info-bg-hsl: 222 92% 94%;
+
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.10);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.10), 0 6px 12px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.12), 0 12px 20px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 12px rgba(0, 0, 0, 0.14), 0 24px 32px rgba(0, 0, 0, 0.10);
+    --shadow-xl: 0 12px 16px rgba(0, 0, 0, 0.16), 0 32px 48px rgba(0, 0, 0, 0.12);
+
+    --shadow-inset-top: inset 0 1px 0 var(--highlight);
+    --shadow-inset-sunken: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+
+    /* Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    /* Transitions */
+    --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: 150ms;
+    --transition-base: 250ms;
+    --transition-slow: 350ms;
+
+    /* Overlay */
+    --backdrop-color: rgba(0, 0, 0, 0.40);
+
+    /* Shadcn tokens */
+    --background: var(--bg-hsl);
+    --foreground: var(--text-hsl);
+    --card: var(--bg-light-hsl);
+    --card-foreground: var(--text-hsl);
+    --popover: var(--bg-light-hsl);
+    --popover-foreground: var(--text-hsl);
+    --primary: var(--accent-hsl);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--bg-dark-hsl);
+    --secondary-foreground: var(--text-hsl);
+    --muted: var(--bg-dark-hsl);
+    --muted-foreground: var(--text-muted-hsl);
+    --accent: var(--accent-hsl);
+    --accent-foreground: 0 0% 100%;
+    --destructive: var(--error-hsl);
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--border-hsl);
+    --input: var(--border-hsl);
+    --ring: var(--accent-hsl);
+    --radius: var(--radius-md);
+
+    --chart-1: 300 65% 52%;
+    --chart-2: 130 60% 48%;
+    --chart-3: 20 78% 54%;
+    --chart-4: 210 60% 46%;
+    --chart-5: 48 92% 60%;
+
+    --sidebar-background: var(--bg-dark-hsl);
+    --sidebar-foreground: var(--text-hsl);
+    --sidebar-primary: var(--bg-hsl);
+    --sidebar-primary-foreground: var(--text-hsl);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 8% 84%;
+    --sidebar-ring: var(--accent-hsl);
+
+    --card-shadow: var(--shadow-sm);
+
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    --bg-dark-hsl: 220 14% 8%;
+    --bg-hsl: 220 12% 16%;
+    --bg-light-hsl: 220 10% 24%;
+
+    --bg-dark: oklch(0.10 0.02 260);
+    --bg: oklch(0.18 0.02 260);
+    --bg-light: oklch(0.24 0.02 260);
+
+    --text-hsl: 0 0% 96%;
+    --text-muted-hsl: 220 12% 66%;
+    --text: oklch(0.96 0.01 260);
+    --text-muted: oklch(0.72 0.02 260);
+
+    --border-hsl: 220 12% 30%;
+    --highlight-hsl: 220 16% 36%;
+    --border: oklch(0.32 0.02 260);
+    --highlight: oklch(0.38 0.02 260);
+
+    --accent-hsl: 270 58% 68%;
+    --accent-color: oklch(0.74 0.20 300);
+    --accent-color-light: oklch(0.82 0.16 300);
+
+    --success: oklch(0.72 0.16 130);
+    --success-bg: oklch(0.28 0.05 130);
+    --success-hsl: 140 64% 62%;
+    --success-bg-hsl: 140 36% 26%;
+
+    --error: oklch(0.66 0.21 20);
+    --error-bg: oklch(0.28 0.07 20);
+    --error-hsl: 8 78% 64%;
+    --error-bg-hsl: 8 60% 28%;
+
+    --warning: oklch(0.76 0.18 85);
+    --warning-bg: oklch(0.32 0.06 85);
+    --warning-hsl: 42 88% 64%;
+    --warning-bg-hsl: 42 56% 30%;
+
+    --info: oklch(0.70 0.16 240);
+    --info-bg: oklch(0.26 0.06 240);
+    --info-hsl: 220 78% 70%;
+    --info-bg-hsl: 220 60% 28%;
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.18);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.22), 0 8px 14px rgba(0, 0, 0, 0.16);
+    --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.26), 0 16px 28px rgba(0, 0, 0, 0.18);
+    --shadow-lg: 0 10px 18px rgba(0, 0, 0, 0.30), 0 28px 40px rgba(0, 0, 0, 0.20);
+    --shadow-xl: 0 14px 24px rgba(0, 0, 0, 0.34), 0 36px 56px rgba(0, 0, 0, 0.24);
+
+    --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --shadow-inset-sunken: inset 0 2px 4px rgba(0, 0, 0, 0.20);
+
+    --backdrop-color: rgba(0, 0, 0, 0.65);
+
+    --background: var(--bg-hsl);
+    --foreground: var(--text-hsl);
+    --card: var(--bg-light-hsl);
+    --card-foreground: var(--text-hsl);
+    --popover: var(--bg-light-hsl);
+    --popover-foreground: var(--text-hsl);
+    --primary: var(--accent-hsl);
+    --primary-foreground: 220 24% 12%;
+    --secondary: 220 14% 24%;
+    --secondary-foreground: var(--text-hsl);
+    --muted: 220 14% 26%;
+    --muted-foreground: var(--text-muted-hsl);
+    --accent: var(--accent-hsl);
+    --accent-foreground: 220 24% 12%;
+    --destructive: var(--error-hsl);
+    --destructive-foreground: 0 0% 98%;
+    --border: var(--border-hsl);
+    --input: var(--border-hsl);
+    --ring: var(--accent-hsl);
+    --card-shadow: var(--shadow-sm);
+
+    --sidebar-background: 220 16% 12%;
+    --sidebar-foreground: var(--text-hsl);
+    --sidebar-primary: var(--bg-hsl);
+    --sidebar-primary-foreground: var(--text-hsl);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: 220 24% 12%;
+    --sidebar-border: 220 14% 26%;
+    --sidebar-ring: var(--accent-hsl);
+
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after {
+    @apply border-border;
+    transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: var(--transition-base);
+    transition-timing-function: var(--transition-easing);
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: var(--bg);
+    color: var(--text);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 6%),
+      var(--bg-light)
+    );
+    border: 1px solid hsl(var(--border));
+    box-shadow: inset 0 1px 0 var(--highlight), var(--shadow-sm);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    transition:
+      box-shadow var(--transition-base) var(--transition-easing),
+      background-image var(--transition-base) var(--transition-easing);
+  }
+
+  .card:hover {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      var(--bg-light)
+    );
+    box-shadow: inset 0 1px 0 var(--highlight), var(--shadow-md);
+  }
+
+  .button-primary,
+  .shadcn-button[data-variant="default"] {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), white 10%),
+      var(--accent-color)
+    );
+    border: 1px solid color-mix(in oklab, var(--accent-color), black 10%);
+    color: white;
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--accent-color), white 30%), var(--shadow-sm);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    transition:
+      transform var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-base) var(--transition-easing),
+      background var(--transition-base) var(--transition-easing);
+  }
+
+  .button-primary:hover,
+  .shadcn-button[data-variant="default"]:hover {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), white 14%),
+      var(--accent-color)
+    );
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--accent-color), white 30%), var(--shadow-md);
+  }
+
+  .button-primary:active,
+  .shadcn-button[data-variant="default"]:active {
+    transform: translateY(0);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--accent-color), white 30%), var(--shadow-xs);
+  }
+
+  .button-secondary,
+  .shadcn-button[data-variant="outline"],
+  .shadcn-button[data-variant="secondary"] {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 6%),
+      var(--bg-light)
+    );
+    border: 1px solid hsl(var(--border));
+    color: var(--text);
+    box-shadow: inset 0 1px 0 var(--highlight), var(--shadow-xs);
+    border-radius: var(--radius-md);
+    transition:
+      transform var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-base) var(--transition-easing),
+      background-image var(--transition-base) var(--transition-easing);
+  }
+
+  .button-secondary:hover,
+  .shadcn-button[data-variant="outline"]:hover,
+  .shadcn-button[data-variant="secondary"]:hover {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      var(--bg-light)
+    );
+    box-shadow: inset 0 1px 0 var(--highlight), var(--shadow-sm);
+  }
+
+  .button-primary:disabled,
+  .button-secondary:disabled,
+  .shadcn-button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .data-table-wrapper {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), black 3%),
+      color-mix(in oklab, var(--bg-light), white 2%)
+    );
+    border-radius: calc(var(--radius-lg) + 2px);
+    border: 1px solid color-mix(in oklab, var(--border), black 10%);
+    /* Effet enfoncé/gravé - ombres internes pour donner l'impression d'une surface creusée */
+    box-shadow:
+      inset 2px 5px 15px rgba(0, 0, 0, 0.08),
+      inset -2px -2px 8px rgba(255, 255, 255, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 1px;
+    overflow: visible;
+  }
+
+  .card-table-wrapper {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 6%),
+      var(--bg-light)
+    );
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  :root[data-theme="dark"] .card-table-wrapper {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 4%),
+      var(--bg-light)
+    );
+    border: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .data-table thead {
+    border-bottom: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      0 2px 4px rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 12%),
+      color-mix(in oklab, var(--bg-light), white 2%)
+    );
+    backdrop-filter: blur(12px);
+  }
+
+  :root[data-theme="dark"] .data-table thead {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), black 12%),
+      color-mix(in oklab, var(--bg-light), black 4%)
+    );
+    border-bottom: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      0 2px 4px rgba(0, 0, 0, 0.16);
+  }
+
+  .data-table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 14px 18px;
+    text-align: left;
+    position: relative;
+  }
+
+  .data-table th:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 30%;
+    bottom: 30%;
+    width: 1px;
+    background: hsl(var(--border));
+    opacity: 0.5;
+  }
+
+  .data-table tbody tr {
+    border-bottom: 1px solid hsl(var(--border));
+    /* Transitions déplacées dans section Design v1.5 (ligne 662) pour éviter doublon */
+  }
+
+  .data-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .data-table tbody tr:hover,
+  .shadcn-table tbody tr:hover {
+    scale: 1.005;
+    transform: translateY(-1px);
+    /* Ombres teintées par la couleur de statut */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 8px 18px var(--row-shadow-strong),
+      0 20px 38px var(--row-shadow-soft);
+  }
+
+  .data-table td {
+    padding: 14px 18px;
+    color: var(--text);
+    /* Background géré par stripe pattern (Design v1.5) */
+  }
+
+  .shadcn-table {
+    font-feature-settings: "tnum", "lnum";
+    background: color-mix(in oklab, var(--card), var(--bg-light) 6%);
+  }
+
+  .shadcn-table caption {
+    color: var(--muted-foreground);
+  }
+
+  :root[data-theme="dark"] .shadcn-table {
+    background: color-mix(in oklab, var(--card), var(--bg-dark) 12%);
+  }
+
+  :root[data-theme="dark"] .shadcn-table caption {
+    color: color-mix(in oklab, var(--muted-foreground), white 12%);
+  }
+
+  :root[data-theme="dark"] .data-table-wrapper {
+    background: color-mix(in oklab, var(--bg), black 12%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), black 16%),
+      color-mix(in oklab, var(--bg), black 10%)
+    );
+    border: 1px solid color-mix(in oklab, var(--border), black 25%);
+    /* Effet enfoncé/gravé en mode sombre - ombres internes plus prononcées */
+    box-shadow:
+      inset 3px 6px 18px rgba(0, 0, 0, 0.5),
+      inset -2px -2px 10px rgba(255, 255, 255, 0.02),
+      0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  :root[data-theme="dark"] .card-table-wrapper {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 4%),
+      var(--bg-light)
+    );
+    border: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+  }
+
+  :root[data-theme="dark"] .data-table thead {
+    border-bottom: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      0 2px 4px rgba(0, 0, 0, 0.16);
+  }
+
+  :root[data-theme="dark"] .data-table tbody tr {
+    border-bottom: 1px solid color-mix(in oklab, var(--border), black 15%);
+  }
+
+  :root[data-theme="dark"] .data-table tbody tr,
+  :root[data-theme="dark"] .shadcn-table tbody tr {
+    /* Ombres grises par défaut en dark mode */
+    --row-shadow-strong: rgba(0, 0, 0, 0.32);
+    --row-shadow-soft: rgba(0, 0, 0, 0.26);
+  }
+
+  /* :root[data-theme="dark"] .data-table td - Background géré par stripe pattern (Design v1.5) */
+
+  :root[data-theme="dark"] .data-table tbody tr:hover,
+  :root[data-theme="dark"] .shadcn-table tbody tr:hover {
+    /* Ombres teintées par la couleur de statut (mode sombre) */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 8px 18px var(--row-shadow-strong),
+      0 26px 42px var(--row-shadow-soft);
+  }
+
+  /* ========================================
+     TableView Enhancements - Design v1.5
+     ======================================== */
+
+  /* ═══════════════════════════════════════════════════════
+     Apparence des Cellules : Stripes vs Dégradé
+     ═══════════════════════════════════════════════════════ */
+
+  /* Mode STRIPES (par défaut) - Sans accent */
+  .data-table tbody tr:nth-child(even) td,
+  .shadcn-table tbody tr:nth-child(even) td {
+    --cell-base-color: color-mix(in oklab, var(--bg-light), black 1.5%);
+  }
+
+  .data-table tbody tr:nth-child(odd) td,
+  .shadcn-table tbody tr:nth-child(odd) td {
+    --cell-base-color: var(--bg-light);
+  }
+
+  :root[data-theme="dark"] .data-table tbody tr:nth-child(even) td,
+  :root[data-theme="dark"] .shadcn-table tbody tr:nth-child(even) td {
+    --cell-base-color: color-mix(in oklab, var(--bg-light), black 9%);
+  }
+
+  :root[data-theme="dark"] .data-table tbody tr:nth-child(odd) td,
+  :root[data-theme="dark"] .shadcn-table tbody tr:nth-child(odd) td {
+    --cell-base-color: color-mix(in oklab, var(--bg-light), black 6%);
+  }
+
+  /* Mode STRIPES - Avec accent color */
+  .data-table[style*="--use-accent-color"] tbody tr:nth-child(even) td,
+  .shadcn-table[style*="--use-accent-color"] tbody tr:nth-child(even) td {
+    --cell-base-color: color-mix(in oklab, var(--accent-color), var(--bg-light) 94%);
+  }
+
+  :root[data-theme="dark"] .data-table[style*="--use-accent-color"] tbody tr:nth-child(even) td,
+  :root[data-theme="dark"] .shadcn-table[style*="--use-accent-color"] tbody tr:nth-child(even) td {
+    --cell-base-color: color-mix(in oklab, var(--accent-color), var(--bg-light) 90%);
+  }
+
+  /* Mode DÉGRADÉ par colonne - Sans accent */
+  .data-table[style*="--use-gradient-mode"] tbody tr td,
+  .shadcn-table[style*="--use-gradient-mode"] tbody tr td {
+    --cell-base-color: var(--bg-light);
+    --cell-background-layer: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 2%) 0%,
+      var(--bg-light) 50%,
+      color-mix(in oklab, var(--bg-light), black 2%) 100%
+    );
+  }
+
+  :root[data-theme="dark"] .data-table[style*="--use-gradient-mode"] tbody tr td,
+  :root[data-theme="dark"] .shadcn-table[style*="--use-gradient-mode"] tbody tr td {
+    --cell-background-layer: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 4%) 0%,
+      var(--bg-light) 50%,
+      color-mix(in oklab, var(--bg-light), black 8%) 100%
+    );
+  }
+
+  /* Mode DÉGRADÉ - Avec accent color */
+  .data-table[style*="--use-gradient-mode"][style*="--use-accent-color"] tbody tr td,
+  .shadcn-table[style*="--use-gradient-mode"][style*="--use-accent-color"] tbody tr td {
+    --cell-background-layer: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), var(--bg-light) 94%) 0%,
+      var(--bg-light) 50%,
+      color-mix(in oklab, var(--accent-color), var(--bg-light) 90%) 100%
+    );
+  }
+
+  :root[data-theme="dark"] .data-table[style*="--use-gradient-mode"][style*="--use-accent-color"] tbody tr td,
+  :root[data-theme="dark"] .shadcn-table[style*="--use-gradient-mode"][style*="--use-accent-color"] tbody tr td {
+    --cell-background-layer: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), var(--bg-light) 92%) 0%,
+      var(--bg-light) 50%,
+      color-mix(in oklab, var(--accent-color), var(--bg-light) 86%) 100%
+    );
+  }
+
+  /* Couche d'accent configurable par cellule (utile pour la bordure colorée) */
+  .data-table tbody tr td,
+  .shadcn-table tbody tr td {
+    --cell-status-gradient: linear-gradient(0deg, transparent, transparent);
+    --cell-status-width: 0px;
+    --cell-background-layer: linear-gradient(0deg, transparent, transparent);
+    background-color: var(--cell-base-color, var(--bg-light));
+    /* Multi-layer: bordure colorée (layer 1) PUIS gradient général (layer 2) */
+    background-image:
+      var(--cell-status-gradient),
+      var(--cell-background-layer);
+    background-repeat: no-repeat, no-repeat;
+    background-size: var(--cell-status-width) 100%, 100% 100%;
+    background-position: left top, center;
+  }
+
+  /* 2. Subtle gloss effect on header */
+  .data-table thead,
+  .shadcn-table thead {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .data-table thead::before,
+  .shadcn-table thead::before {
+    content: "";
+    position: sticky;
+    top: 0;
+    inset: 0;
+    background: 
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--accent-color), rgba(255, 255, 255, 0.35)) 0%,
+        color-mix(in oklab, var(--accent-color), rgba(255, 255, 255, 0.25)) 55%,
+        color-mix(in oklab, var(--accent-color), rgba(0, 0, 0, 0.15)) 100%
+      ),
+      rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(32px) saturate(1.4);
+    -webkit-backdrop-filter: blur(32px) saturate(1.4);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  :root[data-theme="dark"] .data-table thead::before,
+  :root[data-theme="dark"] .shadcn-table thead::before {
+    background: 
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--accent-color), rgba(255, 255, 255, 0.28)) 0%,
+        color-mix(in oklab, var(--accent-color), rgba(255, 255, 255, 0.18)) 55%,
+        color-mix(in oklab, var(--accent-color), rgba(0, 0, 0, 0.22)) 100%
+      ),
+      rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(40px) saturate(1.6);
+    -webkit-backdrop-filter: blur(40px) saturate(1.6);
+  }
+
+  .data-table thead th {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 3. Micro-interaction on row press */
+  .data-table tbody tr,
+  .shadcn-table tbody tr {
+    /* Ombres grises par défaut */
+    --row-shadow-strong: rgba(0, 0, 0, 0.14);
+    --row-shadow-soft: rgba(0, 0, 0, 0.1);
+    transition:
+      background-color var(--transition-base) var(--transition-easing),
+      box-shadow var(--transition-base) var(--transition-easing),
+      transform var(--transition-base) var(--transition-easing),
+      scale 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Ombres colorées en light mode (si activé via --row-shadow-base) */
+  .data-table tbody tr[style*="--row-shadow-base"],
+  .shadcn-table tbody tr[style*="--row-shadow-base"] {
+    --row-shadow-strong: color-mix(
+      in oklab,
+      var(--row-shadow-base),
+      transparent calc(100% - var(--shadow-intensity-strong, 60%))
+    );
+    --row-shadow-soft: color-mix(
+      in oklab,
+      var(--row-shadow-base),
+      transparent calc(100% - var(--shadow-intensity-soft, 28%))
+    );
+  }
+
+  /* Ombres colorées en dark mode - Doit venir APRÈS pour avoir la priorité */
+  :root[data-theme="dark"] .data-table tbody tr[style*="--row-shadow-base"],
+  :root[data-theme="dark"] .shadcn-table tbody tr[style*="--row-shadow-base"] {
+    --row-shadow-strong: color-mix(
+      in oklab,
+      var(--row-shadow-base),
+      transparent calc(100% - var(--shadow-intensity-strong, 60%))
+    );
+    --row-shadow-soft: color-mix(
+      in oklab,
+      var(--row-shadow-base),
+      transparent calc(100% - var(--shadow-intensity-soft, 28%))
+    );
+  }
+
+  .data-table tbody tr:active,
+  .shadcn-table tbody tr:active {
+    scale: 0.998;
+    transform: translateY(0);
+    transition: 
+      scale 50ms cubic-bezier(0.4, 0, 0.6, 1),
+      transform 50ms cubic-bezier(0.4, 0, 0.6, 1);
+  }
+
+  /* 4. Status-colored left border (applied conditionally) */
+  /* Ajouter de l'espace à TOUTES les cellules quand l'option est activée */
+  .table-has-status-border td:first-child,
+  .table-has-status-border th:first-child {
+    padding-left: calc(18px + var(--table-status-border-width, 8px));
+  }
+
+  /* Bordure colorée par ligne (intégrée via une seconde couche de background) */
+  .table-row-status-border {
+    --row-shadow-base: var(--status-border-color, var(--accent-color));
+  }
+
+  /* Mode STRIPES : Bordure couleur unie (sans gradient) */
+  .table-row-status-border td:first-child {
+    --cell-status-width: var(--table-status-border-width, 8px);
+    --cell-status-gradient: linear-gradient(
+      to bottom,
+      var(--status-border-color, var(--accent-color)) 0%,
+      var(--status-border-color, var(--accent-color)) 100%
+    );
+  }
+
+  /* Mode DÉGRADÉ : Bordure avec gradient vertical adouci (Sajid principle) */
+  .data-table[style*="--use-gradient-mode"] .table-row-status-border td:first-child,
+  .shadcn-table[style*="--use-gradient-mode"] .table-row-status-border td:first-child {
+    --cell-status-gradient: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--status-border-color, var(--accent-color)), white 20%) 0%,
+      var(--status-border-color, var(--accent-color)) 50%,
+      color-mix(in oklab, var(--status-border-color, var(--accent-color)), black 20%) 100%
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     MODE DENSE : Réduit tous les espacements
+     ═══════════════════════════════════════════════════════ */
+  
+  /* Réduction de la taille du texte de la table */
+  .data-table.text-sm,
+  .shadcn-table.text-sm {
+    font-size: 0.8125rem; /* 13px au lieu de 14px */
+  }
+
+  /* Ajustement pour la bordure colorée en mode dense */
+  /* Note: Les paddings sont gérés via Tailwind (!p-2, !py-2, !px-3) dans TableView.tsx */
+  .data-table.text-sm.table-has-status-border td:first-child,
+  .shadcn-table.text-sm.table-has-status-border th:first-child {
+    padding-left: calc(0.75rem + var(--table-status-border-width, 8px)) !important; /* 12px + bordure */
+  }
+
+  /* 5. Scrollbar personnalisée pour la table (remplace ScrollArea) */
+  /* Zone scrollable enfoncée pour la table */
+  .table-scroll-wrapper {
+    background: var(--bg-dark);
+    box-shadow:
+      var(--shadow-inset-sunken),
+      inset 0 -1px 0 var(--highlight);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--foreground), transparent 70%);
+    background-clip: padding-box;
+  }
+
+  :root[data-theme="dark"] .table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--border), white 10%);
+    background-clip: padding-box;
+  }
+
+  :root[data-theme="dark"] .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground) / 0.4);
+    background-clip: padding-box;
+  }
+
+  .badge-success { background: var(--success-bg); color: var(--success); }
+  .badge-error { background: var(--error-bg); color: var(--error); }
+  .badge-warning { background: var(--warning-bg); color: var(--warning); }
+  .badge-info { background: var(--info-bg); color: var(--info); }
+
+  .modal-overlay,
+  .shadcn-dialog-overlay {
+    background: var(--backdrop-color);
+    backdrop-filter: none;
+    animation: fadeIn var(--transition-base) var(--transition-easing);
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+  }
+
+  .modal-surface,
+  .modal-content,
+  .shadcn-sheet-content,
+  .shadcn-dialog-content {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 6%),
+      var(--bg-light)
+    );
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-xl);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xl);
+    color: var(--text);
+  }
+
+  .modal-surface {
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      0 26px 52px rgba(15, 23, 42, 0.28);
+    backdrop-filter: blur(6px);
+  }
+
+  .modal-content,
+  .shadcn-dialog-content {
+    padding: 24px;
+    animation: slideUp var(--transition-base) var(--transition-easing);
+    max-width: min(640px, 90vw);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header,
+  .shadcn-dialog-header {
+    margin-bottom: 16px;
+    border-bottom: 1px solid hsl(var(--border));
+    padding-bottom: 16px;
+  }
+
+  .modal-title,
+  .shadcn-dialog-title {
+    color: var(--text);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .modal-description,
+  .shadcn-dialog-description {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 8px;
+  }
+
+  .modal-footer,
+  .shadcn-dialog-footer {
+    margin-top: 24px;
+    border-top: 1px solid hsl(var(--border));
+    padding-top: 16px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .shadcn-sheet-content {
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      0 22px 48px rgba(15, 23, 42, 0.24);
+    backdrop-filter: blur(8px);
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .modal-surface-full {
+    background: color-mix(in oklab, var(--bg), white 4%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--bg), white 6%),
+      0 18px 42px rgba(15, 23, 42, 0.18);
+  }
+
+  :root[data-theme="dark"] .modal-surface,
+  :root[data-theme="dark"] .modal-content,
+  :root[data-theme="dark"] .shadcn-sheet-content,
+  :root[data-theme="dark"] .shadcn-dialog-content {
+    background: color-mix(in oklab, var(--bg), black 6%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), black 10%),
+      color-mix(in oklab, var(--bg), black 14%)
+    );
+    border: 1px solid color-mix(in oklab, var(--border), black 20%);
+    color: color-mix(in oklab, var(--text), white 6%);
+  }
+
+  :root[data-theme="dark"] .modal-surface {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 26px 52px rgba(0, 0, 0, 0.55);
+  }
+
+  :root[data-theme="dark"] .shadcn-sheet-content {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.03),
+      0 22px 48px rgba(0, 0, 0, 0.5);
+  }
+
+  :root[data-theme="dark"] .modal-surface-full {
+    background: color-mix(in oklab, var(--bg), black 4%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 18px 42px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Column configuration modal */
+  .modal-config-surface {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 8%),
+      color-mix(in oklab, var(--bg-light), black 4%)
+    );
+    box-shadow: inset 0 1px 0 var(--highlight);
+    color: var(--text);
+  }
+
+  .modal-config-surface-full {
+    background: color-mix(in oklab, var(--bg), white 4%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 6%),
+      color-mix(in oklab, var(--bg), black 4%)
+    );
+  }
+
+  .modal-config-columns-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 1rem 1.25rem;
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 12%),
+      color-mix(in oklab, var(--bg-light), transparent 0%)
+    );
+    border-bottom: 1px solid color-mix(in oklab, var(--border), black 8%);
+  }
+
+  .modal-config-columns-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
+
+  .modal-config-columns-icon-placeholder {
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .modal-config-columns-icon-button {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.75rem;
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      color-mix(in oklab, var(--bg-light), black 4%)
+    );
+    border: 1px solid color-mix(in oklab, var(--border), black 8%);
+    color: color-mix(in oklab, var(--text-muted), white 6%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xs);
+    transition:
+      transform var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-fast) var(--transition-easing),
+      border-color var(--transition-fast) var(--transition-easing),
+      color var(--transition-fast) var(--transition-easing);
+  }
+
+  .modal-config--halfpage .modal-config-columns-icon-button,
+  .modal-config--centerpage .modal-config-columns-icon-button {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.6rem;
+  }
+
+  .modal-config-columns-icon-button:hover {
+    transform: translateY(-1px);
+    color: color-mix(in oklab, var(--text), var(--accent) 6%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+  }
+
+  .modal-config-columns-icon-button:active {
+    transform: translateY(0);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xs);
+  }
+
+  .modal-config-columns-icon-button--danger {
+    color: color-mix(in oklab, var(--error), white 10%);
+  }
+
+  .modal-config-columns-icon-button--danger:hover {
+    border-color: color-mix(in oklab, var(--error), var(--border) 40%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--error), white 35%),
+      var(--shadow-sm);
+  }
+
+  .modal-config-columns-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .modal-config-columns-grid {
+    display: grid;
+    gap: 1.5rem;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .modal-config--halfpage .modal-config-columns-grid,
+  .modal-config--centerpage .modal-config-columns-grid {
+    gap: 1.1rem;
+  }
+
+  .modal-config-columns-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: color-mix(in oklab, var(--bg), white 5%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 9%),
+      color-mix(in oklab, var(--bg), black 2%)
+    );
+    border: 1px solid color-mix(in oklab, var(--border), black 8%);
+    border-radius: var(--radius-xl);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-lg);
+    /* Empêche les enfants (header) de déborder en angle carré sur les coins arrondis */
+    overflow: hidden;
+  }
+
+  .modal-config-columns-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.95rem 1.25rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--border), black 10%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 14%),
+      color-mix(in oklab, var(--bg-light), transparent 0%)
+    );
+    /* Suit les coins arrondis du parent pour éviter les artefacts visibles */
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+  }
+
+  .modal-config-columns-scroll {
+    flex: 1;
+    min-height: 0;
+    padding-right: 0.25rem;
+  }
+
+  .modal-config-columns-scroll-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 1.1rem 1.35rem 1.5rem;
+  }
+
+  .modal-config--halfpage .modal-config-columns-scroll-inner,
+  .modal-config--centerpage .modal-config-columns-scroll-inner {
+    padding: 0.9rem 1.2rem 1.3rem;
+  }
+
+  .modal-config-columns-scroll [data-orientation="vertical"] {
+    width: 0.5rem;
+    padding: 3px 2px;
+    margin: 0.4rem 0.1rem;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .modal-config-columns-scroll [data-orientation="vertical"] > div {
+    background: color-mix(in oklab, var(--border), black 20%);
+    border-radius: 999px;
+  }
+
+  .modal-config-columns-item {
+    padding: 0.85rem 1.15rem;
+    border-radius: calc(var(--radius-xl) - 6px);
+    border: 1px solid color-mix(in oklab, var(--border), black 12%);
+    background: color-mix(in oklab, var(--bg-light), white 4%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 12%),
+      color-mix(in oklab, var(--bg-light), black 2%)
+    );
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+    transition:
+      border-color var(--transition-base) var(--transition-easing),
+      box-shadow var(--transition-base) var(--transition-easing),
+      transform var(--transition-fast) var(--transition-easing);
+  }
+
+  .modal-config-columns-item:hover {
+    border-color: color-mix(in oklab, var(--border), var(--accent) 18%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-md);
+  }
+
+  .modal-config-columns-item--dragging {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent), white 45%),
+      color-mix(in oklab, var(--accent), white 20%)
+    );
+    border-color: color-mix(in oklab, var(--accent), white 25%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--accent), white 40%),
+      var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .modal-config-columns-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.7rem;
+    border: 1px dashed color-mix(in oklab, var(--border), black 10%);
+    color: color-mix(in oklab, var(--text-muted), white 8%);
+    background: color-mix(in oklab, var(--bg), white 6%);
+    transition:
+      border-color var(--transition-fast) var(--transition-easing),
+      color var(--transition-fast) var(--transition-easing),
+      background-color var(--transition-fast) var(--transition-easing);
+    cursor: grab;
+  }
+
+  .modal-config-columns-drag-handle:hover {
+    border-style: solid;
+    border-color: color-mix(in oklab, var(--border), var(--accent) 35%);
+    color: var(--text);
+  }
+
+  .modal-config-columns-select {
+    height: 2.25rem;
+    border-radius: calc(var(--radius-md) - 4px);
+    border: 1px solid color-mix(in oklab, var(--border), black 10%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      color-mix(in oklab, var(--bg-light), black 2%)
+    );
+    box-shadow: inset 0 1px 0 var(--highlight);
+    color: var(--text);
+  }
+
+  .modal-config--halfpage .modal-config-columns-select,
+  .modal-config--centerpage .modal-config-columns-select {
+    height: 1.85rem;
+    font-size: 0.7rem;
+  }
+
+  .modal-config-columns-select:hover {
+    border-color: color-mix(in oklab, var(--border), var(--accent) 20%);
+  }
+
+  .modal-config-columns-toggle {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.7rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: color-mix(in oklab, var(--text-muted), transparent 30%);
+    box-shadow: none;
+    transition:
+      border-color var(--transition-fast) var(--transition-easing),
+      background-color var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-fast) var(--transition-easing),
+      color var(--transition-fast) var(--transition-easing),
+      transform var(--transition-fast) var(--transition-easing);
+  }
+
+  .modal-config--halfpage .modal-config-columns-toggle,
+  .modal-config--centerpage .modal-config-columns-toggle {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.5rem;
+  }
+
+  .modal-config-columns-toggle:hover {
+    color: color-mix(in oklab, var(--text-muted), transparent 10%);
+    background: color-mix(in oklab, var(--bg), white 4%);
+  }
+
+  .modal-config-columns-toggle--active {
+    border-color: color-mix(in oklab, var(--accent-color), transparent 10%);
+    background: color-mix(in oklab, var(--accent-color), transparent 5%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), white 25%),
+      color-mix(in oklab, var(--accent-color), black 5%)
+    );
+    color: white;
+    box-shadow:
+      0 0 0 2px color-mix(in oklab, var(--accent-color), white 30%),
+      inset 0 1px 0 color-mix(in oklab, var(--accent-color), white 45%),
+      var(--shadow-sm);
+  }
+
+  .modal-config-columns-toggle--active:hover {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), white 30%),
+      var(--accent-color)
+    );
+    box-shadow:
+      0 0 0 2px color-mix(in oklab, var(--accent-color), white 35%),
+      inset 0 1px 0 color-mix(in oklab, var(--accent-color), white 50%),
+      var(--shadow-md);
+  }
+
+  .modal-config-columns-color-picker {
+    width: 2.35rem;
+    height: 2rem;
+    border-radius: calc(var(--radius-md) - 5px);
+    border: 1px solid color-mix(in oklab, var(--border), black 14%);
+    background: transparent;
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xs);
+    cursor: pointer;
+  }
+
+  .modal-config--halfpage .modal-config-columns-color-picker,
+  .modal-config--centerpage .modal-config-columns-color-picker {
+    width: 2rem;
+    height: 1.75rem;
+  }
+
+  .modal-config-columns-empty {
+    padding: 1.2rem 1.5rem;
+    border-radius: calc(var(--radius-xl) - 6px);
+    border: 1px dashed color-mix(in oklab, var(--border), black 18%);
+    background: color-mix(in oklab, var(--bg), white 6%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 10%),
+      color-mix(in oklab, var(--bg), black 2%)
+    );
+    color: color-mix(in oklab, var(--text-muted), white 10%);
+    text-align: center;
+  }
+
+  .modal-config-columns-available-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.75rem 0.95rem;
+    border-radius: calc(var(--radius-xl) - 7px);
+    border: 1px solid color-mix(in oklab, var(--border), black 12%);
+    background: color-mix(in oklab, var(--bg), white 6%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 10%),
+      color-mix(in oklab, var(--bg), black 2%)
+    );
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xs);
+    transition:
+      border-color var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-fast) var(--transition-easing);
+  }
+
+  .modal-config-columns-available-item:hover {
+    border-color: color-mix(in oklab, var(--border), var(--accent) 14%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+  }
+
+  .modal-config-columns-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid color-mix(in oklab, var(--border), black 10%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 6%),
+      color-mix(in oklab, var(--bg), black 2%)
+    );
+  }
+
+  .modal-config-columns-tooltip {
+    white-space: nowrap;
+  }
+
+  .tooltip-surface {
+    position: relative;
+    z-index: 9999;
+    background: color-mix(in oklab, var(--bg-light), white 8%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 12%),
+      color-mix(in oklab, var(--bg-light), black 6%)
+    );
+    border: 1px solid color-mix(in oklab, var(--border), black 12%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+    border-radius: calc(var(--radius-md) - 2px);
+    color: var(--text);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  :root[data-theme="dark"] .modal-config-surface {
+    background: hsl(var(--background));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.3),
+      hsl(var(--background))
+    );
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    color: hsl(var(--foreground));
+  }
+
+  :root[data-theme="dark"] .modal-config-surface-full {
+    background: hsl(var(--background));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.25),
+      hsl(var(--background))
+    );
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-header {
+    border-bottom: 1px solid hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.4),
+      transparent
+    );
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-icon-button {
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--muted) / 0.4)
+    );
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-xs);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-icon-button:hover {
+    color: hsl(var(--foreground));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.7),
+      hsl(var(--muted) / 0.5)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--shadow-sm);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-icon-button:active {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      var(--shadow-xs);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-icon-button--danger {
+    color: hsl(var(--destructive));
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-panel {
+    background: hsl(var(--card));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.5),
+      hsl(var(--card))
+    );
+    border: 1px solid hsl(var(--border));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-md);
+    overflow: hidden;
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-panel-header {
+    border-bottom: 1px solid hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      transparent
+    );
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-scroll-inner {
+    padding-bottom: 1.5rem;
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-scroll [data-orientation="vertical"] > div {
+    background: hsl(var(--muted-foreground) / 0.3);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-item {
+    border-color: hsl(var(--border));
+    background: hsl(var(--muted) / 0.3);
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.5),
+      hsl(var(--muted) / 0.2)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--shadow-sm);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-item:hover {
+    border-color: hsl(var(--accent) / 0.5);
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--muted) / 0.3)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      var(--shadow-md);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-item--dragging {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      var(--shadow-md);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-drag-handle {
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+    background: hsl(var(--muted) / 0.4);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-select {
+    border-color: hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--muted) / 0.4)
+    );
+    color: hsl(var(--foreground));
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-toggle {
+    border-color: transparent;
+    background: transparent;
+    color: hsl(var(--muted-foreground) / 0.5);
+    box-shadow: none;
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-toggle:hover {
+    color: hsl(var(--muted-foreground) / 0.8);
+    background: hsl(var(--muted) / 0.3);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-toggle--active {
+    border-color: hsl(var(--accent) / 0.6);
+    background: hsl(var(--accent) / 0.15);
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--accent) / 0.3),
+      hsl(var(--accent) / 0.15)
+    );
+    color: hsl(var(--accent-foreground));
+    box-shadow:
+      0 0 0 2px hsl(var(--accent) / 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      var(--shadow-sm);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-toggle--active:hover {
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--accent) / 0.35),
+      hsl(var(--accent) / 0.2)
+    );
+    box-shadow:
+      0 0 0 2px hsl(var(--accent) / 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      var(--shadow-md);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-color-picker {
+    border-color: hsl(var(--border));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-xs);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-empty {
+    border-color: hsl(var(--border));
+    background: hsl(var(--muted) / 0.2);
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.3),
+      hsl(var(--muted) / 0.15)
+    );
+    color: hsl(var(--muted-foreground));
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-available-item {
+    border-color: hsl(var(--border));
+    background: hsl(var(--muted) / 0.3);
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.5),
+      hsl(var(--muted) / 0.2)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-xs);
+  }
+
+  :root[data-theme="dark"] .modal-config-columns-footer {
+    border-top: 1px solid hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.3),
+      hsl(var(--background))
+    );
+  }
+
+  :root[data-theme="dark"] .tooltip-surface {
+    background: hsl(var(--popover));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--popover))
+    );
+    border: 1px solid hsl(var(--border));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--shadow-sm);
+    color: hsl(var(--popover-foreground));
+  }
+
+  /* === Legacy Intervention Form Responsive Styles === */
+  
+  /* Responsive grid for the 5 main fields - ALWAYS 5 columns on larger screens */
+  .legacy-form-main-grid {
+    @apply grid gap-3;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+  
+  .modal-config--halfpage .legacy-form-main-grid {
+    @apply gap-2;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+  
+  .modal-config--centerpage .legacy-form-main-grid {
+    @apply gap-3;
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .modal-config--fullpage .legacy-form-main-grid {
+    @apply gap-4;
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  /* On small screens, stack them */
+  @media (max-width: 768px) {
+    .legacy-form-main-grid {
+      @apply grid-cols-1;
+    }
+  }
+  
+  /* Responsive field heights */
+  .modal-config--halfpage .legacy-form-field {
+    @apply space-y-1;
+  }
+  
+  .modal-config--centerpage .legacy-form-field {
+    @apply space-y-1.5;
+  }
+  
+  .modal-config--fullpage .legacy-form-field {
+    @apply space-y-2;
+  }
+  
+  /* Responsive input heights */
+  .modal-config--halfpage .legacy-form-input,
+  .modal-config--halfpage .legacy-form-select {
+    @apply h-7 text-xs;
+  }
+  
+  .modal-config--centerpage .legacy-form-input,
+  .modal-config--centerpage .legacy-form-select {
+    @apply h-8 text-sm;
+  }
+  
+  .modal-config--fullpage .legacy-form-input,
+  .modal-config--fullpage .legacy-form-select {
+    @apply h-8 text-sm;
+  }
+  
+  /* Responsive label sizes */
+  .modal-config--halfpage .legacy-form-label {
+    @apply text-xs;
+  }
+  
+  .modal-config--centerpage .legacy-form-label {
+    @apply text-xs;
+  }
+  
+  .modal-config--fullpage .legacy-form-label {
+    @apply text-xs;
+  }
+  
+  /* Responsive card spacing */
+  .modal-config--halfpage .legacy-form-card {
+    @apply p-3 space-y-3;
+  }
+  
+  .modal-config--centerpage .legacy-form-card {
+    @apply p-4 space-y-4;
+  }
+  
+  .modal-config--fullpage .legacy-form-card {
+    @apply p-6 space-y-4;
+  }
+  
+  /* Responsive content grid */
+  .modal-config--halfpage .legacy-form-content-grid {
+    @apply grid-cols-1 gap-4;
+  }
+  
+  .modal-config--centerpage .legacy-form-content-grid {
+    @apply grid-cols-1 gap-6 lg:grid-cols-2;
+  }
+  
+  .modal-config--fullpage .legacy-form-content-grid {
+    @apply grid-cols-1 gap-6 lg:grid-cols-2;
+  }
+  
+  /* Responsive button sizes */
+  .modal-config--halfpage .legacy-form-button {
+    @apply h-7 text-xs px-3;
+  }
+  
+  .modal-config--centerpage .legacy-form-button {
+    @apply h-8 text-sm px-4;
+  }
+  
+  .modal-config--fullpage .legacy-form-button {
+    @apply h-8 text-sm px-4;
+  }
+
+  /* === Intervention Form Modal Styles === */
+  .intervention-form-surface {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 8%),
+      color-mix(in oklab, var(--bg-light), black 4%)
+    );
+    box-shadow: inset 0 1px 0 var(--highlight);
+    color: var(--text);
+  }
+
+  .intervention-form-surface-full {
+    background: color-mix(in oklab, var(--bg), white 4%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 6%),
+      color-mix(in oklab, var(--bg), black 4%)
+    );
+  }
+
+  .intervention-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 1rem 1.25rem;
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 12%),
+      color-mix(in oklab, var(--bg-light), transparent 0%)
+    );
+    border-bottom: 1px solid color-mix(in oklab, var(--border), black 8%);
+  }
+
+  .intervention-form-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
+
+  .intervention-form-icon-button {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.75rem;
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      color-mix(in oklab, var(--bg-light), black 4%)
+    );
+    border: 1px solid color-mix(in oklab, var(--border), black 8%);
+    color: color-mix(in oklab, var(--text-muted), white 6%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xs);
+    transition:
+      transform var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-fast) var(--transition-easing),
+      border-color var(--transition-fast) var(--transition-easing),
+      color var(--transition-fast) var(--transition-easing);
+  }
+
+  .intervention-form-icon-button:hover {
+    transform: translateY(-1px);
+    color: color-mix(in oklab, var(--text), var(--accent) 6%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+  }
+
+  .intervention-form-icon-button:active {
+    transform: translateY(0);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xs);
+  }
+
+  .intervention-form-icon-button--danger {
+    color: color-mix(in oklab, var(--error), white 10%);
+  }
+
+  .intervention-form-icon-button--danger:hover {
+    border-color: color-mix(in oklab, var(--error), var(--border) 40%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--error), white 35%),
+      var(--shadow-sm);
+  }
+
+  .intervention-form-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-height: 0;
+    overflow: hidden;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .intervention-form-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: color-mix(in oklab, var(--bg), white 5%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 9%),
+      color-mix(in oklab, var(--bg), black 2%)
+    );
+    border: 1px solid color-mix(in oklab, var(--border), black 8%);
+    border-radius: var(--radius-xl);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  .intervention-form-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.95rem 1.25rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--border), black 10%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 14%),
+      color-mix(in oklab, var(--bg-light), transparent 0%)
+    );
+  }
+
+  .intervention-form-section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
+
+  .intervention-form-section-content {
+    padding: 1.1rem 1.35rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .intervention-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .intervention-form-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+
+  .intervention-form-input {
+    height: 2.25rem;
+    border-radius: calc(var(--radius-md) - 4px);
+    border: 1px solid color-mix(in oklab, var(--border), black 10%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      color-mix(in oklab, var(--bg-light), black 2%)
+    );
+    box-shadow: inset 0 1px 0 var(--highlight);
+    color: var(--text);
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    transition:
+      border-color var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-fast) var(--transition-easing);
+  }
+
+  .intervention-form-input:focus {
+    outline: none;
+    border-color: color-mix(in oklab, var(--accent), black 20%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      0 0 0 2px color-mix(in oklab, var(--accent), white 80%);
+  }
+
+  .intervention-form-textarea {
+    min-height: 4rem;
+    border-radius: calc(var(--radius-md) - 4px);
+    border: 1px solid color-mix(in oklab, var(--border), black 10%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      color-mix(in oklab, var(--bg-light), black 2%)
+    );
+    box-shadow: inset 0 1px 0 var(--highlight);
+    color: var(--text);
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    resize: vertical;
+    transition:
+      border-color var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-fast) var(--transition-easing);
+  }
+
+  .intervention-form-textarea:focus {
+    outline: none;
+    border-color: color-mix(in oklab, var(--accent), black 20%);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      0 0 0 2px color-mix(in oklab, var(--accent), white 80%);
+  }
+
+  .intervention-form-select {
+    height: 2.25rem;
+    border-radius: calc(var(--radius-md) - 4px);
+    border: 1px solid color-mix(in oklab, var(--border), black 10%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      color-mix(in oklab, var(--bg-light), black 2%)
+    );
+    box-shadow: inset 0 1px 0 var(--highlight);
+    color: var(--text);
+  }
+
+  .intervention-form-select:hover {
+    border-color: color-mix(in oklab, var(--border), var(--accent) 20%);
+  }
+
+  .intervention-form-button {
+    height: 2.25rem;
+    border-radius: calc(var(--radius-md) - 4px);
+    border: 1px solid color-mix(in oklab, var(--border), black 8%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 10%),
+      color-mix(in oklab, var(--bg-light), black 4%)
+    );
+    color: var(--text);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xs);
+    transition:
+      transform var(--transition-fast) var(--transition-easing),
+      box-shadow var(--transition-fast) var(--transition-easing),
+      border-color var(--transition-fast) var(--transition-easing);
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .intervention-form-button:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-sm);
+  }
+
+  .intervention-form-button:active {
+    transform: translateY(0);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      var(--shadow-xs);
+  }
+
+  .intervention-form-button--primary {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), white 10%),
+      var(--accent-color)
+    );
+    border: 1px solid color-mix(in oklab, var(--accent-color), black 10%);
+    color: white;
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--accent-color), white 30%),
+      var(--shadow-sm);
+  }
+
+  .intervention-form-button--primary:hover {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), white 14%),
+      var(--accent-color)
+    );
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--accent-color), white 30%),
+      var(--shadow-md);
+  }
+
+  .intervention-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid color-mix(in oklab, var(--border), black 10%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 6%),
+      color-mix(in oklab, var(--bg), black 2%)
+    );
+  }
+
+  .intervention-form-error {
+    padding: 1rem 1.25rem;
+    border-radius: calc(var(--radius-xl) - 6px);
+    border: 1px solid color-mix(in oklab, var(--error), black 20%);
+    background: color-mix(in oklab, var(--error-bg), white 8%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--error-bg), white 12%),
+      color-mix(in oklab, var(--error-bg), black 2%)
+    );
+    color: color-mix(in oklab, var(--error), black 10%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--error), white 25%),
+      var(--shadow-sm);
+  }
+
+  .intervention-form-warning {
+    padding: 1rem 1.25rem;
+    border-radius: calc(var(--radius-xl) - 6px);
+    border: 1px solid color-mix(in oklab, var(--warning), black 20%);
+    background: color-mix(in oklab, var(--warning-bg), white 8%);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--warning-bg), white 12%),
+      color-mix(in oklab, var(--warning-bg), black 2%)
+    );
+    color: color-mix(in oklab, var(--warning), black 10%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--warning), white 25%),
+      var(--shadow-sm);
+  }
+
+  /* Dark mode styles for intervention form */
+  :root[data-theme="dark"] .intervention-form-surface {
+    background: hsl(var(--background));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.3),
+      hsl(var(--background))
+    );
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    color: hsl(var(--foreground));
+  }
+
+  :root[data-theme="dark"] .intervention-form-surface-full {
+    background: hsl(var(--background));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.25),
+      hsl(var(--background))
+    );
+  }
+
+  :root[data-theme="dark"] .intervention-form-header {
+    border-bottom: 1px solid hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.4),
+      transparent
+    );
+  }
+
+  :root[data-theme="dark"] .intervention-form-icon-button {
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--muted) / 0.4)
+    );
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-xs);
+  }
+
+  :root[data-theme="dark"] .intervention-form-icon-button:hover {
+    color: hsl(var(--foreground));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.7),
+      hsl(var(--muted) / 0.5)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--shadow-sm);
+  }
+
+  :root[data-theme="dark"] .intervention-form-icon-button:active {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      var(--shadow-xs);
+  }
+
+  :root[data-theme="dark"] .intervention-form-icon-button--danger {
+    color: hsl(var(--destructive));
+  }
+
+  :root[data-theme="dark"] .intervention-form-section {
+    background: hsl(var(--card));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.5),
+      hsl(var(--card))
+    );
+    border: 1px solid hsl(var(--border));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-md);
+    overflow: hidden;
+  }
+
+  :root[data-theme="dark"] .intervention-form-section-header {
+    border-bottom: 1px solid hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      transparent
+    );
+  }
+
+  :root[data-theme="dark"] .intervention-form-input {
+    border-color: hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--muted) / 0.4)
+    );
+    color: hsl(var(--foreground));
+  }
+
+  :root[data-theme="dark"] .intervention-form-input:focus {
+    border-color: hsl(var(--accent) / 0.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 0 0 2px hsl(var(--accent) / 0.3);
+  }
+
+  :root[data-theme="dark"] .intervention-form-textarea {
+    border-color: hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--muted) / 0.4)
+    );
+    color: hsl(var(--foreground));
+  }
+
+  :root[data-theme="dark"] .intervention-form-textarea:focus {
+    border-color: hsl(var(--accent) / 0.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 0 0 2px hsl(var(--accent) / 0.3);
+  }
+
+  :root[data-theme="dark"] .intervention-form-select {
+    border-color: hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--muted) / 0.4)
+    );
+    color: hsl(var(--foreground));
+  }
+
+  :root[data-theme="dark"] .intervention-form-button {
+    border-color: hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.6),
+      hsl(var(--muted) / 0.4)
+    );
+    color: hsl(var(--foreground));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-xs);
+  }
+
+  :root[data-theme="dark"] .intervention-form-button:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--shadow-sm);
+  }
+
+  :root[data-theme="dark"] .intervention-form-button--primary {
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--accent) / 0.8),
+      hsl(var(--accent))
+    );
+    border-color: hsl(var(--accent) / 0.6);
+    color: hsl(var(--accent-foreground));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      var(--shadow-sm);
+  }
+
+  :root[data-theme="dark"] .intervention-form-button--primary:hover {
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--accent) / 0.9),
+      hsl(var(--accent))
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      var(--shadow-md);
+  }
+
+  :root[data-theme="dark"] .intervention-form-footer {
+    border-top: 1px solid hsl(var(--border));
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--muted) / 0.3),
+      hsl(var(--background))
+    );
+  }
+
+  :root[data-theme="dark"] .intervention-form-error {
+    border-color: hsl(var(--destructive) / 0.6);
+    background: hsl(var(--destructive) / 0.1);
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--destructive) / 0.15),
+      hsl(var(--destructive) / 0.05)
+    );
+    color: hsl(var(--destructive));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-sm);
+  }
+
+  :root[data-theme="dark"] .intervention-form-warning {
+    border-color: hsl(var(--warning) / 0.6);
+    background: hsl(var(--warning) / 0.1);
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--warning) / 0.15),
+      hsl(var(--warning) / 0.05)
+    );
+    color: hsl(var(--warning));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      var(--shadow-sm);
+  }
+
+  .dropdown,
+  .shadcn-popover-content {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 6%),
+      var(--bg-light)
+    );
+    border: 1px solid hsl(var(--border));
+    box-shadow: inset 0 1px 0 var(--highlight), var(--shadow-md);
+    border-radius: var(--radius-md);
+    padding: 8px 4px;
+    animation: fadeIn var(--transition-fast) var(--transition-easing);
+    z-index: 50;
+  }
+
+  .dropdown-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background-color var(--transition-fast) var(--transition-easing);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    margin: 0 4px;
+  }
+
+  .dropdown-item:hover {
+    background: hsl(var(--background));
+  }
+
+  .dropdown-item.is-active {
+    background: var(--accent-color-light);
+    color: white;
+  }
+
+  .toast {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 6%),
+      var(--bg-light)
+    );
+    border: 1px solid hsl(var(--border));
+    border-left: 4px solid var(--accent-color);
+    box-shadow: inset 0 1px 0 var(--highlight), var(--shadow-md);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    animation: slideInRight var(--transition-base) var(--transition-easing);
+  }
+
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--error); }
+  .toast.warning { border-left-color: var(--warning); }
+
+  .drawer {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(420px, 100%);
+    background: var(--bg-light);
+    box-shadow: var(--shadow-xl);
+    animation: slideInRight var(--transition-base) var(--transition-easing);
+    z-index: 50;
+    border-left: 1px solid hsl(var(--border));
+    padding: 24px;
+    overflow-y: auto;
+  }
+
+  .accordion {
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-md);
+    background: var(--bg);
+  }
+
+  .accordion-item {
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .accordion-trigger {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color var(--transition-fast) var(--transition-easing);
+  }
+
+  .accordion-trigger:hover {
+    background: hsl(var(--background));
+  }
+
+  .accordion-content {
+    padding: 12px 16px;
+    animation: expandDown var(--transition-base) var(--transition-easing);
+  }
+
+  .options-group {
+    background: var(--bg);
+    border-radius: var(--radius-lg);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .option-card {
+    background: var(--bg);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all var(--transition-fast) var(--transition-easing);
+    color: var(--text);
+  }
+
+  .option-card:hover {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg), white 4%),
+      var(--bg)
+    );
+    border-color: var(--accent-color-light);
+  }
+
+  .option-card.is-selected {
+    background: var(--bg-light);
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 8%),
+      var(--bg-light)
+    );
+    border-color: var(--accent-color);
+    box-shadow: inset 0 1px 0 var(--highlight), var(--shadow-sm);
+  }
+
+  .option-card.is-selected::before {
+    content: "\2713";
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--accent-color);
+    font-weight: bold;
+  }
+}
+
+@layer utilities {
+  .gradient-micro {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 2%),
+      var(--bg-light)
+    );
+  }
+
+  .gradient-standard {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 6%),
+      var(--bg-light)
+    );
+  }
+
+  .gradient-accent {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bg-light), white 12%),
+      var(--bg-light)
+    );
+  }
+
+  .gradient-accent-primary {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--accent-color), white 10%),
+      var(--accent-color)
+    );
+  }
+
+  .skeleton {
+    background: var(--bg);
+    animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border-radius: var(--radius-md);
+  }
+
+  [disabled],
+  .is-disabled {
+    opacity: 0.60;
+    cursor: not-allowed;
+    background: var(--bg-dark) !important;
+    color: var(--text-muted) !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .animate-glass-float {
+    animation: glass-float 6s ease-in-out infinite;
+  }
+}
+
+input,
+textarea,
+select {
+  background: var(--bg-light);
+  border: 1px solid hsl(var(--border));
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--transition-base) var(--transition-easing),
+    box-shadow var(--transition-base) var(--transition-easing);
+  box-shadow: inset 0 1px 0 var(--highlight);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow:
+    inset 0 1px 0 var(--highlight),
+    0 0 0 3px color-mix(in oklab, var(--accent-color), white 80%);
+}
+
+input:disabled {
+  background: var(--bg-dark);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes expandDown {
+  from { max-height: 0; opacity: 0; }
+  to { max-height: 100%; opacity: 1; }
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes expand-contract {
+  0%, 100% { width: 2rem; }
+  50% { width: 3rem; }
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.3; transform: translateX(-100%); }
+  50% { opacity: 0.6; transform: translateX(100%); }
+}
+
+@keyframes breathing {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
+}
+
+@keyframes glass-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Thème Color - Variables CSS personnalisées */
+.theme-color {
+  /* Conversion des couleurs hex vers HSL */
+  --primary: 160 30% 35%; /* #3F756C - Vert sage pour les icônes */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 45 55% 72%; /* #E1C789 - Beige doré pour le fond */
+  --secondary-foreground: 0 0% 0%;
+  --accent: 25 50% 50%; /* #C6743E - Orange terre pour les autres éléments */
+  --accent-foreground: 0 0% 100%;
+  --background: 45 55% 72%; /* Fond global beige doré */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --muted: 45 35% 85%;
+  --muted-foreground: 0 0% 30%;
+  --border: 45 30% 60%;
+  --input: 0 0% 100%;
+  --ring: 160 30% 35%;
+  
+  /* Variables sidebar spécifiques */
+  --sidebar-background: 160 30% 35%; /* Vert sage pour sidebar */
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-accent: 25 50% 50%; /* Orange terre pour accents */
+  --sidebar-primary: 45 55% 72%; /* Beige doré */
+  --sidebar-border: 160 25% 30%;
+  --sidebar-ring: 25 50% 50%;
+}
+
+/* Thème Color en mode sombre */
+.dark .theme-color {
+  --background: 160 30% 8%; /* Fond vert sage très foncé pour plus de contraste */
+  --foreground: 0 0% 98%;
+  --card: 160 30% 12%; /* Cards plus contrastées */
+  --card-foreground: 0 0% 98%;
+  --muted: 160 20% 18%;
+  --muted-foreground: 0 0% 75%; /* Texte muted plus lisible */
+  --border: 160 20% 25%; /* Bordures plus visibles */
+  --input: 160 25% 15%;
+  --sidebar-background: 160 35% 6%; /* Sidebar encore plus foncée */
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-border: 160 25% 20%;
+}
+
+/* Thème Glass - Variables pour effet glassmorphism (mode clair) */
+.theme-glass {
+  /* En mode clair, on garde les couleurs de base mais avec transparence */
+  --card: 0 0% 100% / 0.7; /* Cards avec transparence */
+  --popover: 0 0% 100% / 0.9;
+  --secondary: 0 0% 100% / 0.8;
+  --muted: 0 0% 96% / 0.8;
+  --accent: 0 0% 96% / 0.8;
+  --border: 0 0% 89% / 0.6;
+  --input: 0 0% 100% / 0.8;
+  --sidebar-background: 0 0% 100% / 0.8;
+  --sidebar-accent: 0 0% 96% / 0.8;
+  --sidebar-border: 0 0% 89% / 0.6;
+}
+
+/* Thème Glass en mode sombre */
+.dark .theme-glass {
+  --card: 0 0% 8% / 0.6; /* Cards plus contrastées avec transparence */
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 6% / 0.9;
+  --popover-foreground: 0 0% 98%;
+  --secondary: 0 0% 12% / 0.7;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 12% / 0.7;
+  --muted-foreground: 0 0% 75%; /* Plus lisible */
+  --accent: 0 0% 12% / 0.7;
+  --accent-foreground: 0 0% 98%;
+  --border: 0 0% 30% / 0.5; /* Bordures plus visibles mais transparentes */
+  --input: 0 0% 10% / 0.8;
+  --sidebar-background: 0 0% 6% / 0.7; /* Sidebar plus contrastée */
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-accent: 0 0% 12% / 0.7;
+  --sidebar-border: 0 0% 30% / 0.5;
+}
+
+/* Thème Formal - Variables par défaut (déjà définies) */
+.theme-formal {
+  /* Utilise les variables CSS par défaut déjà définies dans :root */
+}
+
+@layer utilities {
+  /* Utilitaires pour le thème glass */
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  }
+  
+  .glass-nav {
+    @apply bg-white/10 backdrop-blur-lg border-b border-white/20;
+  }
+  
+  .glass-sidebar {
+    @apply bg-black/20 backdrop-blur-xl border-r border-white/10;
+  }
+
+  /* Animations pour les thèmes */
+  @keyframes expand-contract {
+    0%,
+    100% {
+      width: 2rem;
+    }
+    50% {
+      width: 3rem;
+    }
+  }
+
+  @keyframes shimmer {
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: translateX(-100%);
+    }
+    50% {
+      opacity: 0.6;
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes breathing {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.02);
+    }
+  }
+
+  @keyframes glass-float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-glass-float {
+    animation: glass-float 6s ease-in-out infinite;
+  }
+}

@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 55836760b37eab6116ba183663c2603c41199672 BarBar-DD <andre.bertea92@gmail.com> 1756685783 +0200	branch: Created from HEAD
+55836760b37eab6116ba183663c2603c41199672 aec491b57f6980e4998347e5accba552513b5925 BarBar-DD <andre.bertea92@gmail.com> 1756686301 +0200	commit: 🚀 deploy: préparation déploiement GMBS_DEMO - Mise à jour API billing et Stripe webhook - Amélioration page settings billing - Nouvelle migration Supabase pour billing et chat - Configuration Vercel optimisée pour déploiement
+aec491b57f6980e4998347e5accba552513b5925 25c95c7a433ced10dd1c2c252ccb624fb8b5f59d BarBar-DD <andre.bertea92@gmail.com> 1756744381 +0200	commit: adding purchase page
+25c95c7a433ced10dd1c2c252ccb624fb8b5f59d a23e3eecbaf0538c24f86f4b0ca95d774d4b141c BarBar-DD <andre.bertea92@gmail.com> 1756758992 +0200	commit: on commence a etre pas mal la version de prod test
+a23e3eecbaf0538c24f86f4b0ca95d774d4b141c beb77d1b167720553da4c8376a5a9c01c200c32e BarBar-DD <andre.bertea92@gmail.com> 1756759471 +0200	commit: prod2
+beb77d1b167720553da4c8376a5a9c01c200c32e 3e45f6cf5c8aeea15ed1327a554992cc5b3724cd BarBar-DD <andre.bertea92@gmail.com> 1756759956 +0200	commit: prod3
+3e45f6cf5c8aeea15ed1327a554992cc5b3724cd a23e3eecbaf0538c24f86f4b0ca95d774d4b141c BarBar-DD <andre.bertea92@gmail.com> 1756760705 +0200	reset: moving to a23e3eecbaf0538c24f86f4b0ca95d774d4b141c
+a23e3eecbaf0538c24f86f4b0ca95d774d4b141c 3e45f6cf5c8aeea15ed1327a554992cc5b3724cd BarBar-DD <andre.bertea92@gmail.com> 1758062738 +0200	pull: Fast-forward

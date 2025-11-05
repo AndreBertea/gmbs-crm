@@ -1,0 +1,65 @@
+import { NextResponse } from 'next/server'
+import { createServerSupabase, bearerFrom } from '@/lib/supabase/server'
+
+export const runtime = 'nodejs'
+
+export async function GET(req: Request) {
+  try {
+    // Read token from Authorization header when called from browser
+    const token = bearerFrom(req)
+    if (!token) return NextResponse.json({ user: null })
+    const supabase = createServerSupabase(token)
+
+    const { data: authUser, error: authError } = await supabase.auth.getUser()
+    if (authError) return NextResponse.json({ error: authError.message }, { status: 401 })
+    const userId = authUser?.user?.id || null
+    const userEmail = authUser?.user?.email || null
+
+    let record: any = null
+    let queryError: any = null
+
+    if (userId) {
+      const byId = await supabase
+        .from('users')
+        .select('id, firstname, lastname, email, status, color, code_gestionnaire, username, last_seen_at')
+        .eq('id', userId)
+        .maybeSingle()
+      record = byId.data
+      queryError = byId.error
+    }
+
+    if ((!record || queryError) && userEmail) {
+      const fallback = await supabase
+        .from('users')
+        .select('id, firstname, lastname, email, status, color, code_gestionnaire, username, last_seen_at')
+        .eq('email', userEmail)
+        .maybeSingle()
+      record = fallback.data
+      queryError = fallback.error
+    }
+
+    if (queryError && queryError.code !== 'PGRST116') {
+      return NextResponse.json({ error: queryError.message }, { status: 500 })
+    }
+
+    if (!record) return NextResponse.json({ user: null })
+
+    const user = {
+      id: record.id,
+      firstname: record.firstname,
+      lastname: record.lastname,
+      prenom: record.firstname,
+      name: record.lastname,
+      email: record.email,
+      status: record.status,
+      color: record.color,
+      code_gestionnaire: record.code_gestionnaire,
+      surnom: record.code_gestionnaire,
+      username: record.username,
+      last_seen_at: record.last_seen_at,
+    }
+    return NextResponse.json({ user })
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
+  }
+}

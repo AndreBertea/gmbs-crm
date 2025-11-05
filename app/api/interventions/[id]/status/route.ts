@@ -1,0 +1,29 @@
+import { NextResponse } from "next/server"
+import { transitionStatus } from "@/lib/api/interventions"
+import type { InterventionStatusValue } from "@/types/interventions"
+
+type Params = {
+  params: {
+    id: string
+  }
+}
+
+export async function POST(request: Request, { params }: Params) {
+  try {
+    const body = await request.json()
+    const status = body.status as InterventionStatusValue | undefined
+    if (!status) {
+      return NextResponse.json({ message: "Statut requis" }, { status: 400 })
+    }
+
+    const intervention = await transitionStatus(params.id, {
+      status,
+      dueAt: body.dueAt,
+      artisanId: body.artisanId,
+    })
+    return NextResponse.json(intervention)
+  } catch (error) {
+    console.error("[api/interventions/:id/status] POST failed", error)
+    return NextResponse.json({ message: (error as Error).message }, { status: 400 })
+  }
+}

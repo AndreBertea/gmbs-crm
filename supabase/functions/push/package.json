@@ -1,0 +1,10 @@
+{
+  "name": "push-sheets",
+  "version": "1.0.0",
+  "description": "Push data from Supabase to Google Sheets",
+  "main": "index.ts",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "googleapis": "^128.0.0"
+  }
+}

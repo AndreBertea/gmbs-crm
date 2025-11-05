@@ -1,0 +1,1114 @@
+// ===== API ARTISANS COMPLÈTE ET SCALABLE =====
+// Service API Supabase - CRUD complet pour les artisans
+// 
+// FEATURES:
+// - CRUD complet (Create, Read, Update, Delete)
+// - Gestion des métiers et zones d'intervention
+// - Assignation par gestionnaire
+// - Gestion des documents/attachments
+// - Gestion des absences
+// - Pagination optimisée
+// - Validation des données
+// - Gestion d'erreurs robuste
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+};
+
+// Types pour la validation
+interface CreateArtisanRequest {
+  prenom?: string;
+  nom?: string;
+  telephone?: string;
+  telephone2?: string;
+  email?: string;
+  raison_sociale?: string;
+  siret?: string;
+  statut_juridique?: string;
+  statut_id?: string;
+  gestionnaire_id?: string;
+  adresse_siege_social?: string;
+  ville_siege_social?: string;
+  code_postal_siege_social?: string;
+  adresse_intervention?: string;
+  ville_intervention?: string;
+  code_postal_intervention?: string;
+  intervention_latitude?: number;
+  intervention_longitude?: number;
+  numero_associe?: string;
+  suivi_relances_docs?: string;
+  metiers?: string[];
+  zones?: string[];
+}
+
+interface UpdateArtisanRequest {
+  prenom?: string;
+  nom?: string;
+  telephone?: string;
+  telephone2?: string;
+  email?: string;
+  raison_sociale?: string;
+  siret?: string;
+  statut_juridique?: string;
+  statut_id?: string;
+  gestionnaire_id?: string;
+  adresse_siege_social?: string;
+  ville_siege_social?: string;
+  code_postal_siege_social?: string;
+  adresse_intervention?: string;
+  ville_intervention?: string;
+  code_postal_intervention?: string;
+  intervention_latitude?: number;
+  intervention_longitude?: number;
+  numero_associe?: string;
+  suivi_relances_docs?: string;
+  is_active?: boolean;
+  metiers?: string[];
+  zones?: string[];
+}
+
+interface AssignMetierRequest {
+  artisan_id: string;
+  metier_id: string;
+  is_primary?: boolean;
+}
+
+interface AssignZoneRequest {
+  artisan_id: string;
+  zone_id: string;
+}
+
+interface CreateAbsenceRequest {
+  artisan_id: string;
+  start_date: string;
+  end_date: string;
+  reason?: string;
+  is_confirmed?: boolean;
+}
+
+interface CreateAttachmentRequest {
+  artisan_id: string;
+  kind: string;
+  url: string;
+  filename?: string;
+  mime_type?: string;
+  file_size?: number;
+}
+
+serve(async (req: Request) => {
+  const startTime = Date.now();
+  const requestId = crypto.randomUUID();
+
+  console.log(JSON.stringify({
+    level: 'info',
+    requestId,
+    method: req.method,
+    url: req.url,
+    timestamp: new Date().toISOString(),
+    message: 'Artisans API request started'
+  }));
+
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const url = new URL(req.url);
+    const pathSegments = url.pathname.split('/').filter(segment => segment);
+    
+    // Parsing plus robuste pour gérer les sous-ressources
+    let resource = pathSegments[pathSegments.length - 1];
+    let resourceId = null;
+    let isUpsert = false;
+    
+    // Détecter si c'est une requête upsert
+    if (pathSegments.includes('upsert')) {
+      isUpsert = true;
+      resource = 'artisans';
+    }
+    
+    // Pour /artisans-v2/artisans/{id}/metiers
+    if (pathSegments.length >= 4 && pathSegments[pathSegments.length - 3] === 'artisans') {
+      resourceId = pathSegments[pathSegments.length - 2];
+      resource = pathSegments[pathSegments.length - 1];
+    }
+    // Pour /artisans-v2/artisans/{id}
+    else if (pathSegments.length >= 3 && pathSegments[pathSegments.length - 2] === 'artisans') {
+      resourceId = pathSegments[pathSegments.length - 1];
+      resource = 'artisans';
+    }
+    // Pour /artisans-v2/artisans
+    else if (pathSegments.length >= 2 && pathSegments[pathSegments.length - 1] === 'artisans') {
+      resource = 'artisans';
+    }
+
+    // ===== GET /artisans - Liste tous les artisans =====
+    if (req.method === 'GET' && resource === 'artisans') {
+      const metier = url.searchParams.get('metier');
+      const zone = url.searchParams.get('zone');
+      const statut = url.searchParams.get('statut');
+      const gestionnaire = url.searchParams.get('gestionnaire');
+      const limit = parseInt(url.searchParams.get('limit') || '50');
+      const offset = parseInt(url.searchParams.get('offset') || '0');
+      const includeRelations = url.searchParams.get('include')?.split(',') || [];
+
+      let query = supabase
+        .from('artisans')
+        .select(`
+          id,
+          prenom,
+          nom,
+          telephone,
+          telephone2,
+          email,
+          raison_sociale,
+          siret,
+          statut_juridique,
+          statut_id,
+          gestionnaire_id,
+          adresse_siege_social,
+          ville_siege_social,
+          code_postal_siege_social,
+          adresse_intervention,
+          ville_intervention,
+          code_postal_intervention,
+          intervention_latitude,
+          intervention_longitude,
+          numero_associe,
+          suivi_relances_docs,
+          is_active,
+          date_ajout,
+          created_at,
+          updated_at
+          ${includeRelations.includes('statuses') ? ',artisan_statuses(id,code,label,color)' : ''}
+          ${includeRelations.includes('gestionnaires') ? ',users!gestionnaire_id(id,firstname,lastname,username)' : ''}
+          ${includeRelations.includes('metiers') ? ',artisan_metiers(metier_id,is_primary,metiers(id,label,code))' : ''}
+          ${includeRelations.includes('zones') ? ',artisan_zones(zone_id,zones(id,label,code))' : ''}
+          ${includeRelations.includes('attachments') ? ',artisan_attachments(id,kind,url,filename,mime_type)' : ''}
+          ${includeRelations.includes('absences') ? ',artisan_absences(id,start_date,end_date,reason,is_confirmed)' : ''}
+        `)
+        .order('nom', { ascending: true })
+        .order('prenom', { ascending: true });
+
+      // Appliquer les filtres
+      if (statut) {
+        query = query.eq('statut_id', statut);
+      }
+      if (gestionnaire) {
+        query = query.eq('gestionnaire_id', gestionnaire);
+      }
+
+      // Filtrer les artisans actifs
+      query = query.eq('is_active', true);
+
+      // Compter le total
+      const { count: totalCount } = await supabase
+        .from('artisans')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      // Appliquer pagination
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      // Si métier ou zone est spécifié, filtrer les artisans correspondants
+      let filteredData = data || [];
+      if (metier) {
+        const { data: metierArtisans } = await supabase
+          .from('artisan_metiers')
+          .select('artisan_id')
+          .eq('metier_id', metier);
+        
+        const artisanIds = metierArtisans?.map(am => am.artisan_id) || [];
+        filteredData = filteredData.filter(artisan => artisanIds.includes(artisan.id));
+      }
+
+      if (zone) {
+        const { data: zoneArtisans } = await supabase
+          .from('artisan_zones')
+          .select('artisan_id')
+          .eq('zone_id', zone);
+        
+        const artisanIds = zoneArtisans?.map(az => az.artisan_id) || [];
+        filteredData = filteredData.filter(artisan => artisanIds.includes(artisan.id));
+      }
+
+      const responseTime = Date.now() - startTime;
+      
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        responseTime,
+        dataCount: filteredData.length,
+        timestamp: new Date().toISOString(),
+        message: 'Artisans list retrieved successfully'
+      }));
+
+      return new Response(
+        JSON.stringify({
+          data: filteredData,
+          pagination: {
+            limit,
+            offset,
+            total: totalCount || 0,
+            hasMore: filteredData.length === limit
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== GET /artisans/{id} - Artisan par ID =====
+    if (req.method === 'GET' && resourceId && resource === 'artisans') {
+      const includeRelations = url.searchParams.get('include')?.split(',') || [];
+
+      const { data, error } = await supabase
+        .from('artisans')
+        .select(`
+          id,
+          prenom,
+          nom,
+          telephone,
+          telephone2,
+          email,
+          raison_sociale,
+          siret,
+          statut_juridique,
+          statut_id,
+          gestionnaire_id,
+          adresse_siege_social,
+          ville_siege_social,
+          code_postal_siege_social,
+          adresse_intervention,
+          ville_intervention,
+          code_postal_intervention,
+          intervention_latitude,
+          intervention_longitude,
+          numero_associe,
+          suivi_relances_docs,
+          is_active,
+          date_ajout,
+          created_at,
+          updated_at
+          ${includeRelations.includes('statuses') ? ',artisan_statuses(id,code,label,color)' : ''}
+          ${includeRelations.includes('gestionnaires') ? ',users!gestionnaire_id(id,firstname,lastname,username)' : ''}
+          ${includeRelations.includes('metiers') ? ',artisan_metiers(metier_id,is_primary,metiers(id,label,code))' : ''}
+          ${includeRelations.includes('zones') ? ',artisan_zones(zone_id,zones(id,label,code))' : ''}
+          ${includeRelations.includes('attachments') ? ',artisan_attachments(id,kind,url,filename,mime_type)' : ''}
+          ${includeRelations.includes('absences') ? ',artisan_absences(id,start_date,end_date,reason,is_confirmed)' : ''}
+          ${includeRelations.includes('interventions') ? ',intervention_artisans(intervention_id,role,is_primary,interventions(id,date,statut_id,contexte_intervention))' : ''}
+        `)
+        .eq('id', resourceId)
+        .single();
+
+      if (error) {
+        return new Response(
+          JSON.stringify({ error: 'Artisan not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify(data),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== POST /artisans/upsert - Upsert un artisan =====
+    if (req.method === 'POST' && resource === 'artisans' && isUpsert) {
+      const body: CreateArtisanRequest = await req.json();
+
+      // Validation des données requises pour l'upsert
+      if (!body.email && !body.siret) {
+        return new Response(
+          JSON.stringify({ error: 'Email or SIRET is required for upsert operation' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Vérifier si l'artisan existe déjà par email ou SIRET
+      let existingArtisan = null;
+      
+      if (body.email) {
+        const { data: emailArtisan } = await supabase
+          .from('artisans')
+          .select('id')
+          .eq('email', body.email)
+          .single();
+        existingArtisan = emailArtisan;
+      }
+      
+      if (!existingArtisan && body.siret) {
+        const { data: siretArtisan } = await supabase
+          .from('artisans')
+          .select('id')
+          .eq('siret', body.siret)
+          .single();
+        existingArtisan = siretArtisan;
+      }
+
+      if (existingArtisan) {
+        // Mettre à jour l'artisan existant
+        const { data: updatedArtisan, error: updateError } = await supabase
+          .from('artisans')
+          .update({
+            prenom: body.prenom,
+            nom: body.nom,
+            telephone: body.telephone,
+            telephone2: body.telephone2,
+            raison_sociale: body.raison_sociale,
+            siret: body.siret,
+            statut_juridique: body.statut_juridique,
+            statut_id: body.statut_id,
+            gestionnaire_id: body.gestionnaire_id,
+            adresse_siege_social: body.adresse_siege_social,
+            ville_siege_social: body.ville_siege_social,
+            code_postal_siege_social: body.code_postal_siege_social,
+            adresse_intervention: body.adresse_intervention,
+            ville_intervention: body.ville_intervention,
+            code_postal_intervention: body.code_postal_intervention,
+            intervention_latitude: body.intervention_latitude,
+            intervention_longitude: body.intervention_longitude,
+            numero_associe: body.numero_associe,
+            suivi_relances_docs: body.suivi_relances_docs,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingArtisan.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          throw new Error(`Failed to update artisan: ${updateError.message}`);
+        }
+
+        // Mettre à jour les métiers si spécifiés
+        if (body.metiers && body.metiers.length > 0) {
+          // Supprimer les anciens métiers
+          await supabase
+            .from('artisan_metiers')
+            .delete()
+            .eq('artisan_id', existingArtisan.id);
+
+          // Ajouter les nouveaux métiers
+          const metierInserts = body.metiers.map((metierId, index) => ({
+            artisan_id: existingArtisan.id,
+            metier_id: metierId,
+            is_primary: index === 0
+          }));
+
+          const { error: metierError } = await supabase
+            .from('artisan_metiers')
+            .insert(metierInserts);
+
+          if (metierError) {
+            console.warn(`Failed to update metiers: ${metierError.message}`);
+          }
+        }
+
+        // Mettre à jour les zones si spécifiées
+        if (body.zones && body.zones.length > 0) {
+          // Supprimer les anciennes zones
+          await supabase
+            .from('artisan_zones')
+            .delete()
+            .eq('artisan_id', existingArtisan.id);
+
+          // Ajouter les nouvelles zones
+          const zoneInserts = body.zones.map(zoneId => ({
+            artisan_id: existingArtisan.id,
+            zone_id: zoneId
+          }));
+
+          const { error: zoneError } = await supabase
+            .from('artisan_zones')
+            .insert(zoneInserts);
+
+          if (zoneError) {
+            console.warn(`Failed to update zones: ${zoneError.message}`);
+          }
+        }
+
+        console.log(JSON.stringify({
+          level: 'info',
+          requestId,
+          artisanId: existingArtisan.id,
+          timestamp: new Date().toISOString(),
+          message: 'Artisan updated successfully via upsert'
+        }));
+
+        return new Response(
+          JSON.stringify(updatedArtisan),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        // Créer un nouvel artisan (logique identique à POST /artisans)
+        const { data: artisan, error: artisanError } = await supabase
+          .from('artisans')
+          .insert([{
+            prenom: body.prenom,
+            nom: body.nom,
+            telephone: body.telephone,
+            telephone2: body.telephone2,
+            email: body.email,
+            raison_sociale: body.raison_sociale,
+            siret: body.siret,
+            statut_juridique: body.statut_juridique,
+            statut_id: body.statut_id,
+            gestionnaire_id: body.gestionnaire_id,
+            adresse_siege_social: body.adresse_siege_social,
+            ville_siege_social: body.ville_siege_social,
+            code_postal_siege_social: body.code_postal_siege_social,
+            adresse_intervention: body.adresse_intervention,
+            ville_intervention: body.ville_intervention,
+            code_postal_intervention: body.code_postal_intervention,
+            intervention_latitude: body.intervention_latitude,
+            intervention_longitude: body.intervention_longitude,
+            numero_associe: body.numero_associe,
+            suivi_relances_docs: body.suivi_relances_docs,
+            is_active: true,
+            date_ajout: new Date().toISOString()
+          }])
+          .select()
+          .single();
+
+        if (artisanError) {
+          throw new Error(`Failed to create artisan: ${artisanError.message}`);
+        }
+
+        // Ajouter les métiers si spécifiés
+        if (body.metiers && body.metiers.length > 0) {
+          const metierInserts = body.metiers.map((metierId, index) => ({
+            artisan_id: artisan.id,
+            metier_id: metierId,
+            is_primary: index === 0
+          }));
+
+          const { error: metierError } = await supabase
+            .from('artisan_metiers')
+            .insert(metierInserts);
+
+          if (metierError) {
+            console.warn(`Failed to assign metiers: ${metierError.message}`);
+          }
+        }
+
+        // Ajouter les zones si spécifiées
+        if (body.zones && body.zones.length > 0) {
+          const zoneInserts = body.zones.map(zoneId => ({
+            artisan_id: artisan.id,
+            zone_id: zoneId
+          }));
+
+          const { error: zoneError } = await supabase
+            .from('artisan_zones')
+            .insert(zoneInserts);
+
+          if (zoneError) {
+            console.warn(`Failed to assign zones: ${zoneError.message}`);
+          }
+        }
+
+        console.log(JSON.stringify({
+          level: 'info',
+          requestId,
+          artisanId: artisan.id,
+          timestamp: new Date().toISOString(),
+          message: 'Artisan created successfully via upsert'
+        }));
+
+        return new Response(
+          JSON.stringify(artisan),
+          { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // ===== POST /artisans - Créer un artisan =====
+    if (req.method === 'POST' && resource === 'artisans' && !isUpsert) {
+      const body: CreateArtisanRequest = await req.json();
+
+      // Validation des données requises
+      if (!body.prenom && !body.nom) {
+        return new Response(
+          JSON.stringify({ error: 'At least prenom or nom is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: artisan, error: artisanError } = await supabase
+        .from('artisans')
+        .insert([{
+          prenom: body.prenom,
+          nom: body.nom,
+          telephone: body.telephone,
+          telephone2: body.telephone2,
+          email: body.email,
+          raison_sociale: body.raison_sociale,
+          siret: body.siret,
+          statut_juridique: body.statut_juridique,
+          statut_id: body.statut_id,
+          gestionnaire_id: body.gestionnaire_id,
+          adresse_siege_social: body.adresse_siege_social,
+          ville_siege_social: body.ville_siege_social,
+          code_postal_siege_social: body.code_postal_siege_social,
+          adresse_intervention: body.adresse_intervention,
+          ville_intervention: body.ville_intervention,
+          code_postal_intervention: body.code_postal_intervention,
+          intervention_latitude: body.intervention_latitude,
+          intervention_longitude: body.intervention_longitude,
+          numero_associe: body.numero_associe,
+          suivi_relances_docs: body.suivi_relances_docs,
+          is_active: true,
+          date_ajout: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (artisanError) {
+        throw new Error(`Failed to create artisan: ${artisanError.message}`);
+      }
+
+      // Ajouter les métiers si spécifiés
+      if (body.metiers && body.metiers.length > 0) {
+        const metierInserts = body.metiers.map((metierId, index) => ({
+          artisan_id: artisan.id,
+          metier_id: metierId,
+          is_primary: index === 0 // Premier métier = primaire
+        }));
+
+        const { error: metierError } = await supabase
+          .from('artisan_metiers')
+          .insert(metierInserts);
+
+        if (metierError) {
+          console.warn(`Failed to assign metiers: ${metierError.message}`);
+        }
+      }
+
+      // Ajouter les zones si spécifiées
+      if (body.zones && body.zones.length > 0) {
+        const zoneInserts = body.zones.map(zoneId => ({
+          artisan_id: artisan.id,
+          zone_id: zoneId
+        }));
+
+        const { error: zoneError } = await supabase
+          .from('artisan_zones')
+          .insert(zoneInserts);
+
+        if (zoneError) {
+          console.warn(`Failed to assign zones: ${zoneError.message}`);
+        }
+      }
+
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        artisanId: artisan.id,
+        timestamp: new Date().toISOString(),
+        message: 'Artisan created successfully'
+      }));
+
+      return new Response(
+        JSON.stringify(artisan),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== PUT /artisans/{id} - Modifier un artisan =====
+    if (req.method === 'PUT' && resourceId && resource === 'artisans') {
+      const body: UpdateArtisanRequest = await req.json();
+
+      const { data, error } = await supabase
+        .from('artisans')
+        .update({
+          prenom: body.prenom,
+          nom: body.nom,
+          telephone: body.telephone,
+          telephone2: body.telephone2,
+          email: body.email,
+          raison_sociale: body.raison_sociale,
+          siret: body.siret,
+          statut_juridique: body.statut_juridique,
+          statut_id: body.statut_id,
+          gestionnaire_id: body.gestionnaire_id,
+          adresse_siege_social: body.adresse_siege_social,
+          ville_siege_social: body.ville_siege_social,
+          code_postal_siege_social: body.code_postal_siege_social,
+          adresse_intervention: body.adresse_intervention,
+          ville_intervention: body.ville_intervention,
+          code_postal_intervention: body.code_postal_intervention,
+          intervention_latitude: body.intervention_latitude,
+          intervention_longitude: body.intervention_longitude,
+          numero_associe: body.numero_associe,
+          suivi_relances_docs: body.suivi_relances_docs,
+          is_active: body.is_active,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', resourceId)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to update artisan: ${error.message}`);
+      }
+
+      // Mettre à jour les métiers si spécifiés
+      if (body.metiers !== undefined) {
+        // Supprimer les métiers existants
+        await supabase
+          .from('artisan_metiers')
+          .delete()
+          .eq('artisan_id', resourceId);
+
+        // Ajouter les nouveaux métiers
+        if (body.metiers.length > 0) {
+          const metierInserts = body.metiers.map((metierId, index) => ({
+            artisan_id: resourceId,
+            metier_id: metierId,
+            is_primary: index === 0
+          }));
+
+          const { error: metierError } = await supabase
+            .from('artisan_metiers')
+            .insert(metierInserts);
+
+          if (metierError) {
+            console.warn(`Failed to update metiers: ${metierError.message}`);
+          }
+        }
+      }
+
+      // Mettre à jour les zones si spécifiées
+      if (body.zones !== undefined) {
+        // Supprimer les zones existantes
+        await supabase
+          .from('artisan_zones')
+          .delete()
+          .eq('artisan_id', resourceId);
+
+        // Ajouter les nouvelles zones
+        if (body.zones.length > 0) {
+          const zoneInserts = body.zones.map(zoneId => ({
+            artisan_id: resourceId,
+            zone_id: zoneId
+          }));
+
+          const { error: zoneError } = await supabase
+            .from('artisan_zones')
+            .insert(zoneInserts);
+
+          if (zoneError) {
+            console.warn(`Failed to update zones: ${zoneError.message}`);
+          }
+        }
+      }
+
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        artisanId: resourceId,
+        timestamp: new Date().toISOString(),
+        message: 'Artisan updated successfully'
+      }));
+
+      return new Response(
+        JSON.stringify(data),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== DELETE /artisans/{id} - Supprimer un artisan (soft delete) =====
+    if (req.method === 'DELETE' && resourceId && resource === 'artisans') {
+      const { data, error } = await supabase
+        .from('artisans')
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', resourceId)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to delete artisan: ${error.message}`);
+      }
+
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        artisanId: resourceId,
+        timestamp: new Date().toISOString(),
+        message: 'Artisan deleted successfully'
+      }));
+
+      return new Response(
+        JSON.stringify({ message: 'Artisan deleted successfully', data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== POST /artisans/{id}/metiers - Assigner un métier =====
+    if (req.method === 'POST' && resourceId && resource === 'metiers') {
+      const body: AssignMetierRequest = await req.json();
+
+      if (!body.metier_id) {
+        return new Response(
+          JSON.stringify({ error: 'metier_id is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('artisan_metiers')
+        .insert([{
+          artisan_id: resourceId,
+          metier_id: body.metier_id,
+          is_primary: body.is_primary ?? false
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to assign metier: ${error.message}`);
+      }
+
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        artisanId: resourceId,
+        metierId: body.metier_id,
+        timestamp: new Date().toISOString(),
+        message: 'Metier assigned successfully'
+      }));
+
+      return new Response(
+        JSON.stringify(data),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== POST /artisans/{id}/zones - Assigner une zone =====
+    if (req.method === 'POST' && resourceId && resource === 'zones') {
+      const body: AssignZoneRequest = await req.json();
+
+      if (!body.zone_id) {
+        return new Response(
+          JSON.stringify({ error: 'zone_id is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('artisan_zones')
+        .insert([{
+          artisan_id: resourceId,
+          zone_id: body.zone_id
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to assign zone: ${error.message}`);
+      }
+
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        artisanId: resourceId,
+        zoneId: body.zone_id,
+        timestamp: new Date().toISOString(),
+        message: 'Zone assigned successfully'
+      }));
+
+      return new Response(
+        JSON.stringify(data),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== POST /artisans/{id}/absences - Créer une absence =====
+    if (req.method === 'POST' && resourceId && resource === 'absences') {
+      const body: CreateAbsenceRequest = await req.json();
+
+      if (!body.start_date || !body.end_date) {
+        return new Response(
+          JSON.stringify({ error: 'start_date and end_date are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('artisan_absences')
+        .insert([{
+          artisan_id: resourceId,
+          start_date: body.start_date,
+          end_date: body.end_date,
+          reason: body.reason,
+          is_confirmed: body.is_confirmed ?? false
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to create absence: ${error.message}`);
+      }
+
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        artisanId: resourceId,
+        absenceId: data.id,
+        timestamp: new Date().toISOString(),
+        message: 'Absence created successfully'
+      }));
+
+      return new Response(
+        JSON.stringify(data),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== POST /artisans/{id}/documents - Ajouter un document Drive =====
+    if (req.method === 'POST' && resourceId && resource === 'documents') {
+      const body = await req.json();
+
+      if (!body.kind || !body.url || !body.filename) {
+        return new Response(
+          JSON.stringify({ error: 'kind, url, and filename are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('artisan_attachments')
+        .insert({
+          artisan_id: resourceId,
+          kind: body.kind,
+          url: body.url,
+          filename: body.filename,
+          mime_type: body.mime_type || 'application/octet-stream'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to create document: ${error.message}`);
+      }
+
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        artisanId: resourceId,
+        documentId: data.id,
+        timestamp: new Date().toISOString(),
+        message: 'Document created successfully'
+      }));
+
+      return new Response(
+        JSON.stringify(data),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ===== POST /artisans/{id}/metiers - Ajouter un métier =====
+    if (req.method === 'POST' && resourceId && resource === 'metiers') {
+      const body = await req.json();
+
+      if (!body.metier_id) {
+        return new Response(
+          JSON.stringify({ error: 'metier_id is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      try {
+        // Utiliser upsert pour éviter les problèmes de contrainte de clé unique
+        const result = await supabase
+          .from('artisan_metiers')
+          .upsert({
+            artisan_id: resourceId,
+            metier_id: body.metier_id,
+            is_primary: body.is_primary || false
+          }, {
+            onConflict: 'artisan_id,metier_id',
+            ignoreDuplicates: false
+          })
+          .select()
+          .single();
+
+        if (result.error) {
+          throw new Error(`Failed to assign metier: ${result.error.message}`);
+        }
+
+        console.log(JSON.stringify({
+          level: 'info',
+          requestId,
+          artisanId: resourceId,
+          metierId: result.data.metier_id,
+          timestamp: new Date().toISOString(),
+          message: 'Artisan metier assigned successfully'
+        }));
+
+        return new Response(
+          JSON.stringify(result.data),
+          { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error(JSON.stringify({
+          level: 'error',
+          requestId,
+          artisanId: resourceId,
+          metierId: body.metier_id,
+          timestamp: new Date().toISOString(),
+          error: error.message
+        }));
+
+        return new Response(
+          JSON.stringify({ error: `Failed to assign metier: ${error.message}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // ===== POST /artisans/{id}/zones - Ajouter une zone =====
+    if (req.method === 'POST' && resourceId && resource === 'zones') {
+      const body = await req.json();
+
+      if (!body.zone_id) {
+        return new Response(
+          JSON.stringify({ error: 'zone_id is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      try {
+        // Utiliser upsert pour éviter les problèmes de contrainte de clé unique
+        const result = await supabase
+          .from('artisan_zones')
+          .upsert({
+            artisan_id: resourceId,
+            zone_id: body.zone_id
+          }, {
+            onConflict: 'artisan_id,zone_id',
+            ignoreDuplicates: false
+          })
+          .select()
+          .single();
+
+        if (result.error) {
+          throw new Error(`Failed to assign zone: ${result.error.message}`);
+        }
+
+        console.log(JSON.stringify({
+          level: 'info',
+          requestId,
+          artisanId: resourceId,
+          zoneId: result.data.zone_id,
+          timestamp: new Date().toISOString(),
+          message: 'Artisan zone assigned successfully'
+        }));
+
+        return new Response(
+          JSON.stringify(result.data),
+          { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error(JSON.stringify({
+          level: 'error',
+          requestId,
+          artisanId: resourceId,
+          zoneId: body.zone_id,
+          timestamp: new Date().toISOString(),
+          error: error.message
+        }));
+
+        return new Response(
+          JSON.stringify({ error: `Failed to assign zone: ${error.message}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // ===== POST /artisans/{id}/attachments - Ajouter un document =====
+    if (req.method === 'POST' && resourceId && resource === 'attachments') {
+      const body: CreateAttachmentRequest = await req.json();
+
+      if (!body.kind || !body.url) {
+        return new Response(
+          JSON.stringify({ error: 'kind and url are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('artisan_attachments')
+        .insert([{
+          artisan_id: resourceId,
+          kind: body.kind,
+          url: body.url,
+          filename: body.filename,
+          mime_type: body.mime_type,
+          file_size: body.file_size
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to create attachment: ${error.message}`);
+      }
+
+      console.log(JSON.stringify({
+        level: 'info',
+        requestId,
+        artisanId: resourceId,
+        attachmentId: data.id,
+        timestamp: new Date().toISOString(),
+        message: 'Attachment created successfully'
+      }));
+
+      return new Response(
+        JSON.stringify(data),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    
+    console.log(JSON.stringify({
+      level: 'error',
+      requestId,
+      responseTime,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      message: 'Artisans API request failed'
+    }));
+
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

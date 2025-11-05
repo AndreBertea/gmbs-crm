@@ -1,0 +1,38 @@
+import { NextResponse } from "next/server"
+import { supabaseAdmin } from "@/lib/supabase-admin"
+
+export const runtime = "nodejs"
+
+export async function GET() {
+  if (!supabaseAdmin) return NextResponse.json({ error: "No DB" }, { status: 500 })
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('id, firstname, lastname, email, color, status, code_gestionnaire, username, last_seen_at, user_roles ( roles ( name ) )')
+      .order('lastname', { ascending: true })
+      .order('firstname', { ascending: true })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    const users = (data || []).map((u: any) => {
+      const roleName = u?.user_roles?.[0]?.roles?.name || null
+      return {
+        id: u.id,
+        firstname: u.firstname,
+        lastname: u.lastname,
+        name: u.lastname,
+        prenom: u.firstname,
+        email: u.email,
+        color: u.color,
+        status: u.status,
+        surnom: u.code_gestionnaire,
+        code_gestionnaire: u.code_gestionnaire,
+        role: roleName,
+        username: u.username,
+        last_seen_at: u.last_seen_at,
+      }
+    })
+    return NextResponse.json({ users })
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
+  }
+}
