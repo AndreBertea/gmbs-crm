@@ -58,6 +58,7 @@ import { WORKFLOW_EVENT_KEY } from "@/hooks/useWorkflowConfig"
 import { cn } from "@/lib/utils"
 import type { WorkflowConfig } from "@/types/intervention-workflow"
 import { mapStatusFromDb, mapStatusToDb } from "@/lib/interventions/mappers"
+import type { InterventionCursor } from "@/lib/supabase-api-v2"
 import type { InterventionStatusValue } from "@/types/interventions"
 import { getDistinctInterventionValues, getInterventionCounts, getInterventionTotalCount } from "@/lib/supabase-api-v2"
 import type { InterventionView as InterventionEntity } from "@/types/intervention-view"
@@ -544,6 +545,19 @@ export default function Page() {
   }, [activeView])
   const { open: openInterventionModal } = useInterventionModal()
 
+  const viewFields = useMemo(() => {
+    if (!activeView?.visibleProperties) {
+      return undefined
+    }
+    const normalized = activeView.visibleProperties
+      .map((field) => (field ? field.trim() : ""))
+      .filter((field): field is string => Boolean(field))
+    if (!normalized.length) {
+      return undefined
+    }
+    return Array.from(new Set(normalized))
+  }, [activeView?.visibleProperties])
+
   const {
     interventions: fetchedInterventions,
     setInterventions: updateRemoteInterventions,
@@ -556,12 +570,62 @@ export default function Page() {
     updateInterventionOptimistic,
     setQuery: setRemoteQuery,
     setSearch: setRemoteSearch,
+    direction: remoteDirection,
+    currentCursor,
   } = useInterventions({
     autoLoad: true,
     limit: SCROLL_CONFIG.BATCH_SIZE,
     maxCachedItems: SCROLL_CONFIG.MAX_CACHED_ITEMS,
     slidingWindow: SCROLL_CONFIG.SLIDING_WINDOW_ENABLED,
+    viewId: activeViewId,  // ✅ Force reload au changement de vue
+    fields: viewFields,
   })
+
+  const cursorRegistryRef = useRef<Map<string, InterventionCursor | null>>(new Map())
+  const previousScopeKeyRef = useRef<string | null>(null)
+  const fetchStartRef = useRef<number | null>(null)
+  const previousLoadingRef = useRef<boolean>(false)
+
+  const cursorScopeKey = useMemo(() => {
+    const keyPayload = {
+      view: activeViewId ?? "default",
+      filters: serverFilters,
+      sort: serverSort ?? null,
+      search: search?.trim() || null,
+    }
+    return JSON.stringify(keyPayload)
+  }, [activeViewId, serverFilters, serverSort, search])
+
+  useEffect(() => {
+    if (previousScopeKeyRef.current && previousScopeKeyRef.current !== cursorScopeKey) {
+      cursorRegistryRef.current.clear()
+    }
+    previousScopeKeyRef.current = cursorScopeKey
+  }, [cursorScopeKey])
+
+  useEffect(() => {
+    cursorRegistryRef.current.set(cursorScopeKey, currentCursor ?? null)
+  }, [cursorScopeKey, currentCursor])
+
+  useEffect(() => {
+    if (remoteLoading) {
+      fetchStartRef.current = typeof performance !== "undefined" ? performance.now() : Date.now()
+    } else if (previousLoadingRef.current && !remoteLoading) {
+      const endTime = typeof performance !== "undefined" ? performance.now() : Date.now()
+      const duration = fetchStartRef.current ? endTime - fetchStartRef.current : null
+      console.debug("[interventions] load", {
+        direction: remoteDirection,
+        cursor: currentCursor,
+        count: fetchedInterventions.length,
+        total: totalCount,
+        duration: duration !== null ? Math.round(duration) : null,
+        scope: cursorScopeKey,
+        historySize: cursorRegistryRef.current.size,
+      })
+      fetchStartRef.current = null
+    }
+    previousLoadingRef.current = remoteLoading
+  }, [remoteLoading, currentCursor, remoteDirection, fetchedInterventions.length, totalCount, cursorScopeKey])
 
   const normalizedInterventions = useMemo(
     () => fetchedInterventions.map((item) => {
@@ -1282,6 +1346,7 @@ export default function Page() {
             error={error}
             hasMore={hasMore}
             onEndReached={loadMore}
+            onStartReached={() => loadMore("backward")}
             loadDistinctValues={loadDistinctValues}
             onInterventionClick={handleNavigateToDetail}
             onLayoutOptionsChange={(options) => handleLayoutOptionsPatch(options)}

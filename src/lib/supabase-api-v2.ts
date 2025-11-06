@@ -484,13 +484,25 @@ export interface Comment {
   };
 }
 
+export type CursorDirection = "forward" | "backward";
+
+export interface InterventionCursor {
+  date: string;
+  id: string;
+  direction?: CursorDirection;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {
     limit: number;
-    offset: number;
     total: number;
     hasMore: boolean;
+    offset?: number;
+    hasPrev?: boolean;
+    cursorNext?: InterventionCursor | null;
+    cursorPrev?: InterventionCursor | null;
+    direction?: CursorDirection;
   };
 }
 
@@ -498,12 +510,14 @@ export interface PaginatedResponse<T> {
 
 /**
  * Mapping des propriétés de la vue vers les vraies colonnes de la base
- * ⚠️ Basé sur le schéma réel : supabase/migrations/20251005_clean_schema.sql
+ * ⚠️ Basé STRICTEMENT sur le schéma réel : supabase/migrations/20251005_clean_schema.sql
+ * ⚠️ Contient UNIQUEMENT les colonnes qui existent dans la table interventions
  */
 const PROPERTY_COLUMN_MAP: Record<string, string> = {
   // Identifiants
   id: "id",
   id_inter: "id_inter",
+  idInter: "id_inter",
   
   // Statut
   statusValue: "statut_id",
@@ -514,6 +528,7 @@ const PROPERTY_COLUMN_MAP: Record<string, string> = {
   attribueA: "assigned_user_id",
   assigned_user_id: "assigned_user_id",
   assignedUserName: "assigned_user_id",
+  assignedUserId: "assigned_user_id",
   
   // Agence
   agence: "agence_id",
@@ -526,8 +541,8 @@ const PROPERTY_COLUMN_MAP: Record<string, string> = {
   
   // Dates - ⚠️ La colonne principale est 'date', pas 'date_intervention'
   date: "date",
-  dateIntervention: "date",      // Propriété vue → colonne 'date'
-  date_intervention: "date",     // Alias → colonne 'date'
+  dateIntervention: "date",
+  date_intervention: "date",
   dateTermine: "date_termine",
   date_termine: "date_termine",
   datePrevue: "date_prevue",
@@ -536,19 +551,38 @@ const PROPERTY_COLUMN_MAP: Record<string, string> = {
   due_date: "due_date",
   created_at: "created_at",
   updated_at: "updated_at",
+  createdAt: "created_at",
+  updatedAt: "updated_at",
   
   // Localisation
   codePostal: "code_postal",
   code_postal: "code_postal",
   ville: "ville",
   adresse: "adresse",
+  latitude: "latitude",
+  longitude: "longitude",
+  latitudeAdresse: "latitude",
+  longitudeAdresse: "longitude",
   
   // Tenant / Owner
   tenantId: "tenant_id",
   tenant_id: "tenant_id",
-  clientId: "tenant_id",          // Ancien nom → nouveau nom
+  clientId: "tenant_id",
+  client_id: "tenant_id",
   ownerId: "owner_id",
   owner_id: "owner_id",
+  
+  // Champs texte intervention
+  contexteIntervention: "contexte_intervention",
+  contexte_intervention: "contexte_intervention",
+  consigneIntervention: "consigne_intervention",
+  consigne_intervention: "consigne_intervention",
+  consigneDeuxiemeArtisanIntervention: "consigne_second_artisan",
+  consigneSecondArtisan: "consigne_second_artisan",
+  consigne_second_artisan: "consigne_second_artisan",
+  commentaireAgent: "commentaire_agent",
+  commentaire_agent: "commentaire_agent",
+  commentaire: "commentaire_agent",
   
   // État
   isActive: "is_active",
@@ -587,52 +621,155 @@ const DEFAULT_INTERVENTION_COLUMNS: string[] = [
   "is_active",
 ];
 
-const SUPPORTED_SORT_COLUMNS = new Set(
-  Object.values(PROPERTY_COLUMN_MAP).concat([
-    "created_at",
-    "date",         // ⚠️ Colonne principale pour la date
-    "date_termine",
-    "date_prevue",
-    "due_date",
-  ]),
-);
+/**
+ * Champs calculés/dérivés qui NE SONT PAS des colonnes de la table interventions
+ * Ces champs proviennent de jointures ou sont calculés côté client
+ * ⚠️ Ces champs doivent être IGNORÉS lors de la construction du SELECT SQL
+ */
+const DERIVED_VIEW_FIELDS = new Set<string>([
+  // Artisans (table intervention_artisans)
+  "artisan",
+  "artisans",
+  "primaryArtisan",
+  "deuxiemeArtisan",
+  
+  // Statut (enrichi côté client avec label/color)
+  "status",
+  "statusLabel",
+  "statusColor",
+  
+  // User (enrichi côté client avec color)
+  "assignedUserColor",
+  "assignedUserCode",
+  
+  // Relations
+  "payments",
+  "costs",
+  "attachments",
+  "comments",
+  
+  // Coûts (table intervention_costs)
+  "coutIntervention",
+  "cout_intervention",
+  "coutSST",
+  "cout_sst",
+  "coutMateriel",
+  "cout_materiel",
+  "marge",
+  
+  // Données client (table tenants)
+  "nomClient",
+  "nom_client",
+  "prenomClient",
+  "prenom_client",
+  "telephoneClient",
+  "telephone_client",
+  "telephone2Client",
+  "telephone2_client",
+  "emailClient",
+  "email_client",
+  
+  // Données propriétaire (table owner)
+  "nomProprietaire",
+  "nom_proprietaire",
+  "prenomProprietaire",
+  "prenom_proprietaire",
+  "telephoneProprietaire",
+  "telephone_proprietaire",
+  "emailProprietaire",
+  "email_proprietaire",
+  
+  // Pièces jointes (table intervention_attachments)
+  "pieceJointeIntervention",
+  "piece_jointe_intervention",
+  "pieceJointeCout",
+  "piece_jointe_cout",
+  "pieceJointeDevis",
+  "piece_jointe_devis",
+  "pieceJointePhotos",
+  "piece_jointe_photos",
+  "pieceJointeFactureGMBS",
+  "piece_jointe_facture_gmbs",
+  "pieceJointeFactureArtisan",
+  "piece_jointe_facture_artisan",
+  "pieceJointeFactureMateriel",
+  "piece_jointe_facture_materiel",
+  
+  // Champs qui n'existent plus dans le nouveau schéma
+  "datePrevueDeuxiemeArtisan",
+  "date_prevue_deuxieme_artisan",
+  "typeDeuxiemeArtisan",
+  "type_deuxieme_artisan",
+  "numeroSST",
+  "numero_sst",
+  "pourcentageSST",
+  "pourcentage_sst",
+  "demandeIntervention",
+  "demande_intervention",
+  "demandeDevis",
+  "demande_devis",
+  "demandeTrustPilot",
+  "demande_trust_pilot",
+  "telLoc",
+  "tel_loc",
+  "locataire",
+  "emailLocataire",
+  "email_locataire",
+  "devisId",
+  "devis_id",
+  "numeroAssocie",
+  "numero_associe",
+  "type",
+]);
 
-const resolveColumn = (property: string): string => {
-  return PROPERTY_COLUMN_MAP[property] ?? property;
+/**
+ * Colonnes valides de la table interventions (whitelist)
+ * ⚠️ AUCUNE colonne en dehors de cette liste ne sera ajoutée au SELECT
+ */
+const VALID_INTERVENTION_COLUMNS = new Set<string>(DEFAULT_INTERVENTION_COLUMNS);
+
+const resolveColumn = (property: string): string | null => {
+  // Si c'est un champ dérivé, on retourne null pour l'ignorer
+  if (DERIVED_VIEW_FIELDS.has(property)) {
+    return null;
+  }
+  
+  // Si on a un mapping, on l'utilise
+  const mapped = PROPERTY_COLUMN_MAP[property];
+  if (mapped) {
+    // Vérifier que la colonne mappée est valide
+    return VALID_INTERVENTION_COLUMNS.has(mapped) ? mapped : null;
+  }
+  
+  // Si pas de mapping, vérifier que la propriété est une colonne valide
+  return VALID_INTERVENTION_COLUMNS.has(property) ? property : null;
 };
 
 const resolveSelectColumns = (fields?: string[]): string => {
   const columns = new Set<string>(DEFAULT_INTERVENTION_COLUMNS);
-  if (Array.isArray(fields)) {
+  
+  if (Array.isArray(fields) && fields.length > 0) {
     fields.forEach((field) => {
-      if (!field) return;
-      const column = resolveColumn(field);
-      column && columns.add(column);
+      if (!field || typeof field !== 'string') return;
+      
+      const column = resolveColumn(field.trim());
+      if (column) {
+        columns.add(column);
+      }
     });
   }
+  
   const selection = Array.from(columns).filter(Boolean);
-  if (!selection.length) {
-    return "*";
-  }
-  return selection.join(",");
+  return selection.length > 0 ? selection.join(",") : DEFAULT_INTERVENTION_COLUMNS.join(",");
 };
 
-const normalizeSort = (sortBy?: string, sortDir?: "asc" | "desc") => {
-  if (!sortBy) {
-    return { column: "created_at", ascending: false };
-  }
-  const column = resolveColumn(sortBy);
-  if (!SUPPORTED_SORT_COLUMNS.has(column)) {
-    return { column: "created_at", ascending: false };
-  }
-  return { column, ascending: sortDir === "asc" };
-};
-
-type FilterValue = string | string[] | undefined;
+type FilterValue = string | string[] | null | undefined;
 
 export type GetAllParams = {
   limit?: number;
   offset?: number;
+  cursor?: InterventionCursor | null;
+  direction?: CursorDirection;
   statut?: FilterValue;
   agence?: FilterValue;
   artisan?: FilterValue;
@@ -646,7 +783,10 @@ export type GetAllParams = {
   fields?: string[];
 };
 
-export type GetDistinctParams = Omit<GetAllParams, "offset" | "limit" | "fields" | "sortBy" | "sortDir"> & {
+export type GetDistinctParams = Omit<
+  GetAllParams,
+  "offset" | "limit" | "fields" | "sortBy" | "sortDir" | "cursor" | "direction"
+> & {
   limit?: number;
 };
 
@@ -720,82 +860,99 @@ export const interventionsApiV2 = {
   // Récupérer toutes les interventions (ULTRA-OPTIMISÉ)
   async getAll(params?: GetAllParams): Promise<PaginatedResponse<InterventionView>> {
     const limit = Math.max(1, Math.min(params?.limit ?? 50, 200));
-    const offset = Math.max(0, params?.offset ?? 0);
+    const cursor = params?.cursor ?? null;
+    const direction: CursorDirection =
+      params?.direction ?? cursor?.direction ?? "forward";
     const selectColumns = resolveSelectColumns(params?.fields);
-    const { column: sortColumn, ascending } = normalizeSort(params?.sortBy, params?.sortDir);
 
-    // Construction de la requête avec les relations
-    const baseSelect = selectColumns === "*" ? "*" : selectColumns;
-    const fullSelect = `${baseSelect},
-      intervention_artisans (
-        artisan_id,
-        role,
-        is_primary,
-        artisans (
-          id,
-          prenom,
-          nom,
-          plain_nom,
-          telephone,
-          email
-        )
-      ),
-      intervention_costs (
-        id,
-        cost_type,
-        label,
-        amount,
-        currency,
-        metadata
-      )`;
-
-    let query = supabase
-      .from("interventions")
-      .select(fullSelect, { count: "exact" })
-      .order(sortColumn, { ascending });
-
-    query = applyInterventionFilters(query, params);
-
-    const { data, error, count, status } = await query.range(offset, offset + limit - 1);
-
-    if (status === 416) {
-      // La plage demandée dépasse le nombre de résultats disponibles (ex: offset trop grand)
-      const countQuery = applyInterventionFilters(
-        supabase.from("interventions").select("*", { count: "exact", head: true }),
-        params,
+    const searchParams = new URLSearchParams();
+    searchParams.set("limit", limit.toString());
+    if (direction) {
+      searchParams.set("direction", direction);
+    }
+    if (cursor?.date && cursor?.id) {
+      searchParams.set(
+        "cursor",
+        JSON.stringify({ date: cursor.date, id: cursor.id, direction }),
       );
-      const { count: fallbackCount, error: countError } = await countQuery;
-
-      if (countError) {
-        throw countError;
-      }
-
-      return {
-        data: [],
-        pagination: {
-          total: fallbackCount ?? 0,
-          limit,
-          offset,
-          hasMore: false,
-        },
-      };
+    }
+    if (selectColumns) {
+      searchParams.set("select", selectColumns);
     }
 
-    if (error) throw error;
+    const appendFilterParam = (key: string, value?: FilterValue) => {
+      if (value === undefined) {
+        return;
+      }
+      if (value === null) {
+        searchParams.append(key, "null");
+        return;
+      }
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          if (entry === null) {
+            searchParams.append(key, "null");
+          } else if (typeof entry === "string" && entry.length > 0) {
+            searchParams.append(key, entry);
+          }
+        });
+        return;
+      }
+      if (typeof value === "string" && value.length > 0) {
+        searchParams.append(key, value);
+      }
+    };
+
+    appendFilterParam("statut", params?.statut);
+    appendFilterParam("agence", params?.agence);
+    appendFilterParam("artisan", params?.artisan);
+    appendFilterParam("metier", params?.metier);
+    appendFilterParam("user", params?.user);
+
+    if (params?.startDate) {
+      searchParams.set("startDate", params.startDate);
+    }
+    if (params?.endDate) {
+      searchParams.set("endDate", params.endDate);
+    }
+    if (params?.search) {
+      searchParams.set("search", params.search);
+    }
+
+    const queryString = searchParams.toString();
+    const url = `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    const response = await fetch(url, {
+      headers: getHeaders(),
+    });
+    const raw = await handleResponse(response);
 
     const refs = await getReferenceCache();
 
-    const transformedData = (data || []).map((item) =>
-      mapInterventionRecord(item, refs)
-    ) as InterventionView[];
+    const transformedData = Array.isArray(raw?.data)
+      ? (raw.data as any[]).map((item) => mapInterventionRecord(item, refs) as InterventionView)
+      : [];
+
+    const paginationRaw = raw?.pagination ?? {};
+    const cursorNextRaw = paginationRaw.cursorNext as InterventionCursor | null | undefined;
+    const cursorPrevRaw = paginationRaw.cursorPrev as InterventionCursor | null | undefined;
 
     return {
       data: transformedData,
       pagination: {
-        total: count || 0,
         limit,
-        offset,
-        hasMore: offset + limit < (count || 0),
+        total: paginationRaw.total ?? transformedData.length,
+        hasMore: Boolean(paginationRaw.hasMore),
+        hasPrev: paginationRaw.hasPrev ?? Boolean(cursor),
+        cursorNext: cursorNextRaw
+          ? { ...cursorNextRaw, direction: cursorNextRaw.direction ?? "forward" }
+          : null,
+        cursorPrev: cursorPrevRaw
+          ? { ...cursorPrevRaw, direction: cursorPrevRaw.direction ?? "backward" }
+          : null,
+        direction: (paginationRaw.direction as CursorDirection | undefined) ?? direction,
       },
     };
   },
@@ -2833,60 +2990,16 @@ export const utilsApi = {
  * @returns Nombre total d'interventions correspondant
  */
 export async function getInterventionTotalCount(
-  params?: Omit<GetAllParams, "limit" | "offset" | "fields" | "sortBy" | "sortDir">
+  params?: Omit<
+    GetAllParams,
+    "limit" | "offset" | "fields" | "sortBy" | "sortDir" | "cursor" | "direction"
+  >,
 ): Promise<number> {
   let query = supabase
     .from("interventions")
     .select("id", { count: "exact", head: true });
 
-  if (params?.statut) {
-    if (Array.isArray(params.statut)) {
-      query = query.in("statut_id", params.statut);
-    } else {
-      query = query.eq("statut_id", params.statut);
-    }
-  }
-
-  if (params?.agence) {
-    if (Array.isArray(params.agence)) {
-      query = query.in("agence_id", params.agence);
-    } else {
-      query = query.eq("agence_id", params.agence);
-    }
-  }
-  if (params?.metier) {
-    if (Array.isArray(params.metier)) {
-      query = query.in("metier_id", params.metier);
-    } else {
-      query = query.eq("metier_id", params.metier);
-    }
-  }
-
-  // ⚠️ TODO: Le filtre artisan nécessite un JOIN avec intervention_artisans
-  // if (params?.artisan) { ... }
-
-  if (params?.user !== undefined) {
-    if (params.user === null) {
-      // Filtre pour les interventions sans assignation (vue Market)
-      query = query.is("assigned_user_id", null);
-    } else if (Array.isArray(params.user)) {
-      query = query.in("assigned_user_id", params.user);
-    } else {
-      query = query.eq("assigned_user_id", params.user);
-    }
-  }
-
-  if (params?.startDate) {
-    query = query.gte("date", params.startDate);
-  }
-
-  if (params?.endDate) {
-    query = query.lte("date", params.endDate);
-  }
-
-  if (params?.search) {
-    query = query.ilike("contexte_intervention", `%${params.search}%`);
-  }
+  query = applyInterventionFilters(query, params);
 
   const { count, error } = await query;
   if (error) throw error;
@@ -2906,33 +3019,12 @@ export async function getInterventionCounts(
     .from("interventions")
     .select("statut_id", { count: "exact", head: false });
 
-  // Appliquer les filtres (sauf statut puisqu'on compte PAR statut)
-  if (params?.agence) {
-    if (Array.isArray(params.agence)) {
-      query = query.in("agence_id", params.agence);
-    } else {
-      query = query.eq("agence_id", params.agence);
-    }
-  }
-  if (params?.user !== undefined) {
-    if (params.user === null) {
-      // Filtre pour les interventions sans assignation (vue Market)
-      query = query.is("assigned_user_id", null);
-    } else if (Array.isArray(params.user)) {
-      query = query.in("assigned_user_id", params.user);
-    } else {
-      query = query.eq("assigned_user_id", params.user);
-    }
-  }
-  if (params?.startDate) {
-    query = query.gte("date", params.startDate);
-  }
-  if (params?.endDate) {
-    query = query.lte("date", params.endDate);
-  }
-  if (params?.search) {
-    query = query.ilike("contexte_intervention", `%${params.search}%`);
-  }
+  // Appliquer les filtres (hors statut puisqu'on compte PAR statut)
+  const filterParams: GetAllParams = {
+    ...params,
+    statut: undefined,
+  };
+  query = applyInterventionFilters(query, filterParams);
 
   const { data, error } = await query;
   if (error) throw error;

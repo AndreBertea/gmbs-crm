@@ -3,16 +3,18 @@
 // Utilise l'API v2 optimisée
 
 import { SCROLL_CONFIG } from '@/config/interventions';
-import { interventionsApiV2 } from '@/lib/supabase-api-v2';
+import { interventionsApiV2, type CursorDirection, type InterventionCursor } from '@/lib/supabase-api-v2';
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { InterventionView } from '@/types/intervention-view';
 
 interface UseInterventionsOptions {
   limit?: number;
-  offset?: number;
+  initialCursor?: InterventionCursor | null;
+  initialDirection?: CursorDirection;
   autoLoad?: boolean;
   maxCachedItems?: number;
+  viewId?: string;  // ✅ ID de la vue active pour forcer reload au changement
   filters?: {
     statut?: string | string[];
     agence?: string | string[];
@@ -36,7 +38,7 @@ interface UseInterventionsReturn {
   error: string | null;
   hasMore: boolean;
   totalCount: number | null;
-  loadMore: () => Promise<void>;
+  loadMore: (direction?: CursorDirection) => Promise<void>;
   refresh: () => Promise<void>;
   updateInterventionOptimistic: (id: string, updates: Partial<InterventionView>) => void;
   setFilters: (filters: UseInterventionsOptions['filters']) => void;
@@ -50,15 +52,17 @@ interface UseInterventionsReturn {
     search?: string;
     fields?: string[];
   }) => void;
-  currentOffset: number;
-  direction: "forward" | "backward";
+  currentCursor: InterventionCursor | null;
+  direction: CursorDirection;
 }
 
 export function useInterventions(options: UseInterventionsOptions = {}): UseInterventionsReturn {
   const {
     limit = SCROLL_CONFIG.BATCH_SIZE,
-    offset = 0,
+    initialCursor = null,
+    initialDirection = "forward",
     autoLoad = true,
+    viewId,  // ✅ ID de la vue active
     filters = {},
     sortBy,
     sortDir = "desc",
@@ -75,32 +79,36 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [query, setQueryState] = useState<{
+    viewId?: string;
     filters: UseInterventionsOptions["filters"];
     sortBy?: string;
     sortDir?: "asc" | "desc";
     search?: string;
     fields?: string[];
   }>({
+    viewId,
     filters,
     sortBy,
     sortDir,
     search,
     fields,
   });
-  const [currentOffset, setCurrentOffset] = useState(offset);
-  const [direction, setDirection] = useState<"forward" | "backward">("forward");
-  const windowStartRef = useRef(offset);
-  const nextOffsetRef = useRef(offset);
+  const [currentCursor, setCurrentCursor] = useState<InterventionCursor | null>(initialCursor);
+  const [direction, setDirection] = useState<CursorDirection>(initialDirection);
+  const cursorRef = useRef<InterventionCursor | null>(initialCursor);
+  const prevCursorRef = useRef<InterventionCursor | null>(null);
   const initialLoadRef = useRef(true);
 
+  // ✅ Inclure viewId dans paramsKey pour forcer reload au changement de vue
   const paramsKey = JSON.stringify(query);
   const resetPagingState = useCallback(() => {
-    windowStartRef.current = offset;
-    nextOffsetRef.current = offset;
+    cursorRef.current = initialCursor ?? null;
+    prevCursorRef.current = null;
     initialLoadRef.current = true;
-    setCurrentOffset(offset);
-    setDirection("forward");
-  }, [offset]);
+    setCurrentCursor(initialCursor ?? null);
+    setDirection(initialDirection ?? "forward");
+    setHasMore(true);
+  }, [initialCursor, initialDirection]);
 
   // Fonction pour nettoyer les anciennes entrées de cache
   const cleanupCache = useCallback(() => {
@@ -161,179 +169,244 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
     }
   }, []);
 
-  const loadInterventions = useCallback(async (reset = false) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const loadInterventions = useCallback(
+    async (
+      {
+        reset = false,
+        direction: directionOverride,
+        skipCache = false,
+      }: { reset?: boolean; direction?: CursorDirection; skipCache?: boolean } = {},
+    ): Promise<boolean> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const storage =
-        typeof window !== "undefined" && typeof window.sessionStorage !== "undefined"
-          ? window.sessionStorage
-          : null;
+        const storage =
+          typeof window !== "undefined" && typeof window.sessionStorage !== "undefined"
+            ? window.sessionStorage
+            : null;
 
-      const fetchOffset = reset ? offset : nextOffsetRef.current;
-      const nextDirection =
-        fetchOffset < currentOffset ? "backward" : fetchOffset > currentOffset ? "forward" : direction;
+        const targetDirection: CursorDirection = reset ? "forward" : directionOverride ?? direction ?? "forward";
+        const cursorToUse = reset
+          ? initialCursor ?? null
+          : targetDirection === "backward"
+            ? prevCursorRef.current
+            : cursorRef.current;
 
-      if (nextDirection !== direction) {
-        setDirection(nextDirection);
-      }
-      setCurrentOffset(fetchOffset);
+        if (!reset && targetDirection === "forward" && (!cursorToUse || !hasMore)) {
+          setHasMore(false);
+          setLoading(false);
+          return false;
+        }
 
-      const initialLimit = initialLoadRef.current
-        ? Math.min(limit, SCROLL_CONFIG.INITIAL_BATCH_SIZE)
-        : limit;
-      const effectiveLimit = Math.max(1, Math.min(initialLimit, 200));
+        if (!reset && targetDirection === "backward" && !cursorToUse) {
+          setLoading(false);
+          return false;
+        }
 
-      const params = {
-        limit: effectiveLimit,
-        offset: fetchOffset,
-        statut: query.filters?.statut,
-        agence: query.filters?.agence,
-        artisan: query.filters?.artisan,
-        metier: query.filters?.metier,
-        user: query.filters?.user,
-        startDate: query.filters?.startDate,
-        endDate: query.filters?.endDate,
-        sortBy: query.sortBy,
-        sortDir: query.sortDir,
-        search: query.search,
-        fields: query.fields,
-      };
+        if (targetDirection !== direction) {
+          setDirection(targetDirection);
+        }
 
-      const cacheKey = `interventions-${JSON.stringify(params)}`;
+        const initialLimit = initialLoadRef.current
+          ? Math.min(limit, SCROLL_CONFIG.INITIAL_BATCH_SIZE)
+          : limit;
+        const effectiveLimit = Math.max(1, Math.min(initialLimit, 200));
 
-      const mergeAndTrim = (
-        incoming: InterventionView[],
-        pagination: { hasMore: boolean; total: number; offset: number },
-      ) => {
-        const baseOffset = pagination.offset ?? fetchOffset;
-        const dedupedIncoming = Array.from(new Map(incoming.map((item) => [item.id, item])).values());
+        const requestParams = {
+          limit: effectiveLimit,
+          cursor: cursorToUse ?? undefined,
+          direction: targetDirection,
+          statut: query.filters?.statut,
+          agence: query.filters?.agence,
+          artisan: query.filters?.artisan,
+          metier: query.filters?.metier,
+          user: query.filters?.user,
+          startDate: query.filters?.startDate,
+          endDate: query.filters?.endDate,
+          search: query.search,
+          fields: query.fields,
+        } as const;
 
-        if (reset) {
-          windowStartRef.current = baseOffset;
-          nextOffsetRef.current = baseOffset + incoming.length;
-          setInterventions(dedupedIncoming);
-        } else {
-          if (nextDirection === "backward") {
-            windowStartRef.current = Math.min(windowStartRef.current, baseOffset);
-          }
+        const cursorKey = cursorToUse
+          ? `${cursorToUse.date}|${cursorToUse.id}|${targetDirection}`
+          : `root-${targetDirection}`;
+        const cacheKey = `interventions-${paramsKey}-${cursorKey}`;
+
+        const mergeAndTrim = (
+          incoming: InterventionView[],
+          pagination: {
+            hasMore: boolean;
+            hasPrev?: boolean;
+            total?: number;
+            cursorNext?: InterventionCursor | null;
+            cursorPrev?: InterventionCursor | null;
+            direction?: CursorDirection;
+          },
+        ) => {
+          const directionUsed = pagination.direction ?? targetDirection;
+          const dedupedIncoming = Array.from(new Map(incoming.map((item) => [item.id, item])).values());
+          const maxItems = Math.max(1, maxCachedItems);
+
           setInterventions((prev) => {
-            const combined = [...prev, ...dedupedIncoming];
-            const unique = Array.from(new Map(combined.map((item) => [item.id, item])).values());
+            if (reset) {
+              return dedupedIncoming;
+            }
 
-            if (!slidingWindow || unique.length <= maxCachedItems) {
+            const combined =
+              directionUsed === "backward"
+                ? [...dedupedIncoming, ...prev]
+                : [...prev, ...dedupedIncoming];
+
+            const seen = new Set<string>();
+            const unique: InterventionView[] = [];
+            for (const item of combined) {
+              if (!item?.id || seen.has(item.id)) continue;
+              seen.add(item.id);
+              unique.push(item);
+            }
+
+            if (!slidingWindow || unique.length <= maxItems) {
               return unique;
             }
 
-            if (nextDirection === "backward") {
-              const overflow = unique.length - maxCachedItems;
-              if (overflow <= 0) {
-                return unique;
-              }
+            const overflow = unique.length - maxItems;
+            if (overflow <= 0) {
+              return unique;
+            }
+
+            if (directionUsed === "backward") {
               return unique.slice(0, unique.length - overflow);
             }
 
-            if (unique.length > maxCachedItems * 1.5) {
-              const trimmed = unique.slice(-maxCachedItems);
-              windowStartRef.current += unique.length - maxCachedItems;
-              return trimmed;
-            }
-
-            const overflow = unique.length - maxCachedItems;
-            if (overflow > 0) {
-              windowStartRef.current += overflow;
-              return unique.slice(overflow);
-            }
-            return unique;
+            return unique.slice(overflow);
           });
-          nextOffsetRef.current = baseOffset + incoming.length;
-        }
 
-        setHasMore(pagination.hasMore);
-        setTotalCount(pagination.total);
-      };
-
-      if (storage) {
-        try {
-          const cachedData = storage.getItem(cacheKey);
-          if (cachedData) {
-            const parsed = JSON.parse(cachedData);
-            if (Date.now() - (parsed.timestamp ?? 0) < SCROLL_CONFIG.CACHE_TTL_MS) {
-              mergeAndTrim(parsed.data ?? [], {
-                hasMore: parsed.pagination?.hasMore ?? false,
-                total: parsed.pagination?.total ?? parsed.data?.length ?? 0,
-                offset: parsed.pagination?.offset ?? fetchOffset,
-              });
-              setLoading(false);
-              initialLoadRef.current = false;
-              return;
-            }
-          }
-        } catch (cacheError) {
-          console.warn("Cache invalide, rechargement depuis l'API", cacheError);
-        }
-      }
-
-      const result = await interventionsApiV2.getAll(params);
-
-      mergeAndTrim(result.data, result.pagination);
-
-      cleanupCache();
-
-      if (storage) {
-        try {
-          storage.setItem(
-            cacheKey,
-            JSON.stringify({
-              data: result.data,
-              pagination: result.pagination,
-              timestamp: Date.now(),
-            }),
+          setHasMore(Boolean(pagination.hasMore));
+          setTotalCount(
+            typeof pagination.total === "number"
+              ? pagination.total
+              : dedupedIncoming.length,
           );
-        } catch (storageError: any) {
-          if (storageError?.name === "QuotaExceededError" || storageError?.code === 22) {
-            console.warn("Quota sessionStorage dépassé, nettoyage du cache...");
-            for (let i = storage.length - 1; i >= 0; i--) {
-              const key = storage.key(i);
-              if (key && key.startsWith("interventions-")) {
-                storage.removeItem(key);
+          cursorRef.current = pagination.cursorNext ?? null;
+          prevCursorRef.current = pagination.cursorPrev ?? null;
+          setCurrentCursor(pagination.cursorPrev ?? cursorToUse ?? null);
+          setDirection(directionUsed);
+        };
+
+        // Ignorer le cache si skipCache est true (au premier mount par exemple)
+        if (storage && !skipCache) {
+          try {
+            const cachedData = storage.getItem(cacheKey);
+            if (cachedData) {
+              const parsed = JSON.parse(cachedData);
+              const isExpired = Date.now() - (parsed.timestamp ?? 0) >= SCROLL_CONFIG.CACHE_TTL_MS;
+              const hasMoreFalse = parsed.pagination?.hasMore === false;
+              
+              // ⚠️ IMPORTANT : Ne JAMAIS utiliser un cache avec hasMore: false
+              // Cela bloque le scroll infini quand on revient sur la page
+              if (hasMoreFalse) {
+                storage.removeItem(cacheKey);
+              } else if (!isExpired) {
+                mergeAndTrim(parsed.data ?? [], parsed.pagination ?? { hasMore: false });
+                setLoading(false);
+                initialLoadRef.current = false;
+                return true;
               }
             }
-            try {
-              storage.setItem(
-                cacheKey,
-                JSON.stringify({
-                  data: result.data,
-                  pagination: result.pagination,
-                  timestamp: Date.now(),
-                }),
-              );
-            } catch (retryError) {
-              console.warn("Impossible de mettre en cache, cache désactivé", retryError);
+          } catch (cacheError) {
+            console.warn("Cache invalide, rechargement depuis l'API", cacheError);
+          }
+        }
+
+        const result = await interventionsApiV2.getAll(requestParams);
+
+        mergeAndTrim(result.data, result.pagination ?? { hasMore: false });
+
+        cleanupCache();
+
+        if (storage) {
+          try {
+            storage.setItem(
+              cacheKey,
+              JSON.stringify({
+                data: result.data,
+                pagination: result.pagination,
+                timestamp: Date.now(),
+              }),
+            );
+          } catch (storageError: any) {
+            if (storageError?.name === "QuotaExceededError" || storageError?.code === 22) {
+              console.warn("Quota sessionStorage dépassé, nettoyage du cache...");
+              for (let i = storage.length - 1; i >= 0; i--) {
+                const key = storage.key(i);
+                if (key && key.startsWith("interventions-")) {
+                  storage.removeItem(key);
+                }
+              }
+              try {
+                storage.setItem(
+                  cacheKey,
+                  JSON.stringify({
+                    data: result.data,
+                    pagination: result.pagination,
+                    timestamp: Date.now(),
+                  }),
+                );
+              } catch (retryError) {
+                console.warn("Impossible de mettre en cache, cache désactivé", retryError);
+              }
             }
           }
         }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Erreur de chargement";
+        setError(message);
+        if (message.includes("416")) {
+          setHasMore(false);
+        }
+        console.error("Erreur lors du chargement des interventions:", err);
+      } finally {
+        initialLoadRef.current = false;
+        setLoading(false);
       }
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur de chargement");
-      console.error("Erreur lors du chargement des interventions:", err);
-    } finally {
-      initialLoadRef.current = false;
-      setLoading(false);
-    }
-  }, [offset, limit, query, maxCachedItems, cleanupCache, slidingWindow, currentOffset, direction]);
+      return false;
+    },
+    [
+      cleanupCache,
+      direction,
+      hasMore,
+      initialCursor,
+      limit,
+      maxCachedItems,
+      paramsKey,
+      query,
+      slidingWindow,
+    ],
+  );
 
   useEffect(() => {
     interventionsRef.current = interventions;
   }, [interventions]);
 
-  const loadMore = useCallback(async () => {
-    if (!loading && hasMore) {
-      await loadInterventions(false);
-    }
-  }, [loading, hasMore, loadInterventions]);
+  const loadMore = useCallback(
+    async (nextDirection: CursorDirection = "forward") => {
+      if (loading) {
+        return;
+      }
+
+      if (nextDirection === "forward") {
+        if (!hasMore) {
+          return;
+        }
+      } else if (!prevCursorRef.current) {
+        return;
+      }
+
+      await loadInterventions({ reset: false, direction: nextDirection });
+    },
+    [loading, hasMore, loadInterventions],
+  );
 
   const refresh = useCallback(async () => {
     // Vider le cache sessionStorage pour forcer un rechargement complet depuis l'API
@@ -358,7 +431,7 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
     }
     
     resetPagingState();
-    await loadInterventions(true);
+    await loadInterventions({ reset: true, direction: "forward" });
   }, [loadInterventions, resetPagingState]);
 
   // Mise à jour optimiste d'une intervention dans la liste locale
@@ -446,7 +519,11 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
   useEffect(() => {
     if (autoLoad) {
       resetPagingState();
-      loadInterventionsRef.current(true);
+      void loadInterventionsRef.current({
+        reset: true,
+        direction: "forward",
+        skipCache: true,
+      });
     }
   }, [autoLoad, paramsKey, resetPagingState]);
 
@@ -465,7 +542,7 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
     setSearch,
     setFields,
     setQuery,
-    currentOffset,
+    currentCursor,
     direction,
   };
 }

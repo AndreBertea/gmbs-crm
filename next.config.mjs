@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: '/Users/andrebertea/Projects/GMBS/gmbs-crm',
   webpack: (config) => {
     config.module.rules.push({
       test: /\.(glb|gltf)$/,

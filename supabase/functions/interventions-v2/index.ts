@@ -115,6 +115,221 @@ interface CreatePaymentRequest {
 const TERMINATED_INTERVENTION_CODES = ['TERMINE', 'INTER_TERMINEE'];
 const ARTISAN_LEVEL_CODES = ['NOVICE', 'FORMATION', 'CONFIRME', 'EXPERT'];
 
+type CursorDirection = 'forward' | 'backward';
+
+interface InterventionCursor {
+  date: string;
+  id: string;
+  direction?: CursorDirection;
+}
+
+interface FilterParams {
+  statut?: string[];
+  agence?: string[];
+  metier?: string[];
+  user?: string[];
+  userIsNull?: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+  search?: string | null;
+}
+
+const COUNT_CACHE_TTL_MS = 120 * 1000;
+const countCache = new Map<string, { value: number; expiresAt: number }>();
+
+const DEFAULT_INTERVENTION_COLUMNS = [
+  'id',
+  'id_inter',
+  'created_at',
+  'updated_at',
+  'statut_id',
+  'assigned_user_id',
+  'agence_id',
+  'tenant_id',
+  'owner_id',
+  'metier_id',
+  'date',
+  'date_termine',
+  'date_prevue',
+  'due_date',
+  'contexte_intervention',
+  'consigne_intervention',
+  'consigne_second_artisan',
+  'commentaire_agent',
+  'adresse',
+  'code_postal',
+  'ville',
+  'latitude',
+  'longitude',
+  'is_active',
+];
+
+const DEFAULT_SELECT = DEFAULT_INTERVENTION_COLUMNS.join(',');
+
+const AVAILABLE_RELATIONS: Record<string, string> = {
+  agencies: 'agencies(id,label,code)',
+  tenants: 'tenants:tenant_id(id,firstname,lastname,email,telephone,telephone2)',
+  users: 'users!assigned_user_id(id,firstname,lastname,username,color,code_gestionnaire)',
+  statuses: 'intervention_statuses(id,code,label,color,sort_order)',
+  metiers: 'metiers(id,label,code)',
+  artisans: 'intervention_artisans(id,artisan_id,is_primary,role,artisans(id,nom,prenom,plain_nom,email,telephone))',
+  costs: 'intervention_costs(id,cost_type,label,amount,currency)',
+  owner: 'owner:owner_id(id,owner_firstname,owner_lastname,email,telephone)',
+};
+
+const parseJson = <T>(raw: string | null): T | null => {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    console.warn('Failed to parse JSON parameter', { raw, error });
+    return null;
+  }
+};
+
+const parseDirection = (direction?: string | null): CursorDirection => {
+  return direction === 'backward' ? 'backward' : 'forward';
+};
+
+const parseCursorParam = (raw: string | null): InterventionCursor | null => {
+  const parsed = parseJson<InterventionCursor>(raw);
+  if (!parsed || !parsed.date || !parsed.id) {
+    return null;
+  }
+  return {
+    date: parsed.date,
+    id: parsed.id,
+    direction: parseDirection(parsed.direction),
+  };
+};
+
+const parseListParam = (values: string[]): string[] => {
+  return values
+    .flatMap((value) => value.split(','))
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+};
+
+const buildSelectClause = (extraSelect: string | null, include: string[]): string => {
+  const base = new Set<string>(DEFAULT_INTERVENTION_COLUMNS);
+  const selectFragments: string[] = [];
+  
+  // ⚠️ TOUJOURS inclure les artisans et les coûts par défaut
+  const defaultRelations = ['artisans', 'costs'];
+  const allIncludes = [...new Set([...defaultRelations, ...include])];
+  
+  if (extraSelect) {
+    selectFragments.push(extraSelect);
+  }
+  for (const key of allIncludes) {
+    const relation = AVAILABLE_RELATIONS[key];
+    if (relation) {
+      selectFragments.push(relation);
+    }
+  }
+  const baseSelect = Array.from(base).join(',');
+  if (selectFragments.length === 0) {
+    return baseSelect;
+  }
+  return `${baseSelect},${selectFragments.join(',')}`;
+};
+
+const applyFilters = <T extends { in: Function; eq: Function; gte: Function; lte: Function; ilike: Function; is: Function }>(
+  query: T,
+  filters: FilterParams,
+) => {
+  let builder = query;
+
+  if (filters.statut && filters.statut.length > 0) {
+    builder = builder.in('statut_id', filters.statut);
+  }
+
+  if (filters.agence && filters.agence.length > 0) {
+    builder = builder.in('agence_id', filters.agence);
+  }
+
+  if (filters.metier && filters.metier.length > 0) {
+    builder = builder.in('metier_id', filters.metier);
+  }
+
+  if (filters.user && filters.user.length > 0) {
+    builder = builder.in('assigned_user_id', filters.user);
+  } else if (filters.userIsNull) {
+    builder = builder.is('assigned_user_id', null);
+  }
+
+  if (filters.startDate) {
+    builder = builder.gte('date', filters.startDate);
+  }
+
+  if (filters.endDate) {
+    builder = builder.lte('date', filters.endDate);
+  }
+
+  if (filters.search) {
+    builder = builder.ilike('contexte_intervention', `%${filters.search}%`);
+  }
+
+  return builder;
+};
+
+const buildCursorCondition = (cursor: InterventionCursor): string | null => {
+  if (!cursor?.date || !cursor?.id) {
+    return null;
+  }
+  const sanitizedDate = cursor.date.replace(/,/g, '\\,');
+  const sanitizedId = cursor.id.replace(/,/g, '\\,');
+  if (parseDirection(cursor.direction) === 'backward') {
+    return `and(date.gt.${sanitizedDate}),and(date.eq.${sanitizedDate},id.gt.${sanitizedId})`;
+  }
+  return `and(date.lt.${sanitizedDate}),and(date.eq.${sanitizedDate},id.lt.${sanitizedId})`;
+};
+
+const buildCountCacheKey = (filters: FilterParams) => {
+  return JSON.stringify({
+    ...filters,
+    user: filters.user ?? null,
+    userIsNull: filters.userIsNull ?? false,
+  });
+};
+
+const getCachedCount = async (supabase: SupabaseClient, filters: FilterParams) => {
+  const cacheKey = buildCountCacheKey(filters);
+  const now = Date.now();
+  const cached = countCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+
+  let countQuery = supabase
+    .from('interventions')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_active', true);
+
+  countQuery = applyFilters(countQuery, filters);
+
+  const { count, error } = await countQuery;
+
+  if (error) {
+    throw new Error(`Failed to count interventions: ${error.message}`);
+  }
+
+  const value = count ?? 0;
+  countCache.set(cacheKey, { value, expiresAt: now + COUNT_CACHE_TTL_MS });
+  return value;
+};
+
+const createCursor = (row: any, direction: CursorDirection): InterventionCursor | null => {
+  if (!row?.date || !row?.id) {
+    return null;
+  }
+  return {
+    date: row.date,
+    id: row.id,
+    direction,
+  };
+};
+
 async function handleInterventionCompletionSideEffects(
   supabase: SupabaseClient,
   intervention: { id: string; statut_id?: string | null },
@@ -430,121 +645,188 @@ serve(async (req: Request) => {
 
     // ===== GET /interventions - Liste toutes les interventions =====
     if (req.method === 'GET' && resource === 'interventions') {
-      const statut = url.searchParams.get('statut');
-      const agence = url.searchParams.get('agence');
-      const artisan = url.searchParams.get('artisan');
-      const user = url.searchParams.get('user');
-      const startDate = url.searchParams.get('startDate');
-      const endDate = url.searchParams.get('endDate');
-      const limit = parseInt(url.searchParams.get('limit') || '50');
-      const offset = parseInt(url.searchParams.get('offset') || '0');
-      const includeRelations = url.searchParams.get('include')?.split(',') || [];
+      const rawLimit = Number.parseInt(url.searchParams.get('limit') ?? '50', 10);
+      const clampedLimit = Math.max(1, Math.min(Number.isFinite(rawLimit) ? rawLimit : 50, 200));
+      const cursor = parseCursorParam(url.searchParams.get('cursor'));
+      const directionParam = parseDirection(url.searchParams.get('direction'));
+      const effectiveDirection = parseDirection(cursor?.direction ?? directionParam);
+      const include = parseListParam(url.searchParams.getAll('include'));
+      const extraSelect = url.searchParams.get('select');
+      const artisanFilters = parseListParam(url.searchParams.getAll('artisan'));
+
+      const statutFilters = parseListParam(url.searchParams.getAll('statut'));
+      const agenceFilters = parseListParam(url.searchParams.getAll('agence'));
+      const metierFilters = parseListParam(url.searchParams.getAll('metier'));
+
+      const userValues = url.searchParams.getAll('user');
+      const userIds = parseListParam(
+        userValues.filter((value) => value !== 'null' && value !== '__null__' && value !== 'undefined'),
+      );
+      const userIsNull = userValues.some((value) => value === 'null' || value === '__null__');
+
+      const searchRaw = url.searchParams.get('search')?.trim() ?? null;
+      const startDateRaw = url.searchParams.get('startDate')?.trim() ?? null;
+      const endDateRaw = url.searchParams.get('endDate')?.trim() ?? null;
+
+      const filters: FilterParams = {
+        search: searchRaw && searchRaw.length > 0 ? searchRaw : null,
+        startDate: startDateRaw && startDateRaw.length > 0 ? startDateRaw : null,
+        endDate: endDateRaw && endDateRaw.length > 0 ? endDateRaw : null,
+      };
+
+      if (statutFilters.length > 0) {
+        filters.statut = statutFilters;
+      }
+      if (agenceFilters.length > 0) {
+        filters.agence = agenceFilters;
+      }
+      if (metierFilters.length > 0) {
+        filters.metier = metierFilters;
+      }
+      if (userIds.length > 0) {
+        filters.user = userIds;
+      } else if (userIsNull) {
+        filters.userIsNull = true;
+      }
+
+      const selectClause = buildSelectClause(extraSelect, include);
 
       let query = supabase
         .from('interventions')
-        .select(`
-          id,
-          id_inter,
-          agence_id,
-          tenant_id,
-          owner_id,
-          assigned_user_id,
-          statut_id,
-          metier_id,
-          date,
-          date_termine,
-          date_prevue,
-          due_date,
-          contexte_intervention,
-          consigne_intervention,
-          consigne_second_artisan,
-          commentaire_agent,
-          adresse,
-          code_postal,
-          ville,
-          latitude,
-          longitude,
-          is_active,
-          created_at,
-          updated_at
-          ${includeRelations.includes('agencies') ? ',agencies(id,label,code)' : ''}
-          ${
-            includeRelations.includes('tenants') || includeRelations.includes('clients')
-              ? ',tenants:tenant_id(id,firstname,lastname,email,telephone,telephone2)'
-              : ''
-          }
-          ${includeRelations.includes('users') ? ',users!assigned_user_id(id,firstname,lastname,username)' : ''}
-          ${includeRelations.includes('statuses') ? ',intervention_statuses(id,code,label,color)' : ''}
-          ${includeRelations.includes('metiers') ? ',metiers(id,label,code)' : ''}
-        `)
-        .order('date', { ascending: false });
+        .select(selectClause)
+        .eq('is_active', true)
+        .order('date', { ascending: false })
+        .order('id', { ascending: false });
 
-      // Appliquer les filtres
-      if (statut) {
-        query = query.eq('statut_id', statut);
-      }
-      if (agence) {
-        query = query.eq('agence_id', agence);
-      }
-      if (user) {
-        query = query.eq('assigned_user_id', user);
-      }
-      if (startDate && endDate) {
-        query = query.gte('date', startDate).lte('date', endDate);
+      query = applyFilters(query, filters);
+
+      const cursorCondition = cursor ? buildCursorCondition(cursor) : null;
+      if (cursorCondition) {
+        query = query.or(cursorCondition);
       }
 
-      // Filtrer les interventions actives
-      query = query.eq('is_active', true);
+      const fetchLimit = clampedLimit + 1;
+      const fetchStart = Date.now();
+      const { data, error, status } = await query.limit(fetchLimit);
+      const fetchDuration = Date.now() - fetchStart;
 
-      // Compter le total
-      const { count: totalCount } = await supabase
-        .from('interventions')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+      if (status === 416) {
+        const totalCount = await getCachedCount(supabase, filters);
+        console.warn(
+          JSON.stringify({
+            level: 'warn',
+            requestId,
+            responseTime: fetchDuration,
+            cursor,
+            timestamp: new Date().toISOString(),
+            message: 'Interventions cursor request returned 416 RANGE_NOT_SATISFIABLE',
+          }),
+        );
 
-      // Appliquer pagination
-      query = query.range(offset, offset + limit - 1);
-
-      const { data, error } = await query;
+        return new Response(
+          JSON.stringify({
+            data: [],
+            pagination: {
+              limit: clampedLimit,
+              total: totalCount,
+              hasMore: false,
+              hasPrev: Boolean(cursor),
+              cursorNext: null,
+              cursorPrev: cursor ? createCursor(cursor, 'backward') : null,
+              direction: effectiveDirection,
+            },
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
 
       if (error) {
         throw new Error(`Database error: ${error.message}`);
       }
 
-      // Si artisan est spécifié, filtrer les interventions assignées à cet artisan
-      let filteredData = data || [];
-      if (artisan) {
-        const { data: artisanInterventions } = await supabase
+      const rows = Array.isArray(data) ? data : [];
+      const hadExtraRow = rows.length > clampedLimit;
+      const limitedRows = hadExtraRow ? rows.slice(0, clampedLimit) : rows;
+
+      let filteredData = limitedRows;
+
+      if (artisanFilters.length > 0) {
+        const { data: artisanInterventions, error: artisanError } = await supabase
           .from('intervention_artisans')
           .select('intervention_id')
-          .eq('artisan_id', artisan);
-        
-        const interventionIds = artisanInterventions?.map(ia => ia.intervention_id) || [];
-        filteredData = filteredData.filter(intervention => interventionIds.includes(intervention.id));
+          .in('artisan_id', artisanFilters);
+
+        if (artisanError) {
+          console.error(
+            JSON.stringify({
+              level: 'error',
+              requestId,
+              error: artisanError.message,
+              artisanFilters,
+              message: 'Failed to filter interventions by artisan',
+            }),
+          );
+        } else {
+          const interventionIds = new Set(
+            (artisanInterventions ?? [])
+              .map((entry) => entry?.intervention_id as string | null)
+              .filter((value): value is string => Boolean(value)),
+          );
+          filteredData = limitedRows.filter((intervention) => interventionIds.has(intervention.id));
+        }
       }
 
-      const responseTime = Date.now() - startTime;
-      
-      console.log(JSON.stringify({
-        level: 'info',
-        requestId,
-        responseTime,
-        dataCount: filteredData.length,
-        timestamp: new Date().toISOString(),
-        message: 'Interventions list retrieved successfully'
-      }));
+      const nextCursorSource =
+        filteredData.length > 0
+          ? filteredData[filteredData.length - 1]
+          : hadExtraRow
+            ? rows[rows.length - 1]
+            : null;
+      const prevCursorSource =
+        filteredData.length > 0
+          ? filteredData[0]
+          : rows.length > 0
+            ? rows[0]
+            : null;
+
+      const hasNext = hadExtraRow;
+      const hasPrev = effectiveDirection === 'backward' ? hadExtraRow : Boolean(cursor);
+
+      const cursorNext =
+        hasNext && nextCursorSource ? createCursor(nextCursorSource, 'forward') : null;
+      const cursorPrev =
+        hasPrev && prevCursorSource ? createCursor(prevCursorSource, 'backward') : null;
+
+      const totalCount = await getCachedCount(supabase, filters);
+
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          requestId,
+          responseTime: fetchDuration,
+          dataCount: filteredData.length,
+          direction: effectiveDirection,
+          hasNext,
+          hasPrev,
+          timestamp: new Date().toISOString(),
+          message: 'Interventions list retrieved successfully (cursor)',
+        }),
+      );
 
       return new Response(
         JSON.stringify({
           data: filteredData,
           pagination: {
-            limit,
-            offset,
-            total: totalCount || 0,
-            hasMore: filteredData.length === limit
-          }
+            limit: clampedLimit,
+            total: totalCount,
+            hasMore: hasNext,
+            hasPrev,
+            cursorNext,
+            cursorPrev,
+            direction: effectiveDirection,
+          },
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
