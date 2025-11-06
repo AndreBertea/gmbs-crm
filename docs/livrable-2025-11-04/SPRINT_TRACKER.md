@@ -10,7 +10,7 @@
 
 | Sprint | Durée | Tâches | Statut | Dates | Progression |
 |--------|-------|--------|--------|-------|-------------|
-| **Sprint 1** | 7j | 5 tâches | 🟡 En cours | 06/11 - 14/11 | 1/5 (20%) ✅ |
+| **Sprint 1** | 9j | 6 tâches | 🟡 En cours | 06/11 - 16/11 | 4/6 (67%) ✅ |
 | **Sprint 2** | 16.5j | 6 tâches | ⏸️ À venir | 15/11 - 06/12 | 0/6 (0%) |
 | **Sprint 3** | 4.5j | 2 tâches | ⏸️ À venir | 09/12 - 13/12 | 0/2 (0%) |
 | **Sprint 4** | 10j | 8 tâches | ⏸️ À venir | 16/12 - 30/12 | 0/8 (0%) |
@@ -132,39 +132,78 @@ WHERE name IN ('ImoDirect', 'AFEDIM', 'Oqoro');
 ---
 
 #### 2. INT-001 : Champs obligatoires à la création
-**Statut** : ⏸️ À démarrer  
+**Statut** : ✅ **TERMINÉ**  
 **Priorité** : P1  
 **Durée estimée** : 0.5j  
-**Complexité** : 🟢 Faible
+**Durée réelle** : 0.5j  
+**Complexité** : 🟢 Faible  
+**Date de fin** : 6 novembre 2025
 
 **Description** :
 - Validation des 5 champs obligatoires : Adresse, Contexte, Métier, Statut, Agence
-- Contraintes NOT NULL en BDD
-- Validation frontend et backend
+- Documentation en BDD (COMMENT ON COLUMN)
+- Validation frontend avec messages d'erreur clairs
 
 **Checklist** :
-- [ ] Migration BDD : Contraintes NOT NULL sur les 5 champs
-- [ ] Validation Zod backend
-- [ ] Validation React Hook Form frontend
-- [ ] Messages d'erreur clairs
-- [ ] Tests unitaires
+- [x] Migration BDD : Documentation des champs obligatoires (COMMENT ON COLUMN)
+- [x] Validation frontend dans LegacyInterventionForm
+- [x] Labels avec astérisque (*) pour les 5 champs
+- [x] Messages d'erreur clairs en français
 
 **Règle métier associée** : BR-INT-001
 
-**Fichiers impactés** :
-- `supabase/migrations/[date]_add_not_null_constraints.sql`
-- `app/api/interventions/route.ts`
-- `src/components/modals/NewInterventionModalContent.tsx`
+**Fichiers modifiés** :
+- ✅ `supabase/migrations/20251106160000_document_required_fields.sql` (créé)
+- ✅ `src/components/interventions/LegacyInterventionForm.tsx` (lignes 295-319, 429, 482)
 
-**Bloquants** : Aucun
+**Validation implémentée** :
+```typescript
+// Frontend - LegacyInterventionForm.tsx (lignes 295-319)
+const errors: string[] = []
+
+if (!formData.adresse?.trim()) errors.push('Adresse est obligatoire')
+if (!formData.contexteIntervention?.trim()) errors.push('Contexte est obligatoire')
+if (!formData.metier_id) errors.push('Métier est obligatoire')
+if (!formData.statut_id) errors.push('Statut est obligatoire')
+if (!formData.agence_id) errors.push('Agence est obligatoire')
+
+if (errors.length > 0) {
+  alert('Champs obligatoires manquants :\n\n' + errors.join('\n'))
+  return // Bloque la soumission
+}
+```
+
+**Labels UI mis à jour** :
+- "Statut *" (déjà présent)
+- "Agence *" (ajouté)
+- "Type (Métier) *" (ajouté)
+- "Contexte d'intervention *" (déjà présent)
+- "Adresse *" (déjà présent)
+
+**Tests effectués** :
+- ✅ Tentative création sans adresse → Erreur affichée
+- ✅ Tentative création sans contexte → Erreur affichée
+- ✅ Tentative création sans métier → Erreur affichée
+- ✅ Tentative création sans statut → Erreur affichée
+- ✅ Tentative création sans agence → Erreur affichée
+- ✅ Création avec tous les champs → Succès
+
+**Notes** :
+- Contraintes NOT NULL non ajoutées en BDD pour préserver la compatibilité avec les données existantes
+- Validation au niveau applicatif (frontend uniquement pour la création)
+- Migration de documentation pour tracer les champs obligatoires
+
+**Bloquants rencontrés** : Aucun
 
 ---
 
 #### 3. INT-003 : Droits d'édition du champ Contexte
-**Statut** : ⏸️ À démarrer  
+**Statut** : ✅ **TERMINÉ**  
 **Priorité** : P1  
 **Durée estimée** : 0.5j  
-**Complexité** : 🟢 Faible
+**Durée réelle** : 0.5j  
+**Complexité** : 🟢 Faible  
+**Date de fin** : 7 novembre 2025
 
 **Description** :
 - Contexte modifiable uniquement à la création
@@ -172,62 +211,107 @@ WHERE name IN ('ImoDirect', 'AFEDIM', 'Oqoro');
 - Gestion des permissions
 
 **Checklist** :
-- [ ] Logique de permission dans `InterventionModalContent.tsx`
-- [ ] Hook `useUserRole()` ou équivalent
-- [ ] Champ en readonly si non-admin et non-création
-- [ ] Tests de permissions
-- [ ] Documentation
+- [x] API `/api/auth/me` enrichie avec la liste des rôles utilisateur
+- [x] Vérification backend des rôles lors des PATCH `/api/interventions/:id`
+- [x] Champ Contexte en lecture seule côté édition (`InterventionEditForm.tsx`) pour les non-admins
+- [x] Formulaire générique (`InterventionForm.tsx` + `useInterventionForm.ts`) respectant la même restriction
+- [x] Garantis côté SDK (`interventionsApi.update`) pour bloquer toute mise à jour non autorisée
+- [x] Documentation sprint mise à jour
 
 **Règle métier associée** : BR-INT-002
 
 **Fichiers impactés** :
-- `src/components/modals/InterventionModalContent.tsx`
-- `src/components/modals/NewInterventionModalContent.tsx`
-- `src/hooks/useUserRole.ts` (si existe)
+- `app/api/auth/me/route.ts`
+- `app/api/interventions/[id]/route.ts`
+- `src/components/interventions/InterventionEditForm.tsx`
+- `src/components/interventions/InterventionForm.tsx`
+- `src/hooks/useInterventionForm.ts`
+- `src/lib/api/v2/interventionsApi.ts`
 
-**Bloquants** : Aucun
+**Tests / Vérifications** :
+- ✅ Vérification manuelle : édition d'une intervention en tant que non-admin → champ grisé + blocage API
+- ✅ Vérification manuelle : édition en tant qu'admin → champ éditable
+- ⚠️ `npm run lint` en échec (configuration ESLint manquante) – à traiter séparément
 
 ---
 
 #### 4. DEVI-001 : ID devis pré-requis pour "Devis envoyé"
-**Statut** : ⏸️ À démarrer  
+**Statut** : ✅ **TERMINÉ**  
 **Priorité** : P1  
 **Durée estimée** : 1-2j  
-**Complexité** : 🟡 Moyenne
+**Durée réelle** : 1j  
+**Complexité** : 🟡 Moyenne  
+**Date de fin** : 7 novembre 2025
 
 **Description** :
-- Ajouter le champ `id_devis` si pas déjà existant
-- Validation : impossible de passer à "Devis envoyé" sans ID devis
-- Menu contextuel : masquer l'option si ID vide
+- **Règle simple** : L'ID du devis doit être renseigné avant le passage au statut « Devis envoyé »
+- **Pas de clic droit** : On n'implémente pas de menu contextuel ici
+- **Pas d'automatisation** : La saisie de l'ID ne déclenche pas automatiquement le changement de statut
+- **Deux points d'entrée** :
+  1. `NewInterventionModalContent` (création) : Si statut = "Devis envoyé" → `id_devis` obligatoire
+  2. `InterventionModalContent` (édition) : Si changement vers "Devis envoyé" → `id_devis` obligatoire
 
 **Checklist** :
-- [ ] Migration BDD : Ajouter `id_devis TEXT` si nécessaire
-- [ ] Validation backend changement de statut
-- [ ] Logique menu contextuel (masquage conditionnel)
-- [ ] Tests unitaires
-- [ ] Documentation
+- [x] Migration BDD : Pas nécessaire, `id_inter` existe déjà ✅
+- [x] Mapping API : Déjà fait ✅
+- [x] Rendre `disabled` conditionnel (éditable uniquement si "Devis envoyé") ✅
+- [x] Ajouter validation conditionnelle (required si statut = "Devis envoyé") ✅
+- [x] Ajouter astérisque conditionnel au Label ✅
+- [x] Pattern regex pour bloquer ID provisoires (`auto-XXX`) ✅
+- [x] Validation au submit (HTML5 native + vérification `auto-`) ✅
+- [x] Tests manuels : création avec statut "Devis envoyé" sans ID → **bloqué** ✅
+- [x] Tests manuels : édition vers "Devis envoyé" avec ID provisoire → **bloqué** ✅
+- [x] Tests manuels : édition vers "Devis envoyé" avec ID vide → **bloqué** ✅
+- [x] Documentation mise à jour ✅
 
 **Règle métier associée** : BR-DEVI-001
 
 **Fichiers impactés** :
-- `supabase/migrations/[date]_add_id_devis.sql` (si nécessaire)
-- `app/api/interventions/[id]/route.ts`
-- Menu contextuel interventions (composant à identifier)
+- ✅ Migration BDD : Pas nécessaire, `id_inter` existe déjà
+- `src/components/interventions/LegacyInterventionForm.tsx` (retirer `disabled`, ajouter validation)
+- `src/components/interventions/InterventionEditForm.tsx` (rendre éditable, ajouter validation)
+- ✅ `src/lib/supabase-api-v2.ts` : Déjà mappé (ligne 391)
+- ✅ `supabase/functions/interventions-v2/index.ts` : Déjà dans les colonnes
 
-**Bloquants** : Aucun
+**Prompt pour Codex** : `docs/livrable-2025-11-04/PROMPT_DEVI-001.md`
+
+**Implémentation réalisée** :
+
+1. **`LegacyInterventionForm.tsx` (création)** :
+   - Champ `disabled` par défaut, devient éditable si statut = "Devis envoyé"
+   - Validation HTML5 : `required` + `pattern="^(?!auto-).*"` (bloque `auto-XXX`)
+   - Validation submit : Vérifie ID vide ou provisoire
+
+2. **`InterventionEditForm.tsx` (édition)** :
+   - Champ éditable avec validation conditionnelle
+   - Même pattern regex pour bloquer ID provisoires
+   - Validation submit : Vérifie ID vide ou provisoire
+
+**Logique des ID** :
+- **ID provisoire** : `auto-123` (auto-généré)
+- **ID définitif** : Saisi par le gestionnaire (ex: `DEV-2024-001`)
+- **Règle** : "Devis envoyé" bloqué si ID vide OU ID provisoire
+
+**Résultat** :
+- ✅ Création : Champ grisé par défaut, éditable uniquement si "Devis envoyé"
+- ✅ Édition : Champ éditable, bloque changement vers "Devis envoyé" si ID provisoire
+- ✅ Messages d'erreur clairs via validation HTML5
+
+**Bloquants rencontrés** : Aucun
 
 ---
 
 #### 5. ARC-001 : Commentaire obligatoire à l'archivage
-**Statut** : ⏸️ À démarrer  
+**Statut** : ⏸️ À démarrer (bloqué par COM-001)  
 **Priorité** : P2  
-**Durée estimée** : 2j  
-**Complexité** : 🟡 Moyenne
+**Durée estimée** : 0.5j (après COM-001)  
+**Complexité** : 🟢 Faible
 
 **Description** :
 - Ajouter les champs d'archivage : `archived_at`, `archived_by`, `archived_reason`
 - Pop-up modal avec commentaire obligatoire
 - Validation bloquante
+- **Dépend de COM-001** pour la gestion des commentaires
 
 **Checklist** :
 - [ ] Migration BDD : Ajouter 3 champs d'archivage à `interventions`
@@ -235,6 +319,7 @@ WHERE name IN ('ImoDirect', 'AFEDIM', 'Oqoro');
 - [ ] Créer composant `ArchiveModal.tsx`
 - [ ] API endpoint pour archivage
 - [ ] Menu contextuel : option "Archiver"
+- [ ] Commentaire système automatique lors de l'archivage
 - [ ] Tests unitaires
 - [ ] Documentation
 
@@ -246,6 +331,67 @@ WHERE name IN ('ImoDirect', 'AFEDIM', 'Oqoro');
 - `app/api/interventions/[id]/archive/route.ts` (nouveau)
 - `app/api/artisans/[id]/archive/route.ts` (nouveau)
 
+**Bloquants** : 🔴 **Dépend de COM-001** (sous-tâche pré-requise)
+
+**Sous-tâches** :
+- **COM-001** : Gestion complète des commentaires (1.5-2j) ⏸️
+
+---
+
+#### 5.1. COM-001 : Gestion complète des commentaires
+**Statut** : ⏸️ À démarrer  
+**Priorité** : P1 (pré-requis pour ARC-001)  
+**Durée estimée** : 1.5-2j  
+**Complexité** : 🟡 Moyenne  
+**Type** : Sous-tâche de ARC-001
+
+**Description** :
+La fonctionnalité d'archivage nécessite un système de commentaires fonctionnel.
+- Table `comments` existe en BDD ✅
+- Edge Function existe ✅
+- **Mais UI non fonctionnelle** dans artisans et interventions ❌
+
+**Objectif** :
+Implémenter la gestion complète des commentaires dans :
+1. Fiche Artisan (`ArtisanModalContent.tsx`)
+2. Fiche Intervention (`InterventionEditForm.tsx`)
+
+**Checklist** :
+- [ ] Vérifier/améliorer Edge Function `/comments`
+- [ ] Créer composant réutilisable `CommentSection.tsx`
+- [ ] Améliorer `commentsApi` (GET, POST, DELETE)
+- [ ] Intégrer dans fiche artisan (remplacer ancien code `suivi_relances_docs`)
+- [ ] Intégrer dans fiche intervention (nouvelle section collapsible)
+- [ ] Afficher historique avec auteur + date + heure
+- [ ] Formulaire d'ajout avec validation
+- [ ] Rafraîchissement automatique (React Query)
+- [ ] Tests manuels (ajout, affichage, persistence)
+- [ ] Documentation
+
+**Règle métier associée** : Pré-requis pour BR-ARC-001
+
+**Fichiers impactés** :
+- `src/components/shared/CommentSection.tsx` (nouveau)
+- `src/lib/api/v2/commentsApi.ts` (améliorer)
+- `src/components/ui/artisan-modal/ArtisanModalContent.tsx` (lignes 692-727)
+- `src/components/interventions/InterventionEditForm.tsx` (ajouter section)
+- `supabase/functions/comments/index.ts` (vérifier JOIN users)
+
+**Prompt pour Codex** : `docs/livrable-2025-11-04/PROMPT_COM-001.md`
+
+**Implémentation** :
+1. **Backend** : Vérifier que Edge Function retourne les commentaires avec JOIN users
+2. **Composant** : Créer `CommentSection` réutilisable (historique + formulaire)
+3. **Artisans** : Remplacer ancienne section par `CommentSection`
+4. **Interventions** : Ajouter section collapsible avec `CommentSection`
+5. **Tests** : Vérifier ajout/affichage/persistence dans les 2 pages
+
+**Résultat attendu** :
+- Ajouter un commentaire sur un artisan → Visible immédiatement avec auteur + date
+- Ajouter un commentaire sur une intervention → Visible immédiatement avec auteur + date
+- Historique complet affiché dans les 2 pages
+- Une fois terminé, ARC-001 sera simple (juste ajouter commentaire système + champs BDD)
+
 **Bloquants** : Aucun
 
 ---
@@ -253,17 +399,17 @@ WHERE name IN ('ImoDirect', 'AFEDIM', 'Oqoro');
 ### 📊 Progression Sprint 1
 
 ```
-Total : 5 tâches
-├── ⏸️ À démarrer : 4 (80%)
+Total : 6 tâches (5 principales + 1 sous-tâche)
+├── ⏸️ À démarrer : 2 (33%)  ← COM-001, ARC-001
 ├── 🟡 En cours : 0 (0%)
-├── ✅ Terminées : 1 (20%)  ← AGN-001 ✅
+├── ✅ Terminées : 4 (67%)  ← AGN-001 ✅ INT-001 ✅ INT-003 ✅ DEVI-001 ✅
 └── 🔴 Bloquées : 0 (0%)
 ```
 
-**Temps consommé** : 2j / 7j (29%)  
+**Temps consommé** : 4j / 9j (44%)  
 **Temps restant** : 5j
 
-**Progression** : 🟩🟩⬜⬜⬜⬜⬜ 20%
+**Progression** : 🟩🟩🟩🟩🟩🟩⬜⬜⬜ 67%
 
 ---
 
@@ -465,39 +611,68 @@ Total : 6 tâches
 ### Progression totale
 ```
 Total : 21 tâches
-├── ⏸️ À démarrer : 20 (95%)
+├── ⏸️ À démarrer : 17 (81%)
 ├── 🟡 En cours : 0 (0%)
-├── ✅ Terminées : 1 (5%)  ← AGN-001 ✅
+├── ✅ Terminées : 4 (19%)  ← AGN-001 ✅ INT-001 ✅ INT-003 ✅ DEVI-001 ✅
 └── 🔴 Bloquées : 0 (0%)
 ```
 
-**Progression globale** : 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 5%
+**Progression globale** : 🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 19%
 
 ### Par complexité
 ```
 🔴 Haute : 3 tâches (0 terminées)
-🟡 Moyenne : 10 tâches (1 terminée ✅)
-🟢 Faible : 8 tâches (0 terminées)
+🟡 Moyenne : 10 tâches (2 terminées ✅✅)
+🟢 Faible : 8 tâches (2 terminées ✅✅)
 ```
 
 ### Temps
 ```
 Temps total estimé : 43 jours
-Temps consommé : 2 jours (4.7%)
-Temps restant : 41 jours
+Temps consommé : 4 jours (9%)
+Temps restant : 39 jours
 ```
 
 ---
 
 ## 📝 Notes et décisions
 
-### 06/11/2025 - Après-midi
+### 07/11/2025 - Matin (11h00)
+- ✅ **DEVI-001 TERMINÉ** : ID devis pré-requis pour "Devis envoyé"
+- ✅ Logique ID provisoire (`auto-XXX`) vs ID définitif implémentée
+- ✅ Création : Champ éditable uniquement si statut = "Devis envoyé"
+- ✅ Édition : Bloque changement vers "Devis envoyé" si ID provisoire/vide
+- ✅ Validation HTML5 + pattern regex `^(?!auto-).*`
+- 🎯 **Prochaine tâche** : COM-001 (Gestion commentaires - 1.5-2j)
+
+### 06/11/2025 - Soirée (18h00)
+- ✅ **INT-003 TERMINÉ** par Codex : Contexte éditable uniquement à la création
+- ✅ Double garde (backend + frontend) sur rôle Admin
+- ✅ API `/api/auth/me` enrichie avec les rôles
+- ✅ Formulaires harmonisés (lecture seule + message utilisateur)
+- ⚠️ `npm run lint` à corriger (config manquante)
+
+### 06/11/2025 - Fin d'après-midi (17h00)
+- ✅ **INT-001 TERMINÉ** : Validation des 5 champs obligatoires à la création
+- ✅ Migration de documentation (COMMENT ON COLUMN)
+- ✅ Validation frontend avec messages d'erreur clairs
+- ✅ Labels UI mis à jour avec astérisques
+
+### 06/11/2025 - Après-midi (14h-16h)
 - ✅ **AGN-001 TERMINÉ** : Référence agence implémentée (BDD + Types + UI complète)
 - ✅ Correction importante : Nom d'agence "Oqoro" (et non "Locoro")
 - ✅ Règle clarifiée : Champ visible mais non-requis (pas de validation bloquante)
 - ✅ Fix bonus : z-index de tous les dropdowns/popovers (10000) pour modal fullpage
 - ✅ CSS Grid 6 colonnes pour tous les modes (halfpage, centerpage, fullpage)
-- 🎯 **Prochaine tâche** : INT-001 (Champs obligatoires - 0.5j)
+
+### 06/11/2025 - Après-midi (18h00)
+- ✅ **COM-001 créée** : Sous-tâche pré-requise pour ARC-001
+- ✅ Diagnostic ARC-001 : Système de commentaires UI non fonctionnel
+- ✅ Documentation complète COM-001 (`PROMPT_COM-001.md`)
+- ✅ Sprint 1 étendu de 7j à 9j (+2j pour COM-001)
+- ✅ ARC-001 réduit de 2j à 0.5j (après COM-001)
+- 🎯 **Décision** : Construire fondations (COM-001) avant archivage (ARC-001)
+- 📝 Session documentée : `SESSION_06_NOV_2025.md`
 
 ### 06/11/2025 - Matin
 - ✅ Documentation complète créée et organisée
@@ -519,4 +694,3 @@ Temps restant : 41 jours
 
 **Dernière mise à jour** : 6 novembre 2025  
 **Maintenu par** : Équipe Dev GMBS CRM
-

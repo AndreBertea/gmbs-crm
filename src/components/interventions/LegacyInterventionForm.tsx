@@ -27,6 +27,25 @@ const INTERVENTION_DOCUMENT_KINDS = [
 ]
 
 const AGENCIES_WITH_OPTIONAL_REFERENCE = new Set(["imodirect", "afedim", "oqoro"])
+const STATUSES_REQUIRING_DATE_PREVUE = new Set(["VISITE_TECHNIQUE", "EN_COURS", "INTER_EN_COURS"])
+const STATUSES_REQUIRING_DEFINITIVE_ID = new Set([
+  "DEVIS_ENVOYE",
+  "VISITE_TECHNIQUE",
+  "ACCEPTE",
+  "EN_COURS",
+  "INTER_EN_COURS",
+  "TERMINE",
+  "INTER_TERMINEE",
+  "STAND_BY",
+])
+
+const generateAutoInterventionId = () => {
+  const timestampSegment = Date.now().toString().slice(-6)
+  const randomSegment = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0")
+  return `AUTO-${timestampSegment}-${randomSegment}`
+}
 
 interface CurrentUser {
   id: string
@@ -102,6 +121,21 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
   const [isProprietaireOpen, setIsProprietaireOpen] = useState(false)
   const [isAccompteOpen, setIsAccompteOpen] = useState(false)
   const [isDocumentsOpen, setIsDocumentsOpen] = useState(false)
+
+  useEffect(() => {
+    if (!refData?.interventionStatuses || formData.statut_id) {
+      return
+    }
+    const defaultStatus = refData.interventionStatuses.find(
+      (status) =>
+        status.code === "DEMANDE" ||
+        status.label?.toLowerCase() === "demandé" ||
+        status.label?.toLowerCase() === "demande",
+    )
+    if (defaultStatus?.id) {
+      setFormData((prev) => ({ ...prev, statut_id: defaultStatus.id }))
+    }
+  }, [refData, formData.statut_id])
 
   useEffect(() => {
     let isMounted = true
@@ -288,6 +322,32 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
+    
+    // Validation des champs obligatoires (BR-INT-001)
+    // Utilise la validation HTML5 native du formulaire
+    const form = event.currentTarget as HTMLFormElement
+    if (!form.checkValidity()) {
+      form.reportValidity() // Affiche les messages natifs du navigateur
+      return
+    }
+
+    let idInterValue = formData.idIntervention?.trim() ?? ""
+    // BR-DEVI-001 : Statuts post "Devis envoyé" => ID définitif obligatoire
+    if (requiresDefinitiveId) {
+      if (idInterValue.length === 0 || idInterValue.toLowerCase().includes("auto")) {
+        form.reportValidity()
+        return
+      }
+    } else if (!idInterValue) {
+      idInterValue = generateAutoInterventionId()
+      setFormData((prev) => ({ ...prev, idIntervention: idInterValue }))
+    }
+
+    if (requiresDatePrevue && !(formData.datePrevue?.trim())) {
+      form.reportValidity()
+      return
+    }
+
     setIsSubmitting(true)
     onSubmittingChange?.(true)
 
@@ -310,6 +370,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
         ville: formData.ville || undefined,
         latitude: formData.latitude,
         longitude: formData.longitude,
+        id_inter: idInterValue,
       }
 
       // Nettoyer les champs undefined
@@ -337,6 +398,29 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
   const containerClass = useTwoColumns ? "space-y-4" : "space-y-4"
   const contentClass = useTwoColumns ? "grid grid-cols-1 gap-6 lg:grid-cols-2" : "space-y-4"
 
+  const selectedStatus = useMemo(() => {
+    if (!formData.statut_id || !refData?.interventionStatuses) {
+      return undefined
+    }
+    return refData.interventionStatuses.find((status) => status.id === formData.statut_id)
+  }, [formData.statut_id, refData])
+
+  const requiresDatePrevue = useMemo(() => {
+    if (!selectedStatus) {
+      return false
+    }
+    const code = (selectedStatus.code ?? "").toUpperCase()
+    if (STATUSES_REQUIRING_DATE_PREVUE.has(code)) {
+      return true
+    }
+    const normalizedLabel = (selectedStatus.label ?? "").trim().toLowerCase()
+    return (
+      normalizedLabel === "visite technique" ||
+      normalizedLabel === "intervention en cours" ||
+      normalizedLabel === "inter en cours"
+    )
+  }, [selectedStatus])
+
   const selectedAgencyId = formData.agence_id
   const selectedAgencyData = useMemo(() => {
     if (!selectedAgencyId || !refData?.agencies) {
@@ -361,6 +445,30 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
   const mainGridClassName = showReferenceField
     ? "grid legacy-form-main-grid legacy-form-main-grid--with-reference"
     : "grid legacy-form-main-grid"
+
+  const requiresDefinitiveId = useMemo(() => {
+    if (!selectedStatus) {
+      return false
+    }
+    const code = (selectedStatus.code ?? "").toUpperCase()
+    if (STATUSES_REQUIRING_DEFINITIVE_ID.has(code)) {
+      return true
+    }
+    const normalizedLabel = (selectedStatus.label ?? "").trim().toLowerCase()
+    return (
+      normalizedLabel === "devis envoyé" ||
+      normalizedLabel === "visite technique" ||
+      normalizedLabel === "accepté" ||
+      normalizedLabel === "accepte" ||
+      normalizedLabel === "en cours" ||
+      normalizedLabel === "intervention en cours" ||
+      normalizedLabel === "inter en cours" ||
+      normalizedLabel === "terminé" ||
+      normalizedLabel === "termine" ||
+      normalizedLabel === "stand-by" ||
+      normalizedLabel === "stand by"
+    )
+  }, [selectedStatus])
 
   if (refDataLoading) {
     return (
@@ -391,16 +499,37 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                   ))}
                 </SelectContent>
               </Select>
+              <input 
+                type="text" 
+                value={formData.statut_id || ""} 
+                onChange={() => {}}
+                required 
+                pattern=".+"
+                title="Statut est obligatoire"
+                style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
+                tabIndex={-1}
+                aria-hidden="true"
+              />
             </div>
             <div className="legacy-form-field">
               <Label htmlFor="idIntervention" className="legacy-form-label">
-                ID Intervention
+                ID Intervention {requiresDefinitiveId && "*"}
               </Label>
-              <Input id="idIntervention" value={formData.idIntervention} onChange={(event) => handleInputChange("idIntervention", event.target.value)} placeholder="Auto-généré" className="legacy-form-input" disabled />
+              <Input 
+                id="idIntervention" 
+                value={formData.idIntervention} 
+                onChange={(event) => handleInputChange("idIntervention", event.target.value)} 
+                placeholder={requiresDefinitiveId ? "Saisir l'ID définitif" : "Auto-généré"} 
+                className="legacy-form-input" 
+                disabled={!requiresDefinitiveId}
+                required={requiresDefinitiveId}
+                pattern={requiresDefinitiveId ? "^(?!.*(?:[Aa][Uu][Tt][Oo])).+$" : undefined}
+                title={requiresDefinitiveId ? "ID intervention définitif requis (sans la chaîne \"AUTO\")" : undefined}
+              />
             </div>
             <div className="legacy-form-field">
               <Label htmlFor="agence" className="legacy-form-label">
-                Agence
+                Agence *
               </Label>
               <Select value={formData.agence_id} onValueChange={(value) => handleInputChange("agence_id", value)}>
                 <SelectTrigger className="legacy-form-select">
@@ -414,6 +543,17 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                   ))}
                 </SelectContent>
               </Select>
+              <input 
+                type="text" 
+                value={formData.agence_id || ""} 
+                onChange={() => {}}
+                required 
+                pattern=".+"
+                title="Agence est obligatoire"
+                style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
+                tabIndex={-1}
+                aria-hidden="true"
+              />
             </div>
             {showReferenceField && (
               <div className="legacy-form-field">
@@ -453,7 +593,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
             </div>
             <div className="legacy-form-field">
               <Label htmlFor="typeMetier" className="legacy-form-label">
-                Type (Métier)
+                Type (Métier) *
               </Label>
               <Select value={formData.metier_id} onValueChange={(value) => handleInputChange("metier_id", value)}>
                 <SelectTrigger className="legacy-form-select">
@@ -467,6 +607,17 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                   ))}
                 </SelectContent>
               </Select>
+              <input 
+                type="text" 
+                value={formData.metier_id || ""} 
+                onChange={() => {}}
+                required 
+                pattern=".+"
+                title="Métier est obligatoire"
+                style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
+                tabIndex={-1}
+                aria-hidden="true"
+              />
             </div>
           </div>
         </CardContent>
@@ -677,7 +828,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="datePrevue" className="text-xs">
-                      Date prévue *
+                      Date prévue {requiresDatePrevue && "*"}
                     </Label>
                     <Input
                       id="datePrevue"
@@ -685,7 +836,8 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                       value={formData.datePrevue}
                       onChange={(event) => handleInputChange("datePrevue", event.target.value)}
                       className="h-8 text-sm"
-                      required
+                      required={requiresDatePrevue}
+                      title={requiresDatePrevue ? "Date prévue obligatoire pour ce statut" : undefined}
                     />
                   </div>
                 </div>

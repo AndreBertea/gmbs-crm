@@ -53,6 +53,7 @@ type UseInterventionFormParams = {
   interventionId?: string
   defaultValues?: Partial<CreateInterventionInput & UpdateInterventionInput>
   onSuccess?: (payload: unknown) => void
+  canEditContext?: boolean
 }
 
 type DuplicateSummary = {
@@ -67,6 +68,7 @@ export function useInterventionForm({
   interventionId,
   defaultValues,
   onSuccess,
+  canEditContext = true,
 }: UseInterventionFormParams) {
   const resolver = useMemo(
     () => (mode === "create" ? zodResolver(CreateInterventionSchema) : zodResolver(UpdateInterventionSchema)),
@@ -190,6 +192,9 @@ export function useInterventionForm({
         }
 
         const updatePayload = buildUpdatePayload({ ...normalizedValues, dueAt: dueAt ?? undefined } as UpdateInterventionInput)
+        if (!canEditContext) {
+          delete updatePayload.contexte_intervention
+        }
         const { data, error } = await supabase
           .from("interventions")
           .update(updatePayload)

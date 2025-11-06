@@ -858,6 +858,7 @@ serve(async (req: Request) => {
             .from('interventions')
             .update({
               agence_id: body.agence_id,
+              reference_agence: body.reference_agence ?? null,
               tenant_id: body.tenant_id ?? body.client_id ?? null,
               owner_id: body.owner_id ?? null,
               assigned_user_id: body.assigned_user_id,
@@ -907,6 +908,7 @@ serve(async (req: Request) => {
         .insert([{
           id_inter: body.id_inter,
           agence_id: body.agence_id,
+          reference_agence: body.reference_agence ?? null,
           tenant_id: body.tenant_id ?? body.client_id ?? null,
           owner_id: body.owner_id ?? null,
           assigned_user_id: body.assigned_user_id,
@@ -965,6 +967,7 @@ serve(async (req: Request) => {
         .insert([{
           id_inter: body.id_inter,
           agence_id: body.agence_id,
+          reference_agence: body.reference_agence ?? null,
           tenant_id: body.tenant_id ?? body.client_id ?? null,
           owner_id: body.owner_id ?? null,
           assigned_user_id: body.assigned_user_id,
@@ -1014,6 +1017,7 @@ serve(async (req: Request) => {
         .update({
           id_inter: body.id_inter,
           agence_id: body.agence_id,
+          reference_agence: body.reference_agence ?? null,
           tenant_id: body.tenant_id ?? body.client_id ?? null,
           owner_id: body.owner_id ?? null,
           assigned_user_id: body.assigned_user_id,

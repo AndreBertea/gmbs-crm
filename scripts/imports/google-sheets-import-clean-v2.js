@@ -679,6 +679,43 @@ Exemples:
         await instance.databaseManager.saveUnmappedArtisansReport(unmappedArtisansPath);
       }
 
+      // Post-import: Peupler agency_config (BR-AGN-001)
+      console.log('\n🔧 Peuplement de agency_config...');
+      try {
+        const { createClient } = require('@supabase/supabase-js');
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321';
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+        
+        if (supabaseKey) {
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          const { data: agencies, error: fetchError } = await supabase
+            .from('agencies')
+            .select('id, label')
+            .or('label.ilike.%ImoDirect%,label.ilike.%AFEDIM%,label.ilike.%Oqoro%');
+
+          if (!fetchError && agencies && agencies.length > 0) {
+            const { error: insertError } = await supabase
+              .from('agency_config')
+              .upsert(
+                agencies.map(agency => ({
+                  agency_id: agency.id,
+                  requires_reference: true,
+                })),
+                { onConflict: 'agency_id' }
+              );
+
+            if (!insertError) {
+              console.log(`✅ agency_config peuplé (${agencies.length} agences: ${agencies.map(a => a.label).join(', ')})`);
+            } else {
+              console.warn('⚠️  Erreur lors du peuplement agency_config:', insertError.message);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️  Erreur post-import agency_config:', error.message);
+      }
+
     } catch (error) {
       console.error('❌ Erreur fatale:', error.message);
       process.exit(1);

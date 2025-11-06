@@ -119,13 +119,15 @@ export const VALIDATION_RULES: ValidationRule[] = [
     },
   },
   {
-    key: "DEVIS_ENVOYE_REQUIRES_ID",
-    to: "DEVIS_ENVOYE",
-    message: "Un ID intervention doit être renseigné avant d'envoyer le devis",
+    key: "INTERVENTION_ID_REQUIRED",
+    statuses: ["DEVIS_ENVOYE", "VISITE_TECHNIQUE", "ACCEPTE", "EN_COURS", "TERMINE", "STAND_BY"],
+    message: 'Un ID intervention définitif (sans la chaîne "AUTO") est requis pour ce statut',
     blockTransition: true,
     validate: (context) => {
       if (!context.idIntervention) return false
-      return String(context.idIntervention).trim().length > 0
+      const value = String(context.idIntervention).trim()
+      if (!value) return false
+      return !value.toLowerCase().includes("auto")
     },
   },
   {

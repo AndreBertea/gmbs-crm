@@ -24,11 +24,24 @@
 ### ⭐ Pour démarrer le Sprint 1 avec Codex
 👉 **[PROMPT_POUR_CODEX.md](PROMPT_POUR_CODEX.md)** - Prompt complet à copier-coller dans Codex
 
+### 🔄 Reprendre une session
+👉 **[PROMPT_REPRISE_SESSION.md](PROMPT_REPRISE_SESSION.md)** - Prompt à donner au début de chaque session
+
 ### 📋 Suivi des tâches
-👉 **[SPRINT_TRACKER.md](SPRINT_TRACKER.md)** - Suivi détaillé des 5 sprints et 21 tâches
+👉 **[SPRINT_TRACKER.md](SPRINT_TRACKER.md)** - Suivi détaillé des 5 sprints et 22 tâches (SOURCE DE VÉRITÉ)
+
+### 📊 Progression visuelle
+👉 **[PROGRESSION_VISUELLE.md](PROGRESSION_VISUELLE.md)** - Barres de progression et statistiques
 
 ### ⚡ Guide de démarrage rapide
 👉 **[DEMARRAGE_RAPIDE_SPRINT_1.md](DEMARRAGE_RAPIDE_SPRINT_1.md)** - Commencer en 5 minutes
+
+### 🎯 Prompts pour tâches spécifiques
+- 👉 **[PROMPT_DEVI-001.md](PROMPT_DEVI-001.md)** - ID devis pré-requis pour "Devis envoyé"
+- 👉 **[PROMPT_COM-001.md](PROMPT_COM-001.md)** - Gestion complète des commentaires (pré-requis ARC-001)
+
+### 📝 Sessions de travail
+- 👉 **[SESSION_06_NOV_2025.md](SESSION_06_NOV_2025.md)** - Création de COM-001 (sous-tâche pré-requise)
 
 ---
 

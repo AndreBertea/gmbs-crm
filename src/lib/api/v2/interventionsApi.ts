@@ -238,10 +238,41 @@ export const interventionsApi = {
 
   // Modifier une intervention
   async update(id: string, data: UpdateInterventionData): Promise<InterventionWithStatus> {
+    let payload: UpdateInterventionData = { ...data }
+
+    if (Object.prototype.hasOwnProperty.call(payload, "contexte_intervention")) {
+      try {
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+
+        let isAdmin = false
+        if (response.ok) {
+          const current = await response.json()
+          const roles: string[] = Array.isArray(current?.user?.roles) ? current.user.roles : []
+          isAdmin = roles.some(
+            (role) => typeof role === "string" && role.toLowerCase().includes("admin"),
+          )
+        }
+
+        if (!isAdmin) {
+          const { contexte_intervention: _ignored, ...rest } = payload
+          payload = rest as UpdateInterventionData
+        }
+      } catch (error) {
+        console.warn("[interventionsApi.update] Unable to verify user role, dropping context update", error)
+        const { contexte_intervention: _ignored, ...rest } = payload
+        payload = rest as UpdateInterventionData
+      }
+    }
+
     const { data: updated, error } = await supabase
       .from("interventions")
       .update({
-        ...data,
+        ...payload,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)

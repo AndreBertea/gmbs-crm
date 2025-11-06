@@ -44,6 +44,22 @@ export async function GET(req: Request) {
 
     if (!record) return NextResponse.json({ user: null })
 
+    let roles: string[] = []
+    if (record.id) {
+      const { data: roleRows, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('roles(name)')
+        .eq('user_id', record.id)
+
+      if (!rolesError && Array.isArray(roleRows)) {
+        roles = roleRows
+          .map((entry: any) => entry?.roles?.name)
+          .filter((name: unknown): name is string => typeof name === 'string')
+      } else if (rolesError && rolesError.code !== 'PGRST116') {
+        console.warn('[auth/me] Failed to load user roles', rolesError)
+      }
+    }
+
     const user = {
       id: record.id,
       firstname: record.firstname,
@@ -57,6 +73,7 @@ export async function GET(req: Request) {
       surnom: record.code_gestionnaire,
       username: record.username,
       last_seen_at: record.last_seen_at,
+      roles,
     }
     return NextResponse.json({ user })
   } catch (e: any) {

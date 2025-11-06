@@ -285,6 +285,7 @@ export interface UpdateUserData {
 }
 
 export interface CreateInterventionData {
+  id_inter?: string;
   agence_id?: string;
   reference_agence?: string | null;
   tenant_id?: string;

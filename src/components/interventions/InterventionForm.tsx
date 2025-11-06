@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { INTERVENTION_STATUS, INTERVENTION_STATUS_ORDER } from "@/config/interventions"
 import { useInterventionForm, useStatusGuard } from "@/hooks/useInterventionForm"
 import type { CreateInterventionInput, UpdateInterventionInput, InterventionStatusValue } from "@/types/interventions"
+import { supabase } from "@/lib/supabase-client"
+import { cn } from "@/lib/utils"
 
 const ARTISAN_REQUIRED_STATUSES: InterventionStatusValue[] = [
   "VISITE_TECHNIQUE",
@@ -31,16 +33,62 @@ export default function InterventionForm({
   defaultValues,
   onSuccess,
 }: InterventionFormProps) {
+  const [canEditContext, setCanEditContext] = useState(mode !== "edit")
+
   const { form, submit, isSubmitting, serverError, duplicates, checkDuplicates } = useInterventionForm({
     mode,
     interventionId,
     defaultValues,
     onSuccess,
+    canEditContext: mode === "create" ? true : canEditContext,
   })
+
+  useEffect(() => {
+    if (mode !== "edit") {
+      return
+    }
+
+    let cancelled = false
+
+    const loadRoles = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+
+        if (!response.ok) {
+          throw new Error("Impossible de récupérer l'utilisateur courant")
+        }
+
+        const payload = await response.json()
+        if (cancelled) return
+
+        const roles: string[] = Array.isArray(payload?.user?.roles) ? payload.user.roles : []
+        const isAdmin = roles.some(
+          (role) => typeof role === "string" && role.toLowerCase().includes("admin"),
+        )
+        setCanEditContext(isAdmin)
+      } catch (error) {
+        if (!cancelled) {
+          setCanEditContext(false)
+        }
+      }
+    }
+
+    loadRoles()
+
+    return () => {
+      cancelled = true
+    }
+  }, [mode])
 
   const status = (form.watch("status") as InterventionStatusValue | undefined) ?? "DEMANDE"
   const artisanId = form.watch("artisanId") as string | undefined
   const { error: statusError, validate } = useStatusGuard({ status, artisanId })
+  const isContextReadOnly = mode === "edit" && !canEditContext
 
   const [isSearchingArtisan, setIsSearchingArtisan] = useState(false)
   const [artisanResults, setArtisanResults] = useState<unknown[]>([])
@@ -131,10 +179,20 @@ export default function InterventionForm({
                 id="context" 
                 placeholder="Préciser le contexte client/agence" 
                 rows={3} 
-                className="intervention-form-textarea"
+                className={cn(
+                  "intervention-form-textarea",
+                  isContextReadOnly && "cursor-not-allowed bg-muted/50 text-muted-foreground",
+                )}
+                readOnly={isContextReadOnly}
+                aria-readonly={isContextReadOnly}
                 {...form.register("context")} 
                 required 
               />
+              {isContextReadOnly && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Seuls les administrateurs peuvent modifier ce champ après création.
+                </p>
+              )}
             </div>
             <div className="intervention-form-field">
               <Label htmlFor="agency" className="intervention-form-label">Agence</Label>

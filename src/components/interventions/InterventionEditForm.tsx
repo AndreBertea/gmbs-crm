@@ -33,6 +33,17 @@ const INTERVENTION_DOCUMENT_KINDS = [
 const MAX_RADIUS_KM = 10000
 
 const AGENCIES_WITH_OPTIONAL_REFERENCE = new Set(["imodirect", "afedim", "oqoro"])
+const STATUSES_REQUIRING_DATE_PREVUE = new Set(["VISITE_TECHNIQUE", "EN_COURS", "INTER_EN_COURS"])
+const STATUSES_REQUIRING_DEFINITIVE_ID = new Set([
+  "DEVIS_ENVOYE",
+  "VISITE_TECHNIQUE",
+  "ACCEPTE",
+  "EN_COURS",
+  "INTER_EN_COURS",
+  "TERMINE",
+  "INTER_TERMINEE",
+  "STAND_BY",
+])
 
 const formatDistanceKm = (value: number) => {
   if (!Number.isFinite(value)) return "—"
@@ -66,6 +77,7 @@ export function InterventionEditForm({
     displayName: string
     code: string | null
     color: string | null
+    roles: string[]
   } | null>(null)
 
   // Extraire les coûts et paiements
@@ -249,6 +261,7 @@ export function InterventionEditForm({
           displayName,
           code: user.code_gestionnaire ?? null,
           color: user.color ?? null,
+          roles: Array.isArray(user.roles) ? user.roles : [],
         })
       } catch (error) {
         console.warn(
@@ -264,6 +277,58 @@ export function InterventionEditForm({
       isMounted = false
     }
   }, [])
+
+  const canEditContext = useMemo(() => {
+    const roles = currentUser?.roles ?? []
+    return roles.some((role) => typeof role === "string" && role.toLowerCase().includes("admin"))
+  }, [currentUser])
+
+  const selectedStatus = useMemo(() => {
+    if (!formData.statut_id || !refData?.interventionStatuses) {
+      return undefined
+    }
+    return refData.interventionStatuses.find((status) => status.id === formData.statut_id)
+  }, [formData.statut_id, refData])
+
+  const requiresDefinitiveId = useMemo(() => {
+    if (!selectedStatus) {
+      return false
+    }
+    const code = (selectedStatus.code ?? "").toUpperCase()
+    if (STATUSES_REQUIRING_DEFINITIVE_ID.has(code)) {
+      return true
+    }
+    const normalizedLabel = (selectedStatus.label ?? "").trim().toLowerCase()
+    return (
+      normalizedLabel === "devis envoyé" ||
+      normalizedLabel === "visite technique" ||
+      normalizedLabel === "accepté" ||
+      normalizedLabel === "accepte" ||
+      normalizedLabel === "en cours" ||
+      normalizedLabel === "intervention en cours" ||
+      normalizedLabel === "inter en cours" ||
+      normalizedLabel === "terminé" ||
+      normalizedLabel === "termine" ||
+      normalizedLabel === "stand-by" ||
+      normalizedLabel === "stand by"
+    )
+  }, [selectedStatus])
+
+  const requiresDatePrevue = useMemo(() => {
+    if (!selectedStatus) {
+      return false
+    }
+    const code = (selectedStatus.code ?? "").toUpperCase()
+    if (STATUSES_REQUIRING_DATE_PREVUE.has(code)) {
+      return true
+    }
+    const normalizedLabel = (selectedStatus.label ?? "").trim().toLowerCase()
+    return (
+      normalizedLabel === "visite technique" ||
+      normalizedLabel === "intervention en cours" ||
+      normalizedLabel === "inter en cours"
+    )
+  }, [selectedStatus])
 
   const handleInputChange = (field: string, value: string | boolean | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -443,6 +508,26 @@ export function InterventionEditForm({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
+
+    const form = event.currentTarget as HTMLFormElement
+    if (!form.checkValidity()) {
+      form.reportValidity()
+      return
+    }
+
+    const idInterValue = formData.id_inter?.trim() ?? ""
+    // Bloquer si ID vide OU provisoire (auto-XXX)
+    if (requiresDefinitiveId && (idInterValue.length === 0 || idInterValue.toLowerCase().includes("auto"))) {
+      form.reportValidity()
+      return
+    }
+
+    const datePrevueValue = formData.date_prevue?.trim() ?? ""
+    if (requiresDatePrevue && datePrevueValue.length === 0) {
+      form.reportValidity()
+      return
+    }
+
     setIsSubmitting(true)
     onSubmittingChange?.(true)
 
@@ -469,6 +554,11 @@ export function InterventionEditForm({
         longitude: formData.longitude,
         numero_sst: formData.numero_sst || undefined,
         pourcentage_sst: formData.pourcentage_sst ? parseFloat(formData.pourcentage_sst) : undefined,
+        id_inter: idInterValue.length > 0 ? idInterValue : null,
+      }
+
+      if (!canEditContext) {
+        delete updateData.contexte_intervention
       }
 
       // Nettoyer les champs undefined
@@ -565,15 +655,18 @@ export function InterventionEditForm({
             </div>
             <div className="legacy-form-field">
               <Label htmlFor="idIntervention" className="legacy-form-label">
-                ID Intervention
+                ID Intervention {requiresDefinitiveId && "*"}
               </Label>
               <Input 
                 id="idIntervention" 
                 value={formData.id_inter} 
                 onChange={(event) => handleInputChange("id_inter", event.target.value)} 
-                placeholder="Auto-généré" 
+                placeholder="Auto-généré (provisoire)" 
                 className="legacy-form-input" 
-                disabled 
+                required={requiresDefinitiveId}
+                pattern={requiresDefinitiveId ? "^(?!.*(?:[Aa][Uu][Tt][Oo])).+$" : undefined}
+                title={requiresDefinitiveId ? "ID intervention définitif requis (sans la chaîne \"AUTO\")" : undefined}
+                autoComplete="off"
               />
             </div>
             <div className="legacy-form-field">
@@ -668,12 +761,26 @@ export function InterventionEditForm({
                 <Textarea
                   id="contexteIntervention"
                   value={formData.contexte_intervention}
-                  onChange={(event) => handleInputChange("contexte_intervention", event.target.value)}
+                  onChange={
+                    canEditContext
+                      ? (event) => handleInputChange("contexte_intervention", event.target.value)
+                      : undefined
+                  }
                   placeholder="Décrivez le contexte de l&apos;intervention..."
                   rows={3}
-                  className="text-sm"
+                  className={cn(
+                    "text-sm",
+                    !canEditContext && "cursor-not-allowed bg-muted/50 text-muted-foreground",
+                  )}
+                  readOnly={!canEditContext}
+                  aria-readonly={!canEditContext}
                   required
                 />
+                {!canEditContext && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Seuls les administrateurs peuvent modifier ce champ après création.
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="consigneIntervention" className="text-xs">
@@ -874,7 +981,7 @@ export function InterventionEditForm({
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="datePrevue" className="text-xs">
-                      Date prévue *
+                      Date prévue {requiresDatePrevue && "*"}
                     </Label>
                     <Input
                       id="datePrevue"
@@ -882,7 +989,8 @@ export function InterventionEditForm({
                       value={formData.date_prevue}
                       onChange={(event) => handleInputChange("date_prevue", event.target.value)}
                       className="h-8 text-sm"
-                      required
+                      required={requiresDatePrevue}
+                      title={requiresDatePrevue ? "Date prévue obligatoire pour ce statut" : undefined}
                     />
                   </div>
                 </div>
