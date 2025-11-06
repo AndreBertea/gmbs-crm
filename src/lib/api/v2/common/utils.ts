@@ -194,6 +194,7 @@ export const mapInterventionRecord = (item: any, refs: any): any => {
     agence: agency?.label ?? item.agence ?? item.agence_id ?? null,
     agenceLabel: agency?.label ?? null,
     agenceCode: agency?.code ?? null,
+    reference_agence: item.reference_agence ?? item.referenceAgence ?? null,
     contexteIntervention: item.contexte_intervention ?? item.contexteIntervention ?? null,
     consigneIntervention: item.consigne_intervention ?? item.consigneIntervention ?? null,
     consigneDeuxiemeArtisanIntervention: item.consigne_second_artisan ?? item.consigneDeuxiemeArtisanIntervention ?? null,

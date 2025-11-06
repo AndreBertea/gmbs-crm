@@ -185,6 +185,7 @@ const mapInterventionRecord = (
     agence: agency?.label ?? item.agence ?? item.agence_id ?? null,
     agenceLabel: agency?.label ?? null,
     agenceCode: agency?.code ?? null,
+    referenceAgence: item.reference_agence ?? item.referenceAgence ?? null,
     contexteIntervention:
       item.contexte_intervention ?? item.contexteIntervention ?? null,
     consigneIntervention:
@@ -387,6 +388,7 @@ export interface Intervention {
   id: string;
   id_inter: string | null;
   agence_id: string | null;
+  reference_agence: string | null;
   client_id: string | null;
   assigned_user_id: string | null;
   statut_id: string | null;

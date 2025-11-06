@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Building, ChevronDown, ChevronRight, FileText, MessageSquare, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +26,8 @@ const INTERVENTION_DOCUMENT_KINDS = [
   { kind: "facture_artisan", label: "Facture Artisan" },
 ]
 
+const AGENCIES_WITH_OPTIONAL_REFERENCE = new Set(["imodirect", "afedim", "oqoro"])
+
 interface CurrentUser {
   id: string
   displayName: string
@@ -48,6 +50,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
     statut_id: "",
     idIntervention: "",
     agence_id: "",
+    reference_agence: "",
     assigned_user_id: "",
     metier_id: "",
     contexteIntervention: "",
@@ -289,10 +292,13 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
     onSubmittingChange?.(true)
 
     try {
+      const referenceAgenceValue = formData.reference_agence?.trim() ?? ""
+
       // Préparer les données pour l'API V2
       const createData: CreateInterventionData = {
         statut_id: formData.statut_id || undefined,
         agence_id: formData.agence_id || undefined,
+        reference_agence: referenceAgenceValue.length > 0 ? referenceAgenceValue : null,
         assigned_user_id: formData.assigned_user_id || undefined,
         metier_id: formData.metier_id || undefined,
         date: formData.datePrevue || new Date().toISOString(),
@@ -331,6 +337,31 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
   const containerClass = useTwoColumns ? "space-y-4" : "space-y-4"
   const contentClass = useTwoColumns ? "grid grid-cols-1 gap-6 lg:grid-cols-2" : "space-y-4"
 
+  const selectedAgencyId = formData.agence_id
+  const selectedAgencyData = useMemo(() => {
+    if (!selectedAgencyId || !refData?.agencies) {
+      return undefined
+    }
+    return refData.agencies.find((agency) => agency.id === selectedAgencyId)
+  }, [selectedAgencyId, refData])
+
+  const showReferenceField = useMemo(() => {
+    if (!selectedAgencyData) {
+      return false
+    }
+    const normalize = (value?: string | null) => (value ?? "").trim().toLowerCase()
+    const normalizedLabel = normalize(selectedAgencyData.label)
+    const normalizedCode = normalize(selectedAgencyData.code)
+    return (
+      AGENCIES_WITH_OPTIONAL_REFERENCE.has(normalizedLabel) ||
+      AGENCIES_WITH_OPTIONAL_REFERENCE.has(normalizedCode)
+    )
+  }, [selectedAgencyData])
+
+  const mainGridClassName = showReferenceField
+    ? "grid legacy-form-main-grid legacy-form-main-grid--with-reference"
+    : "grid legacy-form-main-grid"
+
   if (refDataLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -343,7 +374,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
     <form ref={formRef} className={containerClass} onSubmit={handleSubmit}>
       <Card className="legacy-form-card">
         <CardContent className="pt-4">
-          <div className="grid legacy-form-main-grid">
+          <div className={mainGridClassName}>
             <div className="legacy-form-field">
               <Label htmlFor="statut" className="legacy-form-label">
                 Statut *
@@ -384,6 +415,22 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                 </SelectContent>
               </Select>
             </div>
+            {showReferenceField && (
+              <div className="legacy-form-field">
+                <Label htmlFor="reference_agence" className="legacy-form-label">
+                  Référence agence
+                </Label>
+                <Input
+                  id="reference_agence"
+                  name="reference_agence"
+                  value={formData.reference_agence}
+                  onChange={(event) => handleInputChange("reference_agence", event.target.value)}
+                  placeholder="Ex: REF-12345"
+                  className="legacy-form-input"
+                  autoComplete="off"
+                />
+              </div>
+            )}
             <div className="legacy-form-field">
               <Label htmlFor="attribueA" className="legacy-form-label">
                 Attribué à

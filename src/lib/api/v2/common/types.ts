@@ -63,6 +63,7 @@ export interface Intervention {
   id: string;
   id_inter: string | null;
   agence_id: string | null;
+  reference_agence: string | null;
   tenant_id: string | null;
   owner_id: string | null;
   client_id?: string | null;
@@ -285,6 +286,7 @@ export interface UpdateUserData {
 
 export interface CreateInterventionData {
   agence_id?: string;
+  reference_agence?: string | null;
   tenant_id?: string;
   owner_id?: string;
   client_id?: string;
@@ -308,6 +310,7 @@ export interface CreateInterventionData {
 
 export interface UpdateInterventionData {
   agence_id?: string;
+  reference_agence?: string | null;
   tenant_id?: string | null;
   owner_id?: string | null;
   client_id?: string | null;

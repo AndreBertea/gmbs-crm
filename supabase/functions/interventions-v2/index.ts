@@ -24,6 +24,7 @@ const corsHeaders = {
 interface CreateInterventionRequest {
   id_inter?: string;
   agence_id?: string;
+  reference_agence?: string;
   client_id?: string;
   tenant_id?: string;
   owner_id?: string;
@@ -47,6 +48,7 @@ interface CreateInterventionRequest {
 interface UpdateInterventionRequest {
   id_inter?: string;
   agence_id?: string;
+  reference_agence?: string;
   client_id?: string;
   tenant_id?: string;
   owner_id?: string;
@@ -145,6 +147,7 @@ const DEFAULT_INTERVENTION_COLUMNS = [
   'statut_id',
   'assigned_user_id',
   'agence_id',
+  'reference_agence',
   'tenant_id',
   'owner_id',
   'metier_id',

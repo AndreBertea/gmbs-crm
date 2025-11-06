@@ -1731,6 +1731,19 @@
     @apply gap-4;
     grid-template-columns: repeat(5, 1fr);
   }
+
+  /* Grid avec référence agence: 6 colonnes (spécificité augmentée par mode) */
+  .modal-config--halfpage .legacy-form-main-grid--with-reference {
+    grid-template-columns: repeat(6, minmax(120px, 1fr));
+  }
+  
+  .modal-config--centerpage .legacy-form-main-grid--with-reference {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .modal-config--fullpage .legacy-form-main-grid--with-reference {
+    grid-template-columns: repeat(6, 1fr);
+  }
   
   /* On small screens, stack them */
   @media (max-width: 768px) {

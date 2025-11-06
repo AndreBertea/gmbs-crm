@@ -1368,17 +1368,30 @@ function ExpandedRowContent({
 }) {
   const [newComment, setNewComment] = useState("")
 
-  // Récupération des données de l'intervention
-  const contexte = (intervention as any).contexteIntervention || "—"
-  const consigne = (intervention as any).consigneIntervention || "—"
-  const coutSST = (intervention as any).coutSST
-  const adresse = (intervention as any).adresse || "—"
-  const ville = (intervention as any).ville || ""
-  const codePostal = (intervention as any).codePostal || ""
-  const prenomClient = (intervention as any).prenomClient || ""
-  const nomClient = (intervention as any).nomClient || ""
-  const telephoneClient = (intervention as any).telephoneClient || "—"
-  const telephone2Client = (intervention as any).telephone2Client || ""
+  // Récupération des données de l'intervention avec useMemo pour réactivité
+  const interventionData = useMemo(() => {
+    const intervAny = intervention as any
+    return {
+      contexte: intervAny.contexteIntervention || "—",
+      consigne: intervAny.consigneIntervention || "—",
+      coutSST: intervAny.coutSST,
+      adresse: intervAny.adresse || "—",
+      ville: intervAny.ville || "",
+      codePostal: intervAny.codePostal || "",
+      prenomClient: intervAny.prenomClient || "",
+      nomClient: intervAny.nomClient || "",
+      telephoneClient: intervAny.telephoneClient || "—",
+      telephone2Client: intervAny.telephone2Client || "",
+      agenceName: intervAny.agenceLabel || intervAny.agence || intervAny.agency || "",
+      referenceAgence: intervAny.referenceAgence || intervAny.reference_agence || "",
+    }
+  }, [intervention])
+
+  const agencesRequiringRef = useMemo(() => ["ImoDirect", "AFEDIM", "Oqoro"], [])
+  const showReferenceAgence = useMemo(
+    () => agencesRequiringRef.includes(interventionData.agenceName),
+    [interventionData.agenceName, agencesRequiringRef]
+  )
 
   const handleSubmitComment = () => {
     if (!newComment.trim()) return
@@ -1409,50 +1422,56 @@ function ExpandedRowContent({
         <div className="space-y-1">
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Contexte</p>
-            <p className="text-sm">{contexte}</p>
+            <p className="text-sm">{interventionData.contexte}</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Consigne</p>
-            <p className="text-sm">{consigne}</p>
+            <p className="text-sm">{interventionData.consigne}</p>
           </div>
-          {coutSST != null && (
+          {interventionData.coutSST != null && (
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Coût Artisan</p>
-              <p className="text-sm font-medium">{numberFormatter.format(coutSST)} €</p>
+              <p className="text-sm font-medium">{numberFormatter.format(interventionData.coutSST)} €</p>
             </div>
           )}
         </div>
 
         {/* Colonne 2 - Informations Client */}
         <div className="space-y-3">
+          {showReferenceAgence && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Référence agence</p>
+              <p className="text-sm">{interventionData.referenceAgence || "—"}</p>
+            </div>
+          )}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Adresse</p>
             <p className="text-sm">
-              {adresse}
-              {(ville || codePostal) && (
+              {interventionData.adresse}
+              {(interventionData.ville || interventionData.codePostal) && (
                 <>
                   <br />
-                  {codePostal} {ville}
+                  {interventionData.codePostal} {interventionData.ville}
                 </>
               )}
             </p>
           </div>
-          {(prenomClient || nomClient) && (
+          {(interventionData.prenomClient || interventionData.nomClient) && (
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Client</p>
               <p className="text-sm">
-                {prenomClient} {nomClient}
+                {interventionData.prenomClient} {interventionData.nomClient}
               </p>
             </div>
           )}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Téléphone</p>
             <p className="text-sm">
-              {telephoneClient}
-              {telephone2Client && (
+              {interventionData.telephoneClient}
+              {interventionData.telephone2Client && (
                 <>
                   {" | "}
-                  {telephone2Client}
+                  {interventionData.telephone2Client}
                 </>
               )}
             </p>

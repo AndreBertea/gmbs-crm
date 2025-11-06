@@ -8,13 +8,13 @@
 
 ## 🎯 Vue d'ensemble
 
-| Sprint | Durée | Tâches | Statut | Dates |
-|--------|-------|--------|--------|-------|
-| **Sprint 1** | 7j | 5 tâches | 🟡 En cours | 06/11 - 14/11 |
-| **Sprint 2** | 16.5j | 6 tâches | ⏸️ À venir | 15/11 - 06/12 |
-| **Sprint 3** | 4.5j | 2 tâches | ⏸️ À venir | 09/12 - 13/12 |
-| **Sprint 4** | 10j | 8 tâches | ⏸️ À venir | 16/12 - 30/12 |
-| **Sprint 5** | 5j | Tests & QA | ⏸️ À venir | 02/01 - 08/01 |
+| Sprint | Durée | Tâches | Statut | Dates | Progression |
+|--------|-------|--------|--------|-------|-------------|
+| **Sprint 1** | 7j | 5 tâches | 🟡 En cours | 06/11 - 14/11 | 1/5 (20%) ✅ |
+| **Sprint 2** | 16.5j | 6 tâches | ⏸️ À venir | 15/11 - 06/12 | 0/6 (0%) |
+| **Sprint 3** | 4.5j | 2 tâches | ⏸️ À venir | 09/12 - 13/12 | 0/2 (0%) |
+| **Sprint 4** | 10j | 8 tâches | ⏸️ À venir | 16/12 - 30/12 | 0/8 (0%) |
+| **Sprint 5** | 5j | Tests & QA | ⏸️ À venir | 02/01 - 08/01 | — |
 
 **Légende** :
 - ⏸️ À venir
@@ -34,34 +34,100 @@
 ### Tâches
 
 #### 1. AGN-001 : Référence agence obligatoire
-**Statut** : ⏸️ À démarrer  
+**Statut** : ✅ **TERMINÉ**  
 **Priorité** : P1  
 **Durée estimée** : 1-2j  
-**Complexité** : 🟡 Moyenne
+**Durée réelle** : 2j  
+**Complexité** : 🟡 Moyenne  
+**Date de fin** : 6 novembre 2025
 
 **Description** :
 - Ajouter le champ `reference_agence` dans la table `interventions`
 - Créer une table de configuration `agency_config`
-- Validation conditionnelle pour ImoDirect, AFEDIM, Locoro
+- Affichage conditionnel pour ImoDirect, AFEDIM, Oqoro (correction : pas Locoro)
 
 **Checklist** :
-- [ ] Migration BDD : Ajouter `reference_agence TEXT` à `interventions`
-- [ ] Migration BDD : Créer table `agency_config` avec `requires_reference`
-- [ ] Peupler `agency_config` pour les 3 agences
-- [ ] Validation backend (Zod) dans `/api/interventions/route.ts`
-- [ ] Validation frontend dans `NewInterventionModalContent.tsx`
-- [ ] Tests unitaires pour la validation conditionnelle
-- [ ] Documentation mise à jour
+- [x] Migration BDD : Ajouter `reference_agence TEXT` à `interventions`
+- [x] Migration BDD : Créer table `agency_config` avec `requires_reference`
+- [x] Peupler `agency_config` pour les 3 agences (manuel via SQL)
+- [x] Types TypeScript mis à jour (API V2)
+- [x] UI : Champ conditionnel dans `LegacyInterventionForm.tsx`
+- [x] UI : Champ conditionnel dans `InterventionEditForm.tsx`
+- [x] UI : Champ ajouté dans `ExpandedRowContent` (TableView.tsx)
+- [x] CSS : Grid 6 colonnes pour tous les modes (halfpage, centerpage, fullpage)
+- [x] Fix z-index : SelectContent, DropdownMenu, Popover passent au-dessus du modal fullpage
+- [x] Documentation mise à jour
 
-**Règle métier associée** : BR-AGN-001
+**Règle métier associée** : BR-AGN-001 (modifiée : champ visible mais non-requis)
 
-**Fichiers impactés** :
-- `supabase/migrations/[date]_add_reference_agence.sql`
-- `src/types/intervention.ts`
-- `app/api/interventions/route.ts`
-- `src/components/modals/NewInterventionModalContent.tsx`
+**Fichiers modifiés** :
+- ✅ `supabase/migrations/20251106143000_add_reference_agence.sql` (créé)
+- ✅ `src/lib/api/v2/common/types.ts` (ligne 62, 287, 311)
+- ✅ `src/lib/api/v2/common/utils.ts` (ligne 197)
+- ✅ `src/components/interventions/LegacyInterventionForm.tsx` (lignes 29, 49, 300, 340, 397)
+- ✅ `src/components/interventions/InterventionEditForm.tsx` (lignes 35, 84, 449, 511, 575)
+- ✅ `src/components/interventions/views/TableView.tsx` (lignes 1382-1392, 1439-1444)
+- ✅ `app/globals.css` (lignes 1735-1746 - Grid 6 colonnes)
+- ✅ `src/components/ui/select.tsx` (ligne 78 - z-index 10000)
+- ✅ `src/components/ui/dropdown-menu.tsx` (lignes 50, 68 - z-index 10000)
+- ✅ `src/components/ui/popover.tsx` (ligne 26 - z-index 10000)
 
-**Bloquants** : Aucun
+**Modifications BDD effectuées** :
+```sql
+-- Table interventions
+ALTER TABLE interventions ADD COLUMN reference_agence TEXT;
+
+-- Nouvelle table agency_config
+CREATE TABLE agency_config (
+  agency_id UUID PRIMARY KEY REFERENCES agencies(id) ON DELETE CASCADE,
+  requires_reference BOOLEAN DEFAULT false NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+-- Données peuplées (manuel)
+INSERT INTO agency_config (agency_id, requires_reference) 
+SELECT id, true FROM agencies 
+WHERE name IN ('ImoDirect', 'AFEDIM', 'Oqoro');
+```
+
+**Changements UI** :
+1. **Formulaire création** (`LegacyInterventionForm.tsx`) :
+   - Champ "Référence agence" s'affiche à côté de "Agence" quand ImoDirect/AFEDIM/Oqoro sélectionné
+   - Layout : 5 champs → 6 champs sur la même ligne (grâce au CSS)
+   
+2. **Formulaire édition** (`InterventionEditForm.tsx`) :
+   - Même comportement que le formulaire création
+   - Affiche la valeur existante si présente
+   
+3. **Vue étendue** (clic sur ligne dans `TableView.tsx`) :
+   - Section "Référence agence" ajoutée dans Colonne 2 (au-dessus d'Adresse)
+   - Visible uniquement pour les 3 agences concernées
+   - Affiche la valeur ou "—" si vide
+
+**Corrections techniques** :
+- CSS Grid responsive pour 3 modes de modal (halfpage, centerpage, fullpage)
+- z-index des dropdowns augmenté à 10000 pour passer au-dessus du modal fullpage
+
+**Tests effectués** :
+- ✅ Migration appliquée sans erreur
+- ✅ Table `agency_config` peuplée avec 3 agences
+- ✅ Champ visible dans les 3 endroits de l'UI
+- ✅ Dropdowns fonctionnels en mode fullpage
+- ✅ Layout 6 colonnes correct dans tous les modes
+
+**Liens utiles** :
+- Migration : `supabase/migrations/20251106143000_add_reference_agence.sql`
+- Règle métier : `BUSINESS_RULES_2025-11-04.md` → BR-AGN-001
+- Workflow : `WORKFLOW_REGLES_METIER.md` → Workflow 6
+
+**Notes** :
+- Correction importante : Le nom exact est **"Oqoro"** et non "Locoro"
+- Règle clarifiée : Le champ doit être **visible** (obligation d'affichage) mais peut rester **vide/null** (pas de validation bloquante)
+- Fix bonus : Problème de z-index résolu pour tous les popovers/dropdowns en mode fullpage
+
+**Bloquants rencontrés** : 
+- ❌ Conflit de version de migration (résolu par renommage avec timestamp complet)
+- ❌ Nom d'agence incorrect "Locoro" → "Oqoro" (corrigé)
 
 ---
 
@@ -188,14 +254,16 @@
 
 ```
 Total : 5 tâches
-├── ⏸️ À démarrer : 5 (100%)
+├── ⏸️ À démarrer : 4 (80%)
 ├── 🟡 En cours : 0 (0%)
-├── ✅ Terminées : 0 (0%)
+├── ✅ Terminées : 1 (20%)  ← AGN-001 ✅
 └── 🔴 Bloquées : 0 (0%)
 ```
 
-**Temps consommé** : 0j / 7j  
-**Temps restant** : 7j
+**Temps consommé** : 2j / 7j (29%)  
+**Temps restant** : 5j
+
+**Progression** : 🟩🟩⬜⬜⬜⬜⬜ 20%
 
 ---
 
@@ -397,35 +465,45 @@ Total : 6 tâches
 ### Progression totale
 ```
 Total : 21 tâches
-├── ⏸️ À démarrer : 21 (100%)
+├── ⏸️ À démarrer : 20 (95%)
 ├── 🟡 En cours : 0 (0%)
-├── ✅ Terminées : 0 (0%)
+├── ✅ Terminées : 1 (5%)  ← AGN-001 ✅
 └── 🔴 Bloquées : 0 (0%)
 ```
 
+**Progression globale** : 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 5%
+
 ### Par complexité
 ```
-🔴 Haute : 3 tâches
-🟡 Moyenne : 10 tâches
-🟢 Faible : 8 tâches
+🔴 Haute : 3 tâches (0 terminées)
+🟡 Moyenne : 10 tâches (1 terminée ✅)
+🟢 Faible : 8 tâches (0 terminées)
 ```
 
 ### Temps
 ```
 Temps total estimé : 43 jours
-Temps consommé : 0 jours
-Temps restant : 43 jours
+Temps consommé : 2 jours (4.7%)
+Temps restant : 41 jours
 ```
 
 ---
 
 ## 📝 Notes et décisions
 
-### 06/11/2025
+### 06/11/2025 - Après-midi
+- ✅ **AGN-001 TERMINÉ** : Référence agence implémentée (BDD + Types + UI complète)
+- ✅ Correction importante : Nom d'agence "Oqoro" (et non "Locoro")
+- ✅ Règle clarifiée : Champ visible mais non-requis (pas de validation bloquante)
+- ✅ Fix bonus : z-index de tous les dropdowns/popovers (10000) pour modal fullpage
+- ✅ CSS Grid 6 colonnes pour tous les modes (halfpage, centerpage, fullpage)
+- 🎯 **Prochaine tâche** : INT-001 (Champs obligatoires - 0.5j)
+
+### 06/11/2025 - Matin
 - ✅ Documentation complète créée et organisée
 - ✅ Sprint Tracker créé
-- ⏸️ Sprint 1 prêt à démarrer
-- ⚠️ ART-001 à clarifier avec le client
+- ✅ Sprint 1 démarré avec AGN-001
+- ⚠️ ART-001 à clarifier avec le client (Sprint 3)
 
 ---
 
