@@ -82,42 +82,33 @@ export function useSimpleInterventions() {
       setLoading(true);
       setError(null);
 
-      const cacheKey = `interventions-${reset ? 'reset' : 'more'}`;
+      const cacheKey = 'interventions-all';
       const cached = cache.get(cacheKey);
       
       if (cached && !reset) {
-        setInterventions(prev => reset ? cached.data : [...prev, ...cached.data]);
+        setInterventions(cached.data);
         setTotalCount(cached.total);
-        setHasMore(cached.hasMore);
+        setHasMore(false);
         setLoading(false);
         return;
       }
 
       // Import dynamique
       const { interventionsApiV2 } = await import('@/lib/supabase-api-v2');
-      const result = await interventionsApiV2.getAll({ 
-        limit: 30, // Limité pour PC faibles
-        offset: reset ? 0 : interventions.length 
-      });
+      const result = await interventionsApiV2.getAll({ limit: 10000 });
 
       const newData = result.data;
-      const newTotal = result.pagination.total;
-      const newHasMore = result.pagination.hasMore;
+      const newTotal = result.total;
 
-      if (reset) {
-        setInterventions(newData);
-      } else {
-        setInterventions(prev => [...prev, ...newData]);
-      }
-
+      setInterventions(newData);
       setTotalCount(newTotal);
-      setHasMore(newHasMore);
+      setHasMore(false);
 
       // Cache
       cache.set(cacheKey, {
         data: newData,
         total: newTotal,
-        hasMore: newHasMore
+        hasMore: false
       });
 
     } catch (err) {

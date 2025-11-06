@@ -99,16 +99,7 @@ type TableViewProps = {
   onLayoutOptionsChange?: (patch: Partial<TableLayoutOptions>) => void
   onPropertyFilterChange?: (property: string, filter: ViewFilter | null) => void
   allInterventions?: InterventionEntity[]
-  hasMore?: boolean
-  onEndReached?: () => void
-  onStartReached?: () => void
   loadDistinctValues?: (property: string) => Promise<string[]>
-  loadingProgress?: {
-    loaded: number
-    total: number
-    isComplete: boolean
-    progress: number
-  }
   totalCount?: number
 }
 
@@ -320,11 +311,7 @@ export function TableView({
   onLayoutOptionsChange,
   onPropertyFilterChange,
   allInterventions,
-  hasMore,
-  onEndReached,
-  onStartReached,
   loadDistinctValues,
-  loadingProgress,
   totalCount,
 }: TableViewProps) {
   const dataset = useMemo(() => {
@@ -409,73 +396,6 @@ export function TableView({
   })
   const virtualItems = rowVirtualizer.getVirtualItems()
   const totalHeight = rowVirtualizer.getTotalSize()
-  const loadMoreTriggerRef = useRef<number>(-1)
-  const loadPreviousTriggerRef = useRef<number>(-1)
-  const loadingRef = useRef(false)
-
-  useEffect(() => {
-    if (!hasMore || !onEndReached) return
-    const last = virtualItems[virtualItems.length - 1]
-    if (!last) return
-    const datasetLength = dataset.length
-    if (datasetLength === 0) return
-    const prefetchThreshold = Math.floor(datasetLength * SCROLL_CONFIG.PREFETCH_THRESHOLD)
-    const criticalThreshold = Math.max(datasetLength - SCROLL_CONFIG.CRITICAL_THRESHOLD, 0)
-    const resetThreshold = Math.max(prefetchThreshold - 10, 0)
-
-    const shouldPrefetch =
-      (last.index >= prefetchThreshold || last.index >= criticalThreshold) && !loadingRef.current
-
-    if (shouldPrefetch) {
-      if (loadMoreTriggerRef.current !== datasetLength) {
-        loadMoreTriggerRef.current = datasetLength
-        loadingRef.current = true
-        try {
-          const maybePromise = onEndReached()
-          Promise.resolve(maybePromise)
-            .catch(() => {
-              // déjà logué côté hook
-            })
-            .finally(() => {
-              loadingRef.current = false
-            })
-        } catch {
-          loadingRef.current = false
-        }
-      }
-    } else if (loadMoreTriggerRef.current !== -1 && last.index < resetThreshold) {
-      loadMoreTriggerRef.current = -1
-    }
-  }, [virtualItems, dataset.length, hasMore, onEndReached])
-
-  useEffect(() => {
-    if (!onStartReached) return
-    const first = virtualItems[0]
-    if (!first) return
-    const datasetLength = dataset.length
-    if (datasetLength === 0) return
-
-    // ⚠️ DÉSACTIVÉ TEMPORAIREMENT : backward scroll cause des problèmes
-    // Le prefetch backward sera réactivé après correction de la logique
-    // const shouldPrefetchTop = first.index <= SCROLL_CONFIG.CRITICAL_THRESHOLD
-    const shouldPrefetchTop = false;
-
-    if (shouldPrefetchTop && !loadingRef.current) {
-      if (loadPreviousTriggerRef.current !== first.index) {
-        loadPreviousTriggerRef.current = first.index
-        loadingRef.current = true
-        Promise.resolve(onStartReached())
-          .catch(() => {
-            // déjà logué côté hook
-          })
-          .finally(() => {
-            loadingRef.current = false
-          })
-      }
-    } else if (loadPreviousTriggerRef.current !== -1 && first.index > SCROLL_CONFIG.CRITICAL_THRESHOLD) {
-      loadPreviousTriggerRef.current = -1
-    }
-  }, [virtualItems, dataset.length, onStartReached])
 
   const firstVisible = virtualItems[0]?.index ?? 0
   const lastVisible = virtualItems[virtualItems.length - 1]?.index ?? 0

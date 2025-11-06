@@ -17,6 +17,7 @@ import InterventionCard, { INTERVENTION_STATUS_CONFIG } from "@/features/interve
 import { InterventionDetailCard } from "@/features/interventions/components/InterventionDetailCard"
 import { useInterventions } from "@/hooks/useInterventions"
 import type { Intervention } from "@/lib/supabase-api-v2"
+import type { InterventionView } from "@/types/intervention-view"
 import { Download, Filter, Info, Search, Settings } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -36,19 +37,13 @@ export default function InterventionsFullPage() {
   const searchParams = useSearchParams()
 
   // Utiliser le hook personnalisé
-  const { 
-    interventions, 
-    setInterventions,
-    loading, 
-    error, 
-    hasMore, 
-    loadMore, 
-    refresh, 
-    setFilters 
-  } = useInterventions({
-    limit: 100,
-    autoLoad: true
-  })
+  const {
+    interventions,
+    loading,
+    error,
+    refresh,
+    updateInterventionOptimistic,
+  } = useInterventions()
   const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null)
 
   const [search, setSearch] = useState("")
@@ -152,10 +147,13 @@ export default function InterventionsFullPage() {
     [pinnedStatuses],
   )
 
-  const applyInterventionUpdate = useCallback((id: string, updates: Partial<Intervention>) => {
-    setInterventions((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)))
-    setSelectedIntervention((prev) => (prev && prev.id === id ? { ...prev, ...updates } : prev))
-  }, [])
+  const applyInterventionUpdate = useCallback(
+    (id: string, updates: Partial<Intervention>) => {
+      updateInterventionOptimistic(id, updates as Partial<InterventionView>)
+      setSelectedIntervention((prev) => (prev && prev.id === id ? { ...prev, ...updates } : prev))
+    },
+    [updateInterventionOptimistic],
+  )
 
   const handleTogglePinnedStatus = useCallback((statusKey: string) => {
     setPinnedStatuses((prev) => {

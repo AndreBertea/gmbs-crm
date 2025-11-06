@@ -185,14 +185,14 @@ export function useUltraInterventions() {
       setLoading(true);
       setError(null);
       
-      await interventionsManager.loadPage(page, async (offset, limit) => {
+      await interventionsManager.loadPage(page, async () => {
         // Import dynamique pour éviter les bundles lourds
         const { interventionsApiV2 } = await import('@/lib/supabase-api-v2');
-        const result = await interventionsApiV2.getAll({ limit, offset });
+        const result = await interventionsApiV2.getAll({ limit: 10000 });
         return {
           data: result.data,
-          total: result.pagination.total,
-          hasMore: result.pagination.hasMore
+          total: result.total,
+          hasMore: false
         };
       });
     } catch (err) {

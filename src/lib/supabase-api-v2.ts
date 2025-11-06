@@ -767,9 +767,6 @@ type FilterValue = string | string[] | null | undefined;
 
 export type GetAllParams = {
   limit?: number;
-  offset?: number;
-  cursor?: InterventionCursor | null;
-  direction?: CursorDirection;
   statut?: FilterValue;
   agence?: FilterValue;
   artisan?: FilterValue;
@@ -778,15 +775,10 @@ export type GetAllParams = {
   startDate?: string;
   endDate?: string;
   search?: string;
-  sortBy?: string;
-  sortDir?: "asc" | "desc";
   fields?: string[];
 };
 
-export type GetDistinctParams = Omit<
-  GetAllParams,
-  "offset" | "limit" | "fields" | "sortBy" | "sortDir" | "cursor" | "direction"
-> & {
+export type GetDistinctParams = Omit<GetAllParams, "limit" | "fields"> & {
   limit?: number;
 };
 
@@ -856,26 +848,38 @@ const applyInterventionFilters = <T>(query: T, params?: GetAllParams): T => {
   return builder as unknown as T;
 };
 
+// ✅ Optimisation : Mapper par chunks pour ne pas bloquer l'UI
+async function mapInterventionRecordsInChunks(
+  items: any[],
+  refs: ReferenceCache,
+  chunkSize = 500
+): Promise<InterventionView[]> {
+  if (items.length === 0) return [];
+
+  const result: InterventionView[] = [];
+  
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize);
+    const mappedChunk = chunk.map((item) => mapInterventionRecord(item, refs) as InterventionView);
+    result.push(...mappedChunk);
+    
+    // Pause pour laisser le navigateur respirer (uniquement si plus de chunks à venir)
+    if (i + chunkSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+  
+  return result;
+}
+
 export const interventionsApiV2 = {
-  // Récupérer toutes les interventions (ULTRA-OPTIMISÉ)
-  async getAll(params?: GetAllParams): Promise<PaginatedResponse<InterventionView>> {
-    const limit = Math.max(1, Math.min(params?.limit ?? 50, 200));
-    const cursor = params?.cursor ?? null;
-    const direction: CursorDirection =
-      params?.direction ?? cursor?.direction ?? "forward";
+  // Récupérer toutes les interventions (chargement complet)
+  async getAll(params: GetAllParams = {}): Promise<{ data: InterventionView[]; total: number }> {
+    const limit = Math.max(1, params.limit ?? 10000);
     const selectColumns = resolveSelectColumns(params?.fields);
 
     const searchParams = new URLSearchParams();
     searchParams.set("limit", limit.toString());
-    if (direction) {
-      searchParams.set("direction", direction);
-    }
-    if (cursor?.date && cursor?.id) {
-      searchParams.set(
-        "cursor",
-        JSON.stringify({ date: cursor.date, id: cursor.id, direction }),
-      );
-    }
     if (selectColumns) {
       searchParams.set("select", selectColumns);
     }
@@ -903,19 +907,19 @@ export const interventionsApiV2 = {
       }
     };
 
-    appendFilterParam("statut", params?.statut);
-    appendFilterParam("agence", params?.agence);
-    appendFilterParam("artisan", params?.artisan);
-    appendFilterParam("metier", params?.metier);
-    appendFilterParam("user", params?.user);
+    appendFilterParam("statut", params.statut);
+    appendFilterParam("agence", params.agence);
+    appendFilterParam("artisan", params.artisan);
+    appendFilterParam("metier", params.metier);
+    appendFilterParam("user", params.user);
 
-    if (params?.startDate) {
+    if (params.startDate) {
       searchParams.set("startDate", params.startDate);
     }
-    if (params?.endDate) {
+    if (params.endDate) {
       searchParams.set("endDate", params.endDate);
     }
-    if (params?.search) {
+    if (params.search) {
       searchParams.set("search", params.search);
     }
 
@@ -924,37 +928,30 @@ export const interventionsApiV2 = {
       queryString ? `?${queryString}` : ""
     }`;
 
+    const fetchStart = Date.now();
     const response = await fetch(url, {
       headers: getHeaders(),
     });
     const raw = await handleResponse(response);
+    const fetchDuration = Date.now() - fetchStart;
 
     const refs = await getReferenceCache();
 
+    const mapStart = Date.now();
+    // ✅ Mapping par chunks pour ne pas bloquer l'UI
     const transformedData = Array.isArray(raw?.data)
-      ? (raw.data as any[]).map((item) => mapInterventionRecord(item, refs) as InterventionView)
+      ? await mapInterventionRecordsInChunks(raw.data, refs, 500)
       : [];
+    const mapDuration = Date.now() - mapStart;
 
-    const paginationRaw = raw?.pagination ?? {};
-    const cursorNextRaw = paginationRaw.cursorNext as InterventionCursor | null | undefined;
-    const cursorPrevRaw = paginationRaw.cursorPrev as InterventionCursor | null | undefined;
+    console.log(`🚀 [interventionsApiV2.getAll] Fetch: ${fetchDuration}ms, Map: ${mapDuration}ms, Total: ${transformedData.length} items`);
 
-    return {
-      data: transformedData,
-      pagination: {
-        limit,
-        total: paginationRaw.total ?? transformedData.length,
-        hasMore: Boolean(paginationRaw.hasMore),
-        hasPrev: paginationRaw.hasPrev ?? Boolean(cursor),
-        cursorNext: cursorNextRaw
-          ? { ...cursorNextRaw, direction: cursorNextRaw.direction ?? "forward" }
-          : null,
-        cursorPrev: cursorPrevRaw
-          ? { ...cursorPrevRaw, direction: cursorPrevRaw.direction ?? "backward" }
-          : null,
-        direction: (paginationRaw.direction as CursorDirection | undefined) ?? direction,
-      },
-    };
+    const total =
+      typeof raw?.pagination?.total === "number"
+        ? raw.pagination.total
+        : transformedData.length;
+
+    return { data: transformedData, total };
   },
 
   /**

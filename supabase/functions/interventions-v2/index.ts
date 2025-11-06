@@ -644,12 +644,11 @@ serve(async (req: Request) => {
     }
 
     // ===== GET /interventions - Liste toutes les interventions =====
+    // ✅ SIMPLIFIÉ : Load-all sans pagination/cursor pour performances maximales
     if (req.method === 'GET' && resource === 'interventions') {
-      const rawLimit = Number.parseInt(url.searchParams.get('limit') ?? '50', 10);
-      const clampedLimit = Math.max(1, Math.min(Number.isFinite(rawLimit) ? rawLimit : 50, 200));
-      const cursor = parseCursorParam(url.searchParams.get('cursor'));
-      const directionParam = parseDirection(url.searchParams.get('direction'));
-      const effectiveDirection = parseDirection(cursor?.direction ?? directionParam);
+      const rawLimit = Number.parseInt(url.searchParams.get('limit') ?? '10000', 10);
+      const clampedLimit = Math.max(1, Math.min(Number.isFinite(rawLimit) ? rawLimit : 10000, 50000));
+      
       const include = parseListParam(url.searchParams.getAll('include'));
       const extraSelect = url.searchParams.get('select');
       const artisanFilters = parseListParam(url.searchParams.getAll('artisan'));
@@ -696,60 +695,22 @@ serve(async (req: Request) => {
         .select(selectClause)
         .eq('is_active', true)
         .order('date', { ascending: false })
-        .order('id', { ascending: false });
+        .order('id', { ascending: false })
+        .limit(clampedLimit);
 
       query = applyFilters(query, filters);
 
-      const cursorCondition = cursor ? buildCursorCondition(cursor) : null;
-      if (cursorCondition) {
-        query = query.or(cursorCondition);
-      }
-
-      const fetchLimit = clampedLimit + 1;
       const fetchStart = Date.now();
-      const { data, error, status } = await query.limit(fetchLimit);
+      const { data, error } = await query;
       const fetchDuration = Date.now() - fetchStart;
-
-      if (status === 416) {
-        const totalCount = await getCachedCount(supabase, filters);
-        console.warn(
-          JSON.stringify({
-            level: 'warn',
-            requestId,
-            responseTime: fetchDuration,
-            cursor,
-            timestamp: new Date().toISOString(),
-            message: 'Interventions cursor request returned 416 RANGE_NOT_SATISFIABLE',
-          }),
-        );
-
-        return new Response(
-          JSON.stringify({
-            data: [],
-            pagination: {
-              limit: clampedLimit,
-              total: totalCount,
-              hasMore: false,
-              hasPrev: Boolean(cursor),
-              cursorNext: null,
-              cursorPrev: cursor ? createCursor(cursor, 'backward') : null,
-              direction: effectiveDirection,
-            },
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        );
-      }
 
       if (error) {
         throw new Error(`Database error: ${error.message}`);
       }
 
-      const rows = Array.isArray(data) ? data : [];
-      const hadExtraRow = rows.length > clampedLimit;
-      const limitedRows = hadExtraRow ? rows.slice(0, clampedLimit) : rows;
+      let filteredData = Array.isArray(data) ? data : [];
 
-      let filteredData = limitedRows;
-
+      // Filtrage artisan en post-traitement si nécessaire
       if (artisanFilters.length > 0) {
         const { data: artisanInterventions, error: artisanError } = await supabase
           .from('intervention_artisans')
@@ -772,30 +733,9 @@ serve(async (req: Request) => {
               .map((entry) => entry?.intervention_id as string | null)
               .filter((value): value is string => Boolean(value)),
           );
-          filteredData = limitedRows.filter((intervention) => interventionIds.has(intervention.id));
+          filteredData = filteredData.filter((intervention) => interventionIds.has(intervention.id));
         }
       }
-
-      const nextCursorSource =
-        filteredData.length > 0
-          ? filteredData[filteredData.length - 1]
-          : hadExtraRow
-            ? rows[rows.length - 1]
-            : null;
-      const prevCursorSource =
-        filteredData.length > 0
-          ? filteredData[0]
-          : rows.length > 0
-            ? rows[0]
-            : null;
-
-      const hasNext = hadExtraRow;
-      const hasPrev = effectiveDirection === 'backward' ? hadExtraRow : Boolean(cursor);
-
-      const cursorNext =
-        hasNext && nextCursorSource ? createCursor(nextCursorSource, 'forward') : null;
-      const cursorPrev =
-        hasPrev && prevCursorSource ? createCursor(prevCursorSource, 'backward') : null;
 
       const totalCount = await getCachedCount(supabase, filters);
 
@@ -805,11 +745,9 @@ serve(async (req: Request) => {
           requestId,
           responseTime: fetchDuration,
           dataCount: filteredData.length,
-          direction: effectiveDirection,
-          hasNext,
-          hasPrev,
+          totalCount,
           timestamp: new Date().toISOString(),
-          message: 'Interventions list retrieved successfully (cursor)',
+          message: 'Interventions load-all retrieved successfully',
         }),
       );
 
@@ -817,13 +755,8 @@ serve(async (req: Request) => {
         JSON.stringify({
           data: filteredData,
           pagination: {
-            limit: clampedLimit,
             total: totalCount,
-            hasMore: hasNext,
-            hasPrev,
-            cursorNext,
-            cursorPrev,
-            direction: effectiveDirection,
+            hasMore: false,
           },
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

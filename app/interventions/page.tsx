@@ -46,10 +46,6 @@ import { MODE_OPTIONS } from "@/components/ui/mode-selector/ModeSelector"
 import { useModalDisplay } from "@/contexts/ModalDisplayContext"
 import { useInterventionViews } from "@/hooks/useInterventionViews"
 import { useInterventions } from "@/hooks/useInterventions"
-import { useInterventionStatusMap } from "@/hooks/useInterventionStatusMap"
-import { useAgencyMap } from "@/hooks/useAgencyMap"
-import { useMetierMap } from "@/hooks/useMetierMap"
-import { useUserMap } from "@/hooks/useUserMap"
 import { DEFAULT_WORKFLOW_CONFIG, INTERVENTION_STATUS, SCROLL_CONFIG } from "@/config/interventions"
 import { runQuery } from "@/lib/query-engine"
 import { validateTransition } from "@/lib/workflow-engine"
@@ -58,19 +54,15 @@ import { WORKFLOW_EVENT_KEY } from "@/hooks/useWorkflowConfig"
 import { cn } from "@/lib/utils"
 import type { WorkflowConfig } from "@/types/intervention-workflow"
 import { mapStatusFromDb, mapStatusToDb } from "@/lib/interventions/mappers"
-import type { InterventionCursor } from "@/lib/supabase-api-v2"
 import type { InterventionStatusValue } from "@/types/interventions"
-import { getDistinctInterventionValues, getInterventionCounts, getInterventionTotalCount } from "@/lib/supabase-api-v2"
+import { getDistinctInterventionValues } from "@/lib/supabase-api-v2"
 import type { InterventionView as InterventionEntity } from "@/types/intervention-view"
 import type {
-  InterventionViewDefinition,
   LayoutOptions,
   TableLayoutOptions,
   TableRowDensity,
   ViewFilter,
-  ViewFilters,
   ViewLayout,
-  ViewSort,
 } from "@/types/intervention-views"
 import useInterventionModal, { InterventionModalOpenOptions } from "@/hooks/useInterventionModal"
 
@@ -155,8 +147,6 @@ const managedFilterKeys = {
   date: "dateIntervention",
 } as const
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
 const toISODate = (date: Date | null) => (date ? date.toISOString() : undefined)
 
 const filtersShallowEqual = (a: ViewFilter[], b: ViewFilter[]) => {
@@ -172,225 +162,6 @@ const filtersShallowEqual = (a: ViewFilter[], b: ViewFilter[]) => {
   )
 }
 
-type ServerFilterParams = {
-  statut?: string | string[]
-  agence?: string | string[]
-  artisan?: string | string[]
-  metier?: string | string[]
-  user?: string | string[]
-  startDate?: string
-  endDate?: string
-}
-
-/**
- * Colonnes de tri supportées côté serveur
- * ⚠️ Les alias (dateIntervention, date_intervention) seront mappés vers 'date' par l'API V2
- */
-const SUPPORTED_SERVER_SORTS = new Set<string>([
-  "created_at",
-  "date",
-  "dateIntervention",  // → mappé vers 'date'
-  "date_intervention", // → mappé vers 'date'
-  "datePrevue",
-  "date_prevue",
-  "dueDate",
-  "due_date",
-  "dateTermine",
-  "date_termine",
-])
-
-const normalizeDateValue = (value: unknown): string | undefined => {
-  if (!value) return undefined
-  if (value instanceof Date) {
-    const iso = value.toISOString()
-    return Number.isNaN(value.getTime()) ? undefined : iso
-  }
-  const raw = String(value)
-  const parsed = new Date(raw)
-  if (Number.isNaN(parsed.getTime())) {
-    return raw
-  }
-  return parsed.toISOString()
-}
-
-const deriveServerQueryConfig = (
-  view: InterventionViewDefinition,
-  statusCodeToId: (code: string | string[] | undefined) => string | string[] | undefined,
-  userNameToId: (name: string | string[] | undefined) => string | string[] | undefined,
-  agencyNameToId: (name: string | string[] | undefined) => string | string[] | undefined,
-  metierNameToId: (name: string | string[] | undefined) => string | string[] | undefined,
-): {
-  serverFilters: ServerFilterParams
-  residualFilters: ViewFilters
-  serverSort?: ViewSort
-  residualSorts: ViewSort[]
-} => {
-  const serverFilters: ServerFilterParams = {}
-  const residualFilters: ViewFilters = []
-
-  for (const filter of view.filters) {
-    const { property, operator, value } = filter
-    let handled = false
-
-    switch (property) {
-      case "statusValue":
-      case "statut":
-      case "statut_id": {
-        // ⚠️ Convertir CODE → UUID avant d'envoyer au serveur
-        if (operator === "eq" && typeof value === "string") {
-          const statusId = statusCodeToId(value)
-          if (statusId && typeof statusId === "string") {
-            serverFilters.statut = statusId
-            handled = true
-          }
-        } else if (operator === "in" && Array.isArray(value) && value.length > 0) {
-          const statusIds = statusCodeToId(value.map((item) => String(item)))
-          if (Array.isArray(statusIds) && statusIds.length > 0) {
-            serverFilters.statut = statusIds
-            handled = true
-          }
-        }
-        break
-      }
-      case "attribueA":
-      case "assigned_user_id": {
-        // ⚠️ Convertir USERNAME → UUID si ce n'est pas déjà un UUID
-        if (operator === "eq" && typeof value === "string") {
-          // Si c'est déjà un UUID, le garder tel quel
-          const isUuid = UUID_REGEX.test(value)
-          const userId = isUuid ? value : userNameToId(value)
-          if (userId && typeof userId === "string") {
-            serverFilters.user = userId
-            handled = true
-          }
-        } else if (operator === "in" && Array.isArray(value) && value.length > 0) {
-          const userIds = value.map((v) => {
-            const str = String(v)
-            const isUuid = UUID_REGEX.test(str)
-            return isUuid ? str : userNameToId(str)
-          }).filter(Boolean) as string[]
-          if (userIds.length > 0) {
-            serverFilters.user = userIds
-            handled = true
-          }
-        } else if (operator === "is_empty") {
-          // Filtre les interventions sans assignation (vue Market)
-          serverFilters.user = null as any
-          handled = true
-        }
-        break
-      }
-      case "agence":
-      case "agence_id": {
-        if (operator === "eq" && typeof value === "string") {
-          const trimmed = value.trim()
-          const isUuid = UUID_REGEX.test(trimmed)
-          const agencyId = isUuid ? trimmed : agencyNameToId(trimmed)
-          if (agencyId && typeof agencyId === "string") {
-            serverFilters.agence = agencyId
-            handled = true
-          }
-        } else if (operator === "in" && Array.isArray(value) && value.length > 0) {
-          const ids = value
-            .map((item) => {
-              const raw = String(item).trim()
-              if (!raw) return undefined
-              if (UUID_REGEX.test(raw)) return raw
-              return agencyNameToId(raw)
-            })
-            .filter((item): item is string => Boolean(item))
-          if (ids.length > 0) {
-            serverFilters.agence = ids
-            handled = true
-          }
-        }
-        break
-      }
-      case "metier":
-      case "metier_id": {
-        if (operator === "eq" && typeof value === "string") {
-          const trimmed = value.trim()
-          const isUuid = UUID_REGEX.test(trimmed)
-          const metierId = isUuid ? trimmed : metierNameToId(trimmed)
-          if (metierId && typeof metierId === "string") {
-            serverFilters.metier = metierId
-            handled = true
-          }
-        } else if (operator === "in" && Array.isArray(value) && value.length > 0) {
-          const ids = value
-            .map((item) => {
-              const raw = String(item).trim()
-              if (!raw) return undefined
-              if (UUID_REGEX.test(raw)) return raw
-              return metierNameToId(raw)
-            })
-            .filter((item): item is string => Boolean(item))
-          if (ids.length > 0) {
-            serverFilters.metier = ids
-            handled = true
-          }
-        }
-        break
-      }
-      case "dateIntervention":
-      case "date_intervention": {
-        if (operator === "between") {
-          let from: string | undefined
-          let to: string | undefined
-          if (Array.isArray(value)) {
-            from = normalizeDateValue(value[0])
-            to = normalizeDateValue(value[1])
-          } else if (value && typeof value === "object") {
-            const lookup = value as { from?: unknown; to?: unknown }
-            from = normalizeDateValue(lookup.from)
-            to = normalizeDateValue(lookup.to)
-          }
-          if (from) serverFilters.startDate = from
-          if (to) serverFilters.endDate = to
-          handled = Boolean(from || to)
-        } else if (operator === "gte" || operator === "gt") {
-          const from = normalizeDateValue(value)
-          if (from) {
-            serverFilters.startDate = from
-            handled = true
-          }
-        } else if (operator === "lte" || operator === "lt") {
-          const to = normalizeDateValue(value)
-          if (to) {
-            serverFilters.endDate = to
-            handled = true
-          }
-        } else if (operator === "eq") {
-          const point = normalizeDateValue(value)
-          if (point) {
-            serverFilters.startDate = point
-            serverFilters.endDate = point
-            handled = true
-          }
-        }
-        break
-      }
-      default:
-        break
-    }
-
-    if (!handled) {
-      residualFilters.push(filter)
-    }
-  }
-
-  let serverSort: ViewSort | undefined
-  const residualSorts: ViewSort[] = []
-  for (const sort of view.sorts) {
-    if (!serverSort && SUPPORTED_SERVER_SORTS.has(sort.property)) {
-      serverSort = sort
-    } else {
-      residualSorts.push(sort)
-    }
-  }
-
-  return { serverFilters, residualFilters, serverSort, residualSorts }
-}
 
 export default function Page() {
   const router = useRouter()
@@ -424,120 +195,8 @@ export default function Page() {
   const [selectedStatus, setSelectedStatus] = useState<InterventionStatusValue | null>(null)
   const [isReorderMode, setIsReorderMode] = useState(false)
   const [workflowConfig, setWorkflowConfig] = useState<WorkflowConfig>(DEFAULT_WORKFLOW_CONFIG)
-  const [serverFilters, setServerFilters] = useState<ServerFilterParams>({})
-  const [residualFilters, setResidualFilters] = useState<ViewFilters>([])
-  const [residualSorts, setResidualSorts] = useState<ViewSort[]>([])
-  const [serverSort, setServerSort] = useState<ViewSort | undefined>(undefined)
-  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({})
-  const [viewCounts, setViewCounts] = useState<Record<string, number>>({})
   
   // Hooks pour mapper CODE/USERNAME → UUID
-  const { statusMap, loading: statusMapLoading } = useInterventionStatusMap()
-  const { userMap, loading: userMapLoading } = useUserMap()
-  const { agencyMap, loading: agencyMapLoading } = useAgencyMap()
-  const { metierMap, loading: metierMapLoading } = useMetierMap()
-  
-  const statusCodeToId = useCallback(
-    (code: string | string[] | undefined): string | string[] | undefined => {
-      if (!code) return undefined
-      if (Array.isArray(code)) {
-        const ids = code
-          .map((value) => {
-            const key = String(value)
-            const upperKey = key.toUpperCase()
-            // Chercher d'abord avec le code tel quel, puis en majuscules
-            const normalizedKey = key
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "")
-              .replace(/[^a-zA-Z0-9]+/g, "_")
-              .toUpperCase()
-            return (
-              statusMap[key] ?? statusMap[upperKey] ?? statusMap[normalizedKey]
-            )
-          })
-          .filter((value): value is string => Boolean(value))
-        return ids.length ? ids : undefined
-      }
-      const key = String(code)
-      const upperKey = key.toUpperCase()
-      const normalizedKey = key
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9]+/g, "_")
-        .toUpperCase()
-      // Chercher d'abord avec le code tel quel, puis en majuscules
-      return statusMap[key] ?? statusMap[upperKey] ?? statusMap[normalizedKey]
-    },
-    [statusMap],
-  )
-
-  const userNameToId = useCallback(
-    (name: string | string[] | undefined): string | string[] | undefined => {
-      if (!name) return undefined
-      if (Array.isArray(name)) {
-        const ids = name
-          .map((value) => {
-            const normalized = String(value).toLowerCase()
-            return userMap[normalized]
-          })
-          .filter((value): value is string => Boolean(value))
-        return ids.length ? ids : undefined
-      }
-      const normalized = String(name).toLowerCase()
-      return userMap[normalized]
-    },
-    [userMap],
-  )
-
-  const agencyNameToId = useCallback(
-    (name: string | string[] | undefined): string | string[] | undefined => {
-      if (!name) return undefined
-
-      const resolve = (input: string): string | undefined => {
-        const trimmed = input.trim()
-        if (!trimmed) return undefined
-        if (UUID_REGEX.test(trimmed)) return trimmed
-        const lower = trimmed.toLowerCase()
-        return agencyMap.byLabel[lower] ?? agencyMap.byCode[lower]
-      }
-
-      if (Array.isArray(name)) {
-        const ids = name
-          .map((value) => resolve(String(value)))
-          .filter((value): value is string => Boolean(value))
-        return ids.length ? ids : undefined
-      }
-
-      return resolve(String(name))
-    },
-    [agencyMap],
-  )
-
-  const metierNameToId = useCallback(
-    (name: string | string[] | undefined): string | string[] | undefined => {
-      if (!name) return undefined
-
-      const resolve = (input: string): string | undefined => {
-        const trimmed = input.trim()
-        if (!trimmed) return undefined
-        if (UUID_REGEX.test(trimmed)) return trimmed
-        const lower = trimmed.toLowerCase()
-        return metierMap.byLabel[lower] ?? metierMap.byCode[lower]
-      }
-
-      if (Array.isArray(name)) {
-        const ids = name
-          .map((value) => resolve(String(value)))
-          .filter((value): value is string => Boolean(value))
-        return ids.length ? ids : undefined
-      }
-
-      return resolve(String(name))
-    },
-    [metierMap],
-  )
-
-  const mapsLoading = statusMapLoading || userMapLoading || agencyMapLoading || metierMapLoading
   const showStatusFilter = useMemo(() => {
     if (activeView?.layout !== "table") return false
     const tableOptions = activeView.layoutOptions as TableLayoutOptions
@@ -560,72 +219,15 @@ export default function Page() {
 
   const {
     interventions: fetchedInterventions,
-    setInterventions: updateRemoteInterventions,
     loading: remoteLoading,
     error: remoteError,
-    hasMore,
     totalCount,
-    loadMore,
     refresh,
     updateInterventionOptimistic,
-    setQuery: setRemoteQuery,
-    setSearch: setRemoteSearch,
-    direction: remoteDirection,
-    currentCursor,
   } = useInterventions({
-    autoLoad: true,
-    limit: SCROLL_CONFIG.BATCH_SIZE,
-    maxCachedItems: SCROLL_CONFIG.MAX_CACHED_ITEMS,
-    slidingWindow: SCROLL_CONFIG.SLIDING_WINDOW_ENABLED,
-    viewId: activeViewId,  // ✅ Force reload au changement de vue
+    viewId: activeViewId ?? undefined,
     fields: viewFields,
   })
-
-  const cursorRegistryRef = useRef<Map<string, InterventionCursor | null>>(new Map())
-  const previousScopeKeyRef = useRef<string | null>(null)
-  const fetchStartRef = useRef<number | null>(null)
-  const previousLoadingRef = useRef<boolean>(false)
-
-  const cursorScopeKey = useMemo(() => {
-    const keyPayload = {
-      view: activeViewId ?? "default",
-      filters: serverFilters,
-      sort: serverSort ?? null,
-      search: search?.trim() || null,
-    }
-    return JSON.stringify(keyPayload)
-  }, [activeViewId, serverFilters, serverSort, search])
-
-  useEffect(() => {
-    if (previousScopeKeyRef.current && previousScopeKeyRef.current !== cursorScopeKey) {
-      cursorRegistryRef.current.clear()
-    }
-    previousScopeKeyRef.current = cursorScopeKey
-  }, [cursorScopeKey])
-
-  useEffect(() => {
-    cursorRegistryRef.current.set(cursorScopeKey, currentCursor ?? null)
-  }, [cursorScopeKey, currentCursor])
-
-  useEffect(() => {
-    if (remoteLoading) {
-      fetchStartRef.current = typeof performance !== "undefined" ? performance.now() : Date.now()
-    } else if (previousLoadingRef.current && !remoteLoading) {
-      const endTime = typeof performance !== "undefined" ? performance.now() : Date.now()
-      const duration = fetchStartRef.current ? endTime - fetchStartRef.current : null
-      console.debug("[interventions] load", {
-        direction: remoteDirection,
-        cursor: currentCursor,
-        count: fetchedInterventions.length,
-        total: totalCount,
-        duration: duration !== null ? Math.round(duration) : null,
-        scope: cursorScopeKey,
-        historySize: cursorRegistryRef.current.size,
-      })
-      fetchStartRef.current = null
-    }
-    previousLoadingRef.current = remoteLoading
-  }, [remoteLoading, currentCursor, remoteDirection, fetchedInterventions.length, totalCount, cursorScopeKey])
 
   const normalizedInterventions = useMemo(
     () => fetchedInterventions.map((item) => {
@@ -644,41 +246,28 @@ export default function Page() {
   const loading = remoteLoading && normalizedInterventions.length === 0
   const error = remoteError ?? statusError
 
-  const loadingProgress = useMemo(() => {
-    const loadedCount = normalizedInterventions.length
-    const total = totalCount ?? loadedCount
-    const progressValue = total > 0 ? Math.min(100, (loadedCount / total) * 100) : hasMore ? 0 : 100
-    return {
-      loaded: loadedCount,
-      total,
-      isComplete: !hasMore,
-      progress: progressValue,
+  const filteredInterventions = useMemo(() => {
+    if (!activeView) {
+      return normalizedInterventions
     }
-  }, [normalizedInterventions, totalCount, hasMore])
 
-  const serverAppliedInterventions = useMemo(() => {
-    const datasetSize = totalCount ?? normalizedInterventions.length
-    const hasResidual = residualFilters.length > 0 || residualSorts.length > 0
-    const isLargeDataset = datasetSize > SCROLL_CONFIG.LARGE_DATASET_THRESHOLD
-
-    if (isLargeDataset && hasResidual) {
+    const datasetSize = normalizedInterventions.length
+    if (
+      activeView.filters.length > 3 &&
+      datasetSize > SCROLL_CONFIG.CLIENT_FILTER_WARNING_THRESHOLD
+    ) {
       console.warn(
-        "⚠️ Large dataset detected. Client-side filters/sorts disabled. All filtering must be done server-side.",
+        `⚠️ Filtrage client important : ${activeView.filters.length} filtres appliqués sur ${datasetSize} interventions. Vérifiez les performances si la taille augmente.`,
       )
-      return normalizedInterventions
     }
 
-    if (!hasResidual) {
-      return normalizedInterventions
-    }
-
-    return runQuery(normalizedInterventions, residualFilters, residualSorts)
-  }, [normalizedInterventions, residualFilters, residualSorts, totalCount])
+    return runQuery(normalizedInterventions, activeView.filters, activeView.sorts)
+  }, [activeView, normalizedInterventions])
 
   const searchedInterventions = useMemo(() => {
     const term = search.trim().toLowerCase()
-    if (!term) return serverAppliedInterventions
-    return serverAppliedInterventions.filter((intervention) => {
+    if (!term) return filteredInterventions
+    return filteredInterventions.filter((intervention) => {
       const haystack = [
         intervention.contexteIntervention,
         intervention.nomClient,
@@ -689,155 +278,17 @@ export default function Page() {
         .join(" ")
       return haystack.includes(term)
     })
-  }, [search, serverAppliedInterventions])
+  }, [search, filteredInterventions])
 
-  const loadDistinctValues = useCallback(
-    async (property: string) => {
-      try {
-        const values = await getDistinctInterventionValues(property, serverFilters)
-        return values
-      } catch (error) {
-        console.error("Failed to fetch distinct values", error)
-        return []
-      }
-    },
-    [serverFilters],
-  )
-
-  // Charger les comptages par statut au démarrage et lors des changements
-  useEffect(() => {
-    if (mapsLoading) return
-    
-    getInterventionCounts(serverFilters)
-      .then((counts) => setStatusCounts(counts))
-      .catch((err) => console.error("Failed to load status counts", err))
-  }, [serverFilters, mapsLoading])
-
-  useEffect(() => {
-    if (!isReady || mapsLoading) return
-
-    const viewsWithBadges = views.filter((view) => view.showBadge)
-    if (!viewsWithBadges.length) {
-      setViewCounts({})
-      return
+  const loadDistinctValues = useCallback(async (property: string) => {
+    try {
+      const values = await getDistinctInterventionValues(property)
+      return values
+    } catch (error) {
+      console.error("Failed to fetch distinct values", error)
+      return []
     }
-
-    let cancelled = false
-
-    const fetchCounts = async () => {
-      const entries: Array<[string, number]> = []
-      for (const view of viewsWithBadges) {
-        const { serverFilters: viewServerFilters } = deriveServerQueryConfig(
-          view,
-          statusCodeToId,
-          userNameToId,
-          agencyNameToId,
-        )
-        try {
-          const hasFilters = Object.keys(viewServerFilters).length > 0
-          const total = await getInterventionTotalCount(hasFilters ? viewServerFilters : undefined)
-          entries.push([view.id, total])
-        } catch (error) {
-          console.error(`Failed to fetch total count for view ${view.id}`, error)
-          const fallback = localViewCountsRef.current[view.id] ?? 0
-          entries.push([view.id, fallback])
-        }
-      }
-
-      if (!cancelled) {
-        setViewCounts((prev) => {
-          const next = { ...prev }
-          entries.forEach(([id, count]) => {
-            next[id] = count
-          })
-          return next
-        })
-      }
-    }
-
-    fetchCounts()
-
-    return () => {
-      cancelled = true
-    }
-  }, [views, isReady, mapsLoading, statusCodeToId, userNameToId, agencyNameToId, metierNameToId])
-
-  useEffect(() => {
-    if (!isReady || !activeView || mapsLoading) return
-    const { serverFilters: nextServerFilters, residualFilters: nextResidualFilters, serverSort: nextServerSort, residualSorts: nextResidualSorts } =
-      deriveServerQueryConfig(activeView, statusCodeToId, userNameToId, agencyNameToId, metierNameToId)
-
-    if (
-      nextResidualFilters.length > 2 &&
-      (totalCount ?? 0) > SCROLL_CONFIG.CLIENT_FILTER_WARNING_THRESHOLD
-    ) {
-      console.warn(
-        `⚠️ Performance warning: ${nextResidualFilters.length} filtres appliqués côté client sur ${
-          totalCount ?? 0
-        } lignes. Cela peut causer des ralentissements. Filtres résiduels:`,
-        nextResidualFilters.map((filter) => filter.property),
-      )
-    }
-
-    if (JSON.stringify(nextServerFilters) !== JSON.stringify(serverFilters)) {
-      setServerFilters(nextServerFilters)
-    }
-    if (JSON.stringify(nextResidualFilters) !== JSON.stringify(residualFilters)) {
-      setResidualFilters(nextResidualFilters)
-    }
-    if (JSON.stringify(nextResidualSorts) !== JSON.stringify(residualSorts)) {
-      setResidualSorts(nextResidualSorts)
-    }
-    const sortChanged =
-      (!serverSort && nextServerSort) ||
-      (serverSort && !nextServerSort) ||
-      (serverSort &&
-        nextServerSort &&
-        (serverSort.property !== nextServerSort.property || serverSort.direction !== nextServerSort.direction))
-
-    if (sortChanged) {
-      setServerSort(nextServerSort)
-    }
-
-    const nextQueryKey = JSON.stringify({
-      filters: nextServerFilters,
-      sort: nextServerSort ?? null,
-    })
-    const previousQueryKey = JSON.stringify({
-      filters: serverFilters,
-      sort: serverSort ?? null,
-    })
-
-    if (nextQueryKey !== previousQueryKey) {
-      setRemoteQuery({
-        filters: nextServerFilters,
-        sortBy: nextServerSort?.property,
-        sortDir: nextServerSort?.direction,
-      })
-    }
-  }, [
-    activeView,
-    isReady,
-    mapsLoading,
-    residualFilters,
-    residualSorts,
-    serverFilters,
-    serverSort,
-    setRemoteQuery,
-    statusCodeToId,
-    userNameToId,
-    agencyNameToId,
-    metierNameToId,
-    totalCount,
-  ])
-
-  useEffect(() => {
-    const trimmed = search.trim()
-    const handle = setTimeout(() => {
-      setRemoteSearch(trimmed || undefined)
-    }, 300)
-    return () => clearTimeout(handle)
-  }, [search, setRemoteSearch])
+  }, [])
 
   // Écouter les mises à jour d'interventions depuis le modal
   useEffect(() => {
@@ -1015,9 +466,9 @@ export default function Page() {
 
   const usersForFilter = useMemo(() => {
     const s = new Set<string>()
-    serverAppliedInterventions.forEach((i) => i.attribueA && s.add(i.attribueA))
+    filteredInterventions.forEach((i) => i.attribueA && s.add(i.attribueA))
     return Array.from(s)
-  }, [serverAppliedInterventions])
+  }, [filteredInterventions])
 
   const viewInterventions = searchedInterventions
 
@@ -1030,17 +481,16 @@ export default function Page() {
     return counts
   }, [normalizedInterventions, views])
 
-  const localViewCountsRef = useRef(localViewCounts)
-
-  useEffect(() => {
-    localViewCountsRef.current = localViewCounts
-  }, [localViewCounts])
-
   const uniqueStatuses = useMemo(() => {
     const set = new Set<InterventionStatusValue>()
-    serverAppliedInterventions.forEach((intervention) => set.add(intervention.statusValue))
+    filteredInterventions.forEach((intervention) => {
+      const status = intervention.statusValue
+      if (status) {
+        set.add(status)
+      }
+    })
     return Array.from(set)
-  }, [serverAppliedInterventions])
+  }, [filteredInterventions])
 
   const displayedStatuses = useMemo(() => {
     const order = [...DEFAULT_STATUS_VALUES]
@@ -1075,29 +525,17 @@ export default function Page() {
     [uniqueStatuses, workflowPinnedStatuses],
   )
 
-  const combinedViewCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    views.forEach((view) => {
-      const remote = viewCounts[view.id]
-      const fallback = localViewCounts[view.id]
-      counts[view.id] = remote ?? fallback ?? 0
-    })
-    return counts
-  }, [views, viewCounts, localViewCounts])
+  const combinedViewCounts = useMemo(() => localViewCounts, [localViewCounts])
 
-  // Comptage par statut - utilise les comptages serveur (temps réel)
+  // Comptage par statut - basé sur le filtrage client
   const getCountByStatus = useCallback(
     (status: InterventionStatusValue | null) => {
       if (!status) {
-        // Compter toutes les interventions
-        return Object.values(statusCounts).reduce((sum, count) => sum + count, 0)
+        return filteredInterventions.length
       }
-      // Convertir CODE → UUID puis récupérer le comptage
-      const statusId = statusCodeToId(status)
-      if (!statusId || typeof statusId !== "string") return 0
-      return statusCounts[statusId] || 0
+      return filteredInterventions.filter((intervention) => intervention.statusValue === status).length
     },
-    [statusCounts, statusCodeToId],
+    [filteredInterventions],
   )
 
   const handlePinStatus = useCallback(
@@ -1207,18 +645,11 @@ export default function Page() {
 
       setStatusError(null)
 
-      updateRemoteInterventions((prev) =>
-        prev.map((intervention) =>
-          intervention.id === id
-            ? {
-                ...intervention,
-                statusValue: status,
-                statut: statusLabel,
-                devisId: nextDevisId ?? intervention.devisId ?? null,
-              }
-            : intervention,
-        ),
-      )
+      updateInterventionOptimistic(id, {
+        statusValue: status,
+        statut: statusLabel,
+        devisId: nextDevisId ?? currentIntervention.devisId ?? null,
+      })
 
       try {
         const response = await fetch(`/api/interventions/${id}/status`, {
@@ -1231,22 +662,15 @@ export default function Page() {
           throw new Error(await response.text())
         }
       } catch (err) {
-        updateRemoteInterventions((prev) =>
-          prev.map((intervention) =>
-            intervention.id === id
-              ? {
-                  ...intervention,
-                  statusValue: previous,
-                  statut: mapStatusToDb(previous),
-                  devisId: currentIntervention.devisId ?? null,
-                }
-              : intervention,
-          ),
-        )
+        updateInterventionOptimistic(id, {
+          statusValue: previous,
+          statut: mapStatusToDb(previous),
+          devisId: currentIntervention.devisId ?? null,
+        })
         setStatusError((err as Error).message)
       }
     },
-    [normalizedInterventions, workflowConfig, updateRemoteInterventions],
+    [normalizedInterventions, workflowConfig, updateInterventionOptimistic],
   )
 
   const handleNavigateToDetail = useCallback(
@@ -1341,17 +765,13 @@ export default function Page() {
           <TableView
             view={activeView as TableViewConfig}
             interventions={viewInterventions}
-            allInterventions={serverAppliedInterventions}
+            allInterventions={filteredInterventions}
             loading={loading}
             error={error}
-            hasMore={hasMore}
-            onEndReached={loadMore}
-            onStartReached={() => loadMore("backward")}
             loadDistinctValues={loadDistinctValues}
             onInterventionClick={handleNavigateToDetail}
             onLayoutOptionsChange={(options) => handleLayoutOptionsPatch(options)}
             onPropertyFilterChange={updateFilterForProperty}
-            loadingProgress={loadingProgress}
             totalCount={totalCount ?? undefined}
           />
         )

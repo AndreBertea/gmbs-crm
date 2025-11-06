@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, MessageSquare, Plus, Upload } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // ✅ Import correct de l'API v2
 import {
@@ -21,6 +21,7 @@ import {
 // ✅ Import des hooks personnalisés
 import { useArtisans } from '@/hooks/useArtisans';
 import { useInterventions } from '@/hooks/useInterventions';
+import type { InterventionView } from '@/types/intervention-view';
 
 interface InterventionManagerProps {
   agenceId?: string;
@@ -28,19 +29,35 @@ interface InterventionManagerProps {
 
 export function InterventionManager({ agenceId }: InterventionManagerProps) {
   // ✅ Utilisation des hooks personnalisés
+  const [serverFilters, setServerFilters] = useState<Record<string, string | string[] | null | undefined>>(() =>
+    agenceId ? { agence: agenceId } : {},
+  );
+
   const {
     interventions,
-    setInterventions,
     loading: interventionsLoading,
     error: interventionsError,
-    hasMore,
-    loadMore,
     refresh: refreshInterventions,
-    setFilters
+    updateInterventionOptimistic,
   } = useInterventions({
-    limit: 50,
-    autoLoad: true
+    serverFilters,
   });
+
+  useEffect(() => {
+    if (!agenceId) {
+      setServerFilters((prev) => {
+        if (prev.agence === undefined) return prev;
+        const { agence: _removed, ...rest } = prev;
+        return rest;
+      });
+      return;
+    }
+
+    setServerFilters((prev) => {
+      if (prev.agence === agenceId) return prev;
+      return { ...prev, agence: agenceId };
+    });
+  }, [agenceId]);
 
   const {
     artisans,
@@ -77,8 +94,7 @@ export function InterventionManager({ agenceId }: InterventionManagerProps) {
         date: new Date().toISOString()
       });
 
-      // ✅ Mise à jour optimiste de l'état local
-      setInterventions(prev => [intervention, ...prev]);
+      await refreshInterventions();
       
       // Reset du formulaire
       setNewIntervention({
@@ -95,19 +111,16 @@ export function InterventionManager({ agenceId }: InterventionManagerProps) {
     } finally {
       setCreating(false);
     }
-  }, [newIntervention, agenceId, setInterventions]);
+  }, [newIntervention, agenceId, refreshInterventions]);
 
   // ✅ Fonction de mise à jour du statut
   const handleStatusChange = useCallback(async (interventionId: string, newStatus: string) => {
     try {
       // ✅ Mise à jour optimiste
-      setInterventions(prev => 
-        prev.map(i => 
-          i.id === interventionId 
-            ? { ...i, statut_id: newStatus }
-            : i
-        )
-      );
+      updateInterventionOptimistic(interventionId, {
+        statut: newStatus,
+        statusValue: newStatus as InterventionView["statusValue"],
+      });
 
       // ✅ Mise à jour via l'API
       await interventionsApiV2.update(interventionId, { statut_id: newStatus });
@@ -116,7 +129,7 @@ export function InterventionManager({ agenceId }: InterventionManagerProps) {
       // ✅ Rollback en cas d'erreur
       refreshInterventions();
     }
-  }, [setInterventions, refreshInterventions]);
+  }, [refreshInterventions, updateInterventionOptimistic]);
 
   // ✅ Fonction d'assignation d'artisan
   const handleAssignArtisan = useCallback(async (interventionId: string, artisanId: string) => {
@@ -174,10 +187,16 @@ export function InterventionManager({ agenceId }: InterventionManagerProps) {
 
   // ✅ Fonction de filtrage
   const handleFilterChange = useCallback((filterType: string, value: string) => {
-    setFilters({
-      [filterType]: value === 'all' ? undefined : value
+    setServerFilters((prev) => {
+      const next = { ...prev };
+      if (value === 'all') {
+        delete (next as Record<string, unknown>)[filterType];
+      } else {
+        next[filterType] = value;
+      }
+      return next;
     });
-  }, [setFilters]);
+  }, [setServerFilters]);
 
   // ✅ Gestion des erreurs
   if (interventionsError) {
@@ -397,25 +416,6 @@ export function InterventionManager({ agenceId }: InterventionManagerProps) {
           ))
         )}
         
-        {/* ✅ Bouton "Charger plus" */}
-        {hasMore && (
-          <div className="text-center">
-            <Button 
-              onClick={loadMore}
-              disabled={interventionsLoading}
-              variant="outline"
-            >
-              {interventionsLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Chargement...
-                </>
-              ) : (
-                'Charger plus d\'interventions'
-              )}
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );
