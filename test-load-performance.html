@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Performance Interventions</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+    .test { margin: 20px 0; padding: 15px; background: #2a2a2a; border-radius: 5px; }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+    .warning { color: #fbbf24; }
+    .time { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Diagnostic Performance - Interventions</h1>
+  <div id="results"></div>
+
+  <script>
+    const log = (msg, type = 'info') => {
+      const div = document.createElement('div');
+      div.className = `test ${type}`;
+      div.innerHTML = msg;
+      document.getElementById('results').appendChild(div);
+    };
+
+    async function testDirectAPI() {
+      log('🔍 <b>Test 1 : Edge Function directe (sans mapping)</b>');
+      
+      const start = Date.now();
+      const url = 'http://localhost:54321/functions/v1/interventions-v2/interventions?limit=10000';
+      
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const fetchTime = Date.now() - start;
+        const data = await response.json();
+        const parseTime = Date.now() - start - fetchTime;
+        const totalTime = Date.now() - start;
+        
+        const count = data?.data?.length || 0;
+        const total = data?.pagination?.total || 0;
+        
+        log(`✅ <span class="success">Succès</span>`, 'success');
+        log(`   📊 Interventions reçues : <span class="time">${count}</span>`);
+        log(`   📊 Total en DB : <span class="time">${total}</span>`);
+        log(`   ⏱️  Temps réseau : <span class="time">${fetchTime}ms</span>`);
+        log(`   ⏱️  Temps parsing JSON : <span class="time">${parseTime}ms</span>`);
+        log(`   ⏱️  <b>TOTAL : <span class="time ${totalTime > 2000 ? 'error' : 'success'}">${totalTime}ms</span></b>`);
+        
+        if (count < 1000) {
+          log(`⚠️  <span class="warning">ATTENTION : Seulement ${count} interventions reçues ! Limite max_rows ?</span>`, 'warning');
+        }
+        
+        return { success: true, count, totalTime };
+        
+      } catch (err) {
+        const errorTime = Date.now() - start;
+        log(`❌ <span class="error">Erreur : ${err.message}</span>`, 'error');
+        log(`   ⏱️  Temps écoulé : <span class="time">${errorTime}ms</span>`);
+        return { success: false, error: err.message };
+      }
+    }
+
+    async function runTests() {
+      log('🚀 Démarrage des tests...', 'info');
+      log('---');
+      
+      const result = await testDirectAPI();
+      
+      log('---');
+      log('<b>📋 Diagnostic :</b>');
+      
+      if (!result.success) {
+        log('❌ La requête API a échoué. Vérifiez que Supabase est démarré.', 'error');
+      } else if (result.count < 1000) {
+        log('⚠️  Limite max_rows encore à 1000. Relancez : npx supabase stop && npx supabase start', 'warning');
+      } else if (result.totalTime > 2000) {
+        log('⚠️  Requête API lente (> 2s). Problème de jointures ou d\'index.', 'warning');
+      } else {
+        log(`✅ API rapide (${result.totalTime}ms) et retourne ${result.count} interventions.`, 'success');
+        log('✅ Le problème vient probablement du mapping côté client.', 'success');
+      }
+    }
+
+    runTests();
+  </script>
+</body>
+</html>
+

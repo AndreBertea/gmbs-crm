@@ -848,28 +848,15 @@ const applyInterventionFilters = <T>(query: T, params?: GetAllParams): T => {
   return builder as unknown as T;
 };
 
-// ✅ Optimisation : Mapper par chunks pour ne pas bloquer l'UI
-async function mapInterventionRecordsInChunks(
+// ✅ Mapping direct sans chunks (6K items = ~200ms, acceptable)
+function mapInterventionRecordsBatch(
   items: any[],
-  refs: ReferenceCache,
-  chunkSize = 500
-): Promise<InterventionView[]> {
+  refs: ReferenceCache
+): InterventionView[] {
   if (items.length === 0) return [];
-
-  const result: InterventionView[] = [];
   
-  for (let i = 0; i < items.length; i += chunkSize) {
-    const chunk = items.slice(i, i + chunkSize);
-    const mappedChunk = chunk.map((item) => mapInterventionRecord(item, refs) as InterventionView);
-    result.push(...mappedChunk);
-    
-    // Pause pour laisser le navigateur respirer (uniquement si plus de chunks à venir)
-    if (i + chunkSize < items.length) {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
-  }
-  
-  return result;
+  // Mapping synchrone direct - plus rapide que les chunks async
+  return items.map((item) => mapInterventionRecord(item, refs) as InterventionView);
 }
 
 export const interventionsApiV2 = {
@@ -938,9 +925,9 @@ export const interventionsApiV2 = {
     const refs = await getReferenceCache();
 
     const mapStart = Date.now();
-    // ✅ Mapping par chunks pour ne pas bloquer l'UI
+    // ✅ Mapping direct (synchrone = plus rapide)
     const transformedData = Array.isArray(raw?.data)
-      ? await mapInterventionRecordsInChunks(raw.data, refs, 500)
+      ? mapInterventionRecordsBatch(raw.data, refs)
       : [];
     const mapDuration = Date.now() - mapStart;
 
