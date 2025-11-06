@@ -19,6 +19,19 @@
 
 ---
 
+## 🚀 Commencer l'implémentation
+
+### ⭐ Pour démarrer le Sprint 1 avec Codex
+👉 **[PROMPT_POUR_CODEX.md](PROMPT_POUR_CODEX.md)** - Prompt complet à copier-coller dans Codex
+
+### 📋 Suivi des tâches
+👉 **[SPRINT_TRACKER.md](SPRINT_TRACKER.md)** - Suivi détaillé des 5 sprints et 21 tâches
+
+### ⚡ Guide de démarrage rapide
+👉 **[DEMARRAGE_RAPIDE_SPRINT_1.md](DEMARRAGE_RAPIDE_SPRINT_1.md)** - Commencer en 5 minutes
+
+---
+
 ## 📚 Documentation complète
 
 ### 1️⃣ Point d'entrée principal

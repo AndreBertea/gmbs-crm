@@ -27,6 +27,10 @@ docs/livrable-2025-11-04/
 ├── WORKFLOW_REGLES_METIER.md                         ← 10 workflows visuels
 ├── TABLEAU_RECAPITULATIF_LIVRABLE.md                 ← Tableau complet
 │
+├── SPRINT_TRACKER.md                                  ← Suivi des sprints ⭐ NOUVEAU
+├── PROMPT_POUR_CODEX.md                               ← Prompt complet pour Codex ⭐ NOUVEAU
+├── DEMARRAGE_RAPIDE_SPRINT_1.md                       ← Guide de démarrage ⭐ NOUVEAU
+│
 ├── FICHIERS_CREES_2025-11-04.md                      ← Inventaire des fichiers
 ├── SUMMARY_ANALYSE_COMPLETE.md                       ← Résumé de l'analyse
 ├── ORGANISATION_FICHIERS.md                          ← Ce fichier
@@ -34,7 +38,7 @@ docs/livrable-2025-11-04/
 └── livrable-specs-interventions-artisans_2025-11-04.html  ← Source HTML client
 ```
 
-**Total : 12 fichiers (~170 pages de documentation)**
+**Total : 15 fichiers (~200 pages de documentation)**
 
 ---
 
@@ -43,22 +47,27 @@ docs/livrable-2025-11-04/
 ### 🚀 Démarrage rapide
 1. **README.md** - Point d'entrée avec tous les liens
 2. **TLDR_LIVRABLE_2025-11-04.md** - L'essentiel en 2 minutes
-3. **INDEX_LIVRABLE_2025-11-04.md** - Navigation complète
+3. **DEMARRAGE_RAPIDE_SPRINT_1.md** - ⭐ Guide de démarrage Sprint 1
+4. **INDEX_LIVRABLE_2025-11-04.md** - Navigation complète
 
 ### 📖 Documentation principale
-4. **RESUME_EXECUTIF_LIVRABLE_2025-11-04.md** - Vue d'ensemble complète
-5. **BUSINESS_RULES_2025-11-04.md** - 18 règles métier documentées
-6. **ANALYSE_CLASSIFICATION_TACHES_2025-11-04.md** - 21 tâches avec estimations
-7. **WORKFLOW_REGLES_METIER.md** - 10 workflows visuels Mermaid
-8. **TABLEAU_RECAPITULATIF_LIVRABLE.md** - Vue tabulaire complète
+5. **RESUME_EXECUTIF_LIVRABLE_2025-11-04.md** - Vue d'ensemble complète
+6. **BUSINESS_RULES_2025-11-04.md** - 18 règles métier documentées
+7. **ANALYSE_CLASSIFICATION_TACHES_2025-11-04.md** - 21 tâches avec estimations
+8. **WORKFLOW_REGLES_METIER.md** - 10 workflows visuels Mermaid
+9. **TABLEAU_RECAPITULATIF_LIVRABLE.md** - Vue tabulaire complète
+
+### 🎯 Suivi et exécution
+10. **SPRINT_TRACKER.md** - ⭐ Suivi détaillé des 5 sprints et 21 tâches
+11. **PROMPT_POUR_CODEX.md** - ⭐ Prompt complet pour démarrer avec Codex
 
 ### 📝 Métadonnées
-9. **FICHIERS_CREES_2025-11-04.md** - Inventaire et statistiques
-10. **SUMMARY_ANALYSE_COMPLETE.md** - Résumé de l'analyse effectuée
-11. **ORGANISATION_FICHIERS.md** - Ce fichier (structure du dossier)
+12. **FICHIERS_CREES_2025-11-04.md** - Inventaire et statistiques
+13. **SUMMARY_ANALYSE_COMPLETE.md** - Résumé de l'analyse effectuée
+14. **ORGANISATION_FICHIERS.md** - Ce fichier (structure du dossier)
 
 ### 📄 Source
-12. **livrable-specs-interventions-artisans_2025-11-04.html** - Fichier HTML original du client
+15. **livrable-specs-interventions-artisans_2025-11-04.html** - Fichier HTML original du client
 
 ---
 
