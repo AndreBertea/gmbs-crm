@@ -18,21 +18,48 @@ Cette tâche doit implémenter la **gestion complète des commentaires** dans le
 
 ## 🎯 Objectif
 
-Rendre fonctionnelle la section "Commentaires" dans :
+Rendre fonctionnelle la section "Commentaires" dans **2 contextes** (artisans et interventions), répartis sur **4 endroits** :
+
+### Contexte 1 : Artisans (1 endroit)
 1. **Fiche Artisan** (`src/components/ui/artisan-modal/ArtisanModalContent.tsx`)
-2. **Fiche Intervention** (`src/components/interventions/InterventionEditForm.tsx`)
+
+### Contexte 2 : Interventions (3 endroits - mêmes données)
+2. **Modal Édition** (`src/components/interventions/InterventionEditForm.tsx`)
+3. **Vue étendue** (`src/components/interventions/views/TableView.tsx` - `ExpandedRowContent` en colonne 3)
+4. **Modal Création** (`src/components/interventions/LegacyInterventionForm.tsx`)
+
+**Note** : Les 3 endroits "Interventions" affichent **exactement les mêmes données** (même `entity_type='intervention'` + même `entity_id`). C'est juste une copie conforme dans 3 emplacements UI différents.
 
 **Approche** :
-- S'inspirer de la logique du projet legacy
-- Améliorer l'implémentation graphique
-- Mapper correctement avec la table `comments`
+- S'inspirer de la logique du projet legacy (/Users/andrebertea/Desktop/abWebCraft/Mission/GMBS/code/crm-gmbs)
+- **UI simple** : Avatar + Commentaire + Date/heure (petit, grisé, italique)
+- **Utiliser la table `comments` existante** qui fait la distinction via :
+  - `entity_type` : `'artisan'` ou `'intervention'`
+  - `entity_id` : UUID de l'artisan ou de l'intervention
+- **2 logiques** : une pour artisans, une pour interventions (réutilisée dans 3 endroits)
 - Assurer la traçabilité (auteur, date, historique)
 
 ---
 
 ## 📊 Structure BDD existante
 
-### Table `comments`
+### Table `comments` (polyvalente)
+
+La table `comments` est **unique et partagée** entre toutes les entités.
+
+**Types supportés en BDD** :
+- `'artisan'` ✅ (à implémenter dans COM-001)
+- `'intervention'` ✅ (à implémenter dans COM-001)
+- `'task'` ⏸️ (extension future)
+- `'client'` ⏸️ (extension future)
+
+**Logique de distinction** :
+- `entity_type` : Type d'entité
+- `entity_id` : UUID de l'entité concernée
+
+**Exemples pour COM-001** :
+- Commentaire sur un artisan : `entity_type = 'artisan'` + `entity_id = artisan.id`
+- Commentaire sur une intervention : `entity_type = 'intervention'` + `entity_id = intervention.id`
 
 ```sql
 CREATE TABLE public.comments (
@@ -46,6 +73,11 @@ CREATE TABLE public.comments (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
+```
+
+**Index pour performance** :
+```sql
+CREATE INDEX idx_comments_entity ON comments(entity_type, entity_id);
 ```
 
 ### Interfaces TypeScript existantes
@@ -79,13 +111,19 @@ export interface Comment {
 
 **Fichier** : `src/lib/api/v2/commentsApi.ts` (existe déjà, vérifier et améliorer si nécessaire)
 
+**⚠️ Important** : Pour COM-001, utiliser uniquement :
+- `'artisan'` pour les commentaires d'artisans
+- `'intervention'` pour les commentaires d'interventions
+
+(La table supporte aussi `'task'` et `'client'`, mais ce sont des extensions futures non implémentées)
+
 ```typescript
 import { Comment, CreateCommentData } from './common/types';
 
 const COMMENTS_API_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/comments`;
 
 export const commentsApi = {
-  // Récupérer les commentaires d'une entité
+  // Récupérer les commentaires d'une entité (artisan OU intervention)
   async getByEntity(entityType: 'artisan' | 'intervention', entityId: string): Promise<Comment[]> {
     const response = await fetch(
       `${COMMENTS_API_URL}/comments?entity_type=${entityType}&entity_id=${entityId}`,
@@ -157,9 +195,9 @@ import { commentsApi } from "@/lib/api/v2/commentsApi"
 import type { Comment } from "@/lib/api/v2/common/types"
 
 interface CommentSectionProps {
-  entityType: "artisan" | "intervention"
-  entityId: string
-  currentUserId?: string
+  entityType: "artisan" | "intervention"  // Type d'entité (correspond à comments.entity_type)
+  entityId: string                         // UUID de l'artisan ou intervention (correspond à comments.entity_id)
+  currentUserId?: string                   // ID de l'utilisateur connecté
 }
 
 const formatDate = (value: string | null | undefined, withTime = false) => {
@@ -235,19 +273,36 @@ export function CommentSection({ entityType, entityId, currentUserId }: CommentS
             const author = comment.users
               ? [comment.users.firstname, comment.users.lastname].filter(Boolean).join(" ") || comment.users.username
               : "Utilisateur"
+            
+            // Initiales pour l'avatar (ex: "Jean Dupont" → "JD")
+            const initials = author
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)
 
             return (
-              <div
-                key={comment.id}
-                className="rounded border border-muted/60 bg-muted/20 p-3 text-sm"
-              >
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="font-medium">{author}</span>
-                  <span>{formatDate(comment.created_at, true)}</span>
+              <div key={comment.id} className="flex gap-3">
+                {/* Avatar (bulle) */}
+                <div className="flex-shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    {initials}
+                  </div>
                 </div>
-                <p className="mt-2 whitespace-pre-wrap leading-relaxed text-foreground">
-                  {comment.content}
-                </p>
+                
+                {/* Contenu */}
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-medium text-sm">{author}</span>
+                    <span className="text-xs text-muted-foreground italic">
+                      {formatDate(comment.created_at, true)}
+                    </span>
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                    {comment.content}
+                  </p>
+                </div>
               </div>
             )
           })}
@@ -404,43 +459,63 @@ ORDER BY c.created_at DESC;
 - [ ] Tester les endpoints avec Postman ou `curl`
 
 ### Frontend - Composant partagé
-- [ ] Créer `src/components/shared/CommentSection.tsx`
+- [ ] Créer `src/components/shared/CommentSection.tsx` avec UI simple :
+  - [ ] Avatar (bulle avec initiales) + Date/heure (petit, grisé, italique)
+  - [ ] Commentaire (texte simple)
 - [ ] Implémenter `commentsApi` dans `src/lib/api/v2/commentsApi.ts`
 - [ ] Gérer les états de chargement et erreurs
-- [ ] Afficher l'historique avec auteur + date
 - [ ] Formulaire d'ajout avec validation
 
-### Frontend - Artisans
+### Frontend - Artisans (1 endroit)
 - [ ] Intégrer `CommentSection` dans `ArtisanModalContent.tsx`
 - [ ] Supprimer l'ancien code `suivi_relances_docs`
-- [ ] Tester l'ajout/affichage de commentaires
+- [ ] Utiliser `entityType="artisan"` + `entityId={artisan.id}`
 
-### Frontend - Interventions
-- [ ] Intégrer `CommentSection` dans `InterventionEditForm.tsx`
-- [ ] Ajouter section collapsible "Commentaires"
-- [ ] Tester l'ajout/affichage de commentaires
+### Frontend - Interventions (3 endroits - même logique)
+- [ ] **Modal Édition** : Intégrer dans `InterventionEditForm.tsx`
+- [ ] **Vue étendue** : Intégrer dans `TableView.tsx` (`ExpandedRowContent`, colonne 3)
+- [ ] **Modal Création** : Intégrer dans `LegacyInterventionForm.tsx` (optionnel)
+- [ ] Utiliser `entityType="intervention"` + `entityId={intervention.id}` (même données pour les 3)
 
 ### Tests
-- [ ] Test manuel : Ajouter un commentaire sur un artisan → Visible immédiatement
-- [ ] Test manuel : Ajouter un commentaire sur une intervention → Visible immédiatement
-- [ ] Test manuel : Vérifier l'auteur et la date
+- [ ] Test manuel : Ajouter commentaire sur un artisan → Visible immédiatement
+- [ ] Test manuel : Ajouter commentaire sur une intervention (modal édition) → Visible immédiatement
+- [ ] Test manuel : Vérifier que vue étendue + modal création affichent les **mêmes données**
+- [ ] Test manuel : Vérifier auteur + date/heure (petit, grisé, italique)
 - [ ] Test manuel : Recharger la page → Commentaires persistent
 
 ---
 
 ## 🎯 Résultat attendu
 
-### Artisan
+### 1. Artisan (1 endroit)
 1. Ouvrir une fiche artisan
-2. Section "Commentaires" affiche l'historique (si existant)
+2. Section "Commentaires" affiche l'historique avec :
+   - Avatar (bulle avec initiales)
+   - Nom de l'auteur
+   - Commentaire
+   - Date + heure (petit, grisé, italique)
 3. Ajouter un commentaire → Envoyé avec succès
-4. Commentaire apparaît immédiatement dans l'historique avec nom + date
+4. Commentaire apparaît immédiatement dans l'historique
 
-### Intervention
+### 2. Interventions (3 endroits - mêmes données)
+
+**Modal Édition** :
 1. Ouvrir une fiche intervention en édition
-2. Section "Commentaires" (collapsible) affiche l'historique
-3. Ajouter un commentaire → Envoyé avec succès
-4. Commentaire apparaît immédiatement dans l'historique avec nom + date
+2. Section "Commentaires" (collapsible) affiche l'historique avec UI simple
+3. Ajouter un commentaire → Visible immédiatement
+
+**Vue étendue (TableView, colonne 3)** :
+1. Cliquer sur une ligne d'intervention dans le tableau
+2. La vue étendue s'affiche en colonne 3
+3. Section "Commentaires" affiche **les mêmes données** que le modal édition
+4. Même UI : Avatar + Nom + Commentaire + Date/heure (italique)
+
+**Modal Création** :
+1. Ouvrir le formulaire de création d'intervention
+2. Section "Commentaires" (collapsible, optionnelle)
+3. Ajouter un commentaire initial (facultatif)
+4. Le commentaire est créé automatiquement après la création de l'intervention
 
 ---
 
@@ -479,10 +554,12 @@ WHERE id = {artisan_id};
 ### Nouveaux fichiers
 - `src/components/shared/CommentSection.tsx`
 
-### Fichiers à modifier
+### Fichiers à modifier (4 endroits)
 - `src/lib/api/v2/commentsApi.ts` (vérifier/améliorer)
 - `src/components/ui/artisan-modal/ArtisanModalContent.tsx` (lignes 692-727)
 - `src/components/interventions/InterventionEditForm.tsx` (ajouter section)
+- `src/components/interventions/views/TableView.tsx` (ExpandedRowContent, colonne 3)
+- `src/components/interventions/LegacyInterventionForm.tsx` (ajouter section optionnelle)
 - `supabase/functions/comments/index.ts` (vérifier JOIN users)
 
 ### Fichiers à vérifier
@@ -505,10 +582,13 @@ WHERE id = {artisan_id};
 
 **Durée** : 1.5-2j
 - Backend vérification : 0.5j
-- Composant CommentSection : 0.5j
-- Intégration artisans : 0.25j
-- Intégration interventions : 0.25j
-- Tests manuels : 0.5j
+- Composant CommentSection avec UI simple : 0.5j
+- Intégration artisans (1 endroit) : 0.25j
+- Intégration interventions (3 endroits - copier-coller) : 0.5j
+  - Modal édition : 0.2j
+  - Vue étendue : 0.15j (copie)
+  - Modal création : 0.15j (copie)
+- Tests manuels (4 endroits) : 0.25j
 
 **Complexité** : 🟡 Moyenne
 

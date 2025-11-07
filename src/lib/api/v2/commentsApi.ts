@@ -37,6 +37,20 @@ export const commentsApi = {
     return handleResponse(response);
   },
 
+  // Récupérer les commentaires pour une entité spécifique
+  async getByEntity(
+    entityType: "artisan" | "intervention",
+    entityId: string,
+    params?: Omit<CommentQueryParams, "entity_type" | "entity_id">,
+  ): Promise<Comment[]> {
+    const response = await this.getAll({
+      ...params,
+      entity_type: entityType,
+      entity_id: entityId,
+    });
+    return response.data ?? [];
+  },
+
   // Récupérer un commentaire par ID
   async getById(id: string): Promise<Comment> {
     const response = await fetch(

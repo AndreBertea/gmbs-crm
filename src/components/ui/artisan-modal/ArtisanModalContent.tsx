@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useRef } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Controller, useForm } from "react-hook-form"
@@ -27,9 +27,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ModeIcons } from "@/components/ui/mode-selector"
+import { CommentSection } from "@/components/shared/CommentSection"
 import { useReferenceData } from "@/hooks/useReferenceData"
 import { useToast } from "@/hooks/use-toast"
 import { artisansApiV2, type Artisan as ApiArtisan } from "@/lib/supabase-api-v2"
+import { supabase } from "@/lib/supabase-client"
 import { cn } from "@/lib/utils"
 import type { ModalDisplayMode } from "@/types/modal-display"
 
@@ -69,7 +71,6 @@ type ArtisanWithRelations = ApiArtisan & {
     } | null
   }>
   statutDossier?: string | null
-  commentaire?: string | null
 }
 
 type ArtisanFormValues = {
@@ -91,7 +92,6 @@ type ArtisanFormValues = {
   zone_intervention: string
   gestionnaire_id: string
   statut_id: string
-  commentaire: string
   numero_associe: string
 }
 
@@ -169,7 +169,6 @@ const mapArtisanToForm = (artisan: ArtisanWithRelations): ArtisanFormValues => {
     zone_intervention: zoneValue,
     gestionnaire_id: artisan.gestionnaire_id ?? "",
     statut_id: artisan.statut_id ?? "",
-    commentaire: artisan.commentaire ?? "",
     numero_associe: artisan.numero_associe ?? "",
   }
 }
@@ -193,7 +192,6 @@ const buildUpdatePayload = (values: ArtisanFormValues) => ({
   metiers: values.metiers ?? [],
   gestionnaire_id: values.gestionnaire_id || null,
   statut_id: values.statut_id || null,
-  suivi_relances_docs: values.commentaire || null,
   numero_associe: values.numero_associe || null,
 })
 
@@ -245,7 +243,6 @@ export function ArtisanModalContent({
       zone_intervention: "",
       gestionnaire_id: "",
       statut_id: "",
-      commentaire: "",
       numero_associe: "",
     },
   })
@@ -267,6 +264,37 @@ export function ArtisanModalContent({
         "absences",
       ])) as ArtisanWithRelations,
   })
+
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadCurrentUser = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (!response.ok) {
+          throw new Error("Unable to load current user")
+        }
+        const payload = await response.json()
+        if (!isMounted) return
+        setCurrentUserId(payload?.user?.id ?? null)
+      } catch (loadError) {
+        console.warn("[ArtisanModalContent] Impossible de charger l'utilisateur courant", loadError)
+      }
+    }
+
+    loadCurrentUser()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     if (artisan) {
@@ -350,26 +378,6 @@ export function ArtisanModalContent({
         url: attachment.url,
         createdAt: attachment.created_at ?? null,
       }))
-  }, [artisan])
-
-  const commentHistoryList = useMemo(() => {
-    const raw = artisan?.commentHistories ?? []
-    if (!Array.isArray(raw)) return []
-    return raw
-      .filter((item) => Boolean(item.comment))
-      .map((item) => {
-        const usernameParts = [
-          item.user?.firstname ?? "",
-          item.user?.lastname ?? "",
-        ]
-        const fallback = item.user?.username ?? "Utilisateur"
-        return {
-          id: item.id,
-          author: usernameParts.join(" ").trim() || fallback,
-          date: item.modifiedAt ?? item.created_at ?? null,
-          content: item.comment ?? "",
-        }
-      })
   }, [artisan])
 
   const metierOptions = useMemo(() => {
@@ -693,36 +701,8 @@ export function ArtisanModalContent({
             <CardHeader>
               <CardTitle>Commentaires</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {commentHistoryList.length ? (
-                <div className="space-y-3">
-                  {commentHistoryList.map((comment) => (
-                    <div key={comment.id} className="rounded border border-muted/60 bg-muted/20 p-3 text-sm">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{comment.author}</span>
-                        <span>{formatDate(comment.date, true)}</span>
-                      </div>
-                      <p className="mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground">
-                        {comment.content}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Aucun commentaire historique pour le moment.
-                </p>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="commentaire">Écrivez votre commentaire ici...</Label>
-                <Textarea
-                  id="commentaire"
-                  rows={4}
-                  placeholder="Ajouter une note ou une consigne interne"
-                  {...register("commentaire")}
-                />
-              </div>
+            <CardContent>
+              <CommentSection entityType="artisan" entityId={artisanId} currentUserId={currentUserId ?? undefined} />
             </CardContent>
           </Card>
 

@@ -185,6 +185,7 @@ export interface Comment {
     firstname: string | null;
     lastname: string | null;
     username: string;
+    color: string | null;
   };
 }
 

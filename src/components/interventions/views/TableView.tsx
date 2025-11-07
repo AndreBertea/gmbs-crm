@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import type { ChangeEvent, ReactNode, CSSProperties } from "react"
 import { AlignCenter, AlignLeft, AlignRight, Bell, Bold, ChevronDown, Eye, Filter, Italic, Loader2, Send, X } from "lucide-react"
@@ -63,6 +64,8 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { ReminderMentionInput } from "@/components/interventions/ReminderMentionInput"
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase-client"
+import { CommentSection } from "@/components/shared/CommentSection"
 import {
   STYLE_ELIGIBLE_COLUMNS,
   TABLE_APPEARANCE_OPTIONS,
@@ -342,6 +345,7 @@ export function TableView({
   const [noteDialogCoords, setNoteDialogCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const noteDialogContentRef = useRef<HTMLDivElement | null>(null)
   const isReminderSaveDisabled = noteValue.trim().length === 0 && !dueDateValue
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
   const columnWidths = view.layoutOptions.columnWidths ?? {}
@@ -397,8 +401,25 @@ export function TableView({
   const virtualItems = rowVirtualizer.getVirtualItems()
   const totalHeight = rowVirtualizer.getTotalSize()
 
-  const firstVisible = virtualItems[0]?.index ?? 0
-  const lastVisible = virtualItems[virtualItems.length - 1]?.index ?? 0
+  const scroller = tableContainerRef.current
+  const viewportTop = scroller?.scrollTop ?? 0
+  const viewportHeight = scroller?.clientHeight ?? 0
+  const viewportBottom = viewportTop + viewportHeight
+
+  const visibleItems = virtualItems.filter((item) => {
+    const itemTop = item.start
+    const itemBottom = item.start + item.size
+    return itemBottom > viewportTop && itemTop < viewportBottom
+  })
+
+  const firstVisible =
+    visibleItems[0]?.index ??
+    virtualItems[0]?.index ??
+    0
+  const lastVisible =
+    visibleItems[visibleItems.length - 1]?.index ??
+    virtualItems[virtualItems.length - 1]?.index ??
+    0
   const totalRows = totalCount ?? dataset.length
   const showPositionIndicator = totalRows > SCROLL_CONFIG.SHOW_POSITION_THRESHOLD
 
@@ -419,6 +440,35 @@ export function TableView({
   const { activeColumn, handlePointerDown } = useColumnResize(columnWidths, (widths) => {
     onLayoutOptionsChange?.({ columnWidths: widths })
   })
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadCurrentUser = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (!response.ok) {
+          throw new Error("Unable to load current user")
+        }
+        const payload = await response.json()
+        if (!isMounted) return
+        setCurrentUserId(payload?.user?.id ?? null)
+      } catch (loadError) {
+        console.warn("[TableView] Impossible de charger l'utilisateur courant", loadError)
+      }
+    }
+
+    loadCurrentUser()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
   const handleScrollWithFades = useCallback(() => {
     const scroller = tableContainerRef.current
     if (!scroller) return
@@ -1140,6 +1190,7 @@ export function TableView({
                                       statusColor={statusColor}
                                       showStatusBorder={statusBorderEnabled}
                                       statusBorderWidth={statusBorderWidthPx}
+                                      currentUserId={currentUserId}
                                     />
                                   </td>
                                 </tr>
@@ -1287,6 +1338,7 @@ function TruncatedCell({ content, className }: { content: ReactNode; className?:
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
   const cellRef = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
+  const [portalElement, setPortalElement] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     const element = cellRef.current
@@ -1308,15 +1360,26 @@ function TruncatedCell({ content, className }: { content: ReactNode; className?:
   const contentStr = typeof content === "string" ? content : 
                      typeof content === "number" ? String(content) : ""
 
-  const handleMouseEnter = (e: React.MouseEvent) => {
+  useEffect(() => {
+    if (typeof document === "undefined") return
+    setPortalElement(document.body)
+  }, [])
+
+  const updateTooltipPosition = (event: React.MouseEvent) => {
+    const offset = 12
+    const margin = 16
+    const x = Math.min(window.innerWidth - margin, event.clientX + offset)
+    const y = Math.min(window.innerHeight - margin, event.clientY + offset)
+
+    setTooltipPos({
+      x: Math.max(margin, x),
+      y: Math.max(margin, y),
+    })
+  }
+
+  const handleMouseEnter = (event: React.MouseEvent) => {
     if (!isOverflowing) return
-    const rect = cellRef.current?.getBoundingClientRect()
-    if (rect) {
-      setTooltipPos({
-        x: rect.left,
-        y: rect.bottom + 8
-      })
-    }
+    updateTooltipPosition(event)
   }
 
   const handleMouseLeave = () => {
@@ -1329,6 +1392,10 @@ function TruncatedCell({ content, className }: { content: ReactNode; className?:
         className="relative"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onMouseMove={(event) => {
+          if (!isOverflowing || !tooltipPos) return
+          updateTooltipPosition(event)
+        }}
       >
         <div
           ref={cellRef}
@@ -1340,33 +1407,37 @@ function TruncatedCell({ content, className }: { content: ReactNode; className?:
           {content}
         </div>
       </div>
-      {tooltipPos && contentStr && (
-        <div 
-          className="fixed z-[1000] p-3 bg-card text-card-foreground border-2 border-border rounded-lg shadow-2xl max-w-sm whitespace-normal break-words text-sm font-normal pointer-events-none"
-          style={{
-            left: `${tooltipPos.x}px`,
-            top: `${tooltipPos.y}px`,
-          }}
-        >
-          {contentStr}
-        </div>
-      )}
+      {portalElement && tooltipPos && contentStr
+        ? createPortal(
+            <div
+              className="fixed z-[1000] max-w-sm break-words rounded-lg border-2 border-border bg-card p-3 text-sm font-normal text-card-foreground shadow-2xl whitespace-normal pointer-events-none"
+              style={{
+                left: `${tooltipPos.x}px`,
+                top: `${tooltipPos.y}px`,
+              }}
+            >
+              {contentStr}
+            </div>,
+            portalElement,
+          )
+        : null}
     </>
   )
 }
 
-function ExpandedRowContent({ 
+function ExpandedRowContent({
   intervention,
   statusColor,
   showStatusBorder,
   statusBorderWidth,
-}: { 
+  currentUserId,
+}: {
   intervention: InterventionEntity
   statusColor: string
   showStatusBorder: boolean
   statusBorderWidth: string
+  currentUserId?: string | null
 }) {
-  const [newComment, setNewComment] = useState("")
 
   // Récupération des données de l'intervention avec useMemo pour réactivité
   const interventionData = useMemo(() => {
@@ -1392,13 +1463,6 @@ function ExpandedRowContent({
     () => agencesRequiringRef.includes(interventionData.agenceName),
     [interventionData.agenceName, agencesRequiringRef]
   )
-
-  const handleSubmitComment = () => {
-    if (!newComment.trim()) return
-    // TODO: Implémenter l'ajout du commentaire via l'API
-    console.log("Nouveau commentaire:", newComment)
-    setNewComment("")
-  }
 
   return (
     <div 
@@ -1480,38 +1544,13 @@ function ExpandedRowContent({
 
         {/* Colonne 3 - Commentaires */}
         <div className="space-y-3">
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Commentaires</p>
-            <ScrollArea className="h-[100px] rounded-md border bg-background/50 p-2">
-              <div className="space-y-2 text-xs">
-                {/* TODO: Afficher l'historique des commentaires */}
-                <p className="text-muted-foreground italic">Aucun commentaire pour le moment</p>
-              </div>
-            </ScrollArea>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Ajouter un commentaire..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSubmitComment()
-                }
-              }}
-              className="flex-1 text-sm"
-            />
-            <Button
-              size="icon"
-              variant="default"
-              onClick={handleSubmitComment}
-              disabled={!newComment.trim()}
-              className="shrink-0"
-            >
-              <Send className="h-5 w-5" />
-            </Button>
-          </div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Commentaires</p>
+          <CommentSection
+            entityType="intervention"
+            entityId={intervention.id}
+            currentUserId={currentUserId}
+            disableScrollFades
+          />
         </div>
       </div>
     </div>

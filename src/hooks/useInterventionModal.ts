@@ -107,12 +107,6 @@ export function useInterventionModal() {
 
       // Only handle navigation shortcuts for regular intervention modals (not new-intervention)
       if (modal.content === "intervention") {
-        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-          event.preventDefault()
-          openFullPage()
-          return
-        }
-
         if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "k") {
           event.preventDefault()
           goToPrevious()

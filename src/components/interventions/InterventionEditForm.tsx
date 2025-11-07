@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Badge } from "@/components/ui/badge"
 import { MapLibreMap } from "@/components/maps/MapLibreMap"
 import { DocumentManager } from "@/components/documents/DocumentManager"
+import { CommentSection } from "@/components/shared/CommentSection"
 import { useReferenceData } from "@/hooks/useReferenceData"
 import { useGeocodeSearch } from "@/hooks/useGeocodeSearch"
 import type { GeocodeSuggestion } from "@/hooks/useGeocodeSearch"
@@ -181,6 +182,7 @@ export function InterventionEditForm({
   const [isProprietaireOpen, setIsProprietaireOpen] = useState(false)
   const [isAccompteOpen, setIsAccompteOpen] = useState(false)
   const [isDocumentsOpen, setIsDocumentsOpen] = useState(false)
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
   const [showArtisanSearch, setShowArtisanSearch] = useState(false)
   const [artisanSearchPosition, setArtisanSearchPosition] = useState<{ x: number; y: number } | null>(null)
   const {
@@ -1367,6 +1369,35 @@ export function InterventionEditForm({
                     entityId={intervention.id}
                     kinds={INTERVENTION_DOCUMENT_KINDS}
                     currentUser={currentUser ?? undefined}
+                  />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          {/* Commentaires (Historique) */}
+          <Collapsible open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer pb-3 hover:bg-muted/50">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <MessageSquare className="h-4 w-4" />
+                    Commentaires
+                    <ChevronDown
+                      className={cn(
+                        "ml-auto h-4 w-4 transition-transform",
+                        isCommentsOpen && "rotate-180",
+                      )}
+                    />
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <CommentSection
+                    entityType="intervention"
+                    entityId={intervention.id}
+                    currentUserId={currentUser?.id}
                   />
                 </CardContent>
               </CollapsibleContent>

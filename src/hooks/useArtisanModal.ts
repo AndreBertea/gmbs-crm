@@ -103,12 +103,6 @@ export function useArtisanModal() {
         return
       }
 
-      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault()
-        openFullPage()
-        return
-      }
-
       if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "k") {
         event.preventDefault()
         goToPrevious()

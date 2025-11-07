@@ -1,8 +1,5 @@
 import { notFound } from "next/navigation"
-import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query"
 import { getIntervention } from "@/lib/api/interventions"
-import { queryKeys } from "@/lib/query-keys"
-import { InterventionDetailContent } from "@/components/interventions/InterventionDetailContent"
 
 type Params = {
   params: {
@@ -18,12 +15,14 @@ export default async function InterventionDetailPage({ params }: Params) {
     notFound()
   }
 
-  const queryClient = new QueryClient()
-  queryClient.setQueryData(queryKeys.intervention(id), intervention)
-
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <InterventionDetailContent interventionId={id} mode="page" />
-    </HydrationBoundary>
+    <div className="space-y-4 p-6">
+      <h1 className="text-2xl font-semibold">
+        Intervention {intervention.name ?? intervention.id}
+      </h1>
+      <p className="text-sm text-muted-foreground">
+        La vue détaillée des interventions est en cours de refonte.
+      </p>
+    </div>
   )
 }

@@ -1,0 +1,734 @@
+"use client"
+
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
+import { commentsApi } from "@/lib/api/v2/commentsApi"
+import type { Comment } from "@/lib/api/v2/common/types"
+import { cn } from "@/lib/utils"
+import { Send, Edit, Trash2 } from "lucide-react"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+interface CommentSectionProps {
+  entityType: "artisan" | "intervention"
+  entityId: string
+  currentUserId?: string | null
+  limit?: number
+  scrollFadeColor?: string | null
+  scrollFadeInsetLeft?: number
+  scrollFadeInsetRight?: number
+  disableScrollFades?: boolean
+}
+
+const formatDateTime = (value: string | null | undefined) => {
+  if (!value) return "—"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return "—"
+  }
+  try {
+    return new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(date)
+  } catch {
+    return value
+  }
+}
+
+const getInitials = (name: string) => {
+  if (!name) return "?"
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+  return parts
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+const normalizeHexColor = (color?: string | null) => {
+  if (!color) return null
+  const trimmed = color.trim()
+  if (!trimmed) return null
+  let hex = trimmed.startsWith("#") ? trimmed.slice(1) : trimmed
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((char) => char + char)
+      .join("")
+  }
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
+    return null
+  }
+  return hex
+}
+
+const getAvatarTextColorClass = (color?: string | null) => {
+  const normalized = normalizeHexColor(color)
+  if (!normalized) {
+    return "text-white"
+  }
+  const r = parseInt(normalized.slice(0, 2), 16)
+  const g = parseInt(normalized.slice(2, 4), 16)
+  const b = parseInt(normalized.slice(4, 6), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.65 ? "text-black" : "text-white"
+}
+
+const normalizedHexToRgba = (normalizedHex: string, alpha: number) => {
+  const r = parseInt(normalizedHex.slice(0, 2), 16)
+  const g = parseInt(normalizedHex.slice(2, 4), 16)
+  const b = parseInt(normalizedHex.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+const createFadeGradient = (position: "top" | "bottom", color?: string | null) => {
+  const normalized = normalizeHexColor(color)
+  if (!normalized) return null
+  const direction = position === "top" ? "to bottom" : "to top"
+  const strong = normalizedHexToRgba(normalized, 0.92)
+  const mid = normalizedHexToRgba(normalized, 0.45)
+  return `linear-gradient(${direction}, ${strong} 0%, ${mid} 55%, transparent 100%)`
+}
+
+type CommentAuthorDetails = NonNullable<Comment["users"]>
+
+const SCROLL_DEBOUNCE_MS = 50
+const CONTEXT_MENU_ENABLED = false
+
+const blurActiveElement = () => {
+  if (typeof document === "undefined") return
+  const active = document.activeElement as HTMLElement | null
+  if (active && typeof active.blur === "function") {
+    active.blur()
+  }
+}
+
+export function CommentSection({
+  entityType,
+  entityId,
+  currentUserId,
+  limit = 50,
+  scrollFadeColor,
+  scrollFadeInsetLeft = 0,
+  scrollFadeInsetRight = 0,
+  disableScrollFades = false,
+}: CommentSectionProps) {
+  const [newComment, setNewComment] = useState("")
+  const textareaId = useId()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [canScrollUp, setCanScrollUp] = useState(false)
+  const [canScrollDown, setCanScrollDown] = useState(false)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const previousLengthRef = useRef(0)
+  const [latestCommentId, setLatestCommentId] = useState<string | null>(null)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState("")
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
+  const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const editingOriginalContentRef = useRef("")
+  const rootRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    setNewComment("")
+    setEditingCommentId(null)
+    setEditingContent("")
+    setDeletingCommentId(null)
+    editingOriginalContentRef.current = ""
+  }, [entityId])
+
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const wrapper =
+      root.closest(".card-table-wrapper") ??
+      root.closest("[aria-hidden]")
+    if (!wrapper) return
+
+    const handleHidden = () => {
+      if (wrapper.getAttribute("aria-hidden") === "true") {
+        blurActiveElement()
+      }
+    }
+
+    handleHidden()
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "attributes" && mutation.attributeName === "aria-hidden") {
+          handleHidden()
+        }
+      }
+    })
+
+    observer.observe(wrapper, { attributes: true, attributeFilter: ["aria-hidden"] })
+    return () => observer.disconnect()
+  }, [entityId])
+
+  const {
+    data: comments = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery<Comment[]>({
+    queryKey: ["comments", entityType, entityId, limit],
+    enabled: Boolean(entityId),
+    queryFn: async () => {
+      const items = await commentsApi.getByEntity(entityType, entityId, { limit })
+      return items
+    },
+  })
+
+  const createComment = useMutation({
+    mutationFn: async (content: string) =>
+      commentsApi.create({
+        entity_id: entityId,
+        entity_type: entityType,
+        content,
+        comment_type: "internal",
+        is_internal: true,
+        author_id: currentUserId ?? undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", entityType, entityId, limit] })
+      setNewComment("")
+      toast({
+        title: "Commentaire ajouté",
+        description: "Votre commentaire a été enregistré avec succès.",
+      })
+    },
+    onError: (mutationError) => {
+      const description =
+        mutationError instanceof Error ? mutationError.message : "Impossible d'ajouter le commentaire"
+      toast({
+        title: "Erreur",
+        description,
+        variant: "destructive",
+      })
+    },
+  })
+
+  const updateComment = useMutation({
+    mutationFn: async ({ id, content }: { id: string; content: string }) =>
+      commentsApi.update(id, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", entityType, entityId, limit] })
+      setEditingCommentId(null)
+      setEditingContent("")
+      editingOriginalContentRef.current = ""
+      toast({
+        title: "Commentaire modifié",
+        description: "Votre commentaire a été mis à jour avec succès.",
+      })
+    },
+    onError: (mutationError) => {
+      const description =
+        mutationError instanceof Error ? mutationError.message : "Impossible de modifier le commentaire"
+      toast({
+        title: "Erreur",
+        description,
+        variant: "destructive",
+      })
+    },
+  })
+
+  const deleteComment = useMutation({
+    mutationFn: async (id: string) => commentsApi.delete(id),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ["comments", entityType, entityId, limit] })
+      toast({
+        title: "Commentaire supprimé",
+        description: "Votre commentaire a été supprimé avec succès.",
+        duration: 3500,
+      })
+    },
+    onError: (mutationError) => {
+      const description =
+        mutationError instanceof Error ? mutationError.message : "Impossible de supprimer le commentaire"
+      toast({
+        title: "Erreur",
+        description,
+        variant: "destructive",
+      })
+    },
+    onSettled: () => {
+      requestAnimationFrame(() => {
+        const textarea = document.getElementById(textareaId) as HTMLTextAreaElement | null
+        textarea?.focus()
+      })
+    },
+  })
+
+  const closeDeleteDialog = useCallback(() => {
+    setDeletingCommentId(null)
+  }, [])
+
+  const trimmedComment = newComment.trim()
+
+  const handleSubmit = () => {
+    if (!trimmedComment || createComment.isPending || !currentUserId) {
+      return
+    }
+    createComment.mutate(trimmedComment)
+  }
+
+  const handleStartEdit = (comment: Comment) => {
+    const content = comment.content || ""
+    editingOriginalContentRef.current = content
+    setEditingCommentId(comment.id)
+    setEditingContent(content)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null)
+    setEditingContent("")
+    editingOriginalContentRef.current = ""
+  }
+
+  const handleSaveEdit = () => {
+    const trimmed = editingContent.trim()
+    if (!editingCommentId || !trimmed || updateComment.isPending) {
+      return
+    }
+    if (trimmed === editingOriginalContentRef.current.trim()) {
+      handleCancelEdit()
+      return
+    }
+    updateComment.mutate({ id: editingCommentId, content: trimmed })
+  }
+
+  const handleDelete = () => {
+    if (!deletingCommentId || deleteComment.isPending) {
+      return
+    }
+
+    const targetId = deletingCommentId
+    blurActiveElement()
+    closeDeleteDialog()
+    deleteComment.mutate(targetId)
+  }
+
+  const handleDeleteRequest = (commentId: string) => {
+    blurActiveElement()
+    if (editingCommentId === commentId) {
+      handleCancelEdit()
+    }
+    setDeletingCommentId(commentId)
+  }
+
+  useEffect(() => {
+    if (!editingCommentId) {
+      editingTextareaRef.current = null
+      return
+    }
+
+    const frame = requestAnimationFrame(() => {
+      const textarea = editingTextareaRef.current
+      if (!textarea) return
+      textarea.focus()
+      const length = textarea.value.length
+      textarea.setSelectionRange(length, length)
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [editingCommentId])
+
+  const handleKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault()
+      event.stopPropagation()
+      handleSubmit()
+    }
+  }
+
+  const orderedComments = useMemo(() => {
+    if (!comments?.length) {
+      return []
+    }
+    return [...comments].sort((a, b) => {
+      const aDate = a.created_at ? new Date(a.created_at).getTime() : 0
+      const bDate = b.created_at ? new Date(b.created_at).getTime() : 0
+      return aDate - bDate
+    })
+  }, [comments])
+
+  const placeholderText = currentUserId ? "Écrivez votre commentaire ici..." : "Chargement des informations utilisateur…"
+  const isSubmitDisabled = !currentUserId || !trimmedComment || createComment.isPending
+
+  const evaluateScroll = useCallback(() => {
+    const element = scrollRef.current
+    if (!element) {
+      setCanScrollUp(false)
+      setCanScrollDown(false)
+      return
+    }
+
+    const { scrollTop, clientHeight, scrollHeight } = element
+    setCanScrollUp(scrollTop > 2)
+    setCanScrollDown(scrollTop + clientHeight < scrollHeight - 2)
+  }, [])
+
+  useEffect(() => {
+    evaluateScroll()
+  }, [orderedComments, evaluateScroll])
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    evaluateScroll()
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+    }
+    scrollTimeoutRef.current = setTimeout(evaluateScroll, SCROLL_DEBOUNCE_MS)
+  }, [evaluateScroll])
+
+  useEffect(() => {
+    const currentLength = orderedComments.length
+    if (currentLength === 0) {
+      previousLengthRef.current = 0
+      setLatestCommentId(null)
+      return
+    }
+
+    const lastCommentId = orderedComments[currentLength - 1]?.id ?? null
+    setLatestCommentId(lastCommentId)
+
+    const shouldScrollToBottom =
+      previousLengthRef.current !== currentLength || previousLengthRef.current === 0
+
+    previousLengthRef.current = currentLength
+
+    if (!shouldScrollToBottom) {
+      return
+    }
+
+    requestAnimationFrame(() => {
+      const element = scrollRef.current
+      if (!element) return
+      element.scrollTop = element.scrollHeight
+      evaluateScroll()
+    })
+  }, [orderedComments, evaluateScroll])
+
+  const topFadeBackground = useMemo(
+    () => (disableScrollFades ? null : createFadeGradient("top", scrollFadeColor)),
+    [scrollFadeColor, disableScrollFades],
+  )
+  const bottomFadeBackground = useMemo(
+    () => (disableScrollFades ? null : createFadeGradient("bottom", scrollFadeColor)),
+    [scrollFadeColor, disableScrollFades],
+  )
+
+  const commentsContent = useMemo(() => {
+    if (isLoading) {
+      return (
+        <div className="space-y-3">
+          <div className="h-20 rounded bg-muted animate-pulse" />
+          <div className="h-20 rounded bg-muted animate-pulse" />
+        </div>
+      )
+    }
+
+    if (isError) {
+      const message =
+        error instanceof Error ? error.message : "Impossible de charger les commentaires pour le moment."
+      return <p className="text-sm text-destructive">{message}</p>
+    }
+
+    if (!orderedComments.length) {
+      return <p className="text-sm text-muted-foreground">Aucun commentaire pour le moment.</p>
+    }
+
+    return (
+      <div className="relative max-h-[320px] overflow-hidden">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex flex-col gap-3 overflow-y-auto pr-1"
+          style={{ maxHeight: 320 }}
+        >
+          {orderedComments.map((comment) => {
+            const authorDetails = comment.users as CommentAuthorDetails | undefined
+            const authorName =
+              authorDetails &&
+              ([authorDetails.firstname, authorDetails.lastname].filter(Boolean).join(" ").trim() ||
+                authorDetails.username)
+            const displayAuthor = authorName || "Utilisateur"
+            const initials = getInitials(displayAuthor)
+            const userColor = authorDetails?.color ?? null
+            const avatarStyle = userColor ? { backgroundColor: userColor } : undefined
+            const avatarTextClass = userColor ? getAvatarTextColorClass(userColor) : ""
+            const isCurrentUserComment = Boolean(currentUserId && comment.author_id === currentUserId)
+            const formattedDate = formatDateTime(comment.created_at)
+
+            const isEditing = editingCommentId === comment.id
+
+            return (
+              <div
+                key={comment.id}
+                className={cn("flex w-full", isCurrentUserComment ? "justify-end" : "justify-start")}
+              >
+                <div
+                  className={cn(
+                    "flex w-full max-w-[95%] items-start gap-3",
+                    isCurrentUserComment ? "flex-row-reverse" : "flex-row"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold",
+                      userColor ? avatarTextClass : "bg-primary text-primary-foreground"
+                    )}
+                    style={avatarStyle}
+                    aria-hidden="true"
+                  >
+                    {initials}
+                  </div>
+                  <div
+                    className={cn(
+                      "flex min-w-0 flex-1 items-center gap-2 text-sm leading-relaxed",
+                      isCurrentUserComment ? "flex-row-reverse" : "flex-row"
+                    )}
+                  >
+                    {isEditing ? (
+                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                        <Textarea
+                          ref={(node) => {
+                            if (isEditing) {
+                              editingTextareaRef.current = node
+                            }
+                          }}
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          rows={3}
+                          className="min-w-0 flex-1 resize-none"
+                          aria-label="Modifier votre commentaire"
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") {
+                              handleCancelEdit()
+                            } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                              e.preventDefault()
+                              handleSaveEdit()
+                            }
+                          }}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                            disabled={updateComment.isPending}
+                          >
+                            Annuler
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleSaveEdit}
+                            disabled={
+                              !editingContent.trim() ||
+                              editingContent.trim() === editingOriginalContentRef.current.trim() ||
+                              updateComment.isPending
+                            }
+                          >
+                            Enregistrer
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {isCurrentUserComment ? (
+                          CONTEXT_MENU_ENABLED ? (
+                            <ContextMenu>
+                              <ContextMenuTrigger asChild>
+                                <div
+                                  className={cn(
+                                    "min-w-0 flex-1 rounded-2xl bg-muted px-4 py-2 whitespace-pre-wrap break-words transition-all data-[new=true]:animate-in data-[new=true]:fade-in-0 data-[new=true]:slide-in-from-bottom-2 cursor-context-menu",
+                                    isCurrentUserComment ? "text-right" : "text-left"
+                                  )}
+                                  data-new={comment.id === latestCommentId}
+                                >
+                                  {comment.content}
+                                </div>
+                              </ContextMenuTrigger>
+                              <ContextMenuContent>
+                                <ContextMenuItem onSelect={() => handleStartEdit(comment)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Modifier
+                                </ContextMenuItem>
+                                <ContextMenuItem onSelect={() => handleDeleteRequest(comment.id)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Supprimer
+                                </ContextMenuItem>
+                              </ContextMenuContent>
+                            </ContextMenu>
+                          ) : (
+                            <div
+                              className={cn(
+                                "min-w-0 flex-1 rounded-2xl bg-muted px-4 py-2 whitespace-pre-wrap break-words transition-all data-[new=true]:animate-in data-[new=true]:fade-in-0 data-[new=true]:slide-in-from-bottom-2",
+                                isCurrentUserComment ? "text-right" : "text-left"
+                              )}
+                              data-new={comment.id === latestCommentId}
+                            >
+                              {comment.content}
+                            </div>
+                          )
+                        ) : (
+                          <div
+                            className={cn(
+                              "min-w-0 flex-1 rounded-2xl bg-muted px-4 py-2 whitespace-pre-wrap break-words transition-all data-[new=true]:animate-in data-[new=true]:fade-in-0 data-[new=true]:slide-in-from-bottom-2",
+                              isCurrentUserComment ? "text-right" : "text-left"
+                            )}
+                            data-new={comment.id === latestCommentId}
+                          >
+                            {comment.content}
+                          </div>
+                        )}
+                        <time
+                          dateTime={comment.created_at ?? undefined}
+                          className="flex-shrink-0 whitespace-nowrap text-xs italic text-muted-foreground"
+                        >
+                          {formattedDate}
+                        </time>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        {canScrollUp && !disableScrollFades ? (
+          <div
+            className={cn(
+              "pointer-events-none absolute top-0 h-6",
+              !topFadeBackground && "inset-x-0 bg-gradient-to-b from-background/95 via-background/60 to-transparent",
+            )}
+            style={{
+              left: scrollFadeInsetLeft,
+              right: scrollFadeInsetRight,
+              backgroundImage: topFadeBackground ?? undefined,
+            }}
+          />
+        ) : null}
+        {canScrollDown && !disableScrollFades ? (
+          <div
+            className={cn(
+              "pointer-events-none absolute bottom-0 h-6",
+              !bottomFadeBackground && "inset-x-0 bg-gradient-to-t from-background/95 via-background/60 to-transparent",
+            )}
+            style={{
+              left: scrollFadeInsetLeft,
+              right: scrollFadeInsetRight,
+              backgroundImage: bottomFadeBackground ?? undefined,
+            }}
+          />
+        ) : null}
+      </div>
+    )
+  }, [
+    orderedComments,
+    currentUserId,
+    error,
+    isError,
+    isLoading,
+    handleScroll,
+    canScrollUp,
+    canScrollDown,
+    disableScrollFades,
+    scrollFadeInsetLeft,
+    scrollFadeInsetRight,
+    topFadeBackground,
+    bottomFadeBackground,
+    latestCommentId,
+    editingCommentId,
+    editingContent,
+    updateComment.isPending,
+    CONTEXT_MENU_ENABLED,
+  ])
+
+  return (
+    <>
+      <div ref={rootRef} className="space-y-4">
+        {commentsContent}
+
+        <div className="flex items-end gap-2">
+          <Textarea
+            id={textareaId}
+            value={newComment}
+            onChange={(event) => setNewComment(event.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={2}
+            placeholder={placeholderText}
+            disabled={!currentUserId || createComment.isPending}
+            className="flex-1 resize-none"
+          />
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitDisabled}
+            size="icon"
+            className="shrink-0"
+            aria-label="Envoyer le commentaire (Ctrl/Cmd + Entrée)"
+            title="Envoyer (Ctrl/Cmd + Entrée)"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <AlertDialog open={!!deletingCommentId} onOpenChange={(open) => !open && closeDeleteDialog()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le commentaire</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer ce commentaire ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={closeDeleteDialog}>
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-80"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}

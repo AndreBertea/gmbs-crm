@@ -11,11 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { MapLibreMap } from "@/components/maps/MapLibreMap"
 import { DocumentManager } from "@/components/documents/DocumentManager"
+import { CommentSection } from "@/components/shared/CommentSection"
 import { supabase } from "@/lib/supabase-client"
 import { useGeocodeSearch } from "@/hooks/useGeocodeSearch"
 import type { GeocodeSuggestion } from "@/hooks/useGeocodeSearch"
 import { useReferenceData } from "@/hooks/useReferenceData"
 import { interventionsApi } from "@/lib/api/v2"
+import { commentsApi } from "@/lib/api/v2/commentsApi"
 import type { CreateInterventionData } from "@/lib/api/v2/common/types"
 
 const INTERVENTION_DOCUMENT_KINDS = [
@@ -121,6 +123,8 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
   const [isProprietaireOpen, setIsProprietaireOpen] = useState(false)
   const [isAccompteOpen, setIsAccompteOpen] = useState(false)
   const [isDocumentsOpen, setIsDocumentsOpen] = useState(false)
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+  const [createdInterventionId, setCreatedInterventionId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!refData?.interventionStatuses || formData.statut_id) {
@@ -381,6 +385,31 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
       })
 
       const created = await interventionsApi.create(createData)
+      setCreatedInterventionId(created.id)
+
+      const trimmedInitialComment = formData.commentairesIntervention.trim()
+      if (trimmedInitialComment.length > 0) {
+        try {
+          await commentsApi.create({
+            entity_id: created.id,
+            entity_type: "intervention",
+            content: trimmedInitialComment,
+            comment_type: "internal",
+            is_internal: true,
+            author_id: currentUser?.id,
+          })
+        } catch (commentError) {
+          console.error("[LegacyInterventionForm] Impossible d'ajouter le commentaire initial", commentError)
+          alert(
+            "L'intervention a bien été créée mais le commentaire initial n'a pas pu être enregistré. Merci de l'ajouter manuellement.",
+          )
+        }
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        commentairesIntervention: "",
+      }))
       onSuccess?.(created)
     } catch (error) {
       console.error("Erreur lors de la création:", error)
@@ -1121,27 +1150,55 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
             </Card>
           </Collapsible>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <MessageSquare className="h-4 w-4" />
-                Commentaires intervention
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <Label htmlFor="commentairesIntervention" className="text-xs">
-                Commentaires
-              </Label>
-              <Textarea
-                id="commentairesIntervention"
-                value={formData.commentairesIntervention}
-                onChange={(event) => handleInputChange("commentairesIntervention", event.target.value)}
-                placeholder="Commentaires sur l'intervention..."
-                rows={4}
-                className="text-sm"
-              />
-            </CardContent>
-          </Card>
+          <Collapsible open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer pb-3 hover:bg-muted/50">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <MessageSquare className="h-4 w-4" />
+                    Commentaires
+                    {isCommentsOpen ? (
+                      <ChevronDown className="ml-auto h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="ml-auto h-4 w-4" />
+                    )}
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4 pt-0">
+                  {createdInterventionId ? (
+                    <CommentSection
+                      entityType="intervention"
+                      entityId={createdInterventionId}
+                      currentUserId={currentUser?.id}
+                    />
+                  ) : (
+                    <p className="text-xs italic text-muted-foreground">
+                      Les commentaires seront disponibles après la création de l'intervention.
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="commentairesIntervention" className="text-xs">
+                      Commentaire initial
+                    </Label>
+                    <Textarea
+                      id="commentairesIntervention"
+                      value={formData.commentairesIntervention}
+                      onChange={(event) => handleInputChange("commentairesIntervention", event.target.value)}
+                      placeholder="Commentaires sur l'intervention..."
+                      rows={4}
+                      className="text-sm"
+                      disabled={isSubmitting}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Ce commentaire sera enregistré automatiquement après la création.
+                    </p>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         </div>
       </div>
     </form>

@@ -604,6 +604,31 @@ Total : 6 tâches
 - [ ] Tests d'intégration (1j)
 - [ ] Corrections de bugs (1j)
 
+#### AUT-001 : Auth robuste pour les commentaires
+**Statut** : ⏸️ À démarrer  
+**Priorité** : P0 (bloquant traçabilité)  
+**Durée estimée** : 0.5j  
+**Complexité** : 🟡 Moyenne
+
+**Problème constaté** :
+- L’UI déclenche `useEffect` asynchrone pour charger `/api/auth/me` → `currentUserId` reste `null` pendant plusieurs centaines de ms.
+- Pendant cette fenêtre (ou en cas d’erreur réseau/session), l’utilisateur peut soumettre le formulaire → `comments.author_id` = `NULL`.
+- La traçabilité est alors perdue (viol BR-AUD-001) et les commentaires semblent anonymes.
+
+**Solutions à mettre en œuvre** :
+- Mutualiser l’obtention du user via un hook `useCurrentUser()` (cache + état `isReady`).
+- Bloquer toute soumission tant que `isReady === false` ou `user === null` (désactiver bouton + message explicite).
+- Ajouter un garde backend : refuser `author_id` vide côté Edge Function (`400 Bad Request`).
+- Ajouter un monitoring/log quand `author_id` est `NULL` pour détecter les régressions.
+
+**Checklist** :
+- [ ] Créer hook `useCurrentUser` (React Query + cache) exposant `{ user, isReady, error }`
+- [ ] Remplacer les `useEffect` individuels dans `CommentSection`, `TableView`, `ArtisanModalContent`, `InterventionEditForm`
+- [ ] Forcer `CommentSection` à désactiver le bouton + afficher un message tant que l’utilisateur n’est pas chargé
+- [ ] Edge Function `/comments` : retourner 400 si `author_id` absent ou invalide
+- [ ] Ajout logs/alerting (console Supabase) lorsque `author_id` est `NULL`
+- [ ] Tests manuels : commenter en conditions réseau lentes / session expirée → aucun commentaire sans auteur
+
 ---
 
 ## 📈 Métriques globales

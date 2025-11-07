@@ -2,20 +2,20 @@
 
 **Dernière mise à jour** : 7 novembre 2025, 10h00  
 **Sprint actuel** : Sprint 1 (En cours 🟡)  
-**Progression globale** : 3/21 tâches (14%)
+**Progression globale** : 4/22 tâches (18%)
 
 ---
 
 ## 🎯 Progression Globale
 
 ```
-Projet complet : 🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 14% (3/22 tâches)
+Projet complet : 🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 18% (4/22 tâches)
 
-Temps total : 3j / 45j consommés (6.7%)
-Reste : 42 jours
+Temps total : 4j / 43j consommés (9%)
+Reste : 39 jours
 ```
 
-**Note** : COM-001 ajoutée comme sous-tâche pré-requise pour ARC-001 (+2j)
+**Note** : COM-001 (pré-requis ARC-001) et AUT-001 (auth commentaires) ajoutées au backlog.
 
 ---
 
@@ -27,19 +27,19 @@ Reste : 42 jours
 | **Sprint 2** ⏸️ | Fonctionnalités métier | 6 | À venir | ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0% |
 | **Sprint 3** ⏸️ | Automatisations | 2 | À venir | ⬜⬜⬜⬜ 0% |
 | **Sprint 4** ⏸️ | UI/UX | 8 | À venir | ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0% |
-| **Sprint 5** ⏸️ | Tests & QA | — | À venir | ⬜⬜⬜⬜⬜ 0% |
+| **Sprint 5** ⏸️ | Tests & QA | 5 | À venir | ⬜⬜⬜⬜⬜ 0% |
 
 ---
 
 ## 📊 Sprint 1 : Fondations BDD (En cours 🟡)
 
-**Durée** : 9 jours (+2j) | **Dates** : 06/11 - 16/11 | **Progression** : 3/6 tâches (50%)
+**Durée** : 9 jours (+2j) | **Dates** : 06/11 - 16/11 | **Progression** : 4/6 tâches (67%)
 
 ```
-🟩🟩🟩🟩🟩⬜⬜⬜⬜ 50%
+🟩🟩🟩🟩🟩🟩⬜⬜⬜ 67%
 
-Temps: 3j / 9j consommés (33%)
-Reste: 6 jours
+Temps: 4j / 9j consommés (44%)
+Reste: 5 jours
 ```
 
 ### Détail des tâches
@@ -49,8 +49,8 @@ Reste: 6 jours
 | 1 | AGN-001 : Référence agence | 2j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
 | 2 | INT-001 : Champs obligatoires | 0.5j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
 | 3 | INT-003 : Droits Contexte | 0.5j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
-| 4 | DEVI-001 : ID devis | 1-2j | ⏸️ À démarrer | ⬜⬜⬜⬜⬜ 0% |
-| 5 | **COM-001 : Commentaires (pré-requis ARC-001)** | **2j** | **⏸️ À démarrer** | **⬜⬜⬜⬜⬜ 0%** |
+| 4 | DEVI-001 : ID devis | 1j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
+| 5 | **COM-001 : Commentaires (pré-requis ARC-001)** | **2j** | **🟡 En cours** | **🟩⬜⬜⬜⬜ 20%** |
 | 6 | ARC-001 : Commentaire archivage | 0.5j | ⏸️ À démarrer | ⬜⬜⬜⬜⬜ 0% |
 
 **Note** : COM-001 est une sous-tâche pré-requise pour ARC-001. Elle doit être terminée avant de commencer ARC-001.
@@ -127,24 +127,23 @@ Temps: 0j / 10j
 
 ---
 
-## 📊 Sprint 5 : Tests & QA (À venir ⏸️)
-
-**Durée** : 5 jours | **Dates** : 02/01 - 08/01
-
-```
-⬜⬜⬜⬜⬜ 0%
-
-Temps: 0j / 5j
-```
+## 📊 Sprint 5 : Tests & QA (Semaine 8)
+**Objectif** : Tests complets et corrections  
+**Durée** : 5 jours  
+**Dates** : 02/01/2026 - 08/01/2026  
+**Statut** : ⏸️ À venir
 
 ### Activités
 
-| # | Activité | Durée | État |
-|---|----------|-------|------|
-| 22 | Tests unitaires complémentaires | 1j | ⏸️ À venir |
-| 23 | Tests E2E - 5 scénarios critiques | 2j | ⏸️ À venir |
-| 24 | Tests d'intégration | 1j | ⏸️ À venir |
-| 25 | Corrections de bugs | 1j | ⏸️ À venir |
+- [ ] Tests unitaires complémentaires (1j)
+- [ ] Tests E2E - 5 scénarios critiques (2j)
+- [ ] Tests d'intégration (1j)
+- [ ] Corrections de bugs (1j)
+
+#### AUT-001 : Auth robuste pour les commentaires
+- Risque : la récupération asynchrone du current user laisse une fenêtre où `currentUserId === null` → commentaires créés sans auteur (traçabilité perdue).
+- Solutions : hook `useCurrentUser` mutualisé, UI qui désactive l’envoi tant que l’utilisateur n’est pas chargé, garde backend (400 si `author_id` manquant), logs de suivi.
+- Statut : ⏸️ À démarrer — planifié en Sprint 5 (0.5j, priorité P0).
 
 ---
 

@@ -65,12 +65,24 @@ serve(async (req: Request) => {
     );
 
     const url = new URL(req.url);
-    const pathSegments = url.pathname.split('/').filter(segment => segment);
-    const resource = pathSegments[pathSegments.length - 1];
-    const resourceId = pathSegments[pathSegments.length - 2] !== 'comments' ? pathSegments[pathSegments.length - 2] : null;
+    const pathSegments = url.pathname.split('/').filter(Boolean);
+
+    const functionNameIndex = pathSegments.findIndex((segment) => segment === 'comments');
+    const routeSegments = functionNameIndex >= 0 ? pathSegments.slice(functionNameIndex + 1) : [];
+
+    const primarySegment = routeSegments[0] ?? 'comments';
+    const secondarySegment = routeSegments[1] ?? null;
+    const tertiarySegment = routeSegments[2] ?? null;
+
+    const resource = primarySegment;
+    const resourceId =
+      secondarySegment && !['types', 'stats', 'search', 'recent'].includes(secondarySegment)
+        ? secondarySegment
+        : null;
+    const subResource = resourceId ? tertiarySegment : secondarySegment;
 
     // ===== GET /comments - Liste tous les commentaires =====
-    if (req.method === 'GET' && resource === 'comments') {
+    if (req.method === 'GET' && resource === 'comments' && !resourceId && !subResource) {
       const entityType = url.searchParams.get('entity_type');
       const entityId = url.searchParams.get('entity_id');
       const commentType = url.searchParams.get('comment_type');
@@ -91,7 +103,7 @@ serve(async (req: Request) => {
           author_id,
           created_at,
           updated_at,
-          users!author_id(id,firstname,lastname,username)
+          users!author_id(id,firstname,lastname,username,color)
         `)
         .order('created_at', { ascending: false });
 
@@ -160,7 +172,7 @@ serve(async (req: Request) => {
           author_id,
           created_at,
           updated_at,
-          users!author_id(id,firstname,lastname,username)
+          users!author_id(id,firstname,lastname,username,color)
         `)
         .eq('id', resourceId)
         .single();
@@ -179,7 +191,7 @@ serve(async (req: Request) => {
     }
 
     // ===== POST /comments - Créer un commentaire =====
-    if (req.method === 'POST' && resource === 'comments') {
+    if (req.method === 'POST' && resource === 'comments' && !resourceId && !subResource) {
       const body: CreateCommentRequest = await req.json();
 
       // Validation des données requises
@@ -220,7 +232,7 @@ serve(async (req: Request) => {
           author_id,
           created_at,
           updated_at,
-          users!author_id(id,firstname,lastname,username)
+          users!author_id(id,firstname,lastname,username,color)
         `)
         .single();
 
@@ -246,7 +258,7 @@ serve(async (req: Request) => {
     }
 
     // ===== PUT /comments/{id} - Modifier un commentaire =====
-    if (req.method === 'PUT' && resourceId && resource === 'comments') {
+    if (req.method === 'PUT' && resource === 'comments' && resourceId) {
       const body: UpdateCommentRequest = await req.json();
 
       // Validation du type de commentaire
@@ -278,7 +290,7 @@ serve(async (req: Request) => {
           author_id,
           created_at,
           updated_at,
-          users!author_id(id,firstname,lastname,username)
+          users!author_id(id,firstname,lastname,username,color)
         `)
         .single();
 
@@ -301,7 +313,7 @@ serve(async (req: Request) => {
     }
 
     // ===== DELETE /comments/{id} - Supprimer un commentaire =====
-    if (req.method === 'DELETE' && resourceId && resource === 'comments') {
+    if (req.method === 'DELETE' && resource === 'comments' && resourceId) {
       const { data, error } = await supabase
         .from('comments')
         .delete()
@@ -328,7 +340,7 @@ serve(async (req: Request) => {
     }
 
     // ===== GET /comments/types - Obtenir les types de commentaires supportés =====
-    if (req.method === 'GET' && resource === 'types') {
+    if (req.method === 'GET' && resource === 'comments' && subResource === 'types') {
       return new Response(
         JSON.stringify({
           comment_types: COMMENT_TYPES,
@@ -341,7 +353,7 @@ serve(async (req: Request) => {
     }
 
     // ===== GET /comments/stats - Statistiques des commentaires =====
-    if (req.method === 'GET' && resource === 'stats') {
+    if (req.method === 'GET' && resource === 'comments' && subResource === 'stats') {
       const entityType = url.searchParams.get('entity_type');
       const entityId = url.searchParams.get('entity_id');
 
