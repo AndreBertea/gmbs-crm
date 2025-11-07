@@ -32,7 +32,7 @@ export const commentsApi = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -56,7 +56,7 @@ export const commentsApi = {
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/comments/comments/${id}`,
       {
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -68,7 +68,7 @@ export const commentsApi = {
       `${SUPABASE_FUNCTIONS_URL}/comments/comments`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -81,7 +81,7 @@ export const commentsApi = {
       `${SUPABASE_FUNCTIONS_URL}/comments/comments/${id}`,
       {
         method: "PUT",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -94,7 +94,7 @@ export const commentsApi = {
       `${SUPABASE_FUNCTIONS_URL}/comments/comments/${id}`,
       {
         method: "DELETE",
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -110,7 +110,7 @@ export const commentsApi = {
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/comments/comments/types`,
       {
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -132,7 +132,7 @@ export const commentsApi = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -187,7 +187,7 @@ export const commentsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/comments/comments/search?${searchParams.toString()}`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -207,7 +207,7 @@ export const commentsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/comments/comments/recent?${searchParams.toString()}`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },

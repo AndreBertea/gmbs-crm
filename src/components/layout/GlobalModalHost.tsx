@@ -25,7 +25,9 @@ export function GlobalModalHost() {
   const shouldRenderIntervention =
     isOpen &&
     ((content === "intervention" && Boolean(activeId)) || content === "new-intervention")
-  const shouldRenderArtisan = isOpen && content === "artisan" && Boolean(activeId)
+  const shouldRenderArtisan =
+    isOpen &&
+    ((content === "artisan" && Boolean(activeId)) || content === "new-artisan")
 
   return (
     <Suspense fallback={null}>

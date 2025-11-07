@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useCallback, useEffect } from "react"
+import React, { useState, useCallback, useEffect, useMemo } from "react"
 import type { ReactElement } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,17 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +21,8 @@ import {
 import { useArtisans } from "@/hooks/useArtisans"
 import { useReferenceData } from "@/hooks/useReferenceData"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
+import { useArtisanViews } from "@/hooks/useArtisanViews"
+import { ArtisanViewTabs } from "@/components/artisans/ArtisanViewTabs"
 import type { Artisan as ApiArtisan } from "@/lib/supabase-api-v2"
 import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Wrench } from "lucide-react"
 
@@ -107,6 +99,7 @@ type Contact = {
   attribueA?: string
   gestionnaireInitials?: string
   gestionnaireColor?: string | null
+  gestionnaire_id?: string | null
 }
 
 type ReferenceUser = {
@@ -166,7 +159,7 @@ const dossierStatusConfig = {
 
 const mapArtisanToContact = (artisan: ApiArtisan, users: ReferenceUser[], artisanStatuses: any[]): Contact => {
   const raw = artisan as any
-  const user = users.find((u) => u.id === (raw.gestionnaire_id ?? raw.attribueA))
+  const user = users.find((u) => u.id === artisan.gestionnaire_id)
   const artisanStatus = artisanStatuses.find((s) => s.id === artisan.statut_id)
 
   const zone = Array.isArray(raw.zones) && raw.zones.length > 0 ? raw.zones[0] : raw.zoneIntervention
@@ -201,6 +194,7 @@ const mapArtisanToContact = (artisan: ApiArtisan, users: ReferenceUser[], artisa
     attribueA: user ? `${user.firstname || ""} ${user.lastname || ""}`.trim() || user.code_gestionnaire || "Non assigné" : "Non assigné",
     gestionnaireInitials,
     gestionnaireColor: user?.color || null,
+    gestionnaire_id: artisan.gestionnaire_id ?? null,
   }
 }
 
@@ -233,6 +227,7 @@ export default function ArtisansPage(): ReactElement {
     hasMore,
     totalCount,
     loadMore,
+    refresh,
   } = useArtisans({
     limit: 100,
     autoLoad: true,
@@ -245,6 +240,7 @@ export default function ArtisansPage(): ReactElement {
   } = useReferenceData()
 
   const artisanModal = useArtisanModal()
+  const { views, activeView, activeViewId, setActiveView, isReady } = useArtisanViews()
 
   const loading = artisansLoading || referenceLoading
   const error = artisansError || referenceError
@@ -254,8 +250,6 @@ export default function ArtisansPage(): ReactElement {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [artisanStatuses, setArtisanStatuses] = useState<any[]>([])
   const [metierFilter, setMetierFilter] = useState<string>("all")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingContact, setEditingContact] = useState<Contact | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
@@ -272,7 +266,34 @@ export default function ArtisansPage(): ReactElement {
     setContacts(mapped)
   }, [artisans, referenceData])
 
-  const filteredContacts = contacts.filter((contact) => {
+  useEffect(() => {
+    const handleArtisanUpdated = () => {
+      void refresh()
+    }
+
+    window.addEventListener("artisan-updated", handleArtisanUpdated)
+    return () => {
+      window.removeEventListener("artisan-updated", handleArtisanUpdated)
+    }
+  }, [refresh])
+
+  // Appliquer les filtres de la vue active
+  const viewFilteredContacts = useMemo(() => {
+    if (!isReady || !activeView) return contacts
+    
+    return contacts.filter((contact) => {
+      return activeView.filters.every((filter) => {
+        if (filter.property === "gestionnaire_id") {
+          if (filter.operator === "eq") {
+            return contact.gestionnaire_id === filter.value
+          }
+        }
+        return true
+      })
+    })
+  }, [contacts, activeView, isReady])
+
+  const filteredContacts = viewFilteredContacts.filter((contact) => {
     const matchesSearch =
       contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -282,40 +303,28 @@ export default function ArtisansPage(): ReactElement {
     return matchesSearch && matchesStatus && matchesMetier
   })
 
-  const handleAddContact = useCallback(
-    (contactData: Partial<Contact>) => {
-      const newContact: Contact = {
-        id: `ARTISAN-${String(contacts.length + 1).padStart(3, "0")}`,
-        name: contactData.name || "",
-        email: contactData.email || "",
-        phone: contactData.phone || "",
-        company: contactData.company || "",
-        position: contactData.position || "",
-        status: (contactData.status || "Disponible") as Contact["status"],
-        avatar: "/placeholder.svg",
-        lastContact: new Date().toISOString().split("T")[0],
-        createdAt: new Date().toISOString().split("T")[0],
-        notes: contactData.notes || "",
-        siret: contactData.siret || "",
-        statutJuridique: contactData.statutJuridique || "Auto-entrepreneur",
-        zoneIntervention: contactData.zoneIntervention || 75,
-        adresse: contactData.adresse || "",
-        adresseIntervention: contactData.adresseIntervention || "",
-        metiers: contactData.metiers || ["Dépannage"],
-        statutDossier: contactData.statutDossier || "Actif",
-        statutInactif: contactData.statutInactif || false,
-        attribueA: contactData.attribueA || "Non assigné",
-      }
-      setContacts((prev) => [...prev, newContact])
-      setIsDialogOpen(false)
-    },
-    [contacts.length],
-  )
+  // Calculer les compteurs par vue
+  const viewCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    views.forEach((view) => {
+      const filtered = contacts.filter((contact) => {
+        return view.filters.every((filter) => {
+          if (filter.property === "gestionnaire_id") {
+            if (filter.operator === "eq") {
+              return contact.gestionnaire_id === filter.value
+            }
+          }
+          return true
+        })
+      })
+      counts[view.id] = filtered.length
+    })
+    return counts
+  }, [contacts, views])
 
   const handleEditContact = useCallback((contact: Contact) => {
-    setEditingContact(contact)
-    setIsDialogOpen(true)
-  }, [])
+    artisanModal.open(contact.id)
+  }, [artisanModal])
 
   const handleViewDetails = useCallback((contact: Contact) => {
     artisanModal.open(contact.id)
@@ -403,39 +412,18 @@ export default function ArtisansPage(): ReactElement {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex-1 space-y-6 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Artisans</h1>
-            <p className="text-muted-foreground">Gérez vos artisans partenaires</p>
+      <div className="flex-1 space-y-4 p-6">
+        {/* Boutons de vue */}
+        {isReady && (
+          <div className="space-y-2">
+            <ArtisanViewTabs
+              views={views}
+              activeViewId={activeViewId}
+              onSelect={setActiveView}
+              artisanCounts={viewCounts}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setEditingContact(null)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nouvel Artisan
-                </Button>
-              </DialogTrigger>
-              <ArtisanDialog
-                contact={editingContact}
-                onSave={(data) => {
-                  if (editingContact) {
-                    handleEditContact({ ...editingContact, ...data })
-                  } else {
-                    handleAddContact(data)
-                  }
-                  setIsDialogOpen(false)
-                  setEditingContact(null)
-                }}
-                onCancel={() => {
-                  setIsDialogOpen(false)
-                  setEditingContact(null)
-                }}
-              />
-            </Dialog>
-          </div>
-        </div>
+        )}
 
         <Card className="border-2 shadow-sm">
           <CardContent className="p-4 bg-slate-50 dark:bg-muted/20">
@@ -744,195 +732,36 @@ export default function ArtisansPage(): ReactElement {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Bouton charger plus pour la vue liste */}
+            {hasMore && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={handleLoadMoreArtisans}
+                  disabled={loadingMore}
+                  variant="outline"
+                  className="w-full max-w-xs"
+                >
+                  {loadingMore ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-500"></div>
+                      Chargement...
+                    </>
+                  ) : (
+                    `Charger plus d'artisans (${contacts.length}${totalCount ? ` / ${totalCount}` : ""})`
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {!hasMore && contacts.length > 0 && (
+              <div className="py-4 text-center text-muted-foreground">
+                <p>Tous les artisans ont été chargés ({totalCount || contacts.length} artisans)</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
     </div>
-  )
-}
-
-function ArtisanDialog({
-  contact,
-  onSave,
-  onCancel,
-}: {
-  contact: Contact | null
-  onSave: (data: Partial<Contact>) => void
-  onCancel: () => void
-}): ReactElement {
-  const [formData, setFormData] = useState({
-    name: contact?.name || "",
-    email: contact?.email || "",
-    phone: contact?.phone || "",
-    company: contact?.company || "",
-    position: contact?.position || "",
-    status: contact?.status || "Disponible",
-    notes: contact?.notes || "",
-    siret: contact?.siret || "",
-    statutJuridique: contact?.statutJuridique || "Auto-entrepreneur",
-    zoneIntervention: contact?.zoneIntervention || 75,
-    adresse: contact?.adresse || "",
-    adresseIntervention: contact?.adresseIntervention || "",
-    metiers: contact?.metiers || ["Dépannage"],
-    statutDossier: contact?.statutDossier || "Actif",
-    statutInactif: contact?.statutInactif || false,
-    attribueA: contact?.attribueA || "Non assigné",
-  })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSave(formData)
-  }
-
-  return (
-    <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>{contact ? "Modifier l'Artisan" : "Nouvel Artisan"}</DialogTitle>
-        <DialogDescription>
-          {contact ? "Modifiez les informations de l'artisan." : "Créez un nouvel artisan."}
-        </DialogDescription>
-      </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nom complet</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="company">Raison sociale</Label>
-            <Input
-              id="company"
-              value={formData.company}
-              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Téléphone</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="siret">SIRET</Label>
-            <Input
-              id="siret"
-              value={formData.siret}
-              onChange={(e) => setFormData({ ...formData, siret: e.target.value })}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="statutJuridique">Statut juridique</Label>
-            <Select
-              value={formData.statutJuridique}
-              onValueChange={(value) => setFormData({ ...formData, statutJuridique: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Auto-entrepreneur">Auto-entrepreneur</SelectItem>
-                <SelectItem value="SARL">SARL</SelectItem>
-                <SelectItem value="EURL">EURL</SelectItem>
-                <SelectItem value="SAS">SAS</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="status">Statut</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value as Contact["status"] })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Disponible">Disponible</SelectItem>
-                <SelectItem value="En_intervention">En intervention</SelectItem>
-                <SelectItem value="Indisponible">Indisponible</SelectItem>
-                <SelectItem value="En_congé">En congé</SelectItem>
-                <SelectItem value="Inactif">Inactif</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="zoneIntervention">Zone d'intervention</Label>
-            <Input
-              id="zoneIntervention"
-              value={formData.zoneIntervention}
-              onChange={(e) => setFormData({ ...formData, zoneIntervention: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="position">Métiers</Label>
-          <Input
-            id="position"
-            value={formData.position}
-            onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-            placeholder="Séparés par des virgules"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="adresse">Adresse siège social</Label>
-          <Input
-            id="adresse"
-            value={formData.adresse}
-            onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="notes">Commentaires</Label>
-          <Textarea
-            id="notes"
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            rows={3}
-          />
-        </div>
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Annuler
-          </Button>
-          <Button type="submit">{contact ? "Modifier" : "Créer"}</Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
   )
 }

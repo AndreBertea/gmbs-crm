@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { Building, ChevronDown, ChevronRight, FileText, MessageSquare, Upload, X, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,13 +14,16 @@ import { Badge } from "@/components/ui/badge"
 import { MapLibreMap } from "@/components/maps/MapLibreMap"
 import { DocumentManager } from "@/components/documents/DocumentManager"
 import { CommentSection } from "@/components/shared/CommentSection"
+import { StatusReasonModal } from "@/components/shared/StatusReasonModal"
 import { useReferenceData } from "@/hooks/useReferenceData"
 import { useGeocodeSearch } from "@/hooks/useGeocodeSearch"
 import type { GeocodeSuggestion } from "@/hooks/useGeocodeSearch"
 import { useNearbyArtisans, type NearbyArtisan } from "@/hooks/useNearbyArtisans"
 import { interventionsApi } from "@/lib/api/v2"
+import { commentsApi } from "@/lib/api/v2/commentsApi"
 import type { Intervention, UpdateInterventionData } from "@/lib/api/v2/common/types"
 import { supabase } from "@/lib/supabase-client"
+import { getReasonTypeForTransition, type StatusReasonType } from "@/lib/comments/statusReason"
 import { cn } from "@/lib/utils"
 import { ArtisanSearchModal, type ArtisanSearchResult } from "@/components/artisans/ArtisanSearchModal"
 
@@ -71,6 +75,7 @@ export function InterventionEditForm({
   onSubmittingChange 
 }: InterventionEditFormProps) {
   const { data: refData, loading: refDataLoading } = useReferenceData()
+  const queryClient = useQueryClient()
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [geocodeError, setGeocodeError] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<{
@@ -80,6 +85,7 @@ export function InterventionEditForm({
     color: string | null
     roles: string[]
   } | null>(null)
+  const [pendingReasonType, setPendingReasonType] = useState<StatusReasonType | null>(null)
 
   // Extraire les coûts et paiements
   const costs = intervention.intervention_costs || []
@@ -157,6 +163,7 @@ export function InterventionEditForm({
     accompteClientRecu: clientPayment?.is_received || false,
     dateAccompteClientRecu: clientPayment?.payment_date?.split('T')[0] || "",
   })
+  const isStatusReasonModalOpen = pendingReasonType !== null
   const [perimeterKmInput, setPerimeterKmInput] = useState("50")
   const perimeterKmValue = useMemo(() => {
     const parsed = Number.parseFloat(perimeterKmInput)
@@ -291,6 +298,21 @@ export function InterventionEditForm({
     }
     return refData.interventionStatuses.find((status) => status.id === formData.statut_id)
   }, [formData.statut_id, refData])
+
+  const getInterventionStatusCode = useCallback(
+    (statusId?: string | null) => {
+      if (!statusId || !refData?.interventionStatuses) {
+        return null
+      }
+      return refData.interventionStatuses.find((status) => status.id === statusId)?.code ?? null
+    },
+    [refData?.interventionStatuses],
+  )
+
+  const initialStatusCode = useMemo(
+    () => getInterventionStatusCode(intervention.statut_id),
+    [intervention.statut_id, getInterventionStatusCode],
+  )
 
   const requiresDefinitiveId = useMemo(() => {
     if (!selectedStatus) {
@@ -508,35 +530,14 @@ export function InterventionEditForm({
     }
   }, [locationQuery, geocodeQuery, clearSuggestions])
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-
-    const form = event.currentTarget as HTMLFormElement
-    if (!form.checkValidity()) {
-      form.reportValidity()
-      return
-    }
-
-    const idInterValue = formData.id_inter?.trim() ?? ""
-    // Bloquer si ID vide OU provisoire (auto-XXX)
-    if (requiresDefinitiveId && (idInterValue.length === 0 || idInterValue.toLowerCase().includes("auto"))) {
-      form.reportValidity()
-      return
-    }
-
-    const datePrevueValue = formData.date_prevue?.trim() ?? ""
-    if (requiresDatePrevue && datePrevueValue.length === 0) {
-      form.reportValidity()
-      return
-    }
-
+  const executeSubmit = async (options?: { reason?: string; reasonType?: StatusReasonType }) => {
     setIsSubmitting(true)
     onSubmittingChange?.(true)
 
     try {
       const referenceAgenceValue = formData.reference_agence?.trim() ?? ""
+      const idInterValue = formData.id_inter?.trim() ?? ""
 
-      // Préparer les données pour l'API V2
       const updateData: UpdateInterventionData = {
         statut_id: formData.statut_id || undefined,
         agence_id: formData.agence_id || undefined,
@@ -563,7 +564,6 @@ export function InterventionEditForm({
         delete updateData.contexte_intervention
       }
 
-      // Nettoyer les champs undefined
       Object.keys(updateData).forEach((key) => {
         if (updateData[key as keyof UpdateInterventionData] === undefined) {
           delete updateData[key as keyof UpdateInterventionData]
@@ -583,14 +583,78 @@ export function InterventionEditForm({
         payload = await interventionsApi.getById(intervention.id)
       }
 
+      if (options?.reason && options.reasonType) {
+        try {
+          await commentsApi.create({
+            entity_id: intervention.id,
+            entity_type: "intervention",
+            content: options.reason,
+            comment_type: "internal",
+            is_internal: true,
+            author_id: currentUser?.id ?? undefined,
+            reason_type: options.reasonType,
+          })
+          await queryClient.invalidateQueries({ queryKey: ["comments", "intervention", intervention.id] })
+        } catch (commentError) {
+          console.error("[InterventionEditForm] Impossible d'ajouter le commentaire obligatoire", commentError)
+          throw new Error("Le commentaire obligatoire n'a pas pu être enregistré. Merci de réessayer.")
+        }
+      }
+
       onSuccess?.(payload)
     } catch (error) {
       console.error("Erreur lors de la mise à jour:", error)
-      alert("Erreur lors de la mise à jour de l'intervention")
+      const message = error instanceof Error ? error.message : "Erreur lors de la mise à jour de l'intervention"
+      alert(message)
     } finally {
       setIsSubmitting(false)
       onSubmittingChange?.(false)
     }
+  }
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const form = event.currentTarget
+    if (!form.checkValidity()) {
+      form.reportValidity()
+      return
+    }
+
+    const idInterValue = formData.id_inter?.trim() ?? ""
+    if (requiresDefinitiveId && (idInterValue.length === 0 || idInterValue.toLowerCase().includes("auto"))) {
+      form.reportValidity()
+      return
+    }
+
+    const datePrevueValue = formData.date_prevue?.trim() ?? ""
+    if (requiresDatePrevue && datePrevueValue.length === 0) {
+      form.reportValidity()
+      return
+    }
+
+    const nextStatusCode = getInterventionStatusCode(formData.statut_id)
+    const reasonType = getReasonTypeForTransition(initialStatusCode, nextStatusCode)
+
+    if (reasonType) {
+      setPendingReasonType(reasonType)
+      return
+    }
+
+    await executeSubmit()
+  }
+
+  const handleStatusReasonCancel = () => {
+    setPendingReasonType(null)
+  }
+
+  const handleStatusReasonConfirm = async (reason: string) => {
+    const reasonType = pendingReasonType
+    if (!reasonType) {
+      return
+    }
+    setPendingReasonType(null)
+    await executeSubmit({ reason, reasonType })
   }
 
   const isFullPage = mode === "fullpage"
@@ -1453,6 +1517,15 @@ export function InterventionEditForm({
         }}
         onSelect={handleArtisanSearchSelect}
         position={artisanSearchPosition}
+      />
+      <StatusReasonModal
+        open={isStatusReasonModalOpen}
+        type={pendingReasonType ?? "archive"}
+        onCancel={handleStatusReasonCancel}
+        onConfirm={(reason) => {
+          void handleStatusReasonConfirm(reason)
+        }}
+        isSubmitting={isSubmitting}
       />
     </form>
   )

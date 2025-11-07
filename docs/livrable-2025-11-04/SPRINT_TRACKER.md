@@ -2,7 +2,7 @@
 
 **Date de début** : 6 novembre 2025  
 **Durée estimée totale** : 7-8 semaines (5 sprints)  
-**Statut** : 🟡 En cours - Sprint 1
+**Statut** : ✅ Sprint 1 terminé - Prêt pour Sprint 2
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Sprint | Durée | Tâches | Statut | Dates | Progression |
 |--------|-------|--------|--------|-------|-------------|
-| **Sprint 1** | 9j | 6 tâches | 🟡 En cours | 06/11 - 16/11 | 4/6 (67%) ✅ |
+| **Sprint 1** | 9j | 6 tâches | ✅ Terminé | 06/11 - 16/11 | 6/6 (100%) ✅ |
 | **Sprint 2** | 16.5j | 6 tâches | ⏸️ À venir | 15/11 - 06/12 | 0/6 (0%) |
 | **Sprint 3** | 4.5j | 2 tâches | ⏸️ À venir | 09/12 - 13/12 | 0/2 (0%) |
 | **Sprint 4** | 10j | 8 tâches | ⏸️ À venir | 16/12 - 30/12 | 0/8 (0%) |
@@ -301,45 +301,53 @@ if (errors.length > 0) {
 
 ---
 
-#### 5. ARC-001 : Commentaire obligatoire à l'archivage
-**Statut** : ⏸️ À démarrer (bloqué par COM-001)  
+#### 5. ARC-001 : Commentaire obligatoire à l'archivage / fin d'intervention
+**Statut** : ✅ Terminé (07/11/2025)  
 **Priorité** : P2  
 **Durée estimée** : 0.5j (après COM-001)  
 **Complexité** : 🟢 Faible
 
 **Description** :
-- Ajouter les champs d'archivage : `archived_at`, `archived_by`, `archived_reason`
-- Pop-up modal avec commentaire obligatoire
-- Validation bloquante
-- **Dépend de COM-001** pour la gestion des commentaires
+- Lorsqu'on passe une intervention ou un artisan à `Archivée` ou `Terminée`, on bloque la sauvegarde tant qu'un commentaire obligatoire n'est pas saisi.
+- La pop-up (`StatusReasonModal`) affiche un textarea contextuel (`motif d'archivage` ou `comment s'est déroulée l'intervention ?`).
+- À la validation, le module `commentsApi` est appelé avec la métadonnée `reason_type` (`archive` | `done`) et la section commentaires se rafraîchit immédiatement avec un badge dédié.
 
 **Checklist** :
-- [ ] Migration BDD : Ajouter 3 champs d'archivage à `interventions`
-- [ ] Migration BDD : Ajouter 3 champs d'archivage à `artisans`
-- [ ] Créer composant `ArchiveModal.tsx`
-- [ ] API endpoint pour archivage
-- [ ] Menu contextuel : option "Archiver"
-- [ ] Commentaire système automatique lors de l'archivage
-- [ ] Tests unitaires
-- [ ] Documentation
+- [x] Détecter les transitions de statut vers `Archivée` / `Terminée` (artisans & interventions).
+- [x] Pop-up légère (`StatusReasonModal`) avec textarea obligatoire et libellé contextuel.
+- [x] Appel `commentsApi.create` avec payload enrichi (`reason_type = archive|done`).
+- [x] Affichage du badge dans `CommentSection` (labels + style).
+- [x] Tests manuels (archiver, terminer, annuler, recharger la page).
+- [x] Documentation (README + BR-ARC-001 si ajustement procédé).
 
 **Règle métier associée** : BR-ARC-001
 
 **Fichiers impactés** :
-- `supabase/migrations/[date]_add_archiving_fields.sql`
-- `src/components/modals/ArchiveModal.tsx` (nouveau)
-- `app/api/interventions/[id]/archive/route.ts` (nouveau)
-- `app/api/artisans/[id]/archive/route.ts` (nouveau)
+- `src/components/interventions/InterventionEditForm.tsx`
+- `src/components/ui/artisan-modal/ArtisanModalContent.tsx`
+- `src/components/shared/CommentSection.tsx`
+- `src/components/shared/StatusReasonModal.tsx` (nouveau)
+- `src/lib/api/v2/commentsApi.ts`
+- `src/lib/comments/statusReason.ts` (nouveau helper)
+- `supabase/functions/comments/index.ts` (si ajout champ type/badge)
+- `supabase/migrations/20251107120000_add_comments_reason_type.sql`
 
-**Bloquants** : 🔴 **Dépend de COM-001** (sous-tâche pré-requise)
+**Bloquants** : Aucun (COM-001 terminé)
 
 **Sous-tâches** :
-- **COM-001** : Gestion complète des commentaires (1.5-2j) ⏸️
+- **COM-001** : Gestion complète des commentaires (1.5-2j) ✅
+
+**Tests effectués** :
+- ✅ Intervention → Terminé : modal affichée, commentaire enregistré avec badge `terminé`, persistance après rechargement.
+- ✅ Intervention → Archivée : motif requis, annulation ferme la modal et n'impacte pas la fiche.
+- ✅ Artisan → Archivé : blocage tant que le motif n'est pas rempli, commentaire visible côté artisan.
+- ✅ Artisan → autre champ sans changement de statut : pas de modal.
+- ✅ Rechargement page : badge toujours affiché dans `CommentSection`.
 
 ---
 
 #### 5.1. COM-001 : Gestion complète des commentaires
-**Statut** : ⏸️ À démarrer  
+**Statut** : ✅ Terminé (07/11/2025)  
 **Priorité** : P1 (pré-requis pour ARC-001)  
 **Durée estimée** : 1.5-2j  
 **Complexité** : 🟡 Moyenne  
@@ -357,16 +365,16 @@ Implémenter la gestion complète des commentaires dans :
 2. Fiche Intervention (`InterventionEditForm.tsx`)
 
 **Checklist** :
-- [ ] Vérifier/améliorer Edge Function `/comments`
-- [ ] Créer composant réutilisable `CommentSection.tsx`
-- [ ] Améliorer `commentsApi` (GET, POST, DELETE)
-- [ ] Intégrer dans fiche artisan (remplacer ancien code `suivi_relances_docs`)
-- [ ] Intégrer dans fiche intervention (nouvelle section collapsible)
-- [ ] Afficher historique avec auteur + date + heure
-- [ ] Formulaire d'ajout avec validation
-- [ ] Rafraîchissement automatique (React Query)
-- [ ] Tests manuels (ajout, affichage, persistence)
-- [ ] Documentation
+- [x] Vérifier/améliorer Edge Function `/comments`
+- [x] Créer composant réutilisable `CommentSection.tsx`
+- [x] Améliorer `commentsApi` (GET, POST, DELETE)
+- [x] Intégrer dans fiche artisan (remplacer ancien code `suivi_relances_docs`)
+- [x] Intégrer dans fiche intervention (nouvelle section collapsible)
+- [x] Afficher historique avec auteur + date + heure
+- [x] Formulaire d'ajout avec validation
+- [x] Rafraîchissement automatique (React Query)
+- [x] Tests manuels (ajout, affichage, persistence)
+- [x] Documentation
 
 **Règle métier associée** : Pré-requis pour BR-ARC-001
 
@@ -380,17 +388,16 @@ Implémenter la gestion complète des commentaires dans :
 **Prompt pour Codex** : `docs/livrable-2025-11-04/PROMPT_COM-001.md`
 
 **Implémentation** :
-1. **Backend** : Vérifier que Edge Function retourne les commentaires avec JOIN users
-2. **Composant** : Créer `CommentSection` réutilisable (historique + formulaire)
-3. **Artisans** : Remplacer ancienne section par `CommentSection`
-4. **Interventions** : Ajouter section collapsible avec `CommentSection`
-5. **Tests** : Vérifier ajout/affichage/persistence dans les 2 pages
+1. **Backend** : Edge Function `/comments` enrichie (JOIN `profiles`, tri anté-chronologique, nettoyage des champs inutiles)
+2. **Composant** : `CommentSection` mutualisé avec affichage auteur/horodatage, formulaire contrôlé et upload en file d’attente
+3. **Artisans** : Remplacement complet de `suivi_relances_docs` par la nouvelle section + migration des anciens commentaires
+4. **Interventions** : Nouvelle section « Commentaires » (collapsible) intégrée dans `InterventionEditForm`
+5. **Tests** : Campagne manuelle (ajout/suppression/rafraîchissement) sur artisans et interventions
 
-**Résultat attendu** :
-- Ajouter un commentaire sur un artisan → Visible immédiatement avec auteur + date
-- Ajouter un commentaire sur une intervention → Visible immédiatement avec auteur + date
-- Historique complet affiché dans les 2 pages
-- Une fois terminé, ARC-001 sera simple (juste ajouter commentaire système + champs BDD)
+**Résultats** :
+- Commentaires synchronisés en temps réel avec notifications visuelles
+- Historique cohérent entre artisan et intervention
+- Base prête pour le commentaire automatique d’archivage (ARC-001)
 
 **Bloquants** : Aucun
 
@@ -400,16 +407,16 @@ Implémenter la gestion complète des commentaires dans :
 
 ```
 Total : 6 tâches (5 principales + 1 sous-tâche)
-├── ⏸️ À démarrer : 2 (33%)  ← COM-001, ARC-001
+├── ⏸️ À démarrer : 0 (0%)
 ├── 🟡 En cours : 0 (0%)
-├── ✅ Terminées : 4 (67%)  ← AGN-001 ✅ INT-001 ✅ INT-003 ✅ DEVI-001 ✅
+├── ✅ Terminées : 6 (100%)  ← AGN-001 ✅ INT-001 ✅ INT-003 ✅ DEVI-001 ✅ COM-001 ✅ ARC-001 ✅
 └── 🔴 Bloquées : 0 (0%)
 ```
 
-**Temps consommé** : 4j / 9j (44%)  
-**Temps restant** : 5j
+**Temps consommé** : 6j / 9j (67%)  
+**Temps restant** : 3j
 
-**Progression** : 🟩🟩🟩🟩🟩🟩⬜⬜⬜ 67%
+**Progression** : 🟩🟩🟩🟩🟩🟩🟩🟩🟩 100% ✅
 
 ---
 
@@ -636,31 +643,52 @@ Total : 6 tâches
 ### Progression totale
 ```
 Total : 21 tâches
-├── ⏸️ À démarrer : 17 (81%)
+├── ⏸️ À démarrer : 15 (71%)
 ├── 🟡 En cours : 0 (0%)
-├── ✅ Terminées : 4 (19%)  ← AGN-001 ✅ INT-001 ✅ INT-003 ✅ DEVI-001 ✅
+├── ✅ Terminées : 6 (29%)  ← AGN-001 ✅ INT-001 ✅ INT-003 ✅ DEVI-001 ✅ COM-001 ✅ ARC-001 ✅
 └── 🔴 Bloquées : 0 (0%)
 ```
 
-**Progression globale** : 🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 19%
+**Progression globale** : 🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 29%
 
 ### Par complexité
 ```
 🔴 Haute : 3 tâches (0 terminées)
-🟡 Moyenne : 10 tâches (2 terminées ✅✅)
+🟡 Moyenne : 10 tâches (4 terminées ✅✅✅✅)
 🟢 Faible : 8 tâches (2 terminées ✅✅)
 ```
 
 ### Temps
 ```
 Temps total estimé : 43 jours
-Temps consommé : 4 jours (9%)
-Temps restant : 39 jours
+Temps consommé : 6 jours (14%)
+Temps restant : 37 jours
 ```
 
 ---
 
 ## 📝 Notes et décisions
+
+### 07/11/2025 - Fin de journée
+- ✅ **ARC-001 TERMINÉ** : Commentaire obligatoire à l'archivage/fin d'intervention
+- ✅ `StatusReasonModal` implémenté et intégré dans artisans & interventions
+- ✅ Migration BDD `reason_type` appliquée
+- ✅ Badges "archivage" et "terminé" affichés dans `CommentSection`
+- ✅ **SPRINT 1 COMPLÉTÉ** : 6/6 tâches terminées (100%)
+- 🎯 **Prochaine étape** : Démarrer Sprint 2 (Fonctionnalités métier)
+
+### 07/11/2025 - Après-midi (15h00)
+- ✅ **COM-001 TERMINÉ** : Gestion complète des commentaires artisans & interventions
+- ✅ `CommentSection` mutualisé + Edge Function `/comments` enrichie
+- ✅ Synchronisation temps réel + refresh auto après création/suppression
+- ✅ Documentation + tests manuels croisés
+- 🎯 **Next** : Déclencher ARC-001 (ajout commentaire système + champs BDD)
+
+### 07/11/2025 - Après-midi (15h30)
+- 🔄 **ARC-001 RECADRÉ** : utilisation directe du module commentaires pour archiver / terminer
+- 🎯 Pop-up légère avec saisie obligatoire (`motif` / `retour d'intervention`)
+- 🚫 Plus de champs `archived_*` dédiés : on tag le commentaire (`archive` / `done`)
+- 🗂️ Ajouter un badge dans `CommentSection` pour identifier ces commentaires
 
 ### 07/11/2025 - Matin (11h00)
 - ✅ **DEVI-001 TERMINÉ** : ID devis pré-requis pour "Devis envoyé"
@@ -668,7 +696,7 @@ Temps restant : 39 jours
 - ✅ Création : Champ éditable uniquement si statut = "Devis envoyé"
 - ✅ Édition : Bloque changement vers "Devis envoyé" si ID provisoire/vide
 - ✅ Validation HTML5 + pattern regex `^(?!auto-).*`
-- 🎯 **Prochaine tâche** : COM-001 (Gestion commentaires - 1.5-2j)
+- 🎯 **Prochaine tâche** : ARC-001 (Commentaire archivage - 0.5j)
 
 ### 06/11/2025 - Soirée (18h00)
 - ✅ **INT-003 TERMINÉ** par Codex : Contexte éditable uniquement à la création
@@ -717,5 +745,5 @@ Temps restant : 39 jours
 
 ---
 
-**Dernière mise à jour** : 6 novembre 2025  
+**Dernière mise à jour** : 7 novembre 2025  
 **Maintenu par** : Équipe Dev GMBS CRM

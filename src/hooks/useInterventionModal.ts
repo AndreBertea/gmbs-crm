@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import useModal from "./useModal"
 import { useModalState } from "./useModalState"
+import { useArtisanModal } from "./useArtisanModal"
 import type { ModalOpenOptions } from "@/types/modal"
 
 export type InterventionModalOpenOptions = Pick<ModalOpenOptions, "layoutId" | "modeOverride" | "orderedIds" | "index" | "origin">
@@ -11,6 +12,7 @@ export type InterventionModalOpenOptions = Pick<ModalOpenOptions, "layoutId" | "
 export function useInterventionModal() {
   const modal = useModal()
   const router = useRouter()
+  const { open: openArtisanModal } = useArtisanModal()
 
   const setSourceLayoutId = useModalState((state) => state.setSourceLayoutId)
   const setOverrideMode = useModalState((state) => state.setOverrideMode)
@@ -30,7 +32,27 @@ export function useInterventionModal() {
     [modal],
   )
 
-  const close = modal.close
+  const close = useCallback(() => {
+    // Guard: only close if actually open
+    if (!modal.isOpen || modal.content !== "intervention") return
+
+    // Vérifier si le modal d'intervention vient d'un modal d'artisan AVANT de fermer
+    // car modal.close() va réinitialiser le state
+    const origin = typeof metadata?.origin === "string" ? metadata.origin : null
+    const isFromArtisan = origin?.startsWith("artisan:")
+    const artisanId = isFromArtisan ? origin?.replace("artisan:", "") : null
+
+    // Fermer le modal d'intervention
+    modal.close()
+
+    // Si le modal venait d'un artisan, rouvrir le modal d'artisan
+    if (isFromArtisan && artisanId) {
+      // Petit délai pour laisser le modal d'intervention se fermer proprement
+      setTimeout(() => {
+        openArtisanModal(artisanId)
+      }, 100)
+    }
+  }, [metadata, modal, openArtisanModal])
 
   const openAtIndex = useCallback(
     (ids: string[], index: number, options?: Omit<InterventionModalOpenOptions, "orderedIds" | "index">) => {

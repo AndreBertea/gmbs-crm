@@ -7,7 +7,21 @@
 // - Champs legacy maintenus pour la compatibilité ascendante
 // - Nouvelles interfaces pour les données liées (costs, payments, attachments)
 
-const SUPABASE_FUNCTIONS_URL = 'http://localhost:54321/functions/v1';
+const resolveFunctionsUrl = () => {
+  const explicitUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL || process.env.SUPABASE_FUNCTIONS_URL;
+  if (explicitUrl) {
+    return explicitUrl.replace(/\/$/, '');
+  }
+
+  const baseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321').replace(/\/$/, '');
+  if (baseUrl.endsWith('/rest/v1')) {
+    return baseUrl.replace(/\/rest\/v1$/, '/functions/v1');
+  }
+  return `${baseUrl}/functions/v1`;
+};
+
+const SUPABASE_FUNCTIONS_URL = resolveFunctionsUrl();
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Headers communs pour toutes les requêtes

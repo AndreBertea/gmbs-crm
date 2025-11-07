@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
 
 interface CommentSectionProps {
   entityType: "artisan" | "intervention"
@@ -503,6 +504,18 @@ export function CommentSection({
               CONTEXT_MENU_ENABLED && isCurrentUserComment ? "cursor-context-menu" : "",
             )
             const isEditing = editingCommentId === comment.id
+            const reasonBadge =
+              comment.reason_type === "archive"
+                ? {
+                    label: "archivage",
+                    className: "bg-slate-200 text-slate-700 border-slate-300",
+                  }
+                : comment.reason_type === "done"
+                  ? {
+                      label: "terminé",
+                      className: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+                    }
+                  : null
 
             const bubbleStyle = normalizedBubbleColor
               ? {
@@ -635,6 +648,17 @@ export function CommentSection({
                         >
                           {renderedBubble}
                         </div>
+                        {reasonBadge ? (
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                              reasonBadge.className,
+                            )}
+                          >
+                            {reasonBadge.label}
+                          </Badge>
+                        ) : null}
                         <time
                           dateTime={comment.created_at ?? undefined}
                           className="flex-shrink-0 whitespace-nowrap text-xs italic text-muted-foreground"

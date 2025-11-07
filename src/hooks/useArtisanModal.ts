@@ -47,6 +47,16 @@ export function useArtisanModal() {
     [open],
   )
 
+  const openNew = useCallback(() => {
+    modal.open("new-artisan", {
+      content: "new-artisan",
+      layoutId: null,
+      modeOverride: null,
+      orderedIds: [],
+      index: -1,
+    })
+  }, [modal])
+
   const goToNext = useCallback(() => {
     if (modal.content !== "artisan") return false
     if (modal.activeIndex === -1 || !modal.orderedIds.length || modal.activeIndex >= modal.orderedIds.length - 1) return false
@@ -94,7 +104,7 @@ export function useArtisanModal() {
 
   useEffect(() => {
     if (!modal.isOpen) return
-    if (modal.content !== "artisan") return
+    if (modal.content !== "artisan" && modal.content !== "new-artisan") return
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -103,15 +113,17 @@ export function useArtisanModal() {
         return
       }
 
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "k") {
-        event.preventDefault()
-        goToPrevious()
-        return
-      }
+      if (modal.content === "artisan") {
+        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "k") {
+          event.preventDefault()
+          goToPrevious()
+          return
+        }
 
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "j") {
-        event.preventDefault()
-        goToNext()
+        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "j") {
+          event.preventDefault()
+          goToNext()
+        }
       }
     }
 
@@ -138,6 +150,7 @@ export function useArtisanModal() {
     overrideMode: modal.overrideMode,
     content: modal.content,
     open,
+    openNew,
     close,
     openAtIndex,
     goToNext,

@@ -628,10 +628,12 @@ if (action === 'archive' && !archived_reason) {
 - `archived_at` : timestamptz
 - `archived_by` : uuid (user)
 - `archived_reason` : text (obligatoire)
+- `comments.reason_type` : text (`archive` | `done`) pour tracer l'origine du commentaire obligatoire
 
 **Implémentation** :
 - Pop-up modal avec textarea obligatoire
 - Validation frontend + backend
+- Insertion via `commentsApi.create` avec `reason_type` pour afficher un badge `archivage`/`terminé` dans `CommentSection`
 
 **Test unitaire** :
 ```typescript
@@ -761,4 +763,3 @@ BR-[DOMAINE]-[NUMERO]
 **Dernière mise à jour** : 5 novembre 2025  
 **Maintenu par** : Équipe Dev GMBS CRM  
 **Version** : 1.0
-

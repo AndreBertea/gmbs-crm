@@ -170,6 +170,8 @@ export interface ArtisanAttachment {
   created_by_color: string | null;
 }
 
+export type CommentReasonType = "archive" | "done";
+
 export interface Comment {
   id: string;
   entity_id: string;
@@ -178,6 +180,7 @@ export interface Comment {
   comment_type: string;
   is_internal: boolean | null;
   author_id: string | null;
+  reason_type?: CommentReasonType | null;
   created_at: string | null;
   updated_at: string | null;
   users?: {
@@ -442,12 +445,14 @@ export interface CreateCommentData {
   comment_type?: string;
   is_internal?: boolean;
   author_id?: string;
+  reason_type?: CommentReasonType | null;
 }
 
 export interface UpdateCommentData {
   content?: string;
   comment_type?: string;
   is_internal?: boolean;
+  reason_type?: CommentReasonType | null;
 }
 
 export interface CreateRoleData {

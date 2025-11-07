@@ -7,6 +7,7 @@ import { useModalState } from "@/hooks/useModalState"
 import type { ModalContent } from "@/types/modal"
 import type { ModalDisplayMode } from "@/types/modal-display"
 import { ArtisanModalContent } from "./ArtisanModalContent"
+import { NewArtisanModalContent } from "./NewArtisanModalContent"
 
 const MODE_SEQUENCE: ModalDisplayMode[] = ["halfpage", "centerpage", "fullpage"]
 
@@ -57,6 +58,10 @@ export function ArtisanModal({
   const currentContent: ModalContent = content ?? "artisan"
 
   const renderedContent = (() => {
+    if (currentContent === "new-artisan") {
+      return <NewArtisanModalContent mode={effectiveMode} onClose={onClose} onCycleMode={cycleMode} />
+    }
+
     if (currentContent !== "artisan") {
       return null
     }

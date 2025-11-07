@@ -3,11 +3,12 @@
 
 import { supabase } from "../../../supabase-client";
 
-const DEFAULT_FUNCTIONS_URL = "http://127.0.0.1:54321/functions/v1";
+const DEFAULT_FUNCTIONS_URL = "http://localhost:54321/functions/v1";
 
 /**
  * Construit l'URL des Edge Functions en prenant en compte les variations possibles
  * de NEXT_PUBLIC_SUPABASE_URL (avec ou sans /rest/v1 et slash final).
+ * Normalise également 127.0.0.1 en localhost pour éviter les problèmes CORS.
  */
 export const getSupabaseFunctionsUrl = (): string => {
   const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,7 +16,9 @@ export const getSupabaseFunctionsUrl = (): string => {
     return DEFAULT_FUNCTIONS_URL;
   }
 
-  const sanitized = rawUrl.replace(/\/$/, "");
+  // Normaliser 127.0.0.1 en localhost pour éviter les problèmes CORS
+  let sanitized = rawUrl.replace(/\/$/, "").replace(/127\.0\.0\.1/g, "localhost");
+  
   if (sanitized.endsWith("/rest/v1")) {
     return sanitized.replace(/\/rest\/v1$/, "/functions/v1");
   }
@@ -29,10 +32,12 @@ export const SUPABASE_FUNCTIONS_URL = getSupabaseFunctionsUrl();
 export const getHeaders = async () => {
   const { data: session } = await supabase.auth.getSession();
   const token = session?.session?.access_token;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   
   return {
-    Authorization: `Bearer ${token || ''}`,
-    "Content-Type": "application/json",
+    'apikey': anonKey,
+    'Authorization': `Bearer ${token || anonKey}`,
+    'Content-Type': 'application/json',
   };
 };
 
@@ -176,6 +181,13 @@ export const mapInterventionRecord = (item: any, refs: any): any => {
   const tenantId = item.tenant_id ?? item.client_id ?? null;
   const ownerId = item.owner_id ?? null;
 
+  // Extraction des artisans depuis intervention_artisans
+  const interventionArtisans = Array.isArray(item.intervention_artisans) ? item.intervention_artisans : []
+  const artisanIds = interventionArtisans.map((ia: any) => ia.artisan_id).filter(Boolean)
+
+  // Extraction des coûts depuis intervention_costs
+  const interventionCosts = Array.isArray(item.intervention_costs) ? item.intervention_costs : []
+
   return {
     ...item,
     tenant_id: tenantId,
@@ -183,8 +195,8 @@ export const mapInterventionRecord = (item: any, refs: any): any => {
     client_id: item.client_id ?? tenantId,
     status: normalizedStatus,
     statusLabel: normalizedStatus?.label ?? item.statusLabel ?? null,
-    artisans: Array.isArray(item.artisans) ? item.artisans : [],
-    costs: Array.isArray(item.costs) ? item.costs : [],
+    artisans: artisanIds, // Liste des IDs d'artisans
+    costs: interventionCosts, // Liste des coûts avec leurs labels
     payments: Array.isArray(item.payments) ? item.payments : [],
     attachments: Array.isArray(item.attachments) ? item.attachments : [],
     coutIntervention: item.cout_intervention ?? item.coutIntervention ?? null,

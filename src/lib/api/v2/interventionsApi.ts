@@ -592,9 +592,97 @@ export const interventionsApi = {
     return this.getAll({ ...params, agence: agencyId });
   },
 
-  // Récupérer les interventions par artisan
-  async getByArtisan(artisanId: string, params?: InterventionQueryParams): Promise<PaginatedResponse<Intervention>> {
-    return this.getAll({ ...params, artisan: artisanId });
+  // Récupérer les interventions par artisan via interventions_artisans
+  async getByArtisan(artisanId: string, params?: Omit<InterventionQueryParams, "artisan">): Promise<PaginatedResponse<InterventionWithStatus>> {
+    // Requête avec join sur interventions_artisans
+    // On utilise une sous-requête pour obtenir les IDs d'interventions liées à l'artisan
+    const { data: interventionArtisans, error: joinError } = await supabase
+      .from("intervention_artisans")
+      .select("intervention_id")
+      .eq("artisan_id", artisanId);
+
+    if (joinError) throw joinError;
+
+    const interventionIds = (interventionArtisans || []).map((ia) => ia.intervention_id).filter(Boolean);
+
+    if (interventionIds.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          total: 0,
+          limit: params?.limit || 5000,
+          offset: params?.offset || 0,
+          hasMore: false,
+        },
+      };
+    }
+
+    let query = supabase
+      .from("interventions")
+      .select(
+        `
+          *,
+          status:intervention_statuses(id,code,label,color,sort_order),
+          intervention_artisans (
+            artisan_id,
+            is_primary,
+            role
+          ),
+          intervention_costs (
+            id,
+            cost_type,
+            label,
+            amount,
+            currency,
+            metadata
+          )
+        `,
+        { count: "exact" }
+      )
+      .in("id", interventionIds)
+      .order("created_at", { ascending: false });
+
+    // Appliquer les autres filtres si nécessaire
+    if (params?.statut) {
+      query = query.eq("statut_id", params.statut);
+    }
+    if (params?.agence) {
+      query = query.eq("agence_id", params.agence);
+    }
+    if (params?.user) {
+      query = query.eq("assigned_user_id", params.user);
+    }
+    if (params?.startDate) {
+      query = query.gte("date", params.startDate);
+    }
+    if (params?.endDate) {
+      query = query.lte("date", params.endDate);
+    }
+
+    // Pagination
+    const limit = params?.limit || 5000;
+    const offset = params?.offset || 0;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+
+    if (error) throw error;
+
+    const refs = await getReferenceCache();
+
+    const transformedData = (data || []).map((item) =>
+      mapInterventionRecord(item, refs) as InterventionWithStatus
+    );
+
+    return {
+      data: transformedData,
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: offset + limit < (count || 0),
+      },
+    };
   },
 
   // Récupérer les interventions par période

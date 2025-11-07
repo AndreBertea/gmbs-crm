@@ -24,6 +24,8 @@ const COMMENT_TYPES = [
   'system'
 ];
 
+const REASON_TYPES = ['archive', 'done'] as const;
+
 // Types pour la validation
 interface CreateCommentRequest {
   entity_id: string;
@@ -32,12 +34,14 @@ interface CreateCommentRequest {
   comment_type?: string;
   is_internal?: boolean;
   author_id?: string;
+  reason_type?: typeof REASON_TYPES[number] | null;
 }
 
 interface UpdateCommentRequest {
   content?: string;
   comment_type?: string;
   is_internal?: boolean;
+  reason_type?: typeof REASON_TYPES[number] | null;
 }
 
 serve(async (req: Request) => {
@@ -101,6 +105,7 @@ serve(async (req: Request) => {
           comment_type,
           is_internal,
           author_id,
+          reason_type,
           created_at,
           updated_at,
           users!author_id(id,firstname,lastname,username,color)
@@ -170,6 +175,7 @@ serve(async (req: Request) => {
           comment_type,
           is_internal,
           author_id,
+          reason_type,
           created_at,
           updated_at,
           users!author_id(id,firstname,lastname,username,color)
@@ -212,6 +218,15 @@ serve(async (req: Request) => {
         );
       }
 
+      if (body.reason_type && !REASON_TYPES.includes(body.reason_type)) {
+        return new Response(
+          JSON.stringify({
+            error: `Invalid reason_type. Allowed: ${REASON_TYPES.join(', ')}`
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const { data, error } = await supabase
         .from('comments')
         .insert([{
@@ -220,7 +235,8 @@ serve(async (req: Request) => {
           content: body.content,
           comment_type: body.comment_type || 'internal',
           is_internal: body.is_internal ?? true,
-          author_id: body.author_id
+          author_id: body.author_id,
+          reason_type: body.reason_type ?? null
         }])
         .select(`
           id,
@@ -230,6 +246,7 @@ serve(async (req: Request) => {
           comment_type,
           is_internal,
           author_id,
+          reason_type,
           created_at,
           updated_at,
           users!author_id(id,firstname,lastname,username,color)
@@ -271,12 +288,22 @@ serve(async (req: Request) => {
         );
       }
 
+      if (body.reason_type && !REASON_TYPES.includes(body.reason_type)) {
+        return new Response(
+          JSON.stringify({
+            error: `Invalid reason_type. Allowed: ${REASON_TYPES.join(', ')}`
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const { data, error } = await supabase
         .from('comments')
         .update({
           content: body.content,
           comment_type: body.comment_type,
           is_internal: body.is_internal,
+          reason_type: body.reason_type ?? null,
           updated_at: new Date().toISOString()
         })
         .eq('id', resourceId)
@@ -288,6 +315,7 @@ serve(async (req: Request) => {
           comment_type,
           is_internal,
           author_id,
+          reason_type,
           created_at,
           updated_at,
           users!author_id(id,firstname,lastname,username,color)

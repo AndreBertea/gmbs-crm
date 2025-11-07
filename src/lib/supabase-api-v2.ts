@@ -16,7 +16,24 @@ import { referenceApi, type ReferenceData } from "./reference-api";
 import { supabase } from "./supabase-client";
 import type { InterventionView } from "@/types/intervention-view";
 
-const SUPABASE_FUNCTIONS_URL = "http://localhost:54321/functions/v1";
+const resolveFunctionsUrl = () => {
+  const explicitUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL || process.env.SUPABASE_FUNCTIONS_URL;
+  if (explicitUrl) {
+    // Normaliser 127.0.0.1 en localhost pour éviter les problèmes CORS
+    return explicitUrl.replace(/\/$/, "").replace(/127\.0\.0\.1/g, "localhost");
+  }
+
+  const baseUrl = env.SUPABASE_URL?.replace(/\/$/, "") ?? "http://localhost:54321";
+  // Normaliser 127.0.0.1 en localhost pour éviter les problèmes CORS
+  const normalizedUrl = baseUrl.replace(/127\.0\.0\.1/g, "localhost");
+  if (normalizedUrl.endsWith("/rest/v1")) {
+    return normalizedUrl.replace(/\/rest\/v1$/, "/functions/v1");
+  }
+  return `${normalizedUrl}/functions/v1`;
+};
+
+const SUPABASE_FUNCTIONS_URL = resolveFunctionsUrl();
 
 // Headers communs pour toutes les requêtes
 const getHeaders = () => ({
@@ -1260,7 +1277,32 @@ export const artisansApiV2 = {
   },
 
   // Récupérer un artisan par ID
-  async getById(id: string, include?: string[]): Promise<Artisan> {
+  async getById(id: string, include?: string[]): Promise<Artisan & {
+    artisan_metiers?: Array<{
+      metier_id: string
+      is_primary?: boolean | null
+      metiers?: { id: string; code: string | null; label: string | null } | null
+    }>
+    artisan_zones?: Array<{
+      zone_id: string
+      zones?: { id: string; code: string | null; label: string | null } | null
+    }>
+    artisan_attachments?: Array<{
+      id: string
+      kind: string
+      url: string
+      filename: string | null
+      created_at?: string | null
+    }>
+    artisan_absences?: Array<{
+      id: string
+      start_date: string | null
+      end_date: string | null
+      reason: string | null
+      is_confirmed?: boolean | null
+    }>
+    statutDossier?: string | null
+  }> {
     const searchParams = new URLSearchParams();
     if (include) searchParams.append("include", include.join(","));
 
@@ -1272,9 +1314,37 @@ export const artisansApiV2 = {
       headers: getHeaders(),
     });
     const raw = await handleResponse(response);
-    const refs = await getReferenceCache();
+    console.log("[artisansApiV2.getById] Raw response:", raw);
+    
+    // Si l'edge function retourne les relations directement, les préserver
     const record = raw?.data ?? raw;
-    return mapArtisanRecord(record, refs);
+    console.log("[artisansApiV2.getById] Record before mapping:", record);
+    
+    const refs = await getReferenceCache();
+    const mapped = mapArtisanRecord(record, refs);
+    console.log("[artisansApiV2.getById] Mapped result:", mapped);
+    
+    // Préserver les relations si elles existent dans la réponse brute
+    if (record && typeof record === 'object') {
+      const recordAny = record as any;
+      if (Array.isArray(recordAny.artisan_metiers)) {
+        (mapped as any).artisan_metiers = recordAny.artisan_metiers;
+      }
+      if (Array.isArray(recordAny.artisan_zones)) {
+        (mapped as any).artisan_zones = recordAny.artisan_zones;
+      }
+      if (Array.isArray(recordAny.artisan_attachments)) {
+        (mapped as any).artisan_attachments = recordAny.artisan_attachments;
+      }
+      if (Array.isArray(recordAny.artisan_absences)) {
+        (mapped as any).artisan_absences = recordAny.artisan_absences;
+      }
+      if (recordAny.statutDossier) {
+        (mapped as any).statutDossier = recordAny.statutDossier;
+      }
+    }
+    
+    return mapped;
   },
 
   // Créer un artisan

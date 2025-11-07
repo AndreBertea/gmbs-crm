@@ -1,15 +1,12 @@
 "use client"
 
-import React, { useEffect, useMemo, useRef, useState } from "react"
-import Link from "next/link"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Controller, useForm } from "react-hook-form"
 import {
   Calendar,
-  ChevronLeft,
   ChevronRight,
-  ExternalLink,
-  FileText,
+  Upload,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -26,16 +23,24 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { DocumentManager } from "@/components/documents/DocumentManager"
 import { ModeIcons } from "@/components/ui/mode-selector"
 import { CommentSection } from "@/components/shared/CommentSection"
+import { StatusReasonModal } from "@/components/shared/StatusReasonModal"
+import { ArtisanFinancesSection } from "./ArtisanFinancesSection"
+import { ArtisanInterventionsTable } from "./ArtisanInterventionsTable"
 import { useReferenceData } from "@/hooks/useReferenceData"
+import { interventionsApi } from "@/lib/api/v2"
 import { useToast } from "@/hooks/use-toast"
-import { artisansApiV2, type Artisan as ApiArtisan } from "@/lib/supabase-api-v2"
+import { artisansApi } from "@/lib/api/v2"
+import type { Artisan } from "@/lib/api/v2/common/types"
+import { commentsApi } from "@/lib/api/v2/commentsApi"
 import { supabase } from "@/lib/supabase-client"
+import { getReasonTypeForTransition, type StatusReasonType } from "@/lib/comments/statusReason"
 import { cn } from "@/lib/utils"
 import type { ModalDisplayMode } from "@/types/modal-display"
 
-type ArtisanWithRelations = ApiArtisan & {
+type ArtisanWithRelations = Artisan & {
   artisan_metiers?: Array<{
     metier_id: string
     is_primary?: boolean | null
@@ -127,49 +132,96 @@ const dossierStatusTheme: Record<string, string> = {
   bloque: "bg-slate-200 text-slate-700 border-slate-300",
 }
 
-const mapArtisanToForm = (artisan: ArtisanWithRelations): ArtisanFormValues => {
-  const metierIds = Array.isArray(artisan.artisan_metiers)
-    ? artisan.artisan_metiers
-        .map((item) => item.metier_id || item.metiers?.id || item.metiers?.code || item.metiers?.label)
-        .filter((value): value is string => Boolean(value))
-    : Array.isArray(artisan.metiers)
-      ? artisan.metiers.filter((value): value is string => Boolean(value))
-      : []
+const ARTISAN_DOCUMENT_KINDS = [
+  { kind: "kbis", label: "Extrait Kbis" },
+  { kind: "assurance", label: "Attestation d'assurance" },
+  { kind: "cni_recto_verso", label: "CNI recto/verso" },
+  { kind: "iban", label: "IBAN" },
+  { kind: "decharge_partenariat", label: "Décharge partenariat" },
+  { kind: "autre", label: "Autre document" },
+]
 
+const mapArtisanToForm = (artisan: ArtisanWithRelations | any): ArtisanFormValues => {
+  // Gérer les deux formats possibles : ArtisanWithRelations (avec relations) ou Artisan (format API)
+  const artisanAny = artisan as any
+
+  // Extraire les métiers - gérer plusieurs formats possibles
+  const metierIds = (() => {
+    // Format 1: artisan_metiers avec relations (format attendu par ArtisanWithRelations)
+    if (Array.isArray(artisanAny.artisan_metiers)) {
+      return artisanAny.artisan_metiers
+        .map((item: any) => {
+          // Priorité 1: metier_id (ID direct de la relation)
+          if (item.metier_id) return item.metier_id
+          // Priorité 2: metiers.id (ID depuis la relation jointe)
+          if (item.metiers?.id) return item.metiers.id
+          // Priorité 3: metiers.code (code du métier - à convertir en ID si nécessaire)
+          if (item.metiers?.code) {
+            // Si on a referenceData, chercher l'ID correspondant au code
+            // Sinon, retourner le code tel quel (sera géré par le formulaire)
+            return item.metiers.code
+          }
+          // Priorité 4: metiers.label (label du métier)
+          if (item.metiers?.label) return item.metiers.label
+          // Priorité 5: valeur directe si c'est une string
+          if (typeof item === 'string') return item
+          return null
+        })
+        .filter((value: any): value is string => Boolean(value))
+    }
+    
+    // Format 2: metiers comme tableau de strings (format retourné par mapArtisanRecord)
+    // Ces strings peuvent être des IDs, des codes ou des labels
+    if (Array.isArray(artisanAny.metiers)) {
+      return artisanAny.metiers.filter((value: any): value is string => Boolean(value))
+    }
+    
+    return []
+  })()
+
+  // Extraire la zone d'intervention - gérer plusieurs formats possibles
   const zoneValue = (() => {
-    if (Array.isArray(artisan.artisan_zones) && artisan.artisan_zones.length > 0) {
-      const first = artisan.artisan_zones[0]
-      return first.zone_id || first.zones?.code || first.zones?.label || ""
+    // Format 1: artisan_zones avec relations
+    if (Array.isArray(artisanAny.artisan_zones) && artisanAny.artisan_zones.length > 0) {
+      const first = artisanAny.artisan_zones[0]
+      if (first.zone_id) return String(first.zone_id)
+      if (first.zones?.code) return String(first.zones.code)
+      if (first.zones?.label) return String(first.zones.label)
     }
-    if (Array.isArray(artisan.zones) && artisan.zones.length > 0) {
-      return String(artisan.zones[0] ?? "")
+    
+    // Format 2: zones comme tableau de strings
+    if (Array.isArray(artisanAny.zones) && artisanAny.zones.length > 0) {
+      return String(artisanAny.zones[0] ?? "")
     }
-    if (artisan.zoneIntervention) {
-      return String(artisan.zoneIntervention)
+    
+    // Format 3: zoneIntervention comme valeur directe
+    if (artisanAny.zoneIntervention) {
+      return String(artisanAny.zoneIntervention)
     }
+    
     return ""
   })()
 
   return {
-    raison_sociale: artisan.raison_sociale ?? "",
-    prenom: artisan.prenom ?? "",
-    nom: artisan.nom ?? "",
-    telephone: artisan.telephone ?? "",
-    telephone2: artisan.telephone2 ?? "",
-    email: artisan.email ?? "",
-    adresse_intervention: artisan.adresse_intervention ?? "",
-    code_postal_intervention: artisan.code_postal_intervention ?? "",
-    ville_intervention: artisan.ville_intervention ?? "",
-    adresse_siege_social: artisan.adresse_siege_social ?? "",
-    code_postal_siege_social: artisan.code_postal_siege_social ?? "",
-    ville_siege_social: artisan.ville_siege_social ?? "",
-    statut_juridique: artisan.statut_juridique ?? "",
-    siret: artisan.siret ?? "",
+    raison_sociale: artisanAny.raison_sociale ?? "",
+    prenom: artisanAny.prenom ?? "",
+    nom: artisanAny.nom ?? "",
+    telephone: artisanAny.telephone ?? "",
+    telephone2: artisanAny.telephone2 ?? "",
+    email: artisanAny.email ?? "",
+    adresse_intervention: artisanAny.adresse_intervention ?? "",
+    code_postal_intervention: artisanAny.code_postal_intervention ?? "",
+    ville_intervention: artisanAny.ville_intervention ?? "",
+    adresse_siege_social: artisanAny.adresse_siege_social ?? "",
+    code_postal_siege_social: artisanAny.code_postal_siege_social ?? "",
+    ville_siege_social: artisanAny.ville_siege_social ?? "",
+    statut_juridique: artisanAny.statut_juridique ?? "",
+    siret: artisanAny.siret ?? "",
     metiers: metierIds,
     zone_intervention: zoneValue,
-    gestionnaire_id: artisan.gestionnaire_id ?? "",
-    statut_id: artisan.statut_id ?? "",
-    numero_associe: artisan.numero_associe ?? "",
+    gestionnaire_id: artisanAny.gestionnaire_id ?? "",
+    statut_id: artisanAny.statut_id ?? "",
+    numero_associe: artisanAny.numero_associe ?? "",
   }
 }
 
@@ -222,6 +274,7 @@ export function ArtisanModalContent({
     register,
     handleSubmit,
     reset,
+    getValues,
     formState: { isDirty },
   } = useForm<ArtisanFormValues>({
     defaultValues: {
@@ -251,21 +304,42 @@ export function ArtisanModalContent({
     data: artisan,
     isLoading,
     error,
-  } = useQuery<ArtisanWithRelations>({
+  } = useQuery({
     queryKey: ["artisan", artisanId],
     enabled: Boolean(artisanId),
-    queryFn: async () =>
-      (await artisansApiV2.getById(artisanId, [
-        "statuses",
-        "gestionnaires",
-        "metiers",
-        "zones",
-        "attachments",
-        "absences",
-      ])) as ArtisanWithRelations,
+    queryFn: () => artisansApi.getById(artisanId),
   })
 
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  // Charger les interventions de l'artisan pour les graphiques et le tableau
+  const {
+    data: interventionsResponse,
+  } = useQuery({
+    queryKey: ["interventions", "artisan", artisanId],
+    enabled: Boolean(artisanId),
+    queryFn: async () => {
+      const result = await interventionsApi.getByArtisan(artisanId, {
+        limit: 5000,
+      })
+      return result
+    },
+  })
+
+  const artisanInterventions = interventionsResponse?.data || []
+
+  const [currentUser, setCurrentUser] = useState<{
+    id: string
+    displayName: string
+    code: string | null
+    color: string | null
+  } | null>(null)
+  const [pendingReason, setPendingReason] = useState<{ type: StatusReasonType; values: ArtisanFormValues } | null>(null)
+  const [pendingArchive, setPendingArchive] = useState<boolean>(false)
+  const isStatusReasonModalOpen = pendingReason !== null || pendingArchive
+
+  useEffect(() => {
+    setPendingReason(null)
+    setPendingArchive(false)
+  }, [artisanId])
 
   useEffect(() => {
     let isMounted = true
@@ -283,7 +357,20 @@ export function ArtisanModalContent({
         }
         const payload = await response.json()
         if (!isMounted) return
-        setCurrentUserId(payload?.user?.id ?? null)
+        const user = payload?.user
+        if (!user) return
+
+        const first = user.firstname ?? user.prenom ?? ""
+        const last = user.lastname ?? user.nom ?? ""
+        const displayNameCandidate = [first, last].filter(Boolean).join(" ").trim()
+        const displayName = displayNameCandidate || user.username || user.email || "Vous"
+
+        setCurrentUser({
+          id: user.id,
+          displayName,
+          code: user.code_gestionnaire ?? null,
+          color: user.color ?? null,
+        })
       } catch (loadError) {
         console.warn("[ArtisanModalContent] Impossible de charger l'utilisateur courant", loadError)
       }
@@ -298,37 +385,151 @@ export function ArtisanModalContent({
 
   useEffect(() => {
     if (artisan) {
-      reset(mapArtisanToForm(artisan))
+      console.log("[ArtisanModalContent] Artisan data received:", artisan)
+      const formValues = mapArtisanToForm(artisan)
+      console.log("[ArtisanModalContent] Mapped form values:", formValues)
+      reset(formValues)
     }
   }, [artisan, reset])
 
+  const getArtisanStatusCode = useCallback(
+    (statusId?: string | null) => {
+      if (!statusId || !referenceData?.artisanStatuses) {
+        return null
+      }
+      return referenceData.artisanStatuses.find((status) => status.id === statusId)?.code ?? null
+    },
+    [referenceData?.artisanStatuses],
+  )
+
+  const previousArtisanStatusCode = useMemo(
+    () => getArtisanStatusCode(artisan?.statut_id ?? null),
+    [artisan?.statut_id, getArtisanStatusCode],
+  )
+
   const updateArtisan = useMutation({
-    mutationFn: (payload: ReturnType<typeof buildUpdatePayload>) => artisansApiV2.update(artisanId, payload),
+    mutationFn: (payload: ReturnType<typeof buildUpdatePayload>) => artisansApi.update(artisanId, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["artisan", artisanId] })
       void queryClient.invalidateQueries({ queryKey: ["artisans"] })
     },
   })
 
-  const onSubmit = (values: ArtisanFormValues) => {
+  const submitArtisanUpdate = async (
+    values: ArtisanFormValues,
+    reasonPayload?: { type: StatusReasonType; comment: string },
+  ) => {
     const payload = buildUpdatePayload(values)
-    updateArtisan.mutate(payload, {
-      onSuccess: () => {
+    try {
+      const updated = await updateArtisan.mutateAsync(payload)
+
+      if (reasonPayload) {
+        try {
+          await commentsApi.create({
+            entity_id: artisanId,
+            entity_type: "artisan",
+            content: reasonPayload.comment,
+            comment_type: "internal",
+            is_internal: true,
+            author_id: currentUser?.id ?? undefined,
+            reason_type: reasonPayload.type,
+          })
+          await queryClient.invalidateQueries({ queryKey: ["comments", "artisan", artisanId] })
+        } catch (commentError) {
+          console.error("[ArtisanModalContent] Impossible d'ajouter le commentaire obligatoire", commentError)
+          throw new Error("Le commentaire obligatoire n'a pas pu être enregistré. Merci de réessayer.")
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("artisan-updated", {
+            detail: {
+              id: artisanId,
+              data: updated,
+              optimistic: false,
+              type: "update",
+            },
+          }),
+        )
+      }
+
+      toast({
+        title: "Artisan mis à jour",
+        description: "Les informations de l'artisan ont été enregistrées.",
+      })
+      reset(values)
+    } catch (mutationError) {
+      const message = mutationError instanceof Error ? mutationError.message : "Une erreur est survenue."
+      toast({
+        title: "Échec de l'enregistrement",
+        description: message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const onSubmit = async (values: ArtisanFormValues) => {
+    const nextStatusCode = getArtisanStatusCode(values.statut_id)
+    const reasonType = getReasonTypeForTransition(previousArtisanStatusCode, nextStatusCode)
+
+    if (reasonType) {
+      setPendingReason({ type: reasonType, values })
+      return
+    }
+
+    await submitArtisanUpdate(values)
+  }
+
+  const handleReasonCancel = () => {
+    setPendingReason(null)
+  }
+
+  const handleReasonConfirm = async (comment: string) => {
+    if (pendingArchive) {
+      // Gérer l'archivage direct
+      const archiveStatusId = referenceData?.artisanStatuses?.find((status) => status.code === "ARCHIVE")?.id
+      if (!archiveStatusId) {
         toast({
-          title: "Artisan mis à jour",
-          description: "Les informations de l'artisan ont été enregistrées.",
-        })
-        reset(values)
-      },
-      onError: (mutationError) => {
-        const message = mutationError instanceof Error ? mutationError.message : "Une erreur est survenue."
-        toast({
-          title: "Échec de l'enregistrement",
-          description: message,
+          title: "Erreur",
+          description: "Impossible de trouver le statut ARCHIVE",
           variant: "destructive",
         })
-      },
-    })
+        setPendingArchive(false)
+        return
+      }
+
+      const formValues = getValues()
+      const valuesWithArchive: ArtisanFormValues = {
+        ...formValues,
+        statut_id: archiveStatusId,
+      }
+
+      setPendingArchive(false)
+      await submitArtisanUpdate(valuesWithArchive, { type: "archive", comment })
+      return
+    }
+
+    if (!pendingReason) {
+      return
+    }
+    const { type, values } = pendingReason
+    setPendingReason(null)
+    await submitArtisanUpdate(values, { type, comment })
+  }
+
+  const handleArchiveClick = () => {
+    if (!artisan) return
+    const currentStatusCode = getArtisanStatusCode(artisan.statut_id ?? null)
+    if (currentStatusCode === "ARCHIVE") {
+      // Déjà archivé, ne rien faire
+      return
+    }
+    setPendingArchive(true)
+  }
+
+  const handleArchiveCancel = () => {
+    setPendingArchive(false)
   }
 
   const displayName = useMemo(() => {
@@ -366,19 +567,15 @@ export function ArtisanModalContent({
       }))
   }, [artisan])
 
-  const attachments = useMemo(() => {
-    const raw = artisan?.artisan_attachments ?? []
-    if (!Array.isArray(raw)) return []
-    return raw
-      .filter((attachment) => Boolean(attachment?.url))
-      .map((attachment) => ({
-        id: attachment.id,
-        kind: attachment.kind ?? "document",
-        filename: attachment.filename ?? attachment.kind ?? "Document",
-        url: attachment.url,
-        createdAt: attachment.created_at ?? null,
-      }))
-  }, [artisan])
+  const attachmentCount = useMemo(() => {
+    const raw = artisan?.artisan_attachments
+    if (!Array.isArray(raw)) return 0
+    return raw.filter((attachment) => Boolean(attachment?.url)).length
+  }, [artisan?.artisan_attachments])
+
+  const handleDocumentsChange = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["artisan", artisanId] })
+  }, [artisanId, queryClient])
 
   const metierOptions = useMemo(() => {
     const base = (referenceData?.metiers ?? []).map((metier) => ({
@@ -702,7 +899,7 @@ export function ArtisanModalContent({
               <CardTitle>Commentaires</CardTitle>
             </CardHeader>
             <CardContent>
-              <CommentSection entityType="artisan" entityId={artisanId} currentUserId={currentUserId ?? undefined} />
+              <CommentSection entityType="artisan" entityId={artisanId} currentUserId={currentUser?.id ?? undefined} />
             </CardContent>
           </Card>
 
@@ -766,43 +963,31 @@ export function ArtisanModalContent({
           </Card>
         </div>
 
+        {/* Finances liées à l'artisan */}
+        <ArtisanFinancesSection interventions={artisanInterventions} artisanId={artisanId} />
+
+        {/* Interventions de l'artisan */}
+        <ArtisanInterventionsTable artisanId={artisanId} />
+
         {/* Documents en pleine largeur en bas */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Documents de l&apos;entreprise</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Upload className="h-4 w-4" />
+              Documents de l&apos;entreprise
+            </CardTitle>
             <Badge variant="outline" className="text-xs">
-              {attachments.length} document{attachments.length > 1 ? "s" : ""}
+              {attachmentCount} document{attachmentCount > 1 ? "s" : ""}
             </Badge>
           </CardHeader>
-          <CardContent>
-            {attachments.length ? (
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="flex flex-col justify-between rounded border border-muted p-3"
-                  >
-                    <div>
-                      <p className="font-medium text-sm truncate">{attachment.filename}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {attachment.kind}
-                        {attachment.createdAt ? ` • ${formatDate(attachment.createdAt)}` : ""}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="mt-3 w-full" asChild>
-                      <Link href={attachment.url} target="_blank" rel="noreferrer">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Ouvrir
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Aucun document disponible pour cet artisan.
-              </p>
-            )}
+          <CardContent className="space-y-4 pt-0">
+            <DocumentManager
+              entityType="artisan"
+              entityId={artisan?.id ?? artisanId}
+              kinds={ARTISAN_DOCUMENT_KINDS}
+              currentUser={currentUser ?? undefined}
+              onChange={handleDocumentsChange}
+            />
           </CardContent>
         </Card>
       </div>
@@ -865,65 +1050,31 @@ export function ArtisanModalContent({
             ) : null}
           </div>
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
+            {artisan ? (
+              getArtisanStatusCode(artisan.statut_id ?? null) === "ARCHIVE" ? (
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="modal-config-columns-icon-button"
-                  asChild
-                  aria-label="Ouvrir la fiche complète"
+                  variant="outline"
+                  size="sm"
+                  className="bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200 hover:text-orange-800"
+                  disabled
                 >
-                  <Link href={`/artisans/${artisanId}`} prefetch={false}>
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
+                  Archivé
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent className="modal-config-columns-tooltip">
-                Ouvrir la fiche complète (⌘⏎)
-              </TooltipContent>
-            </Tooltip>
-            {onPrevious ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="modal-config-columns-icon-button"
-                    onClick={onPrevious}
-                    disabled={!canPrevious}
-                    aria-label="Artisan précédent"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="modal-config-columns-tooltip">
-                  Artisan précédent (Ctrl+Shift+K)
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-            {onNext ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="modal-config-columns-icon-button"
-                    onClick={onNext}
-                    disabled={!canNext}
-                    aria-label="Artisan suivant"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="modal-config-columns-tooltip">
-                  Artisan suivant (Ctrl+Shift+J)
-                </TooltipContent>
-              </Tooltip>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200 hover:text-orange-800"
+                  onClick={handleArchiveClick}
+                  disabled={isSaving || isLoading}
+                >
+                  Archivé
+                </Button>
+              )
             ) : null}
           </div>
         </header>
-        <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-col">
+        <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="flex flex-1 min-h-0 flex-col">
           <div className="modal-config-columns-body overflow-y-auto">
             <div className={cn(bodyPadding, "space-y-6")}>
               {renderContent()}
@@ -938,6 +1089,15 @@ export function ArtisanModalContent({
             </Button>
           </footer>
         </form>
+        <StatusReasonModal
+          open={isStatusReasonModalOpen}
+          type={pendingArchive ? "archive" : (pendingReason?.type ?? "archive")}
+          onCancel={pendingArchive ? handleArchiveCancel : handleReasonCancel}
+          onConfirm={(reason) => {
+            void handleReasonConfirm(reason)
+          }}
+          isSubmitting={isSaving}
+        />
       </div>
     </TooltipProvider>
   )

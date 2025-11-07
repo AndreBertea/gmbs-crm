@@ -869,6 +869,11 @@ export function DocumentManager({
     handleCancelAdd,
   ]);
 
+  const showViewFilters = entityType === "intervention";
+  const controlsClassName = showViewFilters
+    ? "flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+    : "flex flex-col gap-3 md:flex-row md:items-center md:justify-end";
+
   return (
     <TooltipProvider>
     <div className="space-y-4">
@@ -893,24 +898,25 @@ export function DocumentManager({
         </div>
       )}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Tabs
-          value={view}
-          onValueChange={(value) => setView(value as ViewFilter)}
-          className="w-full md:w-auto"
-        >
-          <TabsList className="grid w-full grid-cols-4 md:w-auto">
-            <TabsTrigger value="all">Toutes</TabsTrigger>
-            <TabsTrigger value="devis">Devis</TabsTrigger>
-            <TabsTrigger value="factures">Factures</TabsTrigger>
-            <TabsTrigger value="photos">Photos</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
+      <div className={controlsClassName}>
+        {showViewFilters ? (
+          <Tabs
+            value={view}
+            onValueChange={(value) => setView(value as ViewFilter)}
+            className="w-full md:w-auto"
+          >
+            <TabsList className="grid w-full grid-cols-4 md:w-auto">
+              <TabsTrigger value="all">Toutes</TabsTrigger>
+              <TabsTrigger value="devis">Devis</TabsTrigger>
+              <TabsTrigger value="factures">Factures</TabsTrigger>
+              <TabsTrigger value="photos">Photos</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        ) : null}
         <Button
           type="button"
           onClick={handleStartAdd}
-          className="inline-flex items-center gap-2"
+          className="inline-flex w-full items-center justify-center gap-2 md:w-auto"
           disabled={isAddingRow}
         >
           <Plus className="h-4 w-4" />

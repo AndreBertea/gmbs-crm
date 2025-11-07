@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase-client"
 import { normalizeReminderIdentifier } from "@/contexts/RemindersContext"
 import { useUniversalSearch } from "@/hooks/useUniversalSearch"
 import { UniversalSearchResults } from "@/components/search/UniversalSearchResults"
+import { useArtisanModal } from "@/hooks/useArtisanModal"
 
 type ReminderFilter = "all" | "my_reminders" | "mentions"
 
@@ -35,6 +36,7 @@ type DisplayReminder = {
 export default function Topbar() {
   const pathname = usePathname()
   const { open: openModal } = useModal()
+  const artisanModal = useArtisanModal()
   const {
     reminders,
     reminderRecords,
@@ -266,6 +268,10 @@ export default function Topbar() {
   // Show New Intervention button on Interventions page
   const isInterventions = pathname?.startsWith("/interventions")
   const showNewInterventionBtn = isInterventions
+  
+  // Show New Artisan button on Artisans page
+  const isArtisans = pathname?.startsWith("/artisans")
+  const showNewArtisanBtn = isArtisans
 
   // Search reveal on hover; pin on click
   const [searchPinned, setSearchPinned] = React.useState(false)
@@ -423,7 +429,7 @@ export default function Topbar() {
   return (
     <div className="border-b bg-background shadow-sm">
       <div className="flex h-16 items-center px-4">
-        {/* Left: title + new intervention button */}
+        {/* Left: title + new intervention/artisan button */}
         <div className="flex flex-1 items-center gap-2">
           <div className="text-2xl font-semibold tracking-tight select-none">{title}</div>
           {showNewInterventionBtn ? (
@@ -434,6 +440,16 @@ export default function Topbar() {
             >
               <Plus className="mr-2 h-4 w-4" />
               Nouvelle intervention
+            </Button>
+          ) : null}
+          {showNewArtisanBtn ? (
+            <Button
+              size="sm"
+              className="ml-4"
+              onClick={() => artisanModal.openNew()}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvel artisan
             </Button>
           ) : null}
         </div>

@@ -102,23 +102,100 @@ export const artisansApi = {
     };
   },
 
-  // Récupérer un artisan par ID
-  async getById(id: string, include?: string[]): Promise<Artisan> {
-    const searchParams = new URLSearchParams();
-    if (include) searchParams.append("include", include.join(","));
+  // Récupérer un artisan par ID (comme interventionsApi.getById)
+  async getById(id: string, include?: string[]): Promise<Artisan & {
+    artisan_metiers?: Array<{
+      metier_id: string
+      is_primary?: boolean | null
+      metiers?: { id: string; code: string | null; label: string | null } | null
+    }>
+    artisan_zones?: Array<{
+      zone_id: string
+      zones?: { id: string; code: string | null; label: string | null } | null
+    }>
+    artisan_attachments?: Array<{
+      id: string
+      kind: string
+      url: string
+      filename: string | null
+      created_at?: string | null
+    }>
+    artisan_absences?: Array<{
+      id: string
+      start_date: string | null
+      end_date: string | null
+      reason: string | null
+      is_confirmed?: boolean | null
+    }>
+    status?: { id: string; code: string | null; label: string | null; color: string | null } | null
+    gestionnaire?: { id: string; firstname: string | null; lastname: string | null; username: string; code_gestionnaire: string | null; color: string | null } | null
+    statutDossier?: string | null
+  }> {
+    const { data, error } = await supabase
+      .from("artisans")
+      .select(`
+        *,
+        status:artisan_statuses(id,code,label,color),
+        gestionnaire:users!artisans_gestionnaire_id_fkey(
+          id,
+          firstname,
+          lastname,
+          username,
+          code_gestionnaire,
+          color
+        ),
+        artisan_metiers (
+          metier_id,
+          is_primary,
+          metiers (
+            id,
+            code,
+            label
+          )
+        ),
+        artisan_zones (
+          zone_id,
+          zones (
+            id,
+            code,
+            label
+          )
+        ),
+        artisan_attachments (
+          id,
+          kind,
+          url,
+          filename,
+          created_at
+        ),
+        artisan_absences (
+          id,
+          start_date,
+          end_date,
+          reason,
+          is_confirmed
+        )
+      `)
+      .eq("id", id)
+      .single();
 
-    const url = `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${id}${
-      searchParams.toString() ? `?${searchParams.toString()}` : ""
-    }`;
+    if (error) throw error;
+    if (!data) throw new Error("Artisan introuvable");
 
-    const headers = await getHeaders();
-    const response = await fetch(url, {
-      headers,
-    });
-    const raw = await handleResponse(response);
     const refs = await getReferenceCache();
-    const record = raw?.data ?? raw;
-    return mapArtisanRecord(record, refs);
+    const mapped = mapArtisanRecord(data, refs);
+    
+    // Préserver les relations brutes pour le formulaire
+    return {
+      ...mapped,
+      artisan_metiers: data.artisan_metiers || [],
+      artisan_zones: data.artisan_zones || [],
+      artisan_attachments: data.artisan_attachments || [],
+      artisan_absences: data.artisan_absences || [],
+      status: data.status || null,
+      gestionnaire: data.gestionnaire || null,
+      statutDossier: (data as any).statut_dossier || null,
+    };
   },
 
   // Créer un artisan
