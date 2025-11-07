@@ -102,8 +102,18 @@ export function NewArtisanModalContent({ mode, onClose, onCycleMode }: Props) {
   const { toast } = useToast()
   const formRef = useRef<HTMLFormElement>(null)
 
+  // Trouver le statut CANDIDAT par défaut
+  const defaultCandidatStatusId = useMemo(() => {
+    return referenceData?.artisanStatuses?.find(
+      (status) => status.code?.toUpperCase() === 'CANDIDAT'
+    )?.id || "";
+  }, [referenceData]);
+
   const { control, register, handleSubmit, reset } = useForm<NewArtisanFormValues>({
-    defaultValues: buildDefaultFormValues(),
+    defaultValues: {
+      ...buildDefaultFormValues(),
+      statut_id: defaultCandidatStatusId,
+    },
   })
 
   const createArtisan = useMutation({
@@ -118,11 +128,17 @@ export function NewArtisanModalContent({ mode, onClose, onCycleMode }: Props) {
     [referenceData],
   )
 
+  // Filtrer les statuts pour ne permettre que CANDIDAT et POTENTIEL à la création
   const statusOptions = useMemo(
-    () => (referenceData?.artisanStatuses ?? []).map((status) => ({
-      id: status.id,
-      label: status.label ?? status.code ?? status.id,
-    })),
+    () => (referenceData?.artisanStatuses ?? [])
+      .filter((status) => {
+        const code = status.code?.toUpperCase();
+        return code === 'CANDIDAT' || code === 'POTENTIEL';
+      })
+      .map((status) => ({
+        id: status.id,
+        label: status.label ?? status.code ?? status.id,
+      })),
     [referenceData],
   )
 

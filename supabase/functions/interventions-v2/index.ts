@@ -117,6 +117,51 @@ interface CreatePaymentRequest {
 
 const TERMINATED_INTERVENTION_CODES = ['TERMINE', 'INTER_TERMINEE'];
 const ARTISAN_LEVEL_CODES = ['NOVICE', 'FORMATION', 'CONFIRME', 'EXPERT'];
+const REQUIRED_DOCUMENT_KINDS = ['kbis', 'assurance', 'cni_recto_verso', 'iban', 'decharge_partenariat'];
+
+/**
+ * Calcule le statut de dossier d'un artisan basé sur ses documents
+ * 
+ * @param attachments - Liste des documents de l'artisan
+ * @param hasCompletedIntervention - Si l'artisan a effectué au moins une intervention terminée
+ * @returns Le statut de dossier calculé : 'INCOMPLET', 'À compléter', ou 'COMPLET'
+ */
+function calculateDossierStatus(
+  attachments: Array<{ kind: string }> | null | undefined,
+  hasCompletedIntervention: boolean
+): 'INCOMPLET' | 'À compléter' | 'COMPLET' {
+  if (!attachments || attachments.length === 0) {
+    // Si pas de documents et a effectué une intervention → À compléter
+    // Sinon → INCOMPLET
+    return hasCompletedIntervention ? 'À compléter' : 'INCOMPLET';
+  }
+
+  // Créer un Set des kinds présents (normaliser en lowercase pour comparaison)
+  const presentKinds = new Set(
+    attachments
+      .map(att => att.kind?.toLowerCase().trim())
+      .filter(Boolean)
+  );
+
+  // Vérifier quels documents requis sont présents
+  const requiredKindsLower = REQUIRED_DOCUMENT_KINDS.map(k => k.toLowerCase());
+  const missingDocuments = requiredKindsLower.filter(
+    kind => !presentKinds.has(kind)
+  );
+
+  // Si tous les documents requis sont présents → COMPLET
+  if (missingDocuments.length === 0) {
+    return 'COMPLET';
+  }
+
+  // Si manque 1 seul document OU artisan a effectué une intervention → À compléter
+  if (missingDocuments.length === 1 || hasCompletedIntervention) {
+    return 'À compléter';
+  }
+
+  // Sinon → INCOMPLET
+  return 'INCOMPLET';
+}
 
 type CursorDirection = 'forward' | 'backward';
 
@@ -458,9 +503,10 @@ async function handleInterventionCompletionSideEffects(
     }
 
     for (const artisanId of artisanIds) {
+      // Charger l'artisan avec son statut actuel et son statut de dossier
       const { data: artisan, error: artisanError } = await supabase
         .from('artisans')
-        .select('id, statut_id')
+        .select('id, statut_id, statut_dossier')
         .eq('id', artisanId)
         .single();
 
@@ -476,6 +522,27 @@ async function handleInterventionCompletionSideEffects(
           }),
         );
         continue;
+      }
+
+      // Charger les documents de l'artisan pour calculer le statut de dossier
+      const { data: attachments, error: attachmentsError } = await supabase
+        .from('artisan_attachments')
+        .select('kind')
+        .eq('artisan_id', artisanId)
+        .neq('kind', 'autre');
+
+      if (attachmentsError) {
+        console.error(
+          JSON.stringify({
+            level: 'error',
+            requestId,
+            interventionId: intervention.id,
+            artisanId,
+            message: 'Failed to load artisan attachments',
+            error: attachmentsError.message,
+          }),
+        );
+        // Continuer quand même, on utilisera une valeur par défaut
       }
 
       const { data: linkedInterventions, error: linkedError } = await supabase
@@ -531,8 +598,11 @@ async function handleInterventionCompletionSideEffects(
         ? statusIdToCode.get(artisan.statut_id as string) ?? null
         : null;
 
+      // Calculer le nouveau statut selon les règles
       let nextCode = currentCode;
 
+      // Règle : candidat → novice après 1 intervention terminée
+      // Règle : potentiel → novice après première intervention terminée
       if (completed >= 10) {
         nextCode = 'EXPERT';
       } else if (completed >= 6) {
@@ -540,10 +610,48 @@ async function handleInterventionCompletionSideEffects(
       } else if (completed >= 3) {
         nextCode = 'FORMATION';
       } else if (completed >= 1) {
-        nextCode = 'NOVICE';
+        // Si CANDIDAT ou POTENTIEL → NOVICE après 1 intervention
+        if (currentCode === 'CANDIDAT' || currentCode === 'POTENTIEL') {
+          nextCode = 'NOVICE';
+        } else if (currentCode === null) {
+          nextCode = 'NOVICE';
+        } else {
+          // Pour les autres statuts, on garde le statut actuel jusqu'au seuil suivant
+          nextCode = currentCode;
+        }
+      } else {
+        // Moins de 1 intervention → reste CANDIDAT ou POTENTIEL
+        nextCode = currentCode || 'CANDIDAT';
       }
 
+      // Ne pas mettre à jour si le statut n'a pas changé
       if (!nextCode || nextCode === currentCode) {
+        // Mais on peut quand même mettre à jour le statut de dossier
+        const currentDossierStatus = artisan.statut_dossier as string | null;
+        const newDossierStatus = calculateDossierStatus(attachments ?? [], completed > 0);
+        
+        if (newDossierStatus !== currentDossierStatus) {
+          const { error: dossierUpdateError } = await supabase
+            .from('artisans')
+            .update({
+              statut_dossier: newDossierStatus,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', artisanId);
+
+          if (dossierUpdateError) {
+            console.error(
+              JSON.stringify({
+                level: 'error',
+                requestId,
+                interventionId: intervention.id,
+                artisanId,
+                message: 'Failed to update artisan dossier status',
+                error: dossierUpdateError.message,
+              }),
+            );
+          }
+        }
         continue;
       }
 
@@ -552,12 +660,33 @@ async function handleInterventionCompletionSideEffects(
         continue;
       }
 
+      // Calculer le nouveau statut de dossier
+      const currentDossierStatus = artisan.statut_dossier as string | null;
+      let newDossierStatus = calculateDossierStatus(attachments ?? [], completed > 0);
+
+      // Règle ARC-002 : Si statut dossier = INCOMPLET ET statut artisan devient NOVICE → statut dossier passe à "À compléter"
+      if (
+        currentDossierStatus === 'INCOMPLET' &&
+        nextCode === 'NOVICE' &&
+        currentCode !== 'NOVICE'
+      ) {
+        newDossierStatus = 'À compléter';
+      }
+
+      // Préparer la mise à jour
+      const updateData: any = {
+        statut_id: nextStatusId,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Mettre à jour le statut de dossier seulement s'il a changé
+      if (newDossierStatus !== currentDossierStatus) {
+        updateData.statut_dossier = newDossierStatus;
+      }
+
       const { error: updateError } = await supabase
         .from('artisans')
-        .update({
-          statut_id: nextStatusId,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', artisanId);
 
       if (updateError) {
@@ -582,9 +711,11 @@ async function handleInterventionCompletionSideEffects(
           artisanId,
           previousStatus: currentCode,
           newStatus: nextCode,
+          previousDossierStatus: currentDossierStatus,
+          newDossierStatus: newDossierStatus,
           completedInterventions: completed,
           timestamp: new Date().toISOString(),
-          message: 'Artisan status updated based on completed interventions',
+          message: 'Artisan status and dossier status updated based on completed interventions',
         }),
       );
     }

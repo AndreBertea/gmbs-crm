@@ -543,6 +543,37 @@ serve(async (req: Request) => {
     if (req.method === 'POST' && resource === 'artisans' && !isUpsert) {
       const body: CreateArtisanRequest = await req.json();
 
+      // Règle : À la création, l'artisan doit être soit CANDIDAT (par défaut) soit POTENTIEL
+      // Si aucun statut n'est fourni ou si le statut fourni n'est pas autorisé, utiliser CANDIDAT
+      let finalStatutId = body.statut_id;
+      if (finalStatutId) {
+        // Vérifier que le statut fourni est CANDIDAT ou POTENTIEL
+        const { data: statusCheck } = await supabase
+          .from('artisan_statuses')
+          .select('code')
+          .eq('id', finalStatutId)
+          .single();
+        
+        const statusCode = statusCheck?.code?.toUpperCase();
+        if (statusCode !== 'CANDIDAT' && statusCode !== 'POTENTIEL') {
+          // Si le statut n'est pas autorisé, utiliser CANDIDAT par défaut
+          const { data: candidatStatus } = await supabase
+            .from('artisan_statuses')
+            .select('id')
+            .eq('code', 'CANDIDAT')
+            .single();
+          finalStatutId = candidatStatus?.id || null;
+        }
+      } else {
+        // Si aucun statut fourni, utiliser CANDIDAT par défaut
+        const { data: candidatStatus } = await supabase
+          .from('artisan_statuses')
+          .select('id')
+          .eq('code', 'CANDIDAT')
+          .single();
+        finalStatutId = candidatStatus?.id || null;
+      }
+
       // Validation des données requises
       if (!body.prenom && !body.nom) {
         return new Response(
@@ -562,7 +593,8 @@ serve(async (req: Request) => {
           raison_sociale: body.raison_sociale,
           siret: body.siret,
           statut_juridique: body.statut_juridique,
-          statut_id: body.statut_id,
+          statut_id: finalStatutId, // Utiliser finalStatutId (CANDIDAT ou POTENTIEL uniquement)
+          statut_dossier: 'INCOMPLET', // Initialiser le statut de dossier à INCOMPLET
           gestionnaire_id: body.gestionnaire_id,
           adresse_siege_social: body.adresse_siege_social,
           ville_siege_social: body.ville_siege_social,
