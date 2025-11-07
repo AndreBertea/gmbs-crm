@@ -449,7 +449,12 @@ export default function Topbar() {
             <Button variant="ghost" size="icon" onClick={onSearchIconClick} aria-label="Rechercher">
               <Search className="h-4 w-4" />
             </Button>
-            <div className={`overflow-hidden transition-all duration-200 ease-out ${searchOpen ? 'w-72 opacity-100 ml-1' : 'w-0 opacity-0 ml-0'}`}>
+            <div
+              className={cn(
+                "overflow-hidden transition-all duration-200 ease-out",
+                searchOpen ? "w-[190px] opacity-100 ml-1" : "w-0 opacity-0 ml-0",
+              )}
+            >
               <Input
                 autoComplete="off"
                 placeholder="Rechercher..."
@@ -460,6 +465,7 @@ export default function Topbar() {
                 onKeyDown={onEsc}
                 aria-expanded={shouldShowDropdown}
                 ref={searchInputRef}
+                className="h-10 w-full rounded-full border-0 bg-transparent px-5 py-2.5 text-base text-neutral-900 placeholder:text-neutral-500 shadow-[inset_1px_2px_6px_rgba(5,5,5,0.55)] transition-[box-shadow,background-color,color] duration-200 ease-out focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white dark:placeholder:text-white/60"
               />
             </div>
             {shouldShowDropdown ? (

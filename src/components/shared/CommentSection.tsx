@@ -484,12 +484,63 @@ export function CommentSection({
             const displayAuthor = authorName || "Utilisateur"
             const initials = getInitials(displayAuthor)
             const userColor = authorDetails?.color ?? null
+            const normalizedBubbleColor = normalizeHexColor(userColor)
             const avatarStyle = userColor ? { backgroundColor: userColor } : undefined
             const avatarTextClass = userColor ? getAvatarTextColorClass(userColor) : ""
             const isCurrentUserComment = Boolean(currentUserId && comment.author_id === currentUserId)
             const formattedDate = formatDateTime(comment.created_at)
-
+            const bubbleBaseClass =
+              "message-bubble inline-flex max-w-full whitespace-pre-wrap break-words rounded-full border px-4 py-2 text-left text-sm leading-relaxed shadow-inner shadow-black/10 backdrop-blur-sm transition-all data-[new=true]:animate-in data-[new=true]:fade-in-0 data-[new=true]:slide-in-from-bottom-2"
+            const bubbleToneClass = normalizedBubbleColor
+              ? ""
+              : isCurrentUserComment
+                  ? "border-primary/30 bg-primary/10 text-primary-foreground/80"
+                  : "border-border/40 bg-background/70 text-foreground"
+            const bubbleClassName = cn(
+              bubbleBaseClass,
+              bubbleToneClass,
+              normalizedBubbleColor ? avatarTextClass : "",
+              CONTEXT_MENU_ENABLED && isCurrentUserComment ? "cursor-context-menu" : "",
+            )
             const isEditing = editingCommentId === comment.id
+
+            const bubbleStyle = normalizedBubbleColor
+              ? {
+                  backgroundColor: normalizedHexToRgba(
+                    normalizedBubbleColor,
+                    isCurrentUserComment ? 0.32 : 0.2,
+                  ),
+                  borderColor: normalizedHexToRgba(normalizedBubbleColor, 0.5),
+                }
+              : undefined
+
+            const bubbleElement = (
+              <div className={bubbleClassName} style={bubbleStyle} data-new={comment.id === latestCommentId}>
+                {comment.content}
+              </div>
+            )
+
+            const renderedBubble =
+              CONTEXT_MENU_ENABLED && isCurrentUserComment ? (
+                <ContextMenu>
+                  <ContextMenuTrigger asChild>{bubbleElement}</ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onSelect={() => handleStartEdit(comment)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Modifier
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onSelect={() => handleDeleteRequest(comment.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+              ) : (
+                bubbleElement
+              )
 
             return (
               <div
@@ -514,12 +565,17 @@ export function CommentSection({
                   </div>
                   <div
                     className={cn(
-                      "flex min-w-0 flex-1 items-center gap-2 text-sm leading-relaxed",
+                      "flex min-w-0 flex-1 items-center gap-3 text-sm leading-relaxed",
                       isCurrentUserComment ? "flex-row-reverse" : "flex-row"
                     )}
                   >
                     {isEditing ? (
-                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <div
+                        className={cn(
+                          "flex min-w-0 flex-1 flex-col gap-3 rounded-3xl border border-border/40 bg-background/80 px-4 py-3 shadow-inner shadow-black/10 backdrop-blur-sm",
+                          isCurrentUserComment ? "items-end text-right" : "items-start text-left"
+                        )}
+                      >
                         <Textarea
                           ref={(node) => {
                             if (isEditing) {
@@ -529,7 +585,7 @@ export function CommentSection({
                           value={editingContent}
                           onChange={(e) => setEditingContent(e.target.value)}
                           rows={3}
-                          className="min-w-0 flex-1 resize-none"
+                          className="min-w-0 flex-1 resize-none border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
                           aria-label="Modifier votre commentaire"
                           onKeyDown={(e) => {
                             if (e.key === "Escape") {
@@ -565,63 +621,27 @@ export function CommentSection({
                         </div>
                       </div>
                     ) : (
-                      <>
-                        {isCurrentUserComment ? (
-                          CONTEXT_MENU_ENABLED ? (
-                            <ContextMenu>
-                              <ContextMenuTrigger asChild>
-                                <div
-                                  className={cn(
-                                    "min-w-0 flex-1 rounded-2xl bg-muted px-4 py-2 whitespace-pre-wrap break-words transition-all data-[new=true]:animate-in data-[new=true]:fade-in-0 data-[new=true]:slide-in-from-bottom-2 cursor-context-menu",
-                                    isCurrentUserComment ? "text-right" : "text-left"
-                                  )}
-                                  data-new={comment.id === latestCommentId}
-                                >
-                                  {comment.content}
-                                </div>
-                              </ContextMenuTrigger>
-                              <ContextMenuContent>
-                                <ContextMenuItem onSelect={() => handleStartEdit(comment)}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Modifier
-                                </ContextMenuItem>
-                                <ContextMenuItem onSelect={() => handleDeleteRequest(comment.id)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Supprimer
-                                </ContextMenuItem>
-                              </ContextMenuContent>
-                            </ContextMenu>
-                          ) : (
-                            <div
-                              className={cn(
-                                "min-w-0 flex-1 rounded-2xl bg-muted px-4 py-2 whitespace-pre-wrap break-words transition-all data-[new=true]:animate-in data-[new=true]:fade-in-0 data-[new=true]:slide-in-from-bottom-2",
-                                isCurrentUserComment ? "text-right" : "text-left"
-                              )}
-                              data-new={comment.id === latestCommentId}
-                            >
-                              {comment.content}
-                            </div>
-                          )
-                        ) : (
-                          <div
-                            className={cn(
-                              "min-w-0 flex-1 rounded-2xl bg-muted px-4 py-2 whitespace-pre-wrap break-words transition-all data-[new=true]:animate-in data-[new=true]:fade-in-0 data-[new=true]:slide-in-from-bottom-2",
-                              isCurrentUserComment ? "text-right" : "text-left"
-                            )}
-                            data-new={comment.id === latestCommentId}
-                          >
-                            {comment.content}
-                          </div>
+                      <div
+                        className={cn(
+                          "flex min-w-0 flex-1 flex-col gap-1",
+                          isCurrentUserComment ? "items-end text-right" : "items-start text-left"
                         )}
+                      >
+                        <div
+                          className={cn(
+                            "flex w-full min-w-0",
+                            isCurrentUserComment ? "justify-end" : "justify-start"
+                          )}
+                        >
+                          {renderedBubble}
+                        </div>
                         <time
                           dateTime={comment.created_at ?? undefined}
                           className="flex-shrink-0 whitespace-nowrap text-xs italic text-muted-foreground"
                         >
                           {formattedDate}
                         </time>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -683,23 +703,29 @@ export function CommentSection({
       <div ref={rootRef} className="space-y-4">
         {commentsContent}
 
-        <div className="flex items-end gap-2">
-          <Textarea
-            id={textareaId}
-            value={newComment}
-            onChange={(event) => setNewComment(event.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={2}
-            placeholder={placeholderText}
-            disabled={!currentUserId || createComment.isPending}
-            className="flex-1 resize-none"
-          />
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2 rounded-full border border-border/40 bg-background/70 px-3 py-1 shadow-inner shadow-black/10 backdrop-blur-sm">
+            <Textarea
+              id={textareaId}
+              value={newComment}
+              onChange={(event) => setNewComment(event.target.value)}
+              onKeyDown={handleKeyDown}
+              rows={1}
+              placeholder={placeholderText}
+              disabled={!currentUserId || createComment.isPending}
+              className="max-h-24 flex-1 resize-none border-none bg-transparent px-1 py-2 text-sm text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              style={{ minHeight: 0 }}
+            />
+          </div>
           <Button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitDisabled}
             size="icon"
-            className="shrink-0"
+            className={cn(
+              "h-10 w-10 shrink-0 rounded-full bg-primary text-primary-foreground shadow-inner shadow-black/20 transition",
+              "hover:bg-primary/90"
+            )}
             aria-label="Envoyer le commentaire (Ctrl/Cmd + Entrée)"
             title="Envoyer (Ctrl/Cmd + Entrée)"
           >
