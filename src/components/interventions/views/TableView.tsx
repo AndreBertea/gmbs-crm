@@ -8,6 +8,7 @@ import { AlignCenter, AlignLeft, AlignRight, Bell, Bold, ChevronDown, Eye, Filte
 
 import { useColumnResize } from "@/hooks/useColumnResize"
 import { useInterventionReminders } from "@/hooks/useInterventionReminders"
+import { isCheckStatus } from "@/lib/interventions/checkStatus"
 import { runQuery, getPropertyValue } from "@/lib/query-engine"
 import { SCROLL_CONFIG } from "@/config/interventions"
 import { toDate } from "@/lib/date-utils"
@@ -182,37 +183,68 @@ const renderCell = (
       option?.color ??
       "#3B82F6"
     const label = statusInfo?.label ?? option?.label ?? String(value)
+    
+    // DAT-001 : Vérifier si l'intervention doit afficher le statut "Check"
+    const datePrevue = (intervention as any).date_prevue ?? (intervention as any).datePrevue ?? null
+    // Utiliser le code du statut depuis l'objet status si disponible, sinon utiliser statusValue
+    const statusCode = (statusInfo?.code ?? value ?? "") as string
+    const isCheck = isCheckStatus(statusCode, datePrevue)
+    
+    // Si Check, remplacer complètement le label par "CHECK"
+    const displayLabel = isCheck ? "CHECK" : label
+    const displayColor = isCheck ? "#EF4444" : hex // Rouge pour Check
+    
     const appearance: TableColumnAppearance = style?.appearance ?? "solid"
     if (appearance === "none") {
-      return { content: label }
+      return { 
+        content: isCheck ? (
+          <span className="check-status-badge inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold text-white bg-red-500">
+            CHECK
+          </span>
+        ) : displayLabel
+      }
     }
     if (appearance === "badge") {
-      const textColor = style?.textColor ?? getReadableTextColor(hex)
+      const textColor = style?.textColor ?? getReadableTextColor(displayColor)
       return {
         content: (
           <span
-            className="inline-flex items-center justify-center rounded-full px-2 py-0.5 leading-tight"
-            style={{ backgroundColor: hex, color: textColor }}
+            className={cn(
+              "inline-flex items-center justify-center rounded-full px-2 py-0.5 leading-tight",
+              isCheck && "check-status-badge"
+            )}
+            style={{ backgroundColor: displayColor, color: textColor }}
           >
-            {label}
+            {displayLabel}
           </span>
         ),
         cellClassName: "font-medium",
       }
     }
-    const pastel = toSoftColor(hex, themeMode)
+    const pastel = toSoftColor(displayColor, themeMode)
     return {
-      content: label,
-      backgroundColor: pastel,
+      content: isCheck ? (
+        <span className="check-status-badge inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold text-white bg-red-500">
+          CHECK
+        </span>
+      ) : displayLabel,
+      backgroundColor: isCheck ? "#FEE2E2" : pastel, // Fond rouge clair si Check
       defaultTextColor: themeMode === "dark" ? "#F3F4F6" : "#111827",
       cellClassName: "font-medium",
-      // 🆕 En mode gradient, utiliser la couleur du statut
-      statusGradient: `linear-gradient(
-        to bottom,
-        color-mix(in oklab, ${hex}, white 20%) 0%,
-        ${hex} 50%,
-        color-mix(in oklab, ${hex}, black 20%) 100%
-      )`,
+      // 🆕 En mode gradient, utiliser la couleur du statut (rouge si Check)
+      statusGradient: isCheck 
+        ? `linear-gradient(
+          to bottom,
+          color-mix(in oklab, #EF4444, white 20%) 0%,
+          #EF4444 50%,
+          color-mix(in oklab, #EF4444, black 20%) 100%
+        )`
+        : `linear-gradient(
+          to bottom,
+          color-mix(in oklab, ${hex}, white 20%) 0%,
+          ${hex} 50%,
+          color-mix(in oklab, ${hex}, black 20%) 100%
+        )`,
     }
   }
 

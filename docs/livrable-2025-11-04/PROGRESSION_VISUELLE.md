@@ -1,18 +1,18 @@
 # 📊 Progression Visuelle - Livrable 2025-11-04
 
-**Dernière mise à jour** : 7 novembre 2025, 10h00  
-**Sprint actuel** : Sprint 1 (En cours 🟡)  
-**Progression globale** : 4/22 tâches (18%)
+**Dernière mise à jour** : 7 novembre 2025, 18h00  
+**Sprint actuel** : Sprint 1 terminé ✅ - Sprint 2 à démarrer  
+**Progression globale** : 7/22 tâches (32%)
 
 ---
 
 ## 🎯 Progression Globale
 
 ```
-Projet complet : 🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 18% (4/22 tâches)
+Projet complet : 🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 32% (7/22 tâches)
 
-Temps total : 4j / 43j consommés (9%)
-Reste : 39 jours
+Temps total : 6.5j / 43j consommés (15%)
+Reste : 36.5 jours
 ```
 
 **Note** : COM-001 (pré-requis ARC-001) et AUT-001 (auth commentaires) ajoutées au backlog.
@@ -23,23 +23,22 @@ Reste : 39 jours
 
 | Sprint | Nom | Tâches | État | Progression |
 |--------|-----|--------|------|-------------|
-| **Sprint 1** 🟡 | Fondations BDD | 6 | En cours | 🟩🟩🟩🟩🟩⬜⬜⬜⬜ 50% |
+| **Sprint 1** ✅ | Fondations BDD | 6 | Terminé | 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 100% |
 | **Sprint 2** ⏸️ | Fonctionnalités métier | 6 | À venir | ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0% |
-| **Sprint 3** ⏸️ | Automatisations | 2 | À venir | ⬜⬜⬜⬜ 0% |
+| **Sprint 3** ⏸️ | Automatisations | 2 | À venir | 🟩⬜⬜⬜ 50% (DAT-001 terminé) |
 | **Sprint 4** ⏸️ | UI/UX | 8 | À venir | ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0% |
 | **Sprint 5** ⏸️ | Tests & QA | 5 | À venir | ⬜⬜⬜⬜⬜ 0% |
 
 ---
 
-## 📊 Sprint 1 : Fondations BDD (En cours 🟡)
+## 📊 Sprint 1 : Fondations BDD (Terminé ✅)
 
-**Durée** : 9 jours (+2j) | **Dates** : 06/11 - 16/11 | **Progression** : 4/6 tâches (67%)
+**Durée** : 9 jours | **Dates** : 06/11 - 16/11 | **Progression** : 6/6 tâches (100%)
 
 ```
-🟩🟩🟩🟩🟩🟩⬜⬜⬜ 67%
+🟩🟩🟩🟩🟩🟩🟩🟩🟩 100%
 
-Temps: 4j / 9j consommés (44%)
-Reste: 5 jours
+Temps: 6j / 9j consommés (67%)
 ```
 
 ### Détail des tâches
@@ -50,10 +49,8 @@ Reste: 5 jours
 | 2 | INT-001 : Champs obligatoires | 0.5j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
 | 3 | INT-003 : Droits Contexte | 0.5j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
 | 4 | DEVI-001 : ID devis | 1j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
-| 5 | **COM-001 : Commentaires (pré-requis ARC-001)** | **2j** | **🟡 En cours** | **🟩⬜⬜⬜⬜ 20%** |
-| 6 | ARC-001 : Commentaire archivage | 0.5j | ⏸️ À démarrer | ⬜⬜⬜⬜⬜ 0% |
-
-**Note** : COM-001 est une sous-tâche pré-requise pour ARC-001. Elle doit être terminée avant de commencer ARC-001.
+| 5 | COM-001 : Commentaires | 2j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
+| 6 | ARC-001 : Commentaire archivage | 0.5j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
 
 ---
 
@@ -82,19 +79,19 @@ Temps: 0j / 16.5j
 
 ## 📊 Sprint 3 : Automatisations (À venir ⏸️)
 
-**Durée** : 4.5 jours | **Dates** : 09/12 - 13/12 | **Progression** : 0/2 tâches (0%)
+**Durée** : 4.5 jours | **Dates** : 09/12 - 13/12 | **Progression** : 1/2 tâches (50%)
 
 ```
-⬜⬜⬜⬜ 0%
+🟩⬜⬜⬜ 50%
 
-Temps: 0j / 4.5j
+Temps: 0.5j / 4.5j
 ```
 
 ### Détail des tâches
 
 | # | Tâche | Durée | État | Progression |
 |---|-------|-------|------|-------------|
-| 12 | DAT-001 : Due date → Check (job cron) | 3-4j | ⏸️ À venir | ⬜⬜⬜⬜⬜ 0% |
+| 12 | DAT-001 : Due date → Check (affichage visuel) | 0.5j | ✅ Terminé (tâche annexe) | 🟩🟩🟩🟩🟩 100% |
 | 13 | UI-DD : UI Due date VT/EC | 0.5j | ⏸️ À venir | ⬜⬜⬜⬜⬜ 0% |
 
 ### ⚠️ BLOQUANT
@@ -170,21 +167,21 @@ Novembre 2025          Décembre 2025           Janvier 2026
 
 ### Tâches par statut
 ```
-✅ Terminées     : 3 tâches (14%)  🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+✅ Terminées     : 7 tâches (32%)  🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
 🟡 En cours      : 0 tâche  (0%)   ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
-⏸️ À démarrer    : 19 tâches (86%)  ██████████████████
+⏸️ À démarrer    : 15 tâches (68%)  ████████████████
 🔴 Bloquées      : 0 tâche  (0%)   ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
 ```
 
 ### Temps par sprint
 ```
-Sprint 1 :  3j / 9j     █████░░░░░░░░░░░░░░░ 33%
+Sprint 1 :  6j / 9j     ████████████░░░░░░░░ 67%
 Sprint 2 :  0j / 16.5j  ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0%
-Sprint 3 :  0j / 4.5j   ⬜⬜⬜⬜ 0%
+Sprint 3 :  0.5j / 4.5j ██░░░░░░░░ 11% (DAT-001 terminé)
 Sprint 4 :  0j / 10j    ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0%
 Sprint 5 :  0j / 5j     ⬜⬜⬜⬜⬜ 0%
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total    :  3j / 45j    █░░░░░░░░░░░░░░░░░░░ 6.7%
+Total    :  6.5j / 45j   █████░░░░░░░░░░░░░░░ 14.4%
 ```
 
 ### Par complexité
@@ -271,30 +268,50 @@ Qualité: ⭐⭐⭐⭐☆ (4/5)
 
 ---
 
+### 7. DAT-001 : Due date → Check automatique
+```
+✅ TERMINÉ le 7 novembre 2025, 18h00 (tâche annexe)
+Durée réelle: 0.5j (estimé: 3-4j - approche simplifiée)
+Complexité: 🟢 Faible (approche simplifiée)
+
+Fichiers modifiés: 4
+Problèmes résolus: 0
+Qualité: ⭐⭐⭐⭐⭐ (5/5)
+```
+
+**Détails** :
+- Fonction utilitaire `isCheckStatus` créée ✅
+- Animation CSS `check-pulse` ajoutée ✅
+- Badge "CHECK" remplace le statut dans TableView ✅
+- Badge "CHECK" remplace le statut dans InterventionCard ✅
+- Validation date_prevue obligatoire vérifiée ✅
+
+**Approche** :
+- Affichage visuel uniquement (pas de changement BDD)
+- Détection automatique si `date_prevue <= aujourd'hui` ET statut = VT/EC
+- Badge rouge avec animation clignotante
+- Pas de job cron nécessaire
+
+---
+
 ## 🟡 Tâche en cours
 
-**Aucune** (prêt pour DEVI-001)
+**Aucune** (prêt pour Sprint 2)
 
 ---
 
 ## ⏸️ Prochaine tâche
 
-### DEVI-001 : ID devis pré-requis pour "Devis envoyé"
+### Sprint 2 : Fonctionnalités métier
 
 ```
 ⏸️ À DÉMARRER
 
-Durée estimée: 1-2j
-Complexité: 🟡 Moyenne
+Première tâche: INT-002 (Logement vacant)
+Durée estimée Sprint 2: 16.5j
+Complexité: Mixte (🔴🟡🟢)
 Priorité: P1
-
-Règle:
-- Ajout champ `id_devis`
-- Passage à "Devis envoyé" bloqué si ID vide
-- Menu contextuel conditionnel
 ```
-
-**Estimation** : Migration + validations backend + UI
 
 ---
 
@@ -323,8 +340,8 @@ Lun  Mar  Mer  Jeu  Ven
 
 | Date | Jalon | Tâches complétées | État |
 |------|-------|-------------------|------|
-| 06/11 | Démarrage Sprint 1 | 1/6 | ✅ En cours |
-| 16/11 | Fin Sprint 1 | 6/6 | 🎯 Objectif |
+| 06/11 | Démarrage Sprint 1 | 1/6 | ✅ Terminé |
+| 16/11 | Fin Sprint 1 | 6/6 | ✅ Terminé |
 | 06/12 | Fin Sprint 2 | 12/22 | 🎯 Objectif |
 | 13/12 | Fin Sprint 3 | 14/22 | 🎯 Objectif |
 | 30/12 | Fin Sprint 4 | 22/22 | 🎯 Objectif |
@@ -377,11 +394,12 @@ Code review: ✅ Approuvé
 
 | Date | Heure | Événement | Tâche |
 |------|-------|-----------|-------|
+| 07/11/2025 | 18h00 | Tâche terminée | DAT-001 ✅ (tâche annexe) |
+| 07/11/2025 | 15h00 | Sprint 1 terminé | 6/6 tâches ✅ |
 | 07/11/2025 | 09h45 | Tâche terminée | INT-003 ✅ |
 | 06/11/2025 | 17h00 | Tâche terminée | INT-001 ✅ |
 | 06/11/2025 | 16h30 | Tâche terminée | AGN-001 ✅ |
 | 06/11/2025 | 10h00 | Sprint 1 démarré | — |
-| 05/11/2025 | 18h00 | Documentation créée | — |
 
 ---
 

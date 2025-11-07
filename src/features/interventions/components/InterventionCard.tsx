@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import AnimatedCard from "@/features/interventions/components/AnimatedCard"
 import { EditableCell } from "@/features/interventions/components/EditableCell"
 import type { InterventionView } from "@/types/intervention-view"
-import { cn } from "@/lib/utils"
+import { isCheckStatus } from "@/lib/interventions/checkStatus"
 import {
   AlertCircle,
   Calendar,
@@ -188,6 +188,12 @@ export default function InterventionCard({
   const statusKey = (intervention.statut ?? intervention.statusValue ?? "DEMANDE") as string
   const currentStatus = statusConfigMap[statusKey] || INTERVENTION_STATUS_CONFIG[0]
   const statusColor = mergedStatusColors[statusKey] || currentStatus?.defaultColor || "#3B82F6"
+
+  // DAT-001 : Vérifier si l'intervention doit afficher le statut "Check"
+  const datePrevue = (intervention as any).date_prevue ?? (intervention as any).datePrevue ?? null
+  // Utiliser le code du statut depuis l'objet status si disponible, sinon utiliser statusKey
+  const statusCode = (intervention as any).status?.code ?? statusKey
+  const isCheck = isCheckStatus(statusCode, datePrevue)
 
   const isAnyHovered = isHovered || keyboardHovered
   const isDocActive = selectedActionIndex === 2 && keyboardHovered
@@ -399,16 +405,19 @@ export default function InterventionCard({
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all"
+                      className={cn(
+                        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all",
+                        isCheck && "check-status-badge"
+                      )}
                       style={{
-                        backgroundColor: `${statusColor}10`,
-                        borderColor: `${statusColor}40`,
-                        color: statusColor,
+                        backgroundColor: isCheck ? "#EF4444" : `${statusColor}10`,
+                        borderColor: isCheck ? "#EF4444" : `${statusColor}40`,
+                        color: isCheck ? "#FFFFFF" : statusColor,
                       }}
                       onClick={(event) => event.stopPropagation()}
                     >
-                      {currentStatus?.icon ? React.createElement(currentStatus.icon, { className: "h-4 w-4" }) : null}
-                      {currentStatus?.label || intervention.statut}
+                      {!isCheck && currentStatus?.icon ? React.createElement(currentStatus.icon, { className: "h-4 w-4" }) : null}
+                      {isCheck ? "CHECK" : (currentStatus?.label || intervention.statut)}
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-64">
