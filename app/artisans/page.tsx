@@ -160,7 +160,17 @@ const dossierStatusConfig = {
 const mapArtisanToContact = (artisan: ApiArtisan, users: ReferenceUser[], artisanStatuses: any[]): Contact => {
   const raw = artisan as any
   const user = users.find((u) => u.id === artisan.gestionnaire_id)
+  // Trouver le statut en utilisant l'ID du statut de l'artisan
   const artisanStatus = artisanStatuses.find((s) => s.id === artisan.statut_id)
+  
+  // Debug: vérifier si le statut est trouvé
+  if (!artisanStatus && artisan.statut_id) {
+    console.warn(`[mapArtisanToContact] Statut non trouvé pour artisan ${artisan.id}:`, {
+      artisanStatutId: artisan.statut_id,
+      availableStatusIds: artisanStatuses.map(s => s.id),
+      availableStatusCodes: artisanStatuses.map(s => s.code),
+    })
+  }
 
   const zone = Array.isArray(raw.zones) && raw.zones.length > 0 ? raw.zones[0] : raw.zoneIntervention
 
@@ -179,7 +189,7 @@ const mapArtisanToContact = (artisan: ApiArtisan, users: ReferenceUser[], artisa
     status: (raw.statut_artisan ?? raw.status ?? "Disponible") as Contact["status"],
     avatar: "/placeholder.svg",
     lastContact: raw.date_ajout || artisan.updated_at || "",
-    createdAt: raw.date_ajout || artisan.created_at || "",
+    createdAt: artisan.created_at || raw.date_ajout || "",
     notes: raw.commentaire || "",
     siret: artisan.siret || "",
     statutJuridique: artisan.statut_juridique || "",
@@ -229,7 +239,7 @@ export default function ArtisansPage(): ReactElement {
     loadMore,
     refresh,
   } = useArtisans({
-    limit: 100,
+    limit: 10000, // Charger tous les artisans d'un coup
     autoLoad: true,
   })
 
@@ -256,7 +266,19 @@ export default function ArtisansPage(): ReactElement {
     if (!referenceData) return
     const statuses = referenceData.artisanStatuses || []
     setArtisanStatuses(statuses)
-    const mapped = artisans.map((artisan) => 
+    
+    // Trier d'abord les artisans par created_at (du plus récent au plus ancien)
+    const sortedArtisans = [...artisans].sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+      // Si les dates sont invalides, retourner 0 pour garder l'ordre original
+      if (isNaN(dateA) && isNaN(dateB)) return 0
+      if (isNaN(dateA)) return 1 // Les dates invalides vont à la fin
+      if (isNaN(dateB)) return -1
+      return dateB - dateA // Ordre décroissant (plus récent en premier)
+    })
+    
+    const mapped = sortedArtisans.map((artisan) => 
       mapArtisanToContact(
         artisan, 
         referenceData.users as ReferenceUser[], 
@@ -271,9 +293,17 @@ export default function ArtisansPage(): ReactElement {
       void refresh()
     }
 
+    const handleInterventionUpdated = () => {
+      // Rafraîchir les artisans quand une intervention est mise à jour
+      // car cela peut affecter le statut de l'artisan
+      void refresh()
+    }
+
     window.addEventListener("artisan-updated", handleArtisanUpdated)
+    window.addEventListener("intervention-updated", handleInterventionUpdated)
     return () => {
       window.removeEventListener("artisan-updated", handleArtisanUpdated)
+      window.removeEventListener("intervention-updated", handleInterventionUpdated)
     }
   }, [refresh])
 
@@ -411,101 +441,100 @@ export default function ArtisansPage(): ReactElement {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex-1 space-y-4 p-6">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-1 p-6 overflow-hidden flex flex-col min-h-0">
         {/* Boutons de vue */}
-        {isReady && (
-          <div className="space-y-2">
-            <ArtisanViewTabs
-              views={views}
-              activeViewId={activeViewId}
-              onSelect={setActiveView}
-              artisanCounts={viewCounts}
-            />
-          </div>
-        )}
+        <Tabs defaultValue="list" className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          {isReady && (
+            <div className="flex items-center justify-between gap-4 mb-4 flex-shrink-0">
+              <ArtisanViewTabs
+                views={views}
+                activeViewId={activeViewId}
+                onSelect={setActiveView}
+                artisanCounts={viewCounts}
+              />
+              <TabsList className="flex-shrink-0">
+                <TabsTrigger value="list">Vue Liste</TabsTrigger>
+                <TabsTrigger value="grid">Vue Grille</TabsTrigger>
+              </TabsList>
+            </div>
+          )}
 
-        <Card className="border-2 shadow-sm">
-          <CardContent className="p-4 bg-slate-50 dark:bg-muted/20">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col space-y-4">
-                <div className="flex flex-wrap items-center gap-6">
-                  <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-                    <Input
-                      placeholder="Rechercher artisans..."
-                      className="pl-10"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-muted-foreground">Statut:</span>
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => setStatusFilter("all")}
-                        className={`
-                          flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm
-                          ${
-                            statusFilter === "all"
-                              ? "border-gray-500 bg-gray-500 text-white"
-                              : "border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }
-                        `}
-                      >
-                        <span>Tous ({getContactCountByStatus("all")})</span>
-                      </button>
-
-                      {artisanStatuses.filter(s => s.is_active !== false).map((status) => {
-                        const isActive = statusFilter === status.label
-                        const style = isActive && status.color 
-                          ? { backgroundColor: status.color, color: '#fff', borderColor: status.color }
-                          : status.color 
-                          ? { ...computeBadgeStyle(status.color), border: `1px solid ${status.color}40` }
-                          : {}
-                        
-                        return (
-                          <button
-                            key={status.id}
-                            onClick={() => setStatusFilter(status.label)}
-                            className="flex items-center gap-1 rounded-full px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm"
-                            style={style}
-                          >
-                            {status.label} ({getContactCountByStatus(status.label)})
-                          </button>
-                        )
-                      })}
+          <Card className="border-2 shadow-sm flex-shrink-0">
+            <CardContent className="p-4 bg-slate-50 dark:bg-muted/20">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div className="relative flex-1 max-w-md">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+                      <Input
+                        placeholder="Rechercher artisans..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
                     </div>
-                  </div>
 
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-muted-foreground">Métier:</span>
-                    <Select value={metierFilter} onValueChange={setMetierFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Filtrer par métier" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tous les métiers ({getContactCountByMetier("all")})</SelectItem>
-                        {allMetiers.map((metier) => (
-                          <SelectItem key={metier} value={metier}>
-                            {metier} ({getContactCountByMetier(metier)})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-muted-foreground">Statut:</span>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => setStatusFilter("all")}
+                          className={`
+                            flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm
+                            ${
+                              statusFilter === "all"
+                                ? "border-gray-500 bg-gray-500 text-white"
+                                : "border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }
+                          `}
+                        >
+                          <span>Tous ({getContactCountByStatus("all")})</span>
+                        </button>
+
+                        {artisanStatuses.filter(s => s.is_active !== false).map((status) => {
+                          const isActive = statusFilter === status.label
+                          const style = isActive && status.color 
+                            ? { backgroundColor: status.color, color: '#fff', border: `1px solid ${status.color}` }
+                            : status.color 
+                            ? { ...computeBadgeStyle(status.color), border: `1px solid ${status.color}40` }
+                            : {}
+                          
+                          return (
+                            <button
+                              key={status.id}
+                              onClick={() => setStatusFilter(status.label)}
+                              className="flex items-center gap-1 rounded-full px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm"
+                              style={style}
+                            >
+                              {status.label} ({getContactCountByStatus(status.label)})
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-muted-foreground">Métier:</span>
+                      <Select value={metierFilter} onValueChange={setMetierFilter}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Filtrer par métier" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tous les métiers ({getContactCountByMetier("all")})</SelectItem>
+                          {allMetiers.map((metier) => (
+                            <SelectItem key={metier} value={metier}>
+                              {metier} ({getContactCountByMetier(metier)})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Tabs defaultValue="list" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="list">Vue Liste</TabsTrigger>
-            <TabsTrigger value="grid">Vue Grille</TabsTrigger>
-          </TabsList>
+            </CardContent>
+          </Card>
 
           <TabsContent value="grid" className="space-y-4">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -613,12 +642,12 @@ export default function ArtisansPage(): ReactElement {
             )}
           </TabsContent>
 
-          <TabsContent value="list" className="space-y-4">
-            <Card className="border-2 shadow-sm">
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
+          <TabsContent value="list" className="flex flex-col flex-1 min-h-0">
+            <Card className="border-2 shadow-sm flex flex-col flex-1 min-h-0">
+              <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+                <div className="overflow-auto flex-1 min-h-0">
                   <table className="min-w-full divide-y-2 divide-border">
-                    <thead className="bg-slate-100 dark:bg-muted/50 border-b-2">
+                    <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-muted/50 border-b-2">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Artisan</th>
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Entreprise</th>
@@ -732,33 +761,6 @@ export default function ArtisansPage(): ReactElement {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Bouton charger plus pour la vue liste */}
-            {hasMore && (
-              <div className="flex justify-center pt-4">
-                <Button
-                  onClick={handleLoadMoreArtisans}
-                  disabled={loadingMore}
-                  variant="outline"
-                  className="w-full max-w-xs"
-                >
-                  {loadingMore ? (
-                    <>
-                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-500"></div>
-                      Chargement...
-                    </>
-                  ) : (
-                    `Charger plus d'artisans (${contacts.length}${totalCount ? ` / ${totalCount}` : ""})`
-                  )}
-                </Button>
-              </div>
-            )}
-
-            {!hasMore && contacts.length > 0 && (
-              <div className="py-4 text-center text-muted-foreground">
-                <p>Tous les artisans ont été chargés ({totalCount || contacts.length} artisans)</p>
-              </div>
-            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -304,11 +304,28 @@ export function ArtisanModalContent({
     data: artisan,
     isLoading,
     error,
+    refetch: refetchArtisan,
   } = useQuery({
     queryKey: ["artisan", artisanId],
     enabled: Boolean(artisanId),
     queryFn: () => artisansApi.getById(artisanId),
   })
+
+  // Écouter les mises à jour d'interventions pour rafraîchir les données de l'artisan
+  // car le statut de l'artisan peut changer quand une intervention est terminée
+  useEffect(() => {
+    const handleInterventionUpdated = () => {
+      // Rafraîchir les données de l'artisan après un court délai pour laisser le temps au trigger SQL de s'exécuter
+      setTimeout(() => {
+        void refetchArtisan()
+      }, 500)
+    }
+
+    window.addEventListener("intervention-updated", handleInterventionUpdated)
+    return () => {
+      window.removeEventListener("intervention-updated", handleInterventionUpdated)
+    }
+  }, [refetchArtisan])
 
   // Charger les interventions de l'artisan pour les graphiques et le tableau
   const {
@@ -459,6 +476,7 @@ export function ArtisanModalContent({
         description: "Les informations de l'artisan ont été enregistrées.",
       })
       reset(values)
+      onClose()
     } catch (mutationError) {
       const message = mutationError instanceof Error ? mutationError.message : "Une erreur est survenue."
       toast({
@@ -611,14 +629,29 @@ export function ArtisanModalContent({
     return merged
   }, [artisan, referenceData])
 
-  const statusOptions = useMemo(
-    () =>
-      (referenceData?.artisanStatuses ?? []).map((status) => ({
-        id: status.id,
-        label: status.label ?? status.code ?? status.id,
-      })),
-    [referenceData],
-  )
+  // Filtrer les statuts disponibles selon les règles métier
+  // Seuls les statuts CANDIDAT peuvent être changés vers POTENTIEL ou ONE_SHOT
+  const statusOptions = useMemo(() => {
+    const allStatuses = referenceData?.artisanStatuses ?? []
+    const currentStatusCode = getArtisanStatusCode(artisan?.statut_id ?? null)
+    
+    // Si l'artisan est CANDIDAT, permettre uniquement POTENTIEL et ONE_SHOT
+    if (currentStatusCode === 'CANDIDAT') {
+      return allStatuses
+        .filter((status) => {
+          const code = status.code?.toUpperCase()
+          return code === 'POTENTIEL' || code === 'ONE_SHOT' || code === 'CANDIDAT'
+        })
+        .map((status) => ({
+          id: status.id,
+          label: status.label ?? status.code ?? status.id,
+        }))
+    }
+    
+    // Pour tous les autres statuts, ne pas permettre de changement via le dropdown
+    // Le statut sera géré automatiquement par les règles métier
+    return []
+  }, [referenceData, artisan?.statut_id, getArtisanStatusCode])
 
   const gestionnaireOptions = useMemo(
     () =>
@@ -934,29 +967,60 @@ export function ArtisanModalContent({
                 />
               </div>
 
+              {/* Statut Artisan - Affichage uniquement, modification limitée aux règles métier */}
               <div className="space-y-2">
                 <Label>Statut Artisan</Label>
                 <Controller
                   name="statut_id"
                   control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || undefined}
-                      onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un statut" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Non défini</SelectItem>
-                        {statusOptions.map((status) => (
-                          <SelectItem key={status.id} value={status.id}>
-                            {status.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  render={({ field }) => {
+                    const currentStatusCode = getArtisanStatusCode(artisan?.statut_id ?? null)
+                    const canChangeStatus = currentStatusCode === 'CANDIDAT' && statusOptions.length > 0
+                    
+                    if (!canChangeStatus) {
+                      // Afficher le statut actuel en lecture seule
+                      const currentStatus = referenceData?.artisanStatuses?.find(
+                        (s) => s.id === artisan?.statut_id
+                      )
+                      return (
+                        <div className="flex items-center gap-2 rounded-md border bg-muted px-3 py-2 text-sm">
+                          {currentStatus ? (
+                            <>
+                              <span
+                                className="inline-block h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: currentStatus.color ?? '#6B7280' }}
+                              />
+                              <span>{currentStatus.label}</span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">Non défini</span>
+                          )}
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            (Géré automatiquement)
+                          </span>
+                        </div>
+                      )
+                    }
+                    
+                    // Permettre le changement uniquement pour CANDIDAT -> POTENTIEL/ONE_SHOT
+                    return (
+                      <Select
+                        value={field.value || undefined}
+                        onValueChange={(value) => field.onChange(value === "__none__" ? "" : value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner un statut" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((status) => (
+                            <SelectItem key={status.id} value={status.id}>
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )
+                  }}
                 />
               </div>
             </CardContent>

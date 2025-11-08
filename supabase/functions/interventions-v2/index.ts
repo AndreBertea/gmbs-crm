@@ -154,8 +154,9 @@ function calculateDossierStatus(
     return 'COMPLET';
   }
 
-  // Si manque 1 seul document OU artisan a effectué une intervention → À compléter
-  if (missingDocuments.length === 1 || hasCompletedIntervention) {
+  // À compléter : dossier vide (tous les documents requis manquants) OU 1 seul fichier manquant ET artisan a effectué une intervention
+  const totalRequired = REQUIRED_DOCUMENT_KINDS.length; // 5 documents requis
+  if (hasCompletedIntervention && (missingDocuments.length === totalRequired || missingDocuments.length === 1)) {
     return 'À compléter';
   }
 
@@ -597,6 +598,38 @@ async function handleInterventionCompletionSideEffects(
       const currentCode = artisan.statut_id
         ? statusIdToCode.get(artisan.statut_id as string) ?? null
         : null;
+
+      // Ne pas modifier les statuts ONE_SHOT et ARCHIVE automatiquement
+      // Ces statuts sont gérés manuellement uniquement
+      if (currentCode === 'ONE_SHOT' || currentCode === 'ARCHIVE') {
+        // Mettre à jour uniquement le statut de dossier si nécessaire
+        const currentDossierStatus = artisan.statut_dossier as string | null;
+        const newDossierStatus = calculateDossierStatus(attachments ?? [], completed > 0);
+        
+        if (newDossierStatus !== currentDossierStatus) {
+          const { error: dossierUpdateError } = await supabase
+            .from('artisans')
+            .update({
+              statut_dossier: newDossierStatus,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', artisanId);
+
+          if (dossierUpdateError) {
+            console.error(
+              JSON.stringify({
+                level: 'error',
+                requestId,
+                interventionId: intervention.id,
+                artisanId,
+                message: 'Failed to update artisan dossier status',
+                error: dossierUpdateError.message,
+              }),
+            );
+          }
+        }
+        continue;
+      }
 
       // Calculer le nouveau statut selon les règles
       let nextCode = currentCode;
@@ -1097,10 +1130,75 @@ serve(async (req: Request) => {
         );
       }
 
+      // Fonction helper pour générer un nouvel id_inter en cas de collision
+      const generateUniqueIdInter = async (baseIdInter: string | null | undefined): Promise<string | null> => {
+        if (!baseIdInter) return null;
+        
+        // Si ce n'est pas un ID auto-généré, retourner tel quel (sera vérifié plus tard)
+        if (!baseIdInter.startsWith('AUTO-')) {
+          return baseIdInter;
+        }
+
+        // Pour les IDs auto-générés, vérifier l'unicité et générer un nouveau si nécessaire
+        let attemptIdInter = baseIdInter;
+        let attempts = 0;
+        const maxAttempts = 5;
+
+        while (attempts < maxAttempts) {
+          const { data: existing } = await supabase
+            .from('interventions')
+            .select('id')
+            .eq('id_inter', attemptIdInter)
+            .maybeSingle();
+
+          if (!existing) {
+            // ID unique trouvé
+            return attemptIdInter;
+          }
+
+          // Collision détectée, générer un nouvel ID
+          attempts++;
+          const timestampSegment = Date.now().toString().slice(-6);
+          const randomSegment = Math.floor(Math.random() * 100000)
+            .toString()
+            .padStart(5, '0');
+          const uuidSegment = crypto.randomUUID().slice(0, 8);
+          attemptIdInter = `AUTO-${timestampSegment}-${randomSegment}-${uuidSegment}`;
+        }
+
+        // Si après plusieurs tentatives on a toujours une collision, retourner null
+        // La base de données générera une erreur et on la gérera
+        return attemptIdInter;
+      };
+
+      // Vérifier si id_inter existe déjà (sauf pour les IDs auto-générés qui seront régénérés)
+      let finalIdInter = body.id_inter;
+      if (finalIdInter && !finalIdInter.startsWith('AUTO-')) {
+        const { data: existing, error: checkError } = await supabase
+          .from('interventions')
+          .select('id')
+          .eq('id_inter', finalIdInter)
+          .maybeSingle();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw new Error(`Failed to check id_inter uniqueness: ${checkError.message}`);
+        }
+
+        if (existing) {
+          return new Response(
+            JSON.stringify({ error: `An intervention with id_inter "${finalIdInter}" already exists` }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else if (finalIdInter && finalIdInter.startsWith('AUTO-')) {
+        // Pour les IDs auto-générés, s'assurer de l'unicité
+        finalIdInter = await generateUniqueIdInter(finalIdInter) ?? finalIdInter;
+      }
+
       const { data, error } = await supabase
         .from('interventions')
         .insert([{
-          id_inter: body.id_inter,
+          id_inter: finalIdInter,
           agence_id: body.agence_id,
           reference_agence: body.reference_agence ?? null,
           tenant_id: body.tenant_id ?? body.client_id ?? null,
@@ -1124,6 +1222,67 @@ serve(async (req: Request) => {
         .single();
 
       if (error) {
+        // Si l'erreur est une violation de contrainte unique sur id_inter, essayer avec un nouvel ID
+        if (error.message?.includes('duplicate key') && error.message?.includes('id_inter') && finalIdInter?.startsWith('AUTO-')) {
+          console.log(JSON.stringify({
+            level: 'warn',
+            requestId,
+            originalIdInter: finalIdInter,
+            message: 'Duplicate id_inter detected, generating new one'
+          }));
+
+          // Générer un nouvel ID unique
+          const newIdInter = await generateUniqueIdInter(finalIdInter);
+          if (newIdInter && newIdInter !== finalIdInter) {
+            // Réessayer avec le nouvel ID
+            const { data: retryData, error: retryError } = await supabase
+              .from('interventions')
+              .insert([{
+                id_inter: newIdInter,
+                agence_id: body.agence_id,
+                reference_agence: body.reference_agence ?? null,
+                tenant_id: body.tenant_id ?? body.client_id ?? null,
+                owner_id: body.owner_id ?? null,
+                assigned_user_id: body.assigned_user_id,
+                statut_id: body.statut_id,
+                metier_id: body.metier_id,
+                date: body.date,
+                date_prevue: body.date_prevue,
+                contexte_intervention: body.contexte_intervention,
+                consigne_intervention: body.consigne_intervention,
+                consigne_second_artisan: body.consigne_second_artisan,
+                adresse: body.adresse,
+                code_postal: body.code_postal,
+                ville: body.ville,
+                latitude: body.latitude,
+                longitude: body.longitude,
+                is_active: true
+              }])
+              .select()
+              .single();
+
+            if (retryError) {
+              throw new Error(`Failed to create intervention after retry: ${retryError.message}`);
+            }
+
+            console.log(JSON.stringify({
+              level: 'info',
+              requestId,
+              interventionId: retryData.id,
+              originalIdInter: finalIdInter,
+              newIdInter: newIdInter,
+              timestamp: new Date().toISOString(),
+              message: 'Intervention created successfully with regenerated id_inter'
+            }));
+
+            await handleInterventionCompletionSideEffects(supabase, retryData, requestId);
+
+            return new Response(
+              JSON.stringify(retryData),
+              { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
         throw new Error(`Failed to create intervention: ${error.message}`);
       }
 

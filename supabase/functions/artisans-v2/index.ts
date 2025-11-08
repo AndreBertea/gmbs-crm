@@ -667,6 +667,56 @@ serve(async (req: Request) => {
     if (req.method === 'PUT' && resourceId && resource === 'artisans') {
       const body: UpdateArtisanRequest = await req.json();
 
+      // Validation des transitions de statut selon les règles métier
+      if (body.statut_id !== undefined) {
+        // Récupérer le statut actuel de l'artisan
+        const { data: currentArtisan } = await supabase
+          .from('artisans')
+          .select('statut_id')
+          .eq('id', resourceId)
+          .single();
+
+        if (currentArtisan?.statut_id) {
+          // Récupérer les codes des statuts
+          const { data: currentStatus } = await supabase
+            .from('artisan_statuses')
+            .select('code')
+            .eq('id', currentArtisan.statut_id)
+            .single();
+
+          const { data: newStatus } = await supabase
+            .from('artisan_statuses')
+            .select('code')
+            .eq('id', body.statut_id)
+            .single();
+
+          const currentCode = currentStatus?.code?.toUpperCase();
+          const newCode = newStatus?.code?.toUpperCase();
+
+          // Vérifier si la transition est autorisée
+          if (currentCode && newCode && currentCode !== newCode) {
+            // ARCHIVE peut être atteint depuis n'importe quel statut (géré côté frontend avec raison)
+            if (newCode === 'ARCHIVE') {
+              // Autoriser l'archivage
+            }
+            // CANDIDAT → POTENTIEL ou ONE_SHOT : autorisé
+            else if (currentCode === 'CANDIDAT' && (newCode === 'POTENTIEL' || newCode === 'ONE_SHOT')) {
+              // Autoriser la transition
+            }
+            // Les autres transitions manuelles ne sont pas autorisées
+            // Les transitions automatiques sont gérées par les triggers
+            else {
+              return new Response(
+                JSON.stringify({ 
+                  error: `Transition de statut non autorisée : ${currentCode} → ${newCode}. Seules les transitions CANDIDAT → POTENTIEL/ONE_SHOT et vers ARCHIVE sont autorisées manuellement.` 
+                }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+          }
+        }
+      }
+
       const { data, error } = await supabase
         .from('artisans')
         .update({

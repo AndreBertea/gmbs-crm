@@ -41,12 +41,22 @@ const STATUSES_REQUIRING_DEFINITIVE_ID = new Set([
   "STAND_BY",
 ])
 
+// Compteur pour garantir l'unicité même si Date.now() est identique
+let autoIdCounter = 0
+
 const generateAutoInterventionId = () => {
   const timestampSegment = Date.now().toString().slice(-6)
-  const randomSegment = Math.floor(Math.random() * 1000)
+  const randomSegment = Math.floor(Math.random() * 100000)
     .toString()
-    .padStart(3, "0")
-  return `AUTO-${timestampSegment}-${randomSegment}`
+    .padStart(5, "0")
+  // Incrémenter le compteur pour garantir l'unicité
+  autoIdCounter = (autoIdCounter + 1) % 100000
+  const counterSegment = autoIdCounter.toString().padStart(5, "0")
+  // Utiliser crypto.randomUUID si disponible pour une partie supplémentaire
+  const uuidSegment = typeof crypto !== 'undefined' && crypto.randomUUID 
+    ? crypto.randomUUID().slice(0, 8) 
+    : Math.random().toString(36).slice(2, 10)
+  return `AUTO-${timestampSegment}-${randomSegment}-${counterSegment}-${uuidSegment}`
 }
 
 interface CurrentUser {
@@ -410,7 +420,18 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
         ...prev,
         commentairesIntervention: "",
       }))
+      
+      // Appeler onSuccess qui devrait fermer le modal
+      // Si onSuccess ne ferme pas le modal, onCancel le fera
       onSuccess?.(created)
+      
+      // S'assurer que le modal se ferme même si onSuccess ne le fait pas
+      // Utiliser un petit délai pour permettre à onSuccess de se terminer
+      if (onCancel) {
+        setTimeout(() => {
+          onCancel()
+        }, 150)
+      }
     } catch (error) {
       console.error("Erreur lors de la création:", error)
       alert("Erreur lors de la création de l'intervention")
@@ -537,7 +558,9 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                 title="Statut est obligatoire"
                 style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
                 tabIndex={-1}
+                readOnly
                 aria-hidden="true"
+                onFocus={(e) => e.target.blur()}
               />
             </div>
             <div className="legacy-form-field">
@@ -581,7 +604,9 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                 title="Agence est obligatoire"
                 style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
                 tabIndex={-1}
+                readOnly
                 aria-hidden="true"
+                onFocus={(e) => e.target.blur()}
               />
             </div>
             {showReferenceField && (
@@ -645,7 +670,9 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                 title="Métier est obligatoire"
                 style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
                 tabIndex={-1}
+                readOnly
                 aria-hidden="true"
+                onFocus={(e) => e.target.blur()}
               />
             </div>
           </div>

@@ -240,11 +240,11 @@ const renderCell = (
           color-mix(in oklab, #EF4444, black 20%) 100%
         )`
         : `linear-gradient(
-          to bottom,
-          color-mix(in oklab, ${hex}, white 20%) 0%,
-          ${hex} 50%,
-          color-mix(in oklab, ${hex}, black 20%) 100%
-        )`,
+        to bottom,
+        color-mix(in oklab, ${hex}, white 20%) 0%,
+        ${hex} 50%,
+        color-mix(in oklab, ${hex}, black 20%) 100%
+      )`,
     }
   }
 

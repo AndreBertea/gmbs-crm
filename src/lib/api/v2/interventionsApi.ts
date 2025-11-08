@@ -269,6 +269,25 @@ export const interventionsApi = {
       }
     }
 
+    // Récupérer le statut actuel avant la mise à jour pour détecter si on passe à "terminé"
+    let wasTerminatedBefore = false;
+    if (payload.statut_id && typeof window !== "undefined") {
+      const { data: currentIntervention } = await supabase
+        .from("interventions")
+        .select(`
+          statut_id,
+          status:intervention_statuses(code)
+        `)
+        .eq("id", id)
+        .single();
+
+      if (currentIntervention && (currentIntervention as any).status) {
+        const terminatedStatusCodes = ['TERMINE', 'INTER_TERMINEE'];
+        const currentStatusCode = (currentIntervention as any).status?.code;
+        wasTerminatedBefore = currentStatusCode && terminatedStatusCodes.includes(currentStatusCode);
+      }
+    }
+
     const { data: updated, error } = await supabase
       .from("interventions")
       .update({
@@ -286,7 +305,59 @@ export const interventionsApi = {
     if (!updated) throw new Error("Impossible de mettre à jour l'intervention");
 
     const refs = await getReferenceCache();
-    return mapInterventionRecord(updated, refs) as InterventionWithStatus;
+    const mapped = mapInterventionRecord(updated, refs) as InterventionWithStatus;
+
+    // Si l'intervention vient de passer à un statut terminé, recalculer les statuts des artisans associés
+    const terminatedStatusCodes = ['TERMINE', 'INTER_TERMINEE'];
+    const isTerminated = mapped.status?.code && terminatedStatusCodes.includes(mapped.status.code);
+
+    // Si le statut vient de passer à "terminé", recalculer les statuts des artisans
+    if (isTerminated && !wasTerminatedBefore && typeof window !== "undefined") {
+      // Récupérer les artisans associés à cette intervention
+      const { data: interventionArtisans } = await supabase
+        .from('intervention_artisans')
+        .select('artisan_id, is_primary')
+        .eq('intervention_id', id);
+
+      if (interventionArtisans && interventionArtisans.length > 0) {
+        // Prioriser les artisans primaires, sinon prendre tous
+        const artisanIds = interventionArtisans
+          .filter(ia => ia.is_primary === true)
+          .map(ia => ia.artisan_id)
+          .filter(Boolean) as string[];
+
+        const finalArtisanIds = artisanIds.length > 0 
+          ? artisanIds 
+          : interventionArtisans.map(ia => ia.artisan_id).filter(Boolean) as string[];
+
+        // Appeler l'API route pour recalculer chaque artisan en arrière-plan
+        finalArtisanIds.forEach(artisanId => {
+          fetch(`/api/artisans/${artisanId}/recalculate-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          }).catch(error => {
+            console.warn(`[interventionsApi] Erreur lors du recalcul pour artisan ${artisanId}:`, error);
+          });
+        });
+      }
+    }
+
+    // Émettre un événement pour notifier que l'intervention a été mise à jour
+    // Cela permet aux autres composants (comme la page artisans) de rafraîchir leurs données
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("intervention-updated", {
+          detail: {
+            id: mapped.id,
+            data: mapped,
+            optimistic: false,
+            type: "update",
+          },
+        }),
+      );
+    }
+
+    return mapped;
   },
 
   // Mettre à jour uniquement le statut d'une intervention

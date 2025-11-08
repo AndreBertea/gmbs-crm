@@ -149,17 +149,17 @@ export default async function RootLayout({
 })();`,
           }}
         />
+      </head>
+      <body className={inter.className}>
         {/* React Grab - Development only */}
         {process.env.NODE_ENV === "development" && (
           <Script
             src="//unpkg.com/react-grab/dist/index.global.js"
             crossOrigin="anonymous"
-            strategy="beforeInteractive"
+            strategy="lazyOnload"
             data-enabled="true"
           />
         )}
-      </head>
-      <body className={inter.className}>
         <a href="#main" className="sr-only focus:not-sr-only fixed top-2 left-2 z-[1000] bg-background border rounded px-2 py-1">
           Aller au contenu
         </a>

@@ -32,10 +32,13 @@ const SUPPORTED_DOCUMENT_TYPES = {
     'autre'
   ],
   artisan: [
-    'certificat',
-    'assurance',
-    'siret',
     'kbis',
+    'assurance',
+    'cni_recto_verso',
+    'iban',
+    'decharge_partenariat',
+    'certificat',
+    'siret',
     'photo_profil',
     'portfolio',
     'autre'

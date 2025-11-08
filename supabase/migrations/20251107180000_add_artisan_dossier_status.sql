@@ -25,14 +25,15 @@ DECLARE
   present_kinds text[];
   missing_count int;
   has_intervention boolean;
+  kind text;
 BEGIN
   -- Récupérer les kinds de documents présents pour cet artisan
-  SELECT array_agg(DISTINCT LOWER(kind))
+  SELECT array_agg(DISTINCT LOWER(artisan_attachments.kind))
   INTO present_kinds
   FROM artisan_attachments
-  WHERE artisan_id = artisan_uuid
-    AND kind IS NOT NULL
-    AND kind != 'autre';
+  WHERE artisan_attachments.artisan_id = artisan_uuid
+    AND artisan_attachments.kind IS NOT NULL
+    AND artisan_attachments.kind != 'autre';
 
   -- Si aucun document, retourner INCOMPLET
   IF present_kinds IS NULL THEN
@@ -61,7 +62,8 @@ BEGIN
   -- Calculer le statut
   IF missing_count = 0 THEN
     RETURN 'COMPLET';
-  ELSIF missing_count = 1 OR has_intervention THEN
+  ELSIF has_intervention AND (missing_count = array_length(required_kinds, 1) OR missing_count = 1) THEN
+    -- À compléter : dossier vide (tous manquants) OU 1 seul fichier manquant ET artisan a effectué une intervention
     RETURN 'À compléter';
   ELSE
     RETURN 'INCOMPLET';
