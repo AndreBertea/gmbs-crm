@@ -24,8 +24,8 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
   
-  // Optimisations expérimentales
-  experimental: {
+  // Optimisations expérimentales (uniquement en production pour éviter la surcharge CPU en dev)
+  experimental: process.env.NODE_ENV === 'production' ? {
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-dialog',
@@ -39,9 +39,9 @@ const nextConfig = {
       'recharts',
       'date-fns',
     ],
-  },
+  } : {},
   
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Configuration pour les fichiers GLB/GLTF
     config.module.rules.push({
       test: /\.(glb|gltf)$/,
@@ -56,53 +56,56 @@ const nextConfig = {
       };
     }
     
-    // Optimisation des chunks
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // Vendor chunk pour les grandes librairies
-          vendor: {
-            name: 'vendor',
-            chunks: 'all',
-            test: /node_modules/,
-            priority: 20,
-          },
-          // Chunk séparé pour Radix UI
-          radix: {
-            name: 'radix',
-            test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
-            chunks: 'all',
-            priority: 30,
-          },
-          // Chunk séparé pour les librairies de mapping
-          maps: {
-            name: 'maps',
-            test: /[\\/]node_modules[\\/](maplibre-gl|@maptiler)[\\/]/,
-            chunks: 'all',
-            priority: 30,
-          },
-          // Chunk séparé pour React Query
-          reactQuery: {
-            name: 'react-query',
-            test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
-            chunks: 'all',
-            priority: 30,
-          },
-          // Chunk commun pour les composants partagés
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            priority: 10,
-            reuseExistingChunk: true,
+    // Optimisation des chunks UNIQUEMENT en production
+    // En dev, cela ralentit trop le hot reload
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // Vendor chunk pour les grandes librairies
+            vendor: {
+              name: 'vendor',
+              chunks: 'all',
+              test: /node_modules/,
+              priority: 20,
+            },
+            // Chunk séparé pour Radix UI
+            radix: {
+              name: 'radix',
+              test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
+              chunks: 'all',
+              priority: 30,
+            },
+            // Chunk séparé pour les librairies de mapping
+            maps: {
+              name: 'maps',
+              test: /[\\/]node_modules[\\/](maplibre-gl|@maptiler)[\\/]/,
+              chunks: 'all',
+              priority: 30,
+            },
+            // Chunk séparé pour React Query
+            reactQuery: {
+              name: 'react-query',
+              test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
+              chunks: 'all',
+              priority: 30,
+            },
+            // Chunk commun pour les composants partagés
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+              priority: 10,
+              reuseExistingChunk: true,
+            },
           },
         },
-      },
-    };
+      };
+    }
     
     return config;
   },
@@ -138,8 +141,8 @@ const nextConfig = {
     ];
   },
   
-  // Compression
-  compress: true,
+  // Compression (uniquement en production)
+  compress: process.env.NODE_ENV === 'production',
   
   // Production source maps désactivés pour réduire la taille
   productionBrowserSourceMaps: false,

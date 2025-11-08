@@ -1,28 +1,9 @@
 "use client"
 
 import * as React from "react"
-import dynamic from "next/dynamic"
-
-const BarChart = dynamic(
-  () => import("recharts").then((mod) => mod.BarChart),
-  { ssr: false }
-)
-const Bar = dynamic(
-  () => import("recharts").then((mod) => mod.Bar),
-  { ssr: false }
-)
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((mod) => mod.ResponsiveContainer),
-  { ssr: false }
-)
-const XAxis = dynamic(
-  () => import("recharts").then((mod) => mod.XAxis),
-  { ssr: false }
-)
-const YAxis = dynamic(
-  () => import("recharts").then((mod) => mod.YAxis),
-  { ssr: false }
-)
+// En dev, imports directs pour éviter les recompilations coûteuses du hot reload
+// En prod, Next.js optimisera automatiquement avec optimizePackageImports
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
 const data = [
   {

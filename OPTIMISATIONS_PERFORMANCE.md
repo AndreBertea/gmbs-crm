@@ -4,11 +4,15 @@ Ce document résume les optimisations de performance appliquées au codebase pou
 
 ## 🎯 Optimisations Appliquées
 
+### ⚠️ Important : Optimisations Mode Développement vs Production
+
+**Toutes les optimisations agressives sont désactivées en développement** pour éviter la surcharge CPU lors du hot reload. Elles sont uniquement actives en production.
+
 ### 1. Configuration Next.js (`next.config.mjs`)
 
 #### Optimisations de compilation
 - ✅ **SWC Minify** activé pour une minification plus rapide et efficace
-- ✅ **Suppression des console.log** en production (sauf error et warn)
+- ✅ **Suppression des console.log** en production uniquement (sauf error et warn)
 - ✅ **Source maps désactivés** en production pour réduire la taille du bundle
 
 #### Optimisations d'images
@@ -24,13 +28,15 @@ Ce document résume les optimisations de performance appliquées au codebase pou
   - `recharts`
   - `date-fns`
 
-#### Code splitting optimisé
+#### Code splitting optimisé (PRODUCTION UNIQUEMENT)
 - ✅ Chunks séparés pour :
   - **Radix UI** : chunk dédié pour tous les composants Radix
   - **Maps** : chunk séparé pour maplibre-gl et @maptiler
   - **React Query** : chunk dédié pour @tanstack/react-query
   - **Vendor** : chunk pour les autres dépendances node_modules
   - **Common** : chunk partagé pour les composants utilisés plusieurs fois
+  
+⚠️ **Désactivé en développement** : Le code splitting complexe ralentit trop le hot reload et fait chauffer le CPU. Il est uniquement actif en production.
 
 #### Headers de cache
 - ✅ Cache long terme (1 an) pour :
@@ -41,7 +47,7 @@ Ce document résume les optimisations de performance appliquées au codebase pou
 ### 2. Dynamic Imports
 
 #### Composants lourds chargés à la demande
-- ✅ **Vues d'interventions** :
+- ✅ **Vues d'interventions** (toujours en dynamic import) :
   - `CalendarView`
   - `GalleryView`
   - `KanbanView`
@@ -49,8 +55,9 @@ Ce document résume les optimisations de performance appliquées au codebase pou
   - `TimelineView`
 
 - ✅ **Composants de graphiques** :
-  - Tous les composants `recharts` (BarChart, PieChart, etc.)
-  - Chargement uniquement côté client (SSR désactivé)
+  - **En développement** : Imports directs pour éviter les recompilations coûteuses
+  - **En production** : Optimisés automatiquement par `optimizePackageImports`
+  - Les composants `recharts` utilisent des imports directs (Next.js optimise automatiquement)
 
 - ✅ **DocumentManager** :
   - Chargé dynamiquement dans :
@@ -103,6 +110,19 @@ npm run build
 
 ## 🐛 Notes
 
+### Mode Développement
+- ⚠️ **Code splitting désactivé** : Les optimisations de chunks sont désactivées en dev pour éviter la surcharge CPU
+- ⚠️ **optimizePackageImports désactivé** : Désactivé en dev pour éviter les recompilations coûteuses
+- ✅ **Imports directs pour recharts** : En dev, on utilise des imports directs pour éviter les recompilations du hot reload
+- ✅ **Compression désactivée** : Pas de compression en dev pour des builds plus rapides
+
+### Mode Production
+- ✅ Toutes les optimisations sont actives
+- ✅ Code splitting optimisé pour réduire la taille du bundle
+- ✅ Tree-shaking amélioré avec optimizePackageImports
+- ✅ Compression activée
+
+### Autres Notes
 - Les dynamic imports peuvent causer un léger délai lors du premier chargement d'un composant
 - Les composants avec SSR désactivé ne seront pas rendus côté serveur
 - Le bundle analyzer nécessite `ANALYZE=true` pour fonctionner

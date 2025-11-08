@@ -1,44 +1,9 @@
 "use client"
 
 import React, { useMemo } from "react"
-import dynamic from "next/dynamic"
-
-const BarChart = dynamic(
-  () => import("recharts").then((mod) => mod.BarChart),
-  { ssr: false }
-)
-const Bar = dynamic(
-  () => import("recharts").then((mod) => mod.Bar),
-  { ssr: false }
-)
-const PieChart = dynamic(
-  () => import("recharts").then((mod) => mod.PieChart),
-  { ssr: false }
-)
-const Pie = dynamic(
-  () => import("recharts").then((mod) => mod.Pie),
-  { ssr: false }
-)
-const Cell = dynamic(
-  () => import("recharts").then((mod) => mod.Cell),
-  { ssr: false }
-)
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((mod) => mod.ResponsiveContainer),
-  { ssr: false }
-)
-const Tooltip = dynamic(
-  () => import("recharts").then((mod) => mod.Tooltip),
-  { ssr: false }
-)
-const XAxis = dynamic(
-  () => import("recharts").then((mod) => mod.XAxis),
-  { ssr: false }
-)
-const YAxis = dynamic(
-  () => import("recharts").then((mod) => mod.YAxis),
-  { ssr: false }
-)
+// En dev, imports directs pour éviter les recompilations coûteuses du hot reload
+// En prod, Next.js optimisera automatiquement avec optimizePackageImports
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp } from "lucide-react"
 import { useReferenceData } from "@/hooks/useReferenceData"
