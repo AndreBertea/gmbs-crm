@@ -172,16 +172,18 @@ export default async function RootLayout({
                     <RemindersProvider>
                       <ThemeWrapper>
                         <SidebarProvider>
-                          <div className="flex min-h-screen w-full overflow-hidden">
-                            <SidebarGate isAuthed={isAuthed} />
-                            <main id="main" className="flex flex-1 min-h-screen flex-col overflow-hidden">
-                              <GlobalShortcuts />
-                              <TopbarGate />
-                              <GlobalModalHost />
-                              <div className="flex-1 overflow-auto">
-                                {children}
-                              </div>
-                            </main>
+                          <div className="flex min-h-screen w-full overflow-hidden flex-col">
+                            <TopbarGate />
+                            <div className="flex flex-1 w-full overflow-hidden pt-16">
+                              <SidebarGate isAuthed={isAuthed} />
+                              <main id="main" className="flex flex-1 min-h-[calc(100vh-4rem)] flex-col overflow-hidden">
+                                <GlobalShortcuts />
+                                <GlobalModalHost />
+                                <div className="flex-1 overflow-auto">
+                                  {children}
+                                </div>
+                              </main>
+                            </div>
                           </div>
                         </SidebarProvider>
                       </ThemeWrapper>

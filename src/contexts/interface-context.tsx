@@ -8,6 +8,8 @@ type SidebarMode = "collapsed" | "hybrid" | "expanded"
 interface InterfaceContextType {
   sidebarMode: SidebarMode
   setSidebarMode: (mode: SidebarMode) => void
+  sidebarEnabled: boolean
+  setSidebarEnabled: (enabled: boolean) => void
   colorMode: ColorMode
   setColorMode: (mode: ColorMode) => void
   accent: AccentOption
@@ -21,6 +23,7 @@ const InterfaceContext = createContext<InterfaceContextType | undefined>(undefin
 
 export function InterfaceProvider({ children }: { children: ReactNode }) {
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>("hybrid")
+  const [sidebarEnabled, setSidebarEnabled] = useState<boolean>(true)
   const [colorMode, setColorMode] = useState<ColorMode>("system")
   const [accent, setAccent] = useState<AccentOption>(DEFAULT_ACCENT)
   const [customAccent, setCustomAccent] = useState<string | undefined>()
@@ -34,6 +37,11 @@ export function InterfaceProvider({ children }: { children: ReactNode }) {
     const savedMode = localStorage.getItem("sidebar-mode") as SidebarMode
     if (savedMode && ["collapsed", "hybrid", "expanded"].includes(savedMode)) {
       setSidebarMode(savedMode)
+    }
+
+    const savedEnabled = localStorage.getItem("sidebar-enabled")
+    if (savedEnabled !== null) {
+      setSidebarEnabled(savedEnabled === "true")
     }
   }, [])
 
@@ -73,8 +81,14 @@ export function InterfaceProvider({ children }: { children: ReactNode }) {
     applyTheme(colorMode, "custom", color)
   }
 
+  const handleSidebarEnabledChange = (enabled: boolean) => {
+    setSidebarEnabled(enabled)
+    localStorage.setItem("sidebar-enabled", String(enabled))
+  }
+
   const saveSettings = () => {
     localStorage.setItem("sidebar-mode", sidebarMode)
+    localStorage.setItem("sidebar-enabled", String(sidebarEnabled))
     // Les autres préférences sont persistées via applyTheme
   }
 
@@ -83,6 +97,8 @@ export function InterfaceProvider({ children }: { children: ReactNode }) {
       value={{
         sidebarMode,
         setSidebarMode,
+        sidebarEnabled,
+        setSidebarEnabled: handleSidebarEnabledChange,
         colorMode,
         setColorMode: handleColorModeChange,
         accent,

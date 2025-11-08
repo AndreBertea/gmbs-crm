@@ -441,12 +441,12 @@ export default function ArtisansPage(): ReactElement {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 p-6 overflow-hidden flex flex-col min-h-0">
+    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 64px - 2px)', maxHeight: 'calc(100vh - 64px - 2px)', boxSizing: 'border-box' }}>
+      <div className="flex-1 space-y-4 p-6 overflow-hidden flex flex-col min-h-0" style={{ maxHeight: '100%', boxSizing: 'border-box' }}>
         {/* Boutons de vue */}
         <Tabs defaultValue="list" className="flex flex-col flex-1 min-h-0 overflow-hidden">
           {isReady && (
-            <div className="flex items-center justify-between gap-4 mb-4 flex-shrink-0">
+            <div className="flex items-center justify-between gap-4 mb-4">
               <ArtisanViewTabs
                 views={views}
                 activeViewId={activeViewId}
@@ -460,8 +460,8 @@ export default function ArtisansPage(): ReactElement {
             </div>
           )}
 
-          <Card className="border-2 shadow-sm flex-shrink-0">
-            <CardContent className="p-4 bg-slate-50 dark:bg-muted/20">
+          <Card className="border-2 shadow-sm">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col space-y-4">
                   <div className="flex flex-wrap items-center gap-6">

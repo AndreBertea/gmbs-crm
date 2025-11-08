@@ -155,15 +155,21 @@ export default async function RootLayout({
               <InterfaceProvider>
                 <ThemeWrapper>
                   <SidebarProvider>
-                    <div className="flex min-h-screen w-full overflow-hidden">
-                      <SidebarGate isAuthed={isAuthed} />
-                      <main id="main" className="flex flex-1 min-h-screen flex-col overflow-hidden">
-                        <GlobalShortcuts />
+                    <div className="flex flex-col min-h-screen w-full overflow-hidden">
+                      {/* Topbar en haut, couvrant toute la largeur */}
+                      <div className="sticky top-0 z-50 w-full">
                         <TopbarGate />
-                        <div className="flex-1 overflow-auto">
-                          {children}
-                        </div>
-                      </main>
+                      </div>
+                      {/* Sidebar et contenu principal en dessous */}
+                      <div className="flex flex-1 overflow-hidden">
+                        <SidebarGate isAuthed={isAuthed} />
+                        <main id="main" className="flex flex-1 flex-col overflow-hidden">
+                          <GlobalShortcuts />
+                          <div className="flex-1 overflow-auto">
+                            {children}
+                          </div>
+                        </main>
+                      </div>
                     </div>
                   </SidebarProvider>
                 </ThemeWrapper>

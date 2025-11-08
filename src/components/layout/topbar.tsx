@@ -4,9 +4,10 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Bell, Calendar, FileText, Plus, X } from "lucide-react"
+import { Search, Bell, Calendar, FileText, Plus, X, Home, Users, Settings } from "lucide-react"
 import { AvatarStatus } from "@/components/layout/avatar-status"
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 import useModal from "@/hooks/useModal"
 import { useInterventionReminders } from "@/hooks/useInterventionReminders"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -16,6 +17,10 @@ import { normalizeReminderIdentifier } from "@/contexts/RemindersContext"
 import { useUniversalSearch } from "@/hooks/useUniversalSearch"
 import { UniversalSearchResults } from "@/components/search/UniversalSearchResults"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
+import { useInterface } from "@/contexts/interface-context"
+import { t } from "@/config/domain"
+import { AnimatePresence, motion } from "framer-motion"
+import Image from "next/image"
 
 type ReminderFilter = "all" | "my_reminders" | "mentions"
 
@@ -33,10 +38,23 @@ type DisplayReminder = {
   legacyMentions: string[]
 }
 
+type NavItem = { type: "link"; name: string; href: string; icon: React.ComponentType<{ className?: string }> } | { type: "spacer" }
+
+const navigation: NavItem[] = [
+  { type: "link", name: t("dashboard"), href: "/dashboard", icon: Home },
+  { type: "spacer" },
+  { type: "link", name: t("deals"), href: "/interventions", icon: FileText },
+  { type: "link", name: t("contacts"), href: "/artisans", icon: Users },
+  { type: "spacer" },
+  { type: "link", name: "Paramètres", href: "/settings", icon: Settings },
+]
+
 export default function Topbar() {
   const pathname = usePathname()
   const { open: openModal } = useModal()
   const artisanModal = useArtisanModal()
+  const { sidebarEnabled } = useInterface()
+  const [logoHovered, setLogoHovered] = React.useState(false)
   const {
     reminders,
     reminderRecords,
@@ -427,15 +445,96 @@ export default function Topbar() {
   }, [clearSearch])
 
   return (
-    <div className="border-b bg-background shadow-sm">
-      <div className="flex h-16 items-center px-4">
-        {/* Left: title + new intervention/artisan button */}
-        <div className="flex flex-1 items-center gap-2">
-          <div className="text-2xl font-semibold tracking-tight select-none">{title}</div>
+    <div className="fixed top-0 left-0 right-0 z-50 border-b bg-background shadow-sm">
+      <div className="flex h-16 items-center px-4 relative">
+        {/* Left: Logo + boutons d'ajout */}
+        <div className="flex items-center gap-2">
+          <div 
+            className="relative flex items-center"
+            onMouseEnter={() => !sidebarEnabled && setLogoHovered(true)}
+            onMouseLeave={() => setLogoHovered(false)}
+          >
+            <Link href="/dashboard" className="cursor-pointer">
+              <div className="relative w-[100px] h-[100px] z-[60] -bottom-4">
+                <Image
+                  src="/gmbs-logo.svg"
+                  alt="GMBS Logo"
+                  width={100}
+                  height={100}
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </Link>
+            {/* Menu de navigation au hover quand sidebar désactivée */}
+            <AnimatePresence>
+              {!sidebarEnabled && logoHovered && (
+                <motion.div 
+                  className="fixed top-16 left-4 mt-2 w-[75px] z-[70]"
+                  initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                  transition={{ 
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 25,
+                    duration: 0.3
+                  }}
+                  onMouseEnter={() => setLogoHovered(true)}
+                  onMouseLeave={() => setLogoHovered(false)}
+                >
+                  <nav className="flex flex-col space-y-1 py-4">
+                    {navigation.map((item, idx) => {
+                      if (item.type === "spacer") {
+                        return <div key={`sp-${idx}`} className="h-0" aria-hidden="true" />
+                      }
+                      const isActive = pathname === item.href
+                      const Icon = item.icon
+                      return (
+                        <motion.div
+                          key={item.name}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{
+                            delay: idx * 0.05,
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 25
+                          }}
+                        >
+                          <Link 
+                            href={item.href} 
+                            className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+                            onClick={() => setLogoHovered(false)}
+                          >
+                            <motion.div
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                            >
+                              <Button
+                                variant={isActive ? "secondary" : "ghost"}
+                                className={cn(
+                                  "w-full justify-center",
+                                  isActive && "bg-secondary"
+                                )}
+                              >
+                                <Icon className="h-4 w-4 shrink-0" />
+                              </Button>
+                            </motion.div>
+                          </Link>
+                        </motion.div>
+                      )
+                    })}
+                  </nav>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           {showNewInterventionBtn ? (
             <Button
               size="sm"
-              className="ml-4"
               onClick={() => openModal("new", { content: "new-intervention" })}
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -445,7 +544,6 @@ export default function Topbar() {
           {showNewArtisanBtn ? (
             <Button
               size="sm"
-              className="ml-4"
               onClick={() => artisanModal.openNew()}
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -454,8 +552,13 @@ export default function Topbar() {
           ) : null}
         </div>
 
+        {/* Center: Titre centré */}
+        <div className="absolute left-1/2 transform -translate-x-1/2">
+          <div className="text-2xl font-semibold tracking-tight select-none">{title}</div>
+        </div>
+
         {/* Right: search (hover reveal) + notifications + avatar */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ml-auto">
           <div
             ref={searchContainerRef}
             className="relative flex items-center"

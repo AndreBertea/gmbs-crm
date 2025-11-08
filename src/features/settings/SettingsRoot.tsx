@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   User,
@@ -60,21 +61,24 @@ export type SettingsTab = "profile" | "interface" | "team" | "security"
 
 export default function SettingsPage({ activeTab = "profile", embedHeader = true }: { activeTab?: SettingsTab; embedHeader?: boolean }) {
   const { toast } = useToast()
-  const { sidebarMode, setSidebarMode, colorMode, setColorMode, accent, customAccent, setAccent, saveSettings } = useInterface()
+  const { sidebarMode, setSidebarMode, sidebarEnabled, setSidebarEnabled, colorMode, setColorMode, accent, customAccent, setAccent, saveSettings } = useInterface()
   const router = useRouter()
 
   const [tempSidebarMode, setTempSidebarMode] = useState<"collapsed" | "hybrid" | "expanded">(sidebarMode)
+  const [tempSidebarEnabled, setTempSidebarEnabled] = useState<boolean>(sidebarEnabled)
   const [tempColorMode, setTempColorMode] = useState<ColorMode>(colorMode)
   const [tempAccent, setTempAccent] = useState<AccentOption>(accent)
   const [tempCustomAccent, setTempCustomAccent] = useState<string>(customAccent ?? "#6366f1")
 
   // Synchroniser les états temporaires avec les valeurs persistées
   useEffect(() => {
+    setTempSidebarMode(sidebarMode)
+    setTempSidebarEnabled(sidebarEnabled)
     setTempAccent(accent)
     if (accent === "custom" && customAccent) {
       setTempCustomAccent(customAccent)
     }
-  }, [accent, customAccent])
+  }, [sidebarMode, sidebarEnabled, accent, customAccent])
 
   // Profile: load current user and allow editing personal info + badge color
   function ProfileSettings() {
@@ -199,6 +203,7 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
   const handleSaveInterfaceSettings = () => {
     // Mettre à jour les states du contexte
     setSidebarMode(tempSidebarMode)
+    setSidebarEnabled(tempSidebarEnabled)
     setColorMode(tempColorMode)
     if (tempAccent === "custom") {
       setAccent("custom", tempCustomAccent)
@@ -296,6 +301,7 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
 
   const hasUnsavedChanges =
     tempSidebarMode !== sidebarMode ||
+    tempSidebarEnabled !== sidebarEnabled ||
     tempColorMode !== colorMode ||
     tempAccent !== accent ||
     (tempAccent === "custom" &&
@@ -446,6 +452,20 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
                 <CardDescription>Choose how you want the sidebar to behave</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="sidebar-enabled" className="text-base font-medium">Sidebar active</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {tempSidebarEnabled ? "La sidebar est affichée" : "La sidebar est masquée, navigation via le logo"}
+                    </p>
+                  </div>
+                  <Switch
+                    id="sidebar-enabled"
+                    checked={tempSidebarEnabled}
+                    onCheckedChange={setTempSidebarEnabled}
+                  />
+                </div>
+                {tempSidebarEnabled && (
                 <div className="space-y-4">
                   <Label className="text-base font-medium">Sidebar Mode</Label>
                   <RadioGroup
@@ -550,6 +570,7 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
                     </div>
                   </RadioGroup>
                 </div>
+                )}
             </CardContent>
           </Card>
 

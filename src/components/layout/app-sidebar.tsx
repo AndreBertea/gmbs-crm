@@ -36,26 +36,19 @@ export function AppSidebar() {
   return (
     <div
       className={cn(
-        "relative group/sidebar flex min-h-screen flex-col bg-transparent transition-[width] duration-200 ease-out",
-        sidebarMode === "expanded" ? "w-64" : "w-16",
+        "relative group/sidebar flex flex-col bg-transparent transition-[width] duration-200 ease-out",
+        sidebarMode === "expanded" ? "w-72" : "w-20",
         // Hybrid expands only on hover (not focus) to avoid sticking open after click
-        expandOnHover && "hover:w-64"
+        expandOnHover && "hover:w-72"
       )}
+      style={{ height: "calc(100vh - 4rem)" }}
       data-mode={sidebarMode}
       aria-label="Application Sidebar"
     >
-      <div className="flex h-44 items-center px-9">
-        <h1
-          className={cn(
-            "text-lg font-semibold whitespace-nowrap transition-opacity duration-200",
-            collapses ? "opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100" : "opacity-100"
-          )}
-        >
-          GMBS CRM
-        </h1>
-        {/* Icon placeholder to keep height/alignment when collapsed */}
-      </div>
-      <nav className={cn("flex-1 space-y-1 p-2 py-5 rounded-r-lg border-r bg-background")}>
+      <nav className={cn(
+        "flex-1 space-y-1 pr-5 py-10 rounded-r-lg border-r bg-background",
+        sidebarMode === "collapsed" ? "pl-9" : "pl-7"
+      )}>
         {navigation.map((item, idx) => {
           if (item.type === "spacer") {
             return <div key={`sp-${idx}`} className="h-0" aria-hidden="true" />
