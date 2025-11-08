@@ -10,7 +10,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { MapLibreMap } from "@/components/maps/MapLibreMap"
-import { DocumentManager } from "@/components/documents/DocumentManager"
+import dynamic from "next/dynamic"
+
+const DocumentManager = dynamic(() => import("@/components/documents/DocumentManager").then(mod => ({ default: mod.DocumentManager })), {
+  loading: () => <div className="p-4 text-sm text-muted-foreground">Chargement des documents...</div>,
+  ssr: false,
+})
 import { CommentSection } from "@/components/shared/CommentSection"
 import { supabase } from "@/lib/supabase-client"
 import { useGeocodeSearch } from "@/hooks/useGeocodeSearch"

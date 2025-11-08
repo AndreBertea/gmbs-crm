@@ -5,11 +5,23 @@ import { useRouter } from "next/navigation"
 
 import Interventions from "@/components/interventions/Interventions"
 import { FiltersBar, type DateRange, type SortDir, type SortField } from "@/components/interventions/FiltersBar"
-import CalendarView from "@/components/interventions/views/CalendarView"
-import GalleryView from "@/components/interventions/views/GalleryView"
-import KanbanView from "@/components/interventions/views/KanbanView"
-import TableView from "@/components/interventions/views/TableView"
-import TimelineView from "@/components/interventions/views/TimelineView"
+import dynamic from "next/dynamic"
+
+const CalendarView = dynamic(() => import("@/components/interventions/views/CalendarView"), {
+  loading: () => <div className="flex items-center justify-center p-8">Chargement...</div>,
+})
+const GalleryView = dynamic(() => import("@/components/interventions/views/GalleryView"), {
+  loading: () => <div className="flex items-center justify-center p-8">Chargement...</div>,
+})
+const KanbanView = dynamic(() => import("@/components/interventions/views/KanbanView"), {
+  loading: () => <div className="flex items-center justify-center p-8">Chargement...</div>,
+})
+const TableView = dynamic(() => import("@/components/interventions/views/TableView"), {
+  loading: () => <div className="flex items-center justify-center p-8">Chargement...</div>,
+})
+const TimelineView = dynamic(() => import("@/components/interventions/views/TimelineView"), {
+  loading: () => <div className="flex items-center justify-center p-8">Chargement...</div>,
+})
 import { ViewTabs } from "@/components/interventions/views/ViewTabs"
 import ColumnConfigurationModal from "@/components/interventions/views/ColumnConfigurationModal"
 import { Button } from "@/components/ui/button"

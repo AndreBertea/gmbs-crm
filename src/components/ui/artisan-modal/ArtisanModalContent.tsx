@@ -23,7 +23,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { DocumentManager } from "@/components/documents/DocumentManager"
+import dynamic from "next/dynamic"
+
+const DocumentManager = dynamic(() => import("@/components/documents/DocumentManager").then(mod => ({ default: mod.DocumentManager })), {
+  loading: () => <div className="p-4 text-sm text-muted-foreground">Chargement des documents...</div>,
+  ssr: false,
+})
 import { ModeIcons } from "@/components/ui/mode-selector"
 import { CommentSection } from "@/components/shared/CommentSection"
 import { StatusReasonModal } from "@/components/shared/StatusReasonModal"
