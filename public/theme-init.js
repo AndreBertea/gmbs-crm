@@ -1,48 +1,4 @@
-import GlobalModalHost from "@/components/layout/GlobalModalHost"
-import GlobalShortcuts from "@/components/layout/global-shortcuts"
-import { SettingsProvider } from "@/components/layout/settings-provider"
-import SidebarGate from "@/components/layout/sidebar-gate"
-import ThemeWrapper from "@/components/layout/theme-wrapper"
-import TopbarGate from "@/components/layout/topbar-gate"
-import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { Toaster } from "@/components/ui/toaster"
-import { ModalDisplayProvider } from "@/contexts/ModalDisplayContext"
-import { SimpleOptimizedProvider } from "@/contexts/SimpleOptimizedContext"
-import { InterfaceProvider } from "@/contexts/interface-context"
-import { UserStatusProvider } from "@/contexts/user-status-context"
-import { RemindersProvider } from "@/contexts/RemindersContext"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { cookies } from "next/headers"
-import Script from "next/script"
-import type React from "react"
-import "./globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "GMBS CRM - Dashboard",
-  description: "Interface CRM moderne pour GMBS",
-    generator: 'v0.app'
-}
-
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const cookieStore = await cookies()
-  const isAuthed = Boolean(cookieStore.get('sb-access-token')?.value)
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Pré-applique le thème avant l'hydratation pour éviter le flash */}
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(() => {
+(() => {
   try {
     const root = document.documentElement;
     const rawSettings = localStorage.getItem('gmbs:settings');
@@ -77,7 +33,7 @@ export default async function RootLayout({
       return null;
     }
     function hexToHslParts(hex) {
-      const match = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);
+      const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       if (!match) return [0, 0, 0];
       const r = parseInt(match[1], 16) / 255;
       const g = parseInt(match[2], 16) / 255;
@@ -148,56 +104,4 @@ export default async function RootLayout({
       root.style.setProperty('--primary-foreground', tone.pf || tone.af || '0 0% 100%');
     }
   } catch (_) {}
-})();`,
-          }}
-        />
-      </head>
-      <body className={inter.className}>
-        {/* React Grab - Development only */}
-        {process.env.NODE_ENV === "development" && (
-          <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
-            crossOrigin="anonymous"
-            strategy="lazyOnload"
-            data-enabled="true"
-          />
-        )}
-        <a href="#main" className="sr-only focus:not-sr-only fixed top-2 left-2 z-[1000] bg-background border rounded px-2 py-1">
-          Aller au contenu
-        </a>
-        <SimpleOptimizedProvider>
-          <SettingsProvider>
-            <ReactQueryProvider>
-              <ModalDisplayProvider>
-                <UserStatusProvider>
-                  <InterfaceProvider>
-                    <RemindersProvider>
-                      <ThemeWrapper>
-                        <SidebarProvider>
-                          <div className="flex min-h-screen w-full overflow-hidden flex-col">
-                            <TopbarGate />
-                            <div className="flex flex-1 w-full overflow-hidden pt-16">
-                              <SidebarGate isAuthed={isAuthed} />
-                              <main id="main" className="flex flex-1 min-h-[calc(100vh-4rem)] flex-col overflow-hidden">
-                                <GlobalShortcuts />
-                                <GlobalModalHost />
-                                <div className="flex-1 overflow-auto">
-                                  {children}
-                                </div>
-                              </main>
-                            </div>
-                          </div>
-                        </SidebarProvider>
-                      </ThemeWrapper>
-                    </RemindersProvider>
-                  </InterfaceProvider>
-                </UserStatusProvider>
-              </ModalDisplayProvider>
-            </ReactQueryProvider>
-          </SettingsProvider>
-        </SimpleOptimizedProvider>
-        <Toaster />
-      </body>
-    </html>
-  )
-}
+})();

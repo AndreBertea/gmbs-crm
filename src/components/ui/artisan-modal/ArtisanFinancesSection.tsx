@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useMemo } from "react"
+// En dev, imports directs pour éviter les recompilations coûteuses du hot reload
+// En prod, Next.js optimisera automatiquement avec optimizePackageImports
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp } from "lucide-react"

@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+// En dev, imports directs pour éviter les recompilations coûteuses du hot reload
+// En prod, Next.js optimisera automatiquement avec optimizePackageImports
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
 const data = [
