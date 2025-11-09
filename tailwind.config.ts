@@ -96,6 +96,22 @@ const config: Config = {
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' }
+        },
+        'slide-in-right': {
+          '0%, 100%': { transform: 'translateX(100%)', opacity: '0' },
+          '20%, 80%': { transform: 'translateX(0)', opacity: '1' }
+        },
+        'fade-in': {
+          '0%, 100%': { opacity: '0.2' },
+          '20%, 80%': { opacity: '1' }
+        },
+        'scale-in': {
+          '0%, 100%': { transform: 'scale(0.85)', opacity: '0.7' },
+          '20%, 80%': { transform: 'scale(1)', opacity: '1' }
+        },
+        'fullscreen-expand': {
+          '0%, 100%': { transform: 'scale(0.98)', opacity: '0.8' },
+          '20%, 80%': { transform: 'scale(1)', opacity: '1' }
         }
       },
       animation: {

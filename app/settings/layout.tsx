@@ -6,12 +6,17 @@ export const dynamic = "force-dynamic"
 
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-6">
-      <h1 className="text-2xl font-semibold">Settings</h1>
-      <p className="text-sm text-muted-foreground">Manage your account settings and preferences</p>
+    <div className="flex flex-col h-full max-h-[calc(100vh-64px)]">
+      {/* Titre et description retirés - déjà présents dans la topbar */}
       <SettingsNav />
       <PrefetchSettingsTabs />
-      <div className="mt-6">{children}</div>
-    </section>
+      <div className="flex-1 overflow-auto min-h-0" data-settings-scroll-container>
+        <div className="px-4">
+          <section className="mx-auto max-w-5xl py-6">
+            {children}
+          </section>
+        </div>
+      </div>
+    </div>
   )
 }

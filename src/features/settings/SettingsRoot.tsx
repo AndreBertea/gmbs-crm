@@ -422,7 +422,8 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
               </Card>
             )}
 
-            <Card>
+            {/* Workflow des interventions - Masqué selon exigences client */}
+            {/* <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Workflow className="h-5 w-5" />
@@ -444,136 +445,9 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
                   </Link>
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Sidebar Configuration</CardTitle>
-                <CardDescription>Choose how you want the sidebar to behave</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="sidebar-enabled" className="text-base font-medium">Sidebar active</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {tempSidebarEnabled ? "La sidebar est affichée" : "La sidebar est masquée, navigation via le logo"}
-                    </p>
-                  </div>
-                  <Switch
-                    id="sidebar-enabled"
-                    checked={tempSidebarEnabled}
-                    onCheckedChange={setTempSidebarEnabled}
-                  />
-                </div>
-                {tempSidebarEnabled && (
-                <div className="space-y-4">
-                  <Label className="text-base font-medium">Sidebar Mode</Label>
-                  <RadioGroup
-                    value={tempSidebarMode}
-                    onValueChange={(value) => handleSidebarModeChange(value as "collapsed" | "hybrid" | "expanded")}
-                    className="space-y-4"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="collapsed" id="collapsed" />
-                          <Label htmlFor="collapsed" className="font-medium">
-                            Collapsed
-                          </Label>
-                        </div>
-                        <div
-                          className="border rounded-lg p-4 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                          onClick={() => handleSidebarModeChange("collapsed")}
-                        >
-                          <div className="flex gap-2 h-24">
-                            <div className="w-8 bg-sidebar border rounded flex flex-col items-center py-2 gap-1 animate-pulse">
-                              <PanelLeftClose className="h-3 w-3 text-muted-foreground" />
-                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="flex-1"></div>
-                              <div className="w-4 h-4 bg-muted-foreground/40 rounded-full"></div>
-                            </div>
-                            <div className="flex-1 bg-background border rounded p-2">
-                              <div className="w-full h-2 bg-muted-foreground/20 rounded mb-2"></div>
-                              <div className="w-3/4 h-2 bg-muted-foreground/20 rounded"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Icons only, always collapsed</p>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="hybrid" id="hybrid" />
-                          <Label htmlFor="hybrid" className="font-medium">
-                            Hybrid (Default)
-                          </Label>
-                        </div>
-                        <div
-                          className="border rounded-lg p-4 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                          onClick={() => handleSidebarModeChange("hybrid")}
-                        >
-                          <div className="flex gap-2 h-24">
-                            <div className="w-8 bg-sidebar border rounded flex flex-col items-center py-2 gap-1 relative overflow-hidden animate-[expand-contract_2s_ease-in-out_infinite]">
-                              <PanelLeft className="h-3 w-3 text-muted-foreground" />
-                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="flex-1"></div>
-                              <div className="w-4 h-4 bg-muted-foreground/40 rounded-full"></div>
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-sidebar/50 opacity-30 animate-[shimmer_2s_ease-in-out_infinite]"></div>
-                            </div>
-                            <div className="flex-1 bg-background border rounded p-2">
-                              <div className="w-full h-2 bg-muted-foreground/20 rounded mb-2"></div>
-                              <div className="w-3/4 h-2 bg-muted-foreground/20 rounded"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Expands on hover, collapses when not in use</p>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="expanded" id="expanded" />
-                          <Label htmlFor="expanded" className="font-medium">
-                            Expanded
-                          </Label>
-                        </div>
-                        <div
-                          className="border rounded-lg p-4 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                          onClick={() => handleSidebarModeChange("expanded")}
-                        >
-                          <div className="flex gap-2 h-24">
-                            <div className="w-16 bg-sidebar border rounded flex flex-col py-2 px-2 gap-1 animate-[breathing_3s_ease-in-out_infinite]">
-                              <div className="flex items-center gap-1 mb-1">
-                                <PanelLeftOpen className="h-3 w-3 text-muted-foreground" />
-                                <div className="w-8 h-1 bg-muted-foreground/40 rounded"></div>
-                              </div>
-                              <div className="w-full h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="w-full h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="w-full h-1 bg-muted-foreground/40 rounded"></div>
-                              <div className="flex-1"></div>
-                              <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 bg-muted-foreground/40 rounded-full"></div>
-                                <div className="w-6 h-1 bg-muted-foreground/40 rounded"></div>
-                              </div>
-                            </div>
-                            <div className="flex-1 bg-background border rounded p-2">
-                              <div className="w-full h-2 bg-muted-foreground/20 rounded mb-2"></div>
-                              <div className="w-3/4 h-2 bg-muted-foreground/20 rounded"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Always expanded with full text labels</p>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </div>
-                )}
-            </CardContent>
-          </Card>
-
+            {/* Theme Configuration - Position 1 */}
             <Card>
               <CardHeader>
                 <CardTitle>Theme Configuration</CardTitle>
@@ -820,6 +694,135 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
                     </p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Sidebar Configuration - Position 2 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Sidebar Configuration</CardTitle>
+                <CardDescription>Choose how you want the sidebar to behave</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="sidebar-enabled" className="text-base font-medium">Sidebar active</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {tempSidebarEnabled ? "La sidebar est affichée" : "La sidebar est masquée, navigation via le logo"}
+                    </p>
+                  </div>
+                  <Switch
+                    id="sidebar-enabled"
+                    checked={tempSidebarEnabled}
+                    onCheckedChange={setTempSidebarEnabled}
+                  />
+                </div>
+                {tempSidebarEnabled && (
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Sidebar Mode</Label>
+                  <RadioGroup
+                    value={tempSidebarMode}
+                    onValueChange={(value) => handleSidebarModeChange(value as "collapsed" | "hybrid" | "expanded")}
+                    className="space-y-4"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="collapsed" id="collapsed" />
+                          <Label htmlFor="collapsed" className="font-medium">
+                            Collapsed
+                          </Label>
+                        </div>
+                        <div
+                          className="border rounded-lg p-4 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => handleSidebarModeChange("collapsed")}
+                        >
+                          <div className="flex gap-2 h-24">
+                            <div className="w-8 bg-sidebar border rounded flex flex-col items-center py-2 gap-1 animate-pulse">
+                              <PanelLeftClose className="h-3 w-3 text-muted-foreground" />
+                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="flex-1"></div>
+                              <div className="w-4 h-4 bg-muted-foreground/40 rounded-full"></div>
+                            </div>
+                            <div className="flex-1 bg-background border rounded p-2">
+                              <div className="w-full h-2 bg-muted-foreground/20 rounded mb-2"></div>
+                              <div className="w-3/4 h-2 bg-muted-foreground/20 rounded"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Icons only, always collapsed</p>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="hybrid" id="hybrid" />
+                          <Label htmlFor="hybrid" className="font-medium">
+                            Hybrid (Default)
+                          </Label>
+                        </div>
+                        <div
+                          className="border rounded-lg p-4 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => handleSidebarModeChange("hybrid")}
+                        >
+                          <div className="flex gap-2 h-24">
+                            <div className="w-8 bg-sidebar border rounded flex flex-col items-center py-2 gap-1 relative overflow-hidden animate-[expand-contract_2s_ease-in-out_infinite]">
+                              <PanelLeft className="h-3 w-3 text-muted-foreground" />
+                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="w-4 h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="flex-1"></div>
+                              <div className="w-4 h-4 bg-muted-foreground/40 rounded-full"></div>
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-sidebar/50 opacity-30 animate-[shimmer_2s_ease-in-out_infinite]"></div>
+                            </div>
+                            <div className="flex-1 bg-background border rounded p-2">
+                              <div className="w-full h-2 bg-muted-foreground/20 rounded mb-2"></div>
+                              <div className="w-3/4 h-2 bg-muted-foreground/20 rounded"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Expands on hover, collapses when not in use</p>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="expanded" id="expanded" />
+                          <Label htmlFor="expanded" className="font-medium">
+                            Expanded
+                          </Label>
+                        </div>
+                        <div
+                          className="border rounded-lg p-4 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => handleSidebarModeChange("expanded")}
+                        >
+                          <div className="flex gap-2 h-24">
+                            <div className="w-16 bg-sidebar border rounded flex flex-col py-2 px-2 gap-1 animate-[breathing_3s_ease-in-out_infinite]">
+                              <div className="flex items-center gap-1 mb-1">
+                                <PanelLeftOpen className="h-3 w-3 text-muted-foreground" />
+                                <div className="w-8 h-1 bg-muted-foreground/40 rounded"></div>
+                              </div>
+                              <div className="w-full h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="w-full h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="w-full h-1 bg-muted-foreground/40 rounded"></div>
+                              <div className="flex-1"></div>
+                              <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 bg-muted-foreground/40 rounded-full"></div>
+                                <div className="w-6 h-1 bg-muted-foreground/40 rounded"></div>
+                              </div>
+                            </div>
+                            <div className="flex-1 bg-background border rounded p-2">
+                              <div className="w-full h-2 bg-muted-foreground/20 rounded mb-2"></div>
+                              <div className="w-3/4 h-2 bg-muted-foreground/20 rounded"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Always expanded with full text labels</p>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

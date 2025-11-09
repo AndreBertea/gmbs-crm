@@ -12,8 +12,9 @@ export const dynamic = "force-static"
 
 export default function Page() {
   return (
-    <div className="space-y-6 p-6">
-      <Card>
+    <div className="space-y-6">
+      {/* Workflow des interventions - Masqué selon exigences client */}
+      {/* <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Workflow className="h-5 w-5 text-primary" />
@@ -34,15 +35,15 @@ export default function Page() {
             </Link>
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
+
+      <SettingsPage activeTab="interface" embedHeader={false} />
 
       <ModalDisplayProvider>
         <ModalDisplayPreferencesCard />
       </ModalDisplayProvider>
 
       <ResetViewsCard />
-
-      <SettingsPage activeTab="interface" embedHeader={false} />
     </div>
   )
 }
