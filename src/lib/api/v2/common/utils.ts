@@ -311,6 +311,7 @@ export const DOCUMENT_TYPES = {
     "plan",
     "schema",
     "autre",
+    "a_classe",
   ],
   artisan: [
     "certificat",
@@ -320,6 +321,7 @@ export const DOCUMENT_TYPES = {
     "photo_profil",
     "portfolio",
     "autre",
+    "a_classe",
   ],
 };
 

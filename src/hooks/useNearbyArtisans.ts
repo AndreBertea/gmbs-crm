@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "@/lib/supabase-client"
 
+export interface AvatarMetadata {
+  hash: string | null
+  sizes: Record<string, string>
+  mime_preferred: string
+  baseUrl: string | null
+}
+
 export type NearbyArtisan = {
   id: string
   displayName: string
@@ -12,6 +19,10 @@ export type NearbyArtisan = {
   codePostal: string | null
   lat: number
   lng: number
+  prenom: string | null
+  nom: string | null
+  statut_id: string | null
+  photoProfilMetadata: AvatarMetadata | null
 }
 
 type NearbyArtisanState = {
@@ -86,6 +97,8 @@ export function useNearbyArtisans(
             "ville_intervention",
             "intervention_latitude",
             "intervention_longitude",
+            "statut_id",
+            "artisan_attachments(kind, url, content_hash, derived_sizes, mime_preferred, mime_type)",
           ].join(", "),
         )
         .not("intervention_latitude", "is", null)
@@ -100,7 +113,7 @@ export function useNearbyArtisans(
       }
 
       const enriched =
-        data?.map((row) => {
+        data?.map((row: any) => {
           const lat = Number(row.intervention_latitude)
           const lng = Number(row.intervention_longitude)
 
@@ -109,6 +122,23 @@ export function useNearbyArtisans(
           }
 
           const distanceKm = haversineDistanceKm(latitude, longitude, lat, lng)
+
+          // Récupérer la photo de profil depuis les attachments
+          const attachments = Array.isArray(row.artisan_attachments) 
+            ? row.artisan_attachments 
+            : [];
+          
+          const photoProfilAttachment = attachments.find(
+            (att: any) => att?.kind === "photo_profil" && att?.url && att.url.trim() !== ""
+          );
+
+          // Construire les métadonnées de la photo de profil
+          const photoProfilMetadata: AvatarMetadata | null = photoProfilAttachment ? {
+            hash: photoProfilAttachment.content_hash || null,
+            sizes: photoProfilAttachment.derived_sizes || {},
+            mime_preferred: photoProfilAttachment.mime_preferred || photoProfilAttachment.mime_type || 'image/jpeg',
+            baseUrl: photoProfilAttachment.url || null
+          } : null;
 
           return {
             id: row.id,
@@ -124,6 +154,10 @@ export function useNearbyArtisans(
             codePostal: row.code_postal_intervention ?? null,
             lat,
             lng,
+            prenom: row.prenom ?? null,
+            nom: row.nom ?? null,
+            statut_id: row.statut_id ?? null,
+            photoProfilMetadata,
           } satisfies NearbyArtisan
         }) ?? []
 

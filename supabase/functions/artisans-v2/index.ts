@@ -310,7 +310,7 @@ serve(async (req: Request) => {
           ${includeRelations.includes('gestionnaires') ? ',users!gestionnaire_id(id,firstname,lastname,username)' : ''}
           ${includeRelations.includes('metiers') ? ',artisan_metiers(metier_id,is_primary,metiers(id,label,code))' : ''}
           ${includeRelations.includes('zones') ? ',artisan_zones(zone_id,zones(id,label,code))' : ''}
-          ${includeRelations.includes('attachments') ? ',artisan_attachments(id,kind,url,filename,mime_type)' : ''}
+          ${includeRelations.includes('attachments') ? ',artisan_attachments(id,kind,url,filename,mime_type,content_hash,derived_sizes,mime_preferred)' : ''}
           ${includeRelations.includes('absences') ? ',artisan_absences(id,start_date,end_date,reason,is_confirmed)' : ''}
           ${includeRelations.includes('interventions') ? ',intervention_artisans(intervention_id,role,is_primary,interventions(id,date,statut_id,contexte_intervention))' : ''}
         `)

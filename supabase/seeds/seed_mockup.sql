@@ -782,29 +782,29 @@ INSERT INTO public.intervention_attachments (
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-001'), 'devis', 'https://storage.example.com/devis-int001.pdf', 'application/pdf', 'devis-int001.pdf', 102400, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-001'), 'photos', 'https://storage.example.com/photos-fuite.jpg', 'image/jpeg', 'fuite-cuisine.jpg', 204800, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-002'), 'factureGMBS', 'https://storage.example.com/facture-gmbs-int002.pdf', 'application/pdf', 'facture-gmbs-int002.pdf', 51200, NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-002'), 'intervention', 'https://storage.example.com/rapport-electrique-int002.pdf', 'application/pdf', 'rapport-tableau-electrique.pdf', 76800, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-002'), 'facturesGMBS', 'https://storage.example.com/facture-gmbs-int002.pdf', 'application/pdf', 'facture-gmbs-int002.pdf', 51200, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-002'), 'autre', 'https://storage.example.com/rapport-electrique-int002.pdf', 'application/pdf', 'rapport-tableau-electrique.pdf', 76800, NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-003'), 'photos', 'https://storage.example.com/peinture-avant-apres.jpg', 'image/jpeg', 'peinture-murs.jpg', 153600, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-003'), 'devis', 'https://storage.example.com/devis-peinture-int003.pdf', 'application/pdf', 'devis-peinture-chambre.pdf', 89600, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-004'), 'factureArtisan', 'https://storage.example.com/facture-artisan-serrure.pdf', 'application/pdf', 'facture-serrure.pdf', 76800, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-004'), 'facturesArtisans', 'https://storage.example.com/facture-artisan-serrure.pdf', 'application/pdf', 'facture-serrure.pdf', 76800, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-004'), 'photos', 'https://storage.example.com/serrure-avant-apres.jpg', 'image/jpeg', 'serrure-porte.jpg', 128000, NOW()),
   
   -- New interventions attachments
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-005'), 'devis', 'https://storage.example.com/devis-bricolage-int005.pdf', 'application/pdf', 'devis-meuble-cuisine.pdf', 92160, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-005'), 'photos', 'https://storage.example.com/meuble-installation.jpg', 'image/jpeg', 'meuble-cuisine-installe.jpg', 184320, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-006'), 'intervention', 'https://storage.example.com/rapport-chaudiere-int006.pdf', 'application/pdf', 'diagnostic-chaudiere.pdf', 128000, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-006'), 'autre', 'https://storage.example.com/rapport-chaudiere-int006.pdf', 'application/pdf', 'diagnostic-chaudiere.pdf', 128000, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-006'), 'photos', 'https://storage.example.com/chaudiere-panne.jpg', 'image/jpeg', 'chaudiere-defaillante.jpg', 204800, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-007'), 'cout', 'https://storage.example.com/cout-installation.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'cout-chauffe-eau.xlsx', 40960, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-007'), 'autre', 'https://storage.example.com/cout-installation.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'cout-chauffe-eau.xlsx', 40960, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-007'), 'photos', 'https://storage.example.com/chauffe-eau-installation.jpg', 'image/jpeg', 'chauffe-eau-nouveau.jpg', 153600, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-008'), 'intervention', 'https://storage.example.com/rapport-technique-int008.pdf', 'application/pdf', 'rapport-electrique.pdf', 128000, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-008'), 'autre', 'https://storage.example.com/rapport-technique-int008.pdf', 'application/pdf', 'rapport-electrique.pdf', 128000, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-008'), 'devis', 'https://storage.example.com/devis-mise-normes-int008.pdf', 'application/pdf', 'devis-mise-normes.pdf', 102400, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-009'), 'factureArtisan', 'https://storage.example.com/facture-serrure-multipoints.pdf', 'application/pdf', 'facture-serrure-multipoints.pdf', 76800, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-009'), 'facturesArtisans', 'https://storage.example.com/facture-serrure-multipoints.pdf', 'application/pdf', 'facture-serrure-multipoints.pdf', 76800, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-009'), 'photos', 'https://storage.example.com/serrure-multipoints.jpg', 'image/jpeg', 'serrure-multipoints-installee.jpg', 128000, NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-010'), 'devis', 'https://storage.example.com/devis-peinture-chambre-int010.pdf', 'application/pdf', 'devis-peinture-chambre.pdf', 89600, NOW()),
@@ -816,27 +816,27 @@ INSERT INTO public.intervention_attachments (
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-011'), 'photos', 'https://storage.example.com/jardin-apres-entretien.jpg', 'image/jpeg', 'jardin-apres-taille.jpg', 204800, NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-012'), 'devis', 'https://storage.example.com/devis-bibliotheque-int012.pdf', 'application/pdf', 'devis-bibliotheque-chene.pdf', 102400, NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-012'), 'cout', 'https://storage.example.com/cout-bibliotheque.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'cout-bibliotheque-sur-mesure.xlsx', 51200, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-012'), 'autre', 'https://storage.example.com/cout-bibliotheque.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'cout-bibliotheque-sur-mesure.xlsx', 51200, NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-013'), 'devis', 'https://storage.example.com/devis-climatisation-int013.pdf', 'application/pdf', 'devis-climatisation-reversible.pdf', 89600, NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-014'), 'devis', 'https://storage.example.com/devis-vitrerie-int014.pdf', 'application/pdf', 'devis-remplacement-vitre.pdf', 76800, NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'devis', 'https://storage.example.com/devis-renovation-sdb-int015.pdf', 'application/pdf', 'devis-renovation-salle-bain.pdf', 128000, NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'cout', 'https://storage.example.com/cout-renovation-sdb.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'cout-renovation-salle-bain.xlsx', 61440, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'autre', 'https://storage.example.com/cout-renovation-sdb.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'cout-renovation-salle-bain.xlsx', 61440, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'photos', 'https://storage.example.com/sdb-avant-renovation.jpg', 'image/jpeg', 'salle-bain-avant.jpg', 204800, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'photos', 'https://storage.example.com/sdb-apres-renovation.jpg', 'image/jpeg', 'salle-bain-apres.jpg', 204800, NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-016'), 'devis', 'https://storage.example.com/devis-volets-int016.pdf', 'application/pdf', 'devis-volets-roulants.pdf', 102400, NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-016'), 'cout', 'https://storage.example.com/cout-volets.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'cout-volets-electriques.xlsx', 51200, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-016'), 'autre', 'https://storage.example.com/cout-volets.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'cout-volets-electriques.xlsx', 51200, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-017'), 'intervention', 'https://storage.example.com/rapport-nuisibles-int017.pdf', 'application/pdf', 'rapport-diagnostic-nuisibles.pdf', 89600, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-017'), 'autre', 'https://storage.example.com/rapport-nuisibles-int017.pdf', 'application/pdf', 'rapport-diagnostic-nuisibles.pdf', 89600, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-017'), 'photos', 'https://storage.example.com/infestation-nuisibles.jpg', 'image/jpeg', 'signes-infestation.jpg', 153600, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-018'), 'intervention', 'https://storage.example.com/rapport-nettoyage-int018.pdf', 'application/pdf', 'rapport-nettoyage-apres-travaux.pdf', 76800, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-018'), 'autre', 'https://storage.example.com/rapport-nettoyage-int018.pdf', 'application/pdf', 'rapport-nettoyage-apres-travaux.pdf', 76800, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-018'), 'photos', 'https://storage.example.com/appartement-nettoye.jpg', 'image/jpeg', 'appartement-apres-nettoyage.jpg', 128000, NOW()),
   
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'intervention', 'https://storage.example.com/rapport-rdf-int019.pdf', 'application/pdf', 'rapport-reparation-fissures.pdf', 102400, NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'autre', 'https://storage.example.com/rapport-rdf-int019.pdf', 'application/pdf', 'rapport-reparation-fissures.pdf', 102400, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'photos', 'https://storage.example.com/fissures-avant-reparation.jpg', 'image/jpeg', 'fissures-murs-avant.jpg', 153600, NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'photos', 'https://storage.example.com/fissures-apres-reparation.jpg', 'image/jpeg', 'fissures-murs-apres.jpg', 153600, NOW()),
   

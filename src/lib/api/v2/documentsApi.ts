@@ -11,7 +11,85 @@ import type {
   SupportedDocumentTypes,
   UpdateDocumentData,
 } from "./common/types";
-import { SUPABASE_FUNCTIONS_URL, getHeaders, handleResponse } from "./common/utils";
+import { getSupabaseFunctionsUrl, getHeaders, handleResponse } from "./common/utils";
+import { supabase } from "../../supabase-client";
+
+// Détecter si on est dans Node.js (pas de window)
+const isNodeJs = typeof window === 'undefined';
+
+/**
+ * Crée un client Supabase pour Node.js avec les bonnes credentials
+ */
+function getSupabaseClientForNode() {
+  if (!isNodeJs) {
+    return supabase; // Utiliser le client existant dans le browser
+  }
+  
+  // Dans Node.js, créer un nouveau client avec les credentials du service role
+  const { createClient } = require('@supabase/supabase-js');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY requis pour Node.js');
+  }
+  
+  return createClient(supabaseUrl, serviceRoleKey);
+}
+
+function normalizeInterventionKindValue(kind: string): string {
+  if (!kind) return kind;
+
+  const trimmed = kind.trim();
+  if (!trimmed) return kind;
+
+  const lower = trimmed.toLowerCase();
+  const compact = lower.replace(/[_\s-]/g, '');
+
+  const needsClassification = [
+    'aclasser',
+    'aclassifier',
+    'àclasser',
+    'àclassifier',
+    'aclasse',
+    'àclasse'
+  ];
+
+  if (
+    needsClassification.includes(compact) ||
+    lower === 'a classer' ||
+    lower === 'a classifier' ||
+    lower === 'à classer' ||
+    lower === 'à classifier'
+  ) {
+    return 'a_classe';
+  }
+
+  const canonicalMap: Record<string, string> = {
+    facturegmbs: 'facturesGMBS',
+    facturesgmbs: 'facturesGMBS',
+    factureartisan: 'facturesArtisans',
+    facturesartisan: 'facturesArtisans',
+    facturemateriel: 'facturesMateriel',
+    facturesmateriel: 'facturesMateriel'
+  };
+  if (canonicalMap[compact]) {
+    return canonicalMap[compact];
+  }
+
+  const legacyToAutre = new Set([
+    'rapportintervention',
+    'plan',
+    'schema',
+    'intervention',
+    'cout'
+  ]);
+  if (legacyToAutre.has(compact)) {
+    return 'autre';
+  }
+
+  return trimmed;
+}
 
 export const documentsApi = {
   // Récupérer tous les documents
@@ -25,12 +103,13 @@ export const documentsApi = {
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.offset) searchParams.append("offset", params.offset.toString());
 
-    const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents${
+    const url = `${getSupabaseFunctionsUrl()}/documents/documents${
       searchParams.toString() ? `?${searchParams.toString()}` : ""
     }`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
@@ -40,21 +119,57 @@ export const documentsApi = {
     id: string,
     entityType: "intervention" | "artisan" = "intervention"
   ): Promise<InterventionAttachment | ArtisanAttachment> {
-    const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/${id}?entity_type=${entityType}`;
+    const url = `${getSupabaseFunctionsUrl()}/documents/documents/${id}?entity_type=${entityType}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
 
   // Créer un document
   async create(data: CreateDocumentData): Promise<InterventionAttachment | ArtisanAttachment> {
+    // Dans Node.js, utiliser directement Supabase (plus simple et fiable)
+    if (isNodeJs) {
+      const client = getSupabaseClientForNode();
+      const tableName = data.entity_type === 'artisan' ? 'artisan_attachments' : 'intervention_attachments';
+      const entityIdField = data.entity_type === 'artisan' ? 'artisan_id' : 'intervention_id';
+      const canonicalKind = data.entity_type === 'intervention'
+        ? normalizeInterventionKindValue(data.kind)
+        : data.kind;
+      
+      const { data: result, error } = await client
+        .from(tableName)
+        .insert([{
+          [entityIdField]: data.entity_id,
+          kind: canonicalKind,
+          url: data.url,
+          filename: data.filename || null,
+          mime_type: data.mime_type || null,
+          file_size: data.file_size || null,
+          created_by: data.created_by || null,
+          created_by_display: data.created_by_display || null,
+          created_by_code: data.created_by_code || null,
+          created_by_color: data.created_by_color || null,
+        }])
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(`Failed to create document: ${error.message}`);
+      }
+      
+      return result;
+    }
+    
+    // Dans le browser, utiliser les Edge Functions
+    const headers = await getHeaders();
     const response = await fetch(
-      `${SUPABASE_FUNCTIONS_URL}/documents/documents`,
+      `${getSupabaseFunctionsUrl()}/documents/documents`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify(data),
       }
     );
@@ -63,11 +178,96 @@ export const documentsApi = {
 
   // Upload un document avec contenu
   async upload(data: FileUploadData): Promise<InterventionAttachment | ArtisanAttachment> {
+    // Dans Node.js, utiliser directement Supabase Storage (plus simple et fiable)
+    if (isNodeJs) {
+      const client = getSupabaseClientForNode();
+      
+      // Décoder le contenu base64
+      let fileBuffer: Buffer;
+      try {
+        // Enlever le préfixe "data:..." si présent
+        const base64Data = data.content.includes(',') 
+          ? data.content.split(',')[1] 
+          : data.content;
+        
+        // Décoder le base64 en buffer
+        fileBuffer = Buffer.from(base64Data, 'base64');
+      } catch (error: any) {
+        throw new Error(`Invalid base64 content: ${error.message}`);
+      }
+
+      // Générer un nom de fichier unique (comme dans l'Edge Function)
+      const timestamp = Date.now();
+      const extension = data.filename.split('.').pop() || 'bin';
+      
+      // Normaliser le kind pour les interventions (comme dans l'Edge Function)
+      const canonicalKind = data.entity_type === 'intervention'
+        ? normalizeInterventionKindValue(data.kind)
+        : data.kind;
+      
+      const uniqueFilename = `${data.entity_type}_${data.entity_id}_${canonicalKind}_${timestamp}.${extension}`;
+
+      // Upload vers Supabase Storage
+      const storagePath = `${data.entity_type}/${data.entity_id}/${uniqueFilename}`;
+      const { data: uploadData, error: uploadError } = await client.storage
+        .from('documents')
+        .upload(storagePath, fileBuffer, {
+          contentType: data.mime_type,
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload to storage: ${uploadError.message}`);
+      }
+
+      // Obtenir l'URL publique du fichier uploadé
+      const { data: { publicUrl } } = client.storage
+        .from('documents')
+        .getPublicUrl(storagePath);
+
+      // Remplacer l'URL interne Docker par l'URL accessible
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+      const storageUrl = publicUrl.replace(
+        'http://kong:8000',
+        supabaseUrl.replace(/\/rest\/v1$/, '').replace(/\/$/, '') || 'http://127.0.0.1:54321'
+      );
+
+      // Créer l'enregistrement en base
+      const tableName = data.entity_type === 'artisan' ? 'artisan_attachments' : 'intervention_attachments';
+      const entityIdField = data.entity_type === 'artisan' ? 'artisan_id' : 'intervention_id';
+      
+      const { data: result, error } = await client
+        .from(tableName)
+        .insert([{
+          [entityIdField]: data.entity_id,
+          kind: canonicalKind,
+          url: storageUrl,
+          filename: data.filename,
+          mime_type: data.mime_type,
+          file_size: data.file_size,
+          created_by: data.created_by || null,
+          created_by_display: data.created_by_display || null,
+          created_by_code: data.created_by_code || null,
+          created_by_color: data.created_by_color || null,
+        }])
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(`Failed to create document: ${error.message}`);
+      }
+      
+      return result;
+    }
+    
+    // Dans le browser, utiliser les Edge Functions
+    const headers = await getHeaders();
     const response = await fetch(
-      `${SUPABASE_FUNCTIONS_URL}/documents/documents/upload`,
+      `${getSupabaseFunctionsUrl()}/documents/documents/upload`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify(data),
       }
     );
@@ -80,11 +280,12 @@ export const documentsApi = {
     data: UpdateDocumentData,
     entityType: "intervention" | "artisan" = "intervention"
   ): Promise<InterventionAttachment | ArtisanAttachment> {
-    const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/${id}?entity_type=${entityType}`;
+    const url = `${getSupabaseFunctionsUrl()}/documents/documents/${id}?entity_type=${entityType}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
       method: "PUT",
-      headers: getHeaders(),
+      headers,
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -95,21 +296,23 @@ export const documentsApi = {
     id: string,
     entityType: "intervention" | "artisan" = "intervention"
   ): Promise<{ message: string; data: any }> {
-    const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/${id}?entity_type=${entityType}`;
+    const url = `${getSupabaseFunctionsUrl()}/documents/documents/${id}?entity_type=${entityType}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
       method: "DELETE",
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
 
   // Obtenir les types de documents supportés
   async getSupportedTypes(): Promise<SupportedDocumentTypes> {
+    const headers = await getHeaders();
     const response = await fetch(
-      `${SUPABASE_FUNCTIONS_URL}/documents/documents/types`,
+      `${getSupabaseFunctionsUrl()}/documents/documents/types`,
       {
-        headers: getHeaders(),
+        headers,
       }
     );
     return handleResponse(response);
@@ -140,10 +343,11 @@ export const documentsApi = {
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.offset) searchParams.append("offset", params.offset.toString());
 
-    const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/search?${searchParams.toString()}`;
+    const url = `${getSupabaseFunctionsUrl()}/documents/documents/search?${searchParams.toString()}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
@@ -158,10 +362,11 @@ export const documentsApi = {
     if (params?.limit) searchParams.append("limit", params.limit.toString());
     if (params?.offset) searchParams.append("offset", params.offset.toString());
 
-    const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/search?${searchParams.toString()}`;
+    const url = `${getSupabaseFunctionsUrl()}/documents/documents/search?${searchParams.toString()}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
@@ -179,12 +384,13 @@ export const documentsApi = {
     if (params?.entity_type) searchParams.append("entity_type", params.entity_type);
     if (params?.entity_id) searchParams.append("entity_id", params.entity_id);
 
-    const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/stats${
+    const url = `${getSupabaseFunctionsUrl()}/documents/documents/stats${
       searchParams.toString() ? `?${searchParams.toString()}` : ""
     }`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },

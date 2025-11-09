@@ -18,7 +18,18 @@
     "import:artisans": "node scripts/imports/google-sheets-import-clean-v2.js --artisans-only && node scripts/recalculate-artisan-statuses.js",
     "import:debug": "node scripts/debug-import-artisan-links.js",
     "recalculate:artisan-statuses": "node scripts/recalculate-artisan-statuses.js",
-    "recalculate:single-artisan": "node scripts/recalculate-single-artisan-status.js"
+    "recalculate:single-artisan": "node scripts/recalculate-single-artisan-status.js",
+    "drive:analyze": "node scripts/imports/analyze-drive-structure.js",
+    "drive:extract-names": "node scripts/imports/documents/work-extract-folder-names.js",
+    "drive:match-interventions": "npx tsx scripts/imports/documents/match-folders-to-interventions.js",
+    "drive:import-documents-interventions": "npx tsx scripts/imports/documents/match-folders-to-interventions.js",
+    "drive:match-artisans": "npx tsx scripts/imports/documents/match-folders-to-artisans.js",
+    "drive:import-documents-artisans": "npx tsx scripts/imports/documents/match-folders-to-artisans.js",
+    "drive:import-all-documents": "node scripts/imports/documents/import-all-documents.js",
+    "drive:verify-documents": "npx tsx scripts/imports/documents/tests/verify-documents-insertion.js",
+    "drive:verify-intervention-documents": "npx tsx scripts/imports/documents/tests/verify-intervention-documents.js",
+    "drive:verify-storage": "npx tsx scripts/imports/documents/tests/verify-storage-upload.js",
+    "test:csv-interventions": "node scripts/test-interventions-folders-csv.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

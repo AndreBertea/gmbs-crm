@@ -163,6 +163,9 @@ export interface ArtisanAttachment {
   filename: string | null;
   mime_type: string | null;
   file_size: number | null;
+  content_hash?: string | null;
+  derived_sizes?: Record<string, string> | null;
+  mime_preferred?: string | null;
   created_at: string | null;
   created_by: string | null;
   created_by_display: string | null;

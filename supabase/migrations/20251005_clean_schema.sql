@@ -206,7 +206,7 @@ CREATE TABLE IF NOT EXISTS public.artisan_zones (
 CREATE TABLE IF NOT EXISTS public.artisan_attachments (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   artisan_id uuid REFERENCES public.artisans(id) ON DELETE CASCADE,
-  kind text NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('kbis','assurance','cni_recto_verso','iban','decharge_partenariat','photo_profil','autre','a_classe')),
   url text NOT NULL,
   mime_type text,
   filename text,
@@ -340,7 +340,7 @@ CREATE TABLE IF NOT EXISTS public.intervention_payments (
 CREATE TABLE IF NOT EXISTS public.intervention_attachments (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   intervention_id uuid REFERENCES public.interventions(id) ON DELETE CASCADE,
-  kind text NOT NULL CHECK (kind IN ('intervention','cout','devis','photos','factureGMBS','factureArtisan','factureMateriel')),
+  kind text NOT NULL CHECK (kind IN ('devis','photos','facturesGMBS','facturesArtisans','facturesMateriel','autre','a_classe')),
   url text NOT NULL,
   mime_type text,
   filename text,

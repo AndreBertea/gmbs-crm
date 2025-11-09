@@ -23,13 +23,11 @@ const SUPPORTED_DOCUMENT_TYPES = {
   intervention: [
     'devis',
     'photos',
-    'factureGMBS',
-    'factureArtisan',
-    'factureMateriel',
-    'rapport_intervention',
-    'plan',
-    'schema',
-    'autre'
+    'facturesGMBS',
+    'facturesArtisans',
+    'facturesMateriel',
+    'autre',
+    'a_classe'
   ],
   artisan: [
     'kbis',
@@ -37,29 +35,63 @@ const SUPPORTED_DOCUMENT_TYPES = {
     'cni_recto_verso',
     'iban',
     'decharge_partenariat',
-    'certificat',
-    'siret',
     'photo_profil',
-    'portfolio',
-    'autre'
+    'autre',
+    'a_classe'
   ]
 };
 
 function normalizeInterventionKind(kind: string): string {
   if (!kind) return kind;
-  const trimmed = kind.trim();
-  const compact = trimmed.toLowerCase().replace(/[_\s-]/g, '');
 
-  switch (compact) {
-    case 'facturegmbs':
-      return 'factureGMBS';
-    case 'factureartisan':
-      return 'factureArtisan';
-    case 'facturemateriel':
-      return 'factureMateriel';
-    default:
-      return trimmed;
+  const trimmed = kind.trim();
+  if (!trimmed) return kind;
+
+  const lower = trimmed.toLowerCase();
+  const compact = lower.replace(/[_\s-]/g, '');
+
+  const needsClassification = [
+    'aclasser',
+    'aclassifier',
+    'àclasser',
+    'àclassifier',
+    'aclasse',
+    'àclasse'
+  ];
+  if (
+    needsClassification.includes(compact) ||
+    lower === 'a classer' ||
+    lower === 'a classifier' ||
+    lower === 'à classer' ||
+    lower === 'à classifier'
+  ) {
+    return 'a_classe';
   }
+
+  const canonicalMap: Record<string, string> = {
+    facturegmbs: 'facturesGMBS',
+    facturesgmbs: 'facturesGMBS',
+    factureartisan: 'facturesArtisans',
+    facturesartisan: 'facturesArtisans',
+    facturemateriel: 'facturesMateriel',
+    facturesmateriel: 'facturesMateriel'
+  };
+  if (canonicalMap[compact]) {
+    return canonicalMap[compact];
+  }
+
+  const legacyToAutre = new Set([
+    'rapportintervention',
+    'plan',
+    'schema',
+    'intervention',
+    'cout'
+  ]);
+  if (legacyToAutre.has(compact)) {
+    return 'autre';
+  }
+
+  return trimmed;
 }
 
 // Types pour la validation
@@ -187,6 +219,9 @@ serve(async (req: Request) => {
             filename,
             mime_type,
             file_size,
+            content_hash,
+            derived_sizes,
+            mime_preferred,
             created_at,
             created_by,
             created_by_display,
@@ -328,6 +363,20 @@ serve(async (req: Request) => {
         );
       }
 
+      // Pour les artisans, supprimer l'ancienne photo_profil si on en crée une nouvelle
+      if (body.entity_type === 'artisan' && canonicalKind === 'photo_profil') {
+        const { error: deleteError } = await supabase
+          .from('artisan_attachments')
+          .delete()
+          .eq('artisan_id', body.entity_id)
+          .eq('kind', 'photo_profil');
+        
+        if (deleteError) {
+          console.warn('Warning: Failed to delete old photo_profil:', deleteError);
+          // Ne pas faire échouer la création si la suppression échoue
+        }
+      }
+
       let query;
       if (body.entity_type === 'artisan') {
         query = supabase
@@ -382,6 +431,22 @@ serve(async (req: Request) => {
         timestamp: new Date().toISOString(),
         message: 'Document created successfully'
       }));
+
+      // Pour les photos de profil d'artisan, appeler process-avatar en arrière-plan
+      if (body.entity_type === 'artisan' && canonicalKind === 'photo_profil' && body.mime_type?.startsWith('image/')) {
+        // Appeler process-avatar de manière asynchrone (ne pas bloquer la réponse)
+        supabase.functions.invoke('process-avatar', {
+          body: {
+            artisan_id: body.entity_id,
+            attachment_id: data.id,
+            image_url: body.url,
+            mime_type: body.mime_type
+          }
+        }).catch((error) => {
+          console.error('Error invoking process-avatar:', error);
+          // Ne pas faire échouer la création si process-avatar échoue
+        });
+      }
 
       return new Response(
         JSON.stringify(data),
@@ -473,6 +538,20 @@ serve(async (req: Request) => {
         Deno.env.get('SUPABASE_PUBLIC_URL') || 'http://127.0.0.1:54321'
       );
 
+      // Pour les artisans, supprimer l'ancienne photo_profil si on en upload une nouvelle
+      if (body.entity_type === 'artisan' && canonicalKind === 'photo_profil') {
+        const { error: deleteError } = await supabase
+          .from('artisan_attachments')
+          .delete()
+          .eq('artisan_id', body.entity_id)
+          .eq('kind', 'photo_profil');
+        
+        if (deleteError) {
+          console.warn('Warning: Failed to delete old photo_profil:', deleteError);
+          // Ne pas faire échouer l'upload si la suppression échoue
+        }
+      }
+
       // Créer l'enregistrement en base
       let query;
       if (body.entity_type === 'artisan') {
@@ -529,6 +608,22 @@ serve(async (req: Request) => {
         timestamp: new Date().toISOString(),
         message: 'Document uploaded successfully'
       }));
+
+      // Pour les photos de profil d'artisan, appeler process-avatar en arrière-plan
+      if (body.entity_type === 'artisan' && canonicalKind === 'photo_profil' && data.mime_type?.startsWith('image/')) {
+        // Appeler process-avatar de manière asynchrone (ne pas bloquer la réponse)
+        supabase.functions.invoke('process-avatar', {
+          body: {
+            artisan_id: body.entity_id,
+            attachment_id: data.id,
+            image_url: storageUrl,
+            mime_type: body.mime_type
+          }
+        }).catch((error) => {
+          console.error('Error invoking process-avatar:', error);
+          // Ne pas faire échouer l'upload si process-avatar échoue
+        });
+      }
 
       return new Response(
         JSON.stringify({

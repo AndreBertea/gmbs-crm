@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Loader2, Plus, Trash2, FilePlus, Pencil, Link, ExternalLink, Check } from "lucide-react";
+import { toast } from "sonner";
 import { documentsApi } from "@/lib/supabase-api-v2";
 import { DocumentPreview } from "@/components/documents/DocumentPreview";
 import { Button } from "@/components/ui/button";
@@ -517,23 +518,45 @@ export function DocumentManager({
 
       const normalizedKind = normalizeKind(kind);
 
+      // Validation MIME pour photo_profil (images uniquement)
+      if (normalizedKind === 'photo_profil') {
+        const invalidFiles = fileArray.filter(
+          file => !file.type.startsWith('image/')
+        );
+        if (invalidFiles.length > 0) {
+          toast.error(
+            `Les photos de profil doivent être des images. Fichiers rejetés: ${invalidFiles.map(f => f.name).join(', ')}`
+          );
+          return;
+        }
+      }
+
       setQueueLength(fileArray.length);
       setCompletedInQueue(0);
       setIsQueueUploading(true);
 
       try {
         for (const file of fileArray) {
-          await uploadDocument(
-            file,
-            entityType,
-            entityId,
-            normalizedKind,
-            uploaderInfo,
-          );
-          setCompletedInQueue((count) => count + 1);
+          try {
+            await uploadDocument(
+              file,
+              entityType,
+              entityId,
+              normalizedKind,
+              uploaderInfo,
+            );
+            setCompletedInQueue((count) => count + 1);
+          } catch (error) {
+            console.error('Erreur lors de l\'upload:', error);
+            toast.error(`Erreur lors de l'upload de ${file.name}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+          }
         }
         await fetchDocuments();
         onChange?.();
+        toast.success(`${fileArray.length} document(s) importé(s) avec succès`);
+      } catch (error) {
+        console.error('Erreur lors du traitement de la file d\'upload:', error);
+        toast.error('Erreur lors de l\'import des documents');
       } finally {
         resetQueueState();
       }
@@ -639,8 +662,10 @@ export function DocumentManager({
         await documentsApi.delete(documentId, entityType);
         await fetchDocuments();
         onChange?.();
+        toast.success('Document supprimé avec succès');
       } catch (error) {
         console.error("Erreur lors de la suppression du document:", error);
+        toast.error(`Erreur lors de la suppression: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
       } finally {
         setDeleteInProgress(null);
       }
@@ -650,7 +675,20 @@ export function DocumentManager({
 
   const handleCopyLink = useCallback(async (url: string, filename: string, documentId: string) => {
     try {
-      await navigator.clipboard.writeText(url);
+      // Utiliser l'API Clipboard si disponible, sinon fallback avec textarea
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback pour les navigateurs sans support clipboard API
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
       setCopiedLinkId(documentId);
       console.log(`✅ Lien copié : ${filename}`);
       // Reset après 2 secondes
@@ -843,6 +881,65 @@ export function DocumentManager({
     }
   }, [renamingRow]);
 
+  // Formats d'image acceptés pour les photos de profil
+  const PHOTO_PROFIL_IMAGE_TYPES = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/avif',
+  ];
+
+  // Obtenir le texte des formats acceptés selon le kind sélectionné
+  const getAcceptedFormatsText = useCallback((kind: string | null): string => {
+    if (!kind) {
+      return 'PDF, DOC, DOCX, JPG, PNG, XLS, XLSX';
+    }
+
+    const normalizedKind = normalizeKind(kind);
+    if (normalizedKind === 'photo_profil') {
+      return 'JPG, JPEG, PNG, WebP, GIF, AVIF';
+    }
+
+    return 'PDF, DOC, DOCX, JPG, PNG, XLS, XLSX';
+  }, []);
+
+  // Obtenir la valeur de l'attribut accept selon le kind sélectionné
+  const getAcceptAttribute = useCallback((kind: string | null): string => {
+    if (!kind) {
+      return allowedAccept;
+    }
+
+    const normalizedKind = normalizeKind(kind);
+    if (normalizedKind === 'photo_profil') {
+      // Formats d'image uniquement pour photo_profil
+      return 'image/jpeg,image/jpg,image/png,image/webp,image/gif,image/avif';
+    }
+
+    return allowedAccept;
+  }, [allowedAccept]);
+
+  // Mettre à jour allowedAccept quand pendingKind change
+  useEffect(() => {
+    if (pendingKind) {
+      const normalizedKind = normalizeKind(pendingKind);
+      if (normalizedKind === 'photo_profil') {
+        setAllowedAccept('image/jpeg,image/jpg,image/png,image/webp,image/gif,image/avif');
+      } else {
+        // Réinitialiser aux valeurs par défaut si accept n'est pas fourni
+        if (!accept) {
+          setAllowedAccept(DEFAULT_ACCEPT);
+        }
+      }
+    } else {
+      // Réinitialiser aux valeurs par défaut si aucun kind n'est sélectionné
+      if (!accept) {
+        setAllowedAccept(DEFAULT_ACCEPT);
+      }
+    }
+  }, [pendingKind, accept]);
+
   const handlePendingUpload = useCallback(async () => {
     if (!pendingKind || pendingFiles.length === 0) return;
 
@@ -1012,7 +1109,13 @@ export function DocumentManager({
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{labelForKind(row.kind)}</span>
+                      {normalizeKind(row.kind) === 'a_classe' ? (
+                        <Badge variant="outline" className="text-xs">
+                          À classer
+                        </Badge>
+                      ) : (
+                        <span className="text-sm">{labelForKind(row.kind)}</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="text-xs text-muted-foreground">
@@ -1205,7 +1308,7 @@ export function DocumentManager({
                       key={fileInputKey}
                       type="file"
                       multiple={multiple}
-                      accept={allowedAccept}
+                      accept={getAcceptAttribute(pendingKind)}
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       onChange={(event) => handlePendingFilesChange(event.target.files)}
                     />
@@ -1217,7 +1320,7 @@ export function DocumentManager({
                         <p className="text-sm font-medium text-foreground">
                           Glissez vos fichiers ici ou cliquez pour parcourir
                         </p>
-                        <p>PDF, DOC, DOCX, JPG, PNG, XLS, XLSX</p>
+                        <p>{getAcceptedFormatsText(pendingKind)}</p>
                         <p>Taille max: 10MB</p>
                       </div>
                     </div>

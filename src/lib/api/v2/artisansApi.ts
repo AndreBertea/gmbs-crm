@@ -119,6 +119,10 @@ export const artisansApi = {
       url: string
       filename: string | null
       created_at?: string | null
+      content_hash?: string | null
+      derived_sizes?: Record<string, string> | null
+      mime_preferred?: string | null
+      mime_type?: string | null
     }>
     artisan_absences?: Array<{
       id: string
@@ -166,7 +170,11 @@ export const artisansApi = {
           kind,
           url,
           filename,
-          created_at
+          created_at,
+          content_hash,
+          derived_sizes,
+          mime_preferred,
+          mime_type
         ),
         artisan_absences (
           id,

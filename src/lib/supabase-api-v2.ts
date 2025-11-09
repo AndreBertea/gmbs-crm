@@ -304,6 +304,28 @@ const mapArtisanRecord = (item: any, refs: ReferenceCache): Artisan => {
     ? item.zones
     : [];
 
+  // Extraire les métadonnées de la photo de profil depuis artisan_attachments
+  const attachments = Array.isArray(item.artisan_attachments) 
+    ? item.artisan_attachments 
+    : Array.isArray(item.attachments) 
+    ? item.attachments 
+    : [];
+  
+  const photoProfilAttachment = attachments.find(
+    (att: any) => att?.kind === "photo_profil" && att?.url && att.url.trim() !== ""
+  );
+
+  // Construire les métadonnées de la photo de profil
+  const photoProfilMetadata = photoProfilAttachment ? {
+    hash: photoProfilAttachment.content_hash || null,
+    sizes: photoProfilAttachment.derived_sizes || {},
+    mime_preferred: photoProfilAttachment.mime_preferred || photoProfilAttachment.mime_type || 'image/jpeg',
+    baseUrl: photoProfilAttachment.url || null
+  } : null;
+
+  // URL de base pour la photo de profil (sans taille spécifique)
+  const photoProfilBaseUrl = photoProfilMetadata?.baseUrl || null;
+
   return {
     // Propriétés de base de l'artisan
     id: item.id,
@@ -349,6 +371,8 @@ const mapArtisanRecord = (item: any, refs: ReferenceCache): Artisan => {
         ? Number(zones[0]) || zones[0]
         : item.zoneIntervention ?? null,
     date: item.date_ajout ?? item.date ?? null,
+    photoProfilBaseUrl,
+    photoProfilMetadata,
   };
 };
 
@@ -397,6 +421,13 @@ export interface Artisan {
   date_ajout: string | null;
   created_at: string | null;
   updated_at: string | null;
+  photoProfilBaseUrl?: string | null;
+  photoProfilMetadata?: {
+    hash: string | null;
+    sizes: Record<string, string>;
+    mime_preferred: string;
+    baseUrl: string | null;
+  } | null;
   metiers?: string[];
   zones?: string[];
 }
@@ -1216,7 +1247,7 @@ export const artisansApiV2 = {
     zone?: string;
     gestionnaire?: string;
   }): Promise<PaginatedResponse<Artisan>> {
-    // Version ultra-rapide avec jointures pour métiers et zones
+    // Version ultra-rapide avec jointures pour métiers, zones et attachments
     let query = supabase
       .from("artisans")
       .select(`
@@ -1236,6 +1267,16 @@ export const artisansApiV2 = {
             code,
             label
           )
+        ),
+        artisan_attachments (
+          id,
+          kind,
+          url,
+          filename,
+          mime_type,
+          content_hash,
+          derived_sizes,
+          mime_preferred
         )
       `, { count: "exact" })
       // ⚠️ Ordre ASC pour afficher d'abord les artisans avec des données
@@ -1292,6 +1333,10 @@ export const artisansApiV2 = {
       kind: string
       url: string
       filename: string | null
+      mime_type?: string | null
+      content_hash?: string | null
+      derived_sizes?: Record<string, string> | null
+      mime_preferred?: string | null
       created_at?: string | null
     }>
     artisan_absences?: Array<{

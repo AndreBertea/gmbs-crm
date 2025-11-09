@@ -26,6 +26,7 @@ import { supabase } from "@/lib/supabase-client"
 import { getReasonTypeForTransition, type StatusReasonType } from "@/lib/comments/statusReason"
 import { cn } from "@/lib/utils"
 import { ArtisanSearchModal, type ArtisanSearchResult } from "@/components/artisans/ArtisanSearchModal"
+import { Avatar } from "@/components/artisans/Avatar"
 
 const INTERVENTION_DOCUMENT_KINDS = [
   { kind: "devis", label: "Devis" },
@@ -33,6 +34,7 @@ const INTERVENTION_DOCUMENT_KINDS = [
   { kind: "facture_materiel", label: "Facture Matériel" },
   { kind: "photos", label: "Photos" },
   { kind: "facture_artisan", label: "Facture Artisan" },
+  { kind: "a_classe", label: "À classer" },
 ]
 
 const MAX_RADIUS_KM = 10000
@@ -55,6 +57,15 @@ const formatDistanceKm = (value: number) => {
   if (value < 1) return "< 1 km"
   if (value < 10) return `${value.toFixed(1)} km`
   return `${Math.round(value)} km`
+}
+
+function hexToRgba(hex: string, alpha: number): string | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  if (!result) return null
+  const r = parseInt(result[1], 16)
+  const g = parseInt(result[2], 16)
+  const b = parseInt(result[3], 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 interface InterventionEditFormProps {
@@ -1265,6 +1276,21 @@ export function InterventionEditForm({
                   <div className="flex max-h-64 flex-col gap-2 overflow-y-auto pr-1">
                     {nearbyArtisans.map((artisan) => {
                       const isSelected = selectedArtisanId === artisan.id
+                      
+                      // Calculer les initiales de l'artisan
+                      const artisanName = `${artisan.prenom || ""} ${artisan.nom || ""}`.trim() || "Artisan sans nom"
+                      const artisanInitials = artisanName
+                        .split(" ")
+                        .map((part) => part.charAt(0))
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase() || "??"
+                      
+                      // Trouver le statut de l'artisan
+                      const artisanStatus = refData?.artisanStatuses?.find((s) => s.id === artisan.statut_id)
+                      const statutArtisan = artisanStatus?.label || ""
+                      const statutArtisanColor = artisanStatus?.color || null
+                      
                       return (
                           <div
                             key={artisan.id}
@@ -1298,37 +1324,72 @@ export function InterventionEditForm({
                                 <X className="h-3.5 w-3.5" />
                               </Button>
                             ) : null}
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="font-semibold text-foreground">
-                                {artisan.displayName}
-                              </span>
-                              <Badge variant={isSelected ? "default" : "secondary"}>
-                                {formatDistanceKm(artisan.distanceKm)}
-                              </Badge>
-                            </div>
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              {artisan.adresse ? (
-                                <span>
-                                  {artisan.adresse}
-                                  {artisan.codePostal || artisan.ville ? (
-                                    <>
-                                      , {artisan.codePostal ?? ""}
+                            <div className="flex items-start gap-3">
+                              <Avatar
+                                photoProfilMetadata={artisan.photoProfilMetadata}
+                                initials={artisanInitials}
+                                name={artisan.displayName}
+                                size={40}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex flex-col">
+                                    <span className="font-semibold text-foreground">
+                                      {artisan.displayName}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {statutArtisan && statutArtisanColor && (
+                                      <Badge 
+                                        variant="outline" 
+                                        className="border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide flex-shrink-0"
+                                        style={{
+                                          backgroundColor: hexToRgba(statutArtisanColor, 0.15) || statutArtisanColor + '20',
+                                          color: statutArtisanColor,
+                                          borderColor: statutArtisanColor,
+                                        }}
+                                      >
+                                        {statutArtisan}
+                                      </Badge>
+                                    )}
+                                    {statutArtisan && !statutArtisanColor && (
+                                      <Badge 
+                                        variant="outline" 
+                                        className="border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-700 border-gray-300 flex-shrink-0"
+                                      >
+                                        {statutArtisan}
+                                      </Badge>
+                                    )}
+                                    <Badge variant={isSelected ? "default" : "secondary"} className="flex-shrink-0">
+                                      {formatDistanceKm(artisan.distanceKm)}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                  {artisan.adresse ? (
+                                    <span>
+                                      {artisan.adresse}
+                                      {artisan.codePostal || artisan.ville ? (
+                                        <>
+                                          , {artisan.codePostal ?? ""}
+                                          {artisan.codePostal && artisan.ville ? " " : ""}
+                                          {artisan.ville ?? ""}
+                                        </>
+                                      ) : null}
+                                    </span>
+                                  ) : (
+                                    <span>
+                                      {artisan.codePostal ?? "—"}
                                       {artisan.codePostal && artisan.ville ? " " : ""}
                                       {artisan.ville ?? ""}
-                                    </>
-                                  ) : null}
-                                </span>
-                              ) : (
-                                <span>
-                                  {artisan.codePostal ?? "—"}
-                                  {artisan.codePostal && artisan.ville ? " " : ""}
-                                  {artisan.ville ?? ""}
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                              {artisan.telephone ? <span>📞 {artisan.telephone}</span> : null}
-                              {artisan.email ? <span>✉️ {artisan.email}</span> : null}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                                  {artisan.telephone ? <span>📞 {artisan.telephone}</span> : null}
+                                  {artisan.email ? <span>✉️ {artisan.email}</span> : null}
+                                </div>
+                              </div>
                             </div>
                         </div>
                       )

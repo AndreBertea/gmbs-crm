@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar } from "@/components/artisans/Avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -83,6 +83,14 @@ type Contact = {
   position: string
   status: "Disponible" | "En_intervention" | "Indisponible" | "En_congé" | "Inactif"
   avatar: string
+  photoProfilUrl?: string | null
+  photoProfilMetadata?: {
+    hash: string | null
+    sizes: Record<string, string>
+    mime_preferred: string
+    baseUrl: string | null
+  } | null
+  artisanInitials?: string
   lastContact: string
   createdAt: string
   notes: string
@@ -179,15 +187,31 @@ const mapArtisanToContact = (artisan: ApiArtisan, users: ReferenceUser[], artisa
     ? ((user.firstname?.[0] || '') + (user.lastname?.[0] || '')).toUpperCase() || user.code_gestionnaire?.substring(0, 2).toUpperCase() || '??'
     : '—'
 
+  // Récupérer les métadonnées de la photo_profil depuis l'artisan (déjà mappées par mapArtisanRecord)
+  const photoProfilUrl = artisan.photoProfilBaseUrl || null
+  const photoProfilMetadata = artisan.photoProfilMetadata || null
+
+  // Calculer les initiales de l'artisan
+  const artisanName = `${artisan.prenom || ""} ${artisan.nom || ""}`.trim() || "Artisan sans nom"
+  const artisanInitials = artisanName
+    .split(" ")
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "??"
+
   return {
     id: artisan.id,
-    name: `${artisan.prenom || ""} ${artisan.nom || ""}`.trim() || "Artisan sans nom",
+    name: artisanName,
     email: artisan.email || "",
     phone: artisan.telephone || "",
     company: artisan.raison_sociale || "",
     position: Array.isArray(raw.metiers) ? raw.metiers.join(", ") : raw.metiers || "",
     status: (raw.statut_artisan ?? raw.status ?? "Disponible") as Contact["status"],
-    avatar: "/placeholder.svg",
+    avatar: photoProfilUrl || "/placeholder.svg",
+    photoProfilUrl: photoProfilUrl,
+    photoProfilMetadata: photoProfilMetadata,
+    artisanInitials: artisanInitials,
     lastContact: raw.date_ajout || artisan.updated_at || "",
     createdAt: artisan.created_at || raw.date_ajout || "",
     notes: raw.commentaire || "",
@@ -542,9 +566,17 @@ export default function ArtisansPage(): ReactElement {
                 <Card key={contact.id} className="border-2 transition-all hover:shadow-lg hover:border-primary/30">
                   <CardHeader className="pb-3 bg-muted/10 border-b">
                     <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg">{contact.name}</CardTitle>
-                        <CardDescription>{contact.company}</CardDescription>
+                      <div className="flex items-center gap-3 flex-1">
+                        <Avatar
+                          photoProfilMetadata={contact.photoProfilMetadata}
+                          initials={contact.artisanInitials || "??"}
+                          name={contact.name}
+                          size={40}
+                        />
+                        <div className="space-y-1">
+                          <CardTitle className="text-lg">{contact.name}</CardTitle>
+                          <CardDescription>{contact.company}</CardDescription>
+                        </div>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -662,17 +694,13 @@ export default function ArtisansPage(): ReactElement {
                         <tr key={contact.id} className={`hover:bg-slate-100/60 dark:hover:bg-muted/30 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50 dark:bg-muted/10'}`}>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9">
-                                <AvatarImage src={contact.avatar} alt={contact.name} />
-                                <AvatarFallback>
-                                  {contact.name
-                                    .split(" ")
-                                    .map((part) => part.charAt(0))
-                                    .join("" )
-                                    .slice(0, 2)
-                                    .toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
+                              <Avatar 
+                                photoProfilMetadata={contact.photoProfilMetadata}
+                                initials={contact.artisanInitials || "??"}
+                                name={contact.name}
+                                size={40}
+                                priority={index < 3}
+                              />
                               <div className="flex-1">
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex flex-col">

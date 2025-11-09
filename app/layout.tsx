@@ -43,14 +43,32 @@ export default async function RootLayout({
             __html: `(() => {
   try {
     const root = document.documentElement;
-    const rawSettings = localStorage.getItem('gmbs:settings');
+    let rawSettings = null;
     let settings = null;
+    try {
+      rawSettings = localStorage.getItem('gmbs:settings');
+    } catch (e) {
+      // localStorage peut être inaccessible (mode privé, quota dépassé, etc.)
+      console.warn('localStorage inaccessible pour gmbs:settings:', e);
+    }
     if (rawSettings) {
       try {
         settings = JSON.parse(rawSettings) || {};
-      } catch (_) {}
+      } catch (e) {
+        // Données corrompues, nettoyer
+        console.warn('Données corrompues dans gmbs:settings, nettoyage...', e);
+        try {
+          localStorage.removeItem('gmbs:settings');
+        } catch (_) {}
+        settings = {};
+      }
     }
-    let storedMode = localStorage.getItem('color-mode');
+    let storedMode = null;
+    try {
+      storedMode = localStorage.getItem('color-mode');
+    } catch (e) {
+      console.warn('localStorage inaccessible pour color-mode:', e);
+    }
     if (!storedMode && settings && typeof settings.theme === 'string') storedMode = settings.theme;
     const classEffect = settings && settings.classEffect === false ? false : true;
     const accents = {
@@ -113,8 +131,14 @@ export default async function RootLayout({
         dark: { h: brighter, c: 'hsl(' + brighter + ')', l: 'hsl(' + lighter + ')', r: brighter, p: brighter, pf: '222 84% 4.9%', af: '222 84% 4.9%' }
       };
     }
-    const rawAccent = localStorage.getItem('ui-accent') || 'indigo';
-    const storedCustom = localStorage.getItem('ui-accent-custom');
+    let rawAccent = 'indigo';
+    let storedCustom = null;
+    try {
+      rawAccent = localStorage.getItem('ui-accent') || 'indigo';
+      storedCustom = localStorage.getItem('ui-accent-custom');
+    } catch (e) {
+      console.warn('localStorage inaccessible pour ui-accent:', e);
+    }
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const mode = storedMode === 'light' || storedMode === 'dark' || storedMode === 'system' ? storedMode : 'system';
     const resolved = classEffect && (mode === 'dark' || (mode === 'system' && prefersDark)) ? 'dark' : 'light';
@@ -145,7 +169,28 @@ export default async function RootLayout({
       root.style.setProperty('--primary', tone.p || tone.h);
       root.style.setProperty('--primary-foreground', tone.pf || tone.af || '0 0% 100%');
     }
-  } catch (_) {}
+  } catch (e) {
+    // En cas d'erreur, appliquer un thème par défaut pour éviter un flash de contenu non stylé
+    console.error('Erreur lors de l\'application du thème:', e);
+    try {
+      const root = document.documentElement;
+      root.classList.remove('dark');
+      root.setAttribute('data-theme', 'light');
+      root.classList.add('theme-formal');
+      root.classList.remove('theme-color', 'theme-glass');
+      // Appliquer des valeurs par défaut pour indigo
+      root.style.setProperty('--accent-hsl', '228 78% 55%');
+      root.style.setProperty('--accent', '228 78% 55%');
+      root.style.setProperty('--accent-color', 'oklch(0.63 0.20 260)');
+      root.style.setProperty('--accent-color-light', 'oklch(0.78 0.14 260)');
+      root.style.setProperty('--ring', '228 82% 58%');
+      root.style.setProperty('--accent-foreground', '0 0% 100%');
+      root.style.setProperty('--primary', '228 78% 55%');
+      root.style.setProperty('--primary-foreground', '0 0% 100%');
+    } catch (fallbackError) {
+      console.error('Erreur lors de l\'application du thème de secours:', fallbackError);
+    }
+  }
 })();`,
           }}
         />
