@@ -304,6 +304,28 @@ const mapArtisanRecord = (item: any, refs: ReferenceCache): Artisan => {
     ? item.zones
     : [];
 
+  // Extraire les métadonnées de la photo de profil depuis artisan_attachments
+  const attachments = Array.isArray(item.artisan_attachments) 
+    ? item.artisan_attachments 
+    : Array.isArray(item.attachments) 
+    ? item.attachments 
+    : [];
+  
+  const photoProfilAttachment = attachments.find(
+    (att: any) => att?.kind === "photo_profil" && att?.url && att.url.trim() !== ""
+  );
+
+  // Construire les métadonnées de la photo de profil
+  const photoProfilMetadata = photoProfilAttachment ? {
+    hash: photoProfilAttachment.content_hash || null,
+    sizes: photoProfilAttachment.derived_sizes || {},
+    mime_preferred: photoProfilAttachment.mime_preferred || photoProfilAttachment.mime_type || 'image/jpeg',
+    baseUrl: photoProfilAttachment.url || null
+  } : null;
+
+  // URL de base pour la photo de profil (sans taille spécifique)
+  const photoProfilBaseUrl = photoProfilMetadata?.baseUrl || null;
+
   return {
     // Propriétés de base de l'artisan
     id: item.id,
@@ -349,6 +371,8 @@ const mapArtisanRecord = (item: any, refs: ReferenceCache): Artisan => {
         ? Number(zones[0]) || zones[0]
         : item.zoneIntervention ?? null,
     date: item.date_ajout ?? item.date ?? null,
+    photoProfilBaseUrl,
+    photoProfilMetadata,
   };
 };
 
@@ -399,6 +423,13 @@ export interface Artisan {
   updated_at: string | null;
   metiers?: string[];
   zones?: string[];
+  photoProfilBaseUrl?: string | null;
+  photoProfilMetadata?: {
+    hash: string | null;
+    sizes: Record<string, string>;
+    mime_preferred: string;
+    baseUrl: string | null;
+  } | null;
 }
 
 export interface Intervention {
@@ -1216,7 +1247,7 @@ export const artisansApiV2 = {
     zone?: string;
     gestionnaire?: string;
   }): Promise<PaginatedResponse<Artisan>> {
-    // Version ultra-rapide avec jointures pour métiers et zones
+    // Version ultra-rapide avec jointures pour métiers, zones et attachments
     let query = supabase
       .from("artisans")
       .select(`
@@ -1236,6 +1267,16 @@ export const artisansApiV2 = {
             code,
             label
           )
+        ),
+        artisan_attachments (
+          id,
+          kind,
+          url,
+          filename,
+          mime_type,
+          content_hash,
+          derived_sizes,
+          mime_preferred
         )
       `, { count: "exact" })
       // ⚠️ Ordre ASC pour afficher d'abord les artisans avec des données
@@ -1257,13 +1298,62 @@ export const artisansApiV2 = {
 
     const { data, error, count } = await query;
 
-    if (error) throw error;
+    if (error) {
+      // Extraire les informations de l'erreur Supabase de manière robuste
+      const errorCode = (error as any)?.code || (error as any)?.error_code || '';
+      const errorMessage = (error as any)?.message || (error as any)?.error || '';
+      const errorDetails = (error as any)?.details || '';
+      const errorHint = (error as any)?.hint || '';
+      
+      // Construire un message d'erreur complet
+      const fullErrorMessage = [
+        errorMessage,
+        errorCode && `Code: ${errorCode}`,
+        errorDetails && `Détails: ${errorDetails}`,
+        errorHint && `Indice: ${errorHint}`
+      ].filter(Boolean).join(' | ') || 'Erreur Supabase inconnue';
+      
+      console.error('[artisansApiV2.getAll] Supabase query error:', {
+        error: error,
+        code: errorCode,
+        message: errorMessage,
+        details: errorDetails,
+        hint: errorHint,
+        fullMessage: fullErrorMessage,
+        // Essayer de sérialiser l'erreur complète
+        errorStringified: JSON.stringify(error, Object.getOwnPropertyNames(error))
+      });
+      
+      // Si l'erreur concerne des colonnes manquantes (content_hash, derived_sizes, mime_preferred)
+      // c'est probablement que la migration n'a pas été appliquée
+      const errorText = `${errorMessage} ${errorDetails} ${errorHint}`.toLowerCase();
+      if (errorText.includes('content_hash') || errorText.includes('derived_sizes') || errorText.includes('mime_preferred') || 
+          errorCode === '42703' || errorCode === '42P01') {
+        throw new Error(
+          `Les colonnes de métadonnées d'avatar n'existent pas dans la table artisan_attachments. ` +
+          `Veuillez appliquer la migration : supabase db reset\n\n` +
+          `Erreur complète: ${fullErrorMessage}`
+        );
+      }
+      
+      // Créer une erreur avec toutes les informations disponibles
+      const enhancedError = new Error(fullErrorMessage);
+      (enhancedError as any).code = errorCode;
+      (enhancedError as any).details = errorDetails;
+      (enhancedError as any).hint = errorHint;
+      throw enhancedError;
+    }
 
     const refs = await getReferenceCache();
 
-    const transformedData = (data || []).map((item) =>
-      mapArtisanRecord(item, refs)
-    );
+    const transformedData = (data || []).map((item) => {
+      const mapped = mapArtisanRecord(item, refs);
+      // Préserver les attachments si présents dans les données brutes
+      if (Array.isArray(item.artisan_attachments)) {
+        (mapped as any).artisan_attachments = item.artisan_attachments;
+      }
+      return mapped;
+    });
 
     return {
       data: transformedData,

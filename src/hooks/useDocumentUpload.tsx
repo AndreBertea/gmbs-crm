@@ -136,15 +136,21 @@ const DOCUMENT_KINDS = {
   intervention: [
     { value: 'devis', label: 'Devis' },
     { value: 'photos', label: 'Photos' },
-    { value: 'factureGMBS', label: 'Facture GMBS' },
-    { value: 'factureArtisan', label: 'Facture Artisan' },
-    { value: 'factureMateriel', label: 'Facture Matériel' }
+    { value: 'facturesGMBS', label: 'Factures GMBS' },
+    { value: 'facturesArtisans', label: 'Factures Artisans' },
+    { value: 'facturesMateriel', label: 'Factures Matériel' },
+    { value: 'autre', label: 'Autre document' },
+    { value: 'a_classe', label: 'À classer' }
   ],
   artisan: [
-    { value: 'devis', label: 'Devis' },
-    { value: 'photos', label: 'Photos' },
-    { value: 'factureGMBS', label: 'Facture GMBS' },
-    { value: 'factureArtisan', label: 'Facture Artisan' }
+    { value: 'kbis', label: 'Extrait Kbis' },
+    { value: 'assurance', label: "Attestation d'assurance" },
+    { value: 'cni_recto_verso', label: 'CNI recto/verso' },
+    { value: 'iban', label: 'IBAN' },
+    { value: 'decharge_partenariat', label: 'Décharge partenariat' },
+    { value: 'photo_profil', label: 'Photo de profil' },
+    { value: 'autre', label: 'Autre document' },
+    { value: 'a_classe', label: 'À classer' }
   ]
 };
 

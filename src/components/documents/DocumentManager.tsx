@@ -29,6 +29,7 @@ import {
   useDocumentUpload,
   DocumentUploaderInfo,
 } from "@/hooks/useDocumentUpload";
+import { useToast } from "@/hooks/use-toast";
 
 type EntityType = "intervention" | "artisan";
 type ViewFilter = "all" | "devis" | "factures" | "photos";
@@ -271,6 +272,8 @@ export function DocumentManager({
       color: currentUser.color ?? null,
     };
   }, [currentUser]);
+
+  const { toast } = useToast();
 
   const [documents, setDocuments] = useState<AttachmentRecord[]>([]);
   const [staged, setStaged] = useState<Record<string, StagedFile[]>>({});
@@ -517,6 +520,23 @@ export function DocumentManager({
 
       const normalizedKind = normalizeKind(kind);
 
+      // Si c'est une photo_profil pour un artisan, supprimer l'ancienne avant d'uploader
+      if (entityType === 'artisan' && normalizedKind === 'photo_profil') {
+        const existingPhotoProfil = documents.find(
+          (doc) => normalizeKind(doc.kind) === 'photo_profil'
+        );
+        if (existingPhotoProfil) {
+          try {
+            await documentsApi.delete(existingPhotoProfil.id, entityType);
+            // Retirer de la liste locale immédiatement pour éviter les doublons visuels
+            setDocuments((prev) => prev.filter((doc) => doc.id !== existingPhotoProfil.id));
+          } catch (error) {
+            console.warn('Erreur lors de la suppression de l\'ancienne photo_profil:', error);
+            // Continuer quand même l'upload
+          }
+        }
+      }
+
       setQueueLength(fileArray.length);
       setCompletedInQueue(0);
       setIsQueueUploading(true);
@@ -546,6 +566,7 @@ export function DocumentManager({
       fetchDocuments,
       onChange,
       resetQueueState,
+      documents,
     ],
   );
 
@@ -843,8 +864,77 @@ export function DocumentManager({
     }
   }, [renamingRow]);
 
+  // Formats d'image acceptés pour les photos de profil
+  const PHOTO_PROFIL_IMAGE_TYPES = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/avif',
+  ];
+
+  // Valider que les fichiers sont des images si le kind est photo_profil
+  const validatePhotoProfilFiles = useCallback((files: File[], kind: string): string | null => {
+    const normalizedKind = normalizeKind(kind);
+    if (normalizedKind !== 'photo_profil') {
+      return null; // Pas de validation pour les autres types
+    }
+
+    const invalidFiles = files.filter(
+      (file) => !PHOTO_PROFIL_IMAGE_TYPES.includes(file.type.toLowerCase())
+    );
+
+    if (invalidFiles.length > 0) {
+      const fileNames = invalidFiles.map((f) => f.name).join(', ');
+      return `Les fichiers suivants ne sont pas des images valides : ${fileNames}. Veuillez choisir un format compatible (JPEG, PNG, WebP, GIF ou AVIF).`;
+    }
+
+    return null;
+  }, []);
+
+  // Obtenir le texte des formats acceptés selon le kind sélectionné
+  const getAcceptedFormatsText = useCallback((kind: string | null): string => {
+    if (!kind) {
+      return 'PDF, DOC, DOCX, JPG, PNG, XLS, XLSX';
+    }
+
+    const normalizedKind = normalizeKind(kind);
+    if (normalizedKind === 'photo_profil') {
+      return 'JPG, JPEG, PNG, WebP, GIF, AVIF';
+    }
+
+    return 'PDF, DOC, DOCX, JPG, PNG, XLS, XLSX';
+  }, []);
+
+  // Obtenir la valeur de l'attribut accept selon le kind sélectionné
+  const getAcceptAttribute = useCallback((kind: string | null): string => {
+    if (!kind) {
+      return allowedAccept;
+    }
+
+    const normalizedKind = normalizeKind(kind);
+    if (normalizedKind === 'photo_profil') {
+      // Formats d'image uniquement pour photo_profil
+      return 'image/jpeg,image/jpg,image/png,image/webp,image/gif,image/avif';
+    }
+
+    return allowedAccept;
+  }, [allowedAccept]);
+
   const handlePendingUpload = useCallback(async () => {
     if (!pendingKind || pendingFiles.length === 0) return;
+
+    // Valider les formats pour photo_profil
+    const validationError = validatePhotoProfilFiles(pendingFiles, pendingKind);
+    if (validationError) {
+      toast({
+        title: 'Format de fichier incompatible',
+        description: validationError,
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (!entityId) {
       stageFiles(pendingKind, pendingFiles);
@@ -867,6 +957,8 @@ export function DocumentManager({
     processUploadQueue,
     stageFiles,
     handleCancelAdd,
+    validatePhotoProfilFiles,
+    toast,
   ]);
 
   const showViewFilters = entityType === "intervention";
@@ -1205,7 +1297,7 @@ export function DocumentManager({
                       key={fileInputKey}
                       type="file"
                       multiple={multiple}
-                      accept={allowedAccept}
+                      accept={getAcceptAttribute(pendingKind)}
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       onChange={(event) => handlePendingFilesChange(event.target.files)}
                     />
@@ -1217,7 +1309,7 @@ export function DocumentManager({
                         <p className="text-sm font-medium text-foreground">
                           Glissez vos fichiers ici ou cliquez pour parcourir
                         </p>
-                        <p>PDF, DOC, DOCX, JPG, PNG, XLS, XLSX</p>
+                        <p>{getAcceptedFormatsText(pendingKind)}</p>
                         <p>Taille max: 10MB</p>
                       </div>
                     </div>

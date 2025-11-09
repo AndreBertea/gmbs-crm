@@ -328,3 +328,4 @@ recalculateSingleArtisan(artisanId).catch((error) => {
   process.exit(1);
 });
 
+

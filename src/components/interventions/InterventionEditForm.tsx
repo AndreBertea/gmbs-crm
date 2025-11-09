@@ -29,10 +29,12 @@ import { ArtisanSearchModal, type ArtisanSearchResult } from "@/components/artis
 
 const INTERVENTION_DOCUMENT_KINDS = [
   { kind: "devis", label: "Devis" },
-  { kind: "facture_gmbs", label: "Facture GMBS" },
-  { kind: "facture_materiel", label: "Facture Matériel" },
   { kind: "photos", label: "Photos" },
-  { kind: "facture_artisan", label: "Facture Artisan" },
+  { kind: "factures_gmbs", label: "Factures GMBS" },
+  { kind: "factures_artisans", label: "Factures Artisans" },
+  { kind: "factures_materiel", label: "Factures Matériel" },
+  { kind: "autre", label: "Autre document" },
+  { kind: "a_classe", label: "À classer" },
 ]
 
 const MAX_RADIUS_KM = 10000

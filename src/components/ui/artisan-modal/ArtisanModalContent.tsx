@@ -26,6 +26,7 @@ import {
 import { DocumentManager } from "@/components/documents/DocumentManager"
 import { ModeIcons } from "@/components/ui/mode-selector"
 import { CommentSection } from "@/components/shared/CommentSection"
+import { Avatar } from "@/components/artisans/Avatar"
 import { StatusReasonModal } from "@/components/shared/StatusReasonModal"
 import { ArtisanFinancesSection } from "./ArtisanFinancesSection"
 import { ArtisanInterventionsTable } from "./ArtisanInterventionsTable"
@@ -56,6 +57,10 @@ type ArtisanWithRelations = Artisan & {
     url: string
     filename: string | null
     created_at?: string | null
+    content_hash?: string | null
+    derived_sizes?: Record<string, string> | null
+    mime_preferred?: string | null
+    mime_type?: string | null
   }>
   artisan_absences?: Array<{
     id: string
@@ -138,7 +143,9 @@ const ARTISAN_DOCUMENT_KINDS = [
   { kind: "cni_recto_verso", label: "CNI recto/verso" },
   { kind: "iban", label: "IBAN" },
   { kind: "decharge_partenariat", label: "Décharge partenariat" },
+  { kind: "photo_profil", label: "Photo de profil" },
   { kind: "autre", label: "Autre document" },
+  { kind: "a_classe", label: "À classer" },
 ]
 
 const mapArtisanToForm = (artisan: ArtisanWithRelations | any): ArtisanFormValues => {
@@ -554,6 +561,42 @@ export function ArtisanModalContent({
     if (!artisan) return "Artisan"
     const fromName = [artisan.prenom, artisan.nom].filter(Boolean).join(" ").trim()
     return fromName || (artisan as any)?.plain_nom || artisan.raison_sociale || "Artisan"
+  }, [artisan])
+
+  // Construire les métadonnées de photo de profil à partir des attachments
+  const photoProfilMetadata = useMemo(() => {
+    if (!artisan?.artisan_attachments) return null
+    const photoProfilAttachment = artisan.artisan_attachments.find(
+      (att) => att.kind === 'photo_profil'
+    )
+    if (!photoProfilAttachment) return null
+
+    return {
+      hash: photoProfilAttachment.content_hash || null,
+      sizes: photoProfilAttachment.derived_sizes || {},
+      mime_preferred: photoProfilAttachment.mime_preferred || photoProfilAttachment.mime_type || 'image/jpeg',
+      baseUrl: photoProfilAttachment.url || null
+    }
+  }, [artisan])
+
+  // Calculer les initiales pour l'avatar
+  const avatarInitials = useMemo(() => {
+    if (!artisan) return "??"
+    const prenom = artisan.prenom?.trim() || ""
+    const nom = artisan.nom?.trim() || ""
+    if (prenom && nom) {
+      return `${prenom[0]}${nom[0]}`.toUpperCase()
+    }
+    if (prenom) {
+      return prenom.substring(0, 2).toUpperCase()
+    }
+    if (nom) {
+      return nom.substring(0, 2).toUpperCase()
+    }
+    if (artisan.raison_sociale) {
+      return artisan.raison_sociale.substring(0, 2).toUpperCase()
+    }
+    return "??"
   }, [artisan])
 
   const companyName = artisan?.raison_sociale ?? null
@@ -1100,18 +1143,28 @@ export function ArtisanModalContent({
             )}
           </div>
 
-          <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-            <div className="modal-config-columns-title">
-              {displayName}
-              {activeIndex !== undefined && totalCount !== undefined && totalCount > 1 ? (
-                <span className="ml-2 text-sm text-muted-foreground">
-                  ({(activeIndex ?? 0) + 1} / {totalCount})
-                </span>
+          <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3">
+            <Avatar
+              photoProfilMetadata={photoProfilMetadata}
+              initials={avatarInitials}
+              name={displayName}
+              size={48}
+              priority={true}
+              className="pointer-events-auto"
+            />
+            <div className="flex flex-col items-center">
+              <div className="modal-config-columns-title">
+                {displayName}
+                {activeIndex !== undefined && totalCount !== undefined && totalCount > 1 ? (
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    ({(activeIndex ?? 0) + 1} / {totalCount})
+                  </span>
+                ) : null}
+              </div>
+              {companyName ? (
+                <span className="text-xs text-muted-foreground">{companyName}</span>
               ) : null}
             </div>
-            {companyName ? (
-              <span className="text-xs text-muted-foreground">{companyName}</span>
-            ) : null}
           </div>
           <div className="flex items-center gap-2">
             {artisan ? (

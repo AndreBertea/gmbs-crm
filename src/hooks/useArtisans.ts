@@ -68,8 +68,31 @@ export function useArtisans(options: UseArtisansOptions = {}): UseArtisansReturn
       setTotalCount(result.pagination.total);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur de chargement');
-      console.error('Erreur lors du chargement des artisans:', err);
+      // Améliorer la gestion d'erreur pour mieux diagnostiquer
+      let errorMessage = 'Erreur de chargement';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (err && typeof err === 'object') {
+        // Gérer les erreurs Supabase qui sont des objets
+        const supabaseError = err as any;
+        if (supabaseError.message) {
+          errorMessage = supabaseError.message;
+        } else if (supabaseError.error) {
+          errorMessage = supabaseError.error;
+        } else if (supabaseError.code) {
+          errorMessage = `Erreur ${supabaseError.code}: ${JSON.stringify(supabaseError)}`;
+        } else {
+          errorMessage = JSON.stringify(err);
+        }
+      }
+      
+      setError(errorMessage);
+      console.error('Erreur lors du chargement des artisans:', {
+        error: err,
+        message: errorMessage,
+        stack: err instanceof Error ? err.stack : undefined
+      });
     } finally {
       setLoading(false);
     }

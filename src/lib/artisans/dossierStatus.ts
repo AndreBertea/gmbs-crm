@@ -24,7 +24,9 @@ export type ArtisanDocumentKind =
   | "cni_recto_verso"
   | "iban"
   | "decharge_partenariat"
+  | "photo_profil"
   | "autre"
+  | "a_classe"
 
 /**
  * Documents requis pour un dossier complet

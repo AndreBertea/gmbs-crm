@@ -23,13 +23,11 @@ const SUPPORTED_DOCUMENT_TYPES = {
   intervention: [
     'devis',
     'photos',
-    'factureGMBS',
-    'factureArtisan',
-    'factureMateriel',
-    'rapport_intervention',
-    'plan',
-    'schema',
-    'autre'
+    'facturesGMBS',
+    'facturesArtisans',
+    'facturesMateriel',
+    'autre',
+    'a_classe'
   ],
   artisan: [
     'kbis',
@@ -37,11 +35,9 @@ const SUPPORTED_DOCUMENT_TYPES = {
     'cni_recto_verso',
     'iban',
     'decharge_partenariat',
-    'certificat',
-    'siret',
     'photo_profil',
-    'portfolio',
-    'autre'
+    'autre',
+    'a_classe'
   ]
 };
 
@@ -51,12 +47,16 @@ function normalizeInterventionKind(kind: string): string {
   const compact = trimmed.toLowerCase().replace(/[_\s-]/g, '');
 
   switch (compact) {
+    case 'facturesgmbs':
     case 'facturegmbs':
-      return 'factureGMBS';
+      return 'facturesGMBS';
+    case 'facturesartisans':
     case 'factureartisan':
-      return 'factureArtisan';
+    case 'facturesartisan':
+      return 'facturesArtisans';
+    case 'facturesmateriel':
     case 'facturemateriel':
-      return 'factureMateriel';
+      return 'facturesMateriel';
     default:
       return trimmed;
   }
@@ -515,6 +515,47 @@ serve(async (req: Request) => {
 
       if (error) {
         throw new Error(`Failed to upload document: ${error.message}`);
+      }
+
+      // Si c'est une photo_profil pour un artisan, déclencher le traitement d'image
+      if (body.entity_type === 'artisan' && canonicalKind === 'photo_profil') {
+        // Vérifier que c'est bien une image
+        const isImage = body.mime_type?.startsWith('image/');
+        if (isImage) {
+          // Appeler la fonction process-avatar et attendre qu'elle démarre
+          // Note: On attend au moins que la requête soit envoyée pour éviter
+          // que la fonction soit interrompue avant l'envoi
+          const functionsUrl = Deno.env.get('SUPABASE_URL')?.replace(/\/rest\/v1$/, '') || 
+                              Deno.env.get('SUPABASE_URL') || 
+                              'http://127.0.0.1:54321';
+          const processAvatarUrl = `${functionsUrl}/functions/v1/process-avatar`;
+          
+          // Lancer le traitement en arrière-plan mais attendre que la requête soit initiée
+          // pour éviter que la fonction soit interrompue avant l'envoi
+          const processPromise = fetch(processAvatarUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
+            },
+            body: JSON.stringify({
+              artisan_id: body.entity_id,
+              attachment_id: data.id,
+              image_url: storageUrl,
+              mime_type: body.mime_type
+            })
+          }).catch(err => {
+            console.error('Error calling process-avatar:', err);
+            // Ne pas faire échouer l'upload principal si le traitement échoue
+          });
+          
+          // Attendre que la requête soit au moins initiée (mais pas nécessairement complétée)
+          // Cela garantit que la requête est envoyée avant que la fonction ne se termine
+          await Promise.race([
+            processPromise,
+            new Promise(resolve => setTimeout(resolve, 100)) // Timeout de sécurité
+          ]);
+        }
       }
 
       console.log(JSON.stringify({

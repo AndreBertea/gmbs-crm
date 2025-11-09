@@ -304,22 +304,21 @@ export const DOCUMENT_TYPES = {
   intervention: [
     "devis",
     "photos",
-    "facture_gmbs",
-    "facture_artisan",
-    "facture_materiel",
-    "rapport_intervention",
-    "plan",
-    "schema",
+    "factures_gmbs",      // Normalisé en facturesGMBS par l'Edge Function
+    "factures_artisans",  // Normalisé en facturesArtisans par l'Edge Function
+    "factures_materiel", // Normalisé en facturesMateriel par l'Edge Function
     "autre",
+    "a_classe",
   ],
   artisan: [
-    "certificat",
-    "assurance",
-    "siret",
     "kbis",
+    "assurance",
+    "cni_recto_verso",
+    "iban",
+    "decharge_partenariat",
     "photo_profil",
-    "portfolio",
     "autre",
+    "a_classe",
   ],
 };
 
