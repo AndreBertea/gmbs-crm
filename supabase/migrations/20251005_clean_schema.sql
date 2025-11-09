@@ -340,7 +340,7 @@ CREATE TABLE IF NOT EXISTS public.intervention_payments (
 CREATE TABLE IF NOT EXISTS public.intervention_attachments (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   intervention_id uuid REFERENCES public.interventions(id) ON DELETE CASCADE,
-  kind text NOT NULL CHECK (kind IN ('intervention','cout','devis','photos','factureGMBS','factureArtisan','factureMateriel')),
+  kind text NOT NULL CHECK (kind IN ('intervention','cout','devis','photos','factureGMBS','factureArtisan','factureMateriel', 'a classifier')),
   url text NOT NULL,
   mime_type text,
   filename text,
