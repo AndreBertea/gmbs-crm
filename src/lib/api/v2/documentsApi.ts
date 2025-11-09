@@ -29,8 +29,9 @@ export const documentsApi = {
       searchParams.toString() ? `?${searchParams.toString()}` : ""
     }`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
@@ -42,19 +43,21 @@ export const documentsApi = {
   ): Promise<InterventionAttachment | ArtisanAttachment> {
     const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/${id}?entity_type=${entityType}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
 
   // Créer un document
   async create(data: CreateDocumentData): Promise<InterventionAttachment | ArtisanAttachment> {
+    const headers = await getHeaders();
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/documents/documents`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify(data),
       }
     );
@@ -63,11 +66,12 @@ export const documentsApi = {
 
   // Upload un document avec contenu
   async upload(data: FileUploadData): Promise<InterventionAttachment | ArtisanAttachment> {
+    const headers = await getHeaders();
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/documents/documents/upload`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers,
         body: JSON.stringify(data),
       }
     );
@@ -82,9 +86,10 @@ export const documentsApi = {
   ): Promise<InterventionAttachment | ArtisanAttachment> {
     const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/${id}?entity_type=${entityType}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
       method: "PUT",
-      headers: getHeaders(),
+      headers,
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -97,19 +102,21 @@ export const documentsApi = {
   ): Promise<{ message: string; data: any }> {
     const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/${id}?entity_type=${entityType}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
       method: "DELETE",
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
 
   // Obtenir les types de documents supportés
   async getSupportedTypes(): Promise<SupportedDocumentTypes> {
+    const headers = await getHeaders();
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/documents/documents/types`,
       {
-        headers: getHeaders(),
+        headers,
       }
     );
     return handleResponse(response);
@@ -142,8 +149,9 @@ export const documentsApi = {
 
     const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/search?${searchParams.toString()}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
@@ -160,8 +168,9 @@ export const documentsApi = {
 
     const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/search?${searchParams.toString()}`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },
@@ -183,8 +192,9 @@ export const documentsApi = {
       searchParams.toString() ? `?${searchParams.toString()}` : ""
     }`;
 
+    const headers = await getHeaders();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers,
     });
     return handleResponse(response);
   },

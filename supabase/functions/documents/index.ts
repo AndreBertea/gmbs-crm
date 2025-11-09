@@ -41,7 +41,8 @@ const SUPPORTED_DOCUMENT_TYPES = {
     'siret',
     'photo_profil',
     'portfolio',
-    'autre'
+    'autre',
+    'a classifier' // Documents non classifiés automatiquement (sans accent pour compatibilité)
   ]
 };
 
