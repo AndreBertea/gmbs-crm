@@ -100,7 +100,7 @@ type PreviewState =
   | { open: false; row?: undefined }
   | { open: true; row: DocumentRow };
 
-const DEFAULT_ACCEPT = ".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx";
+const DEFAULT_ACCEPT = ".pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.doc,.docx,.xls,.xlsx,.zip,.mp4";
 const INVOICE_KINDS = new Set([
   "facture_gmbs",
   "facture_artisan",

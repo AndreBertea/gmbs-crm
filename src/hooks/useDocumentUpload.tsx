@@ -48,10 +48,14 @@ export function useDocumentUpload(): DocumentUploadHook {
         'image/jpeg',
         'image/png',
         'image/gif',
+        'image/heic',
+        'image/heif',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/zip',
+        'video/mp4'
       ];
 
       if (!allowedTypes.includes(file.type)) {
@@ -222,7 +226,7 @@ export function DocumentUploader({ entityType, entityId, onUploadComplete }: Doc
             id="file-input"
             type="file"
             onChange={handleFileSelect}
-            accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.doc,.docx,.xls,.xlsx,.zip,.mp4"
             disabled={loading}
           />
         </div>
