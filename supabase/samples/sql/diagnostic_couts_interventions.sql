@@ -65,18 +65,18 @@ SELECT
     -- Coûts intervention
     COALESCE(SUM(CASE WHEN ic.cost_type = 'intervention' THEN ic.amount ELSE 0 END), 0) as cout_intervention,
     -- Total déclaré
-    COALESCE(SUM(CASE WHEN ic.cost_type = 'total' THEN ic.amount ELSE 0 END), 0) as total_declare,
+    COALESCE(SUM(CASE WHEN ic.cost_type = 'marge' THEN ic.amount ELSE 0 END), 0) as total_declare,
     -- Total calculé
     COALESCE(SUM(CASE WHEN ic.cost_type IN ('sst', 'materiel', 'intervention') THEN ic.amount ELSE 0 END), 0) as total_calcule,
     -- Différence
-    COALESCE(SUM(CASE WHEN ic.cost_type = 'total' THEN ic.amount ELSE 0 END), 0) - 
+    COALESCE(SUM(CASE WHEN ic.cost_type = 'marge' THEN ic.amount ELSE 0 END), 0) - 
     COALESCE(SUM(CASE WHEN ic.cost_type IN ('sst', 'materiel', 'intervention') THEN ic.amount ELSE 0 END), 0) as difference
 FROM interventions i
 LEFT JOIN intervention_costs ic ON i.id = ic.intervention_id
 WHERE i.created_at >= CURRENT_DATE - INTERVAL '7 days'
 GROUP BY i.id, i.id_inter, i.date
 HAVING COUNT(ic.id) > 0
-ORDER BY ABS(COALESCE(SUM(CASE WHEN ic.cost_type = 'total' THEN ic.amount ELSE 0 END), 0) - 
+ORDER BY ABS(COALESCE(SUM(CASE WHEN ic.cost_type = 'marge' THEN ic.amount ELSE 0 END), 0) - 
              COALESCE(SUM(CASE WHEN ic.cost_type IN ('sst', 'materiel', 'intervention') THEN ic.amount ELSE 0 END), 0)) DESC
 LIMIT 10;
 

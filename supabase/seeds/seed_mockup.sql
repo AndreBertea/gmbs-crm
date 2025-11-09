@@ -612,96 +612,96 @@ INSERT INTO public.intervention_costs (
   -- Original interventions costs
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-001'), 'sst', 'Coût SST plomberie', 150.00, 'EUR', '{"details": "Pièces incluses"}', NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-001'), 'materiel', 'Matériel fuite', 50.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-001'), 'total', 'Total intervention', 200.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-001'), 'marge', 'Marge', 200.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-002'), 'sst', 'Coût SST électricité', 200.00, 'EUR', '{"details": "Diagnostic"}', NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-002'), 'intervention', 'Main d''œuvre', 100.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-002'), 'total', 'Total intervention', 300.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-002'), 'marge', 'Marge', 300.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-003'), 'sst', 'Coût SST peinture', 120.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-003'), 'materiel', 'Peinture et outils', 80.00, 'EUR', '{"quantite": "2 pots"}', NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-003'), 'total', 'Total intervention', 200.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-003'), 'marge', 'Marge', 200.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-004'), 'sst', 'Coût SST serrurerie', 180.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-004'), 'materiel', 'Serrure neuve', 60.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-004'), 'total', 'Total intervention', 240.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-004'), 'marge', 'Marge', 240.00, 'EUR', NULL, NOW(), NOW()),
   
   -- New interventions costs
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-005'), 'sst', 'Coût SST bricolage', 180.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-005'), 'materiel', 'Vis et fixations', 25.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-005'), 'intervention', 'Installation meuble', 95.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-005'), 'total', 'Total intervention', 300.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-005'), 'marge', 'Marge', 300.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-006'), 'sst', 'Coût SST chauffage', 250.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-006'), 'intervention', 'Diagnostic chaudière', 120.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-006'), 'materiel', 'Pièces détachées', 80.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-006'), 'total', 'Total intervention', 450.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-006'), 'marge', 'Marge', 450.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-007'), 'sst', 'Coût SST installation', 200.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-007'), 'intervention', 'Installation chauffe-eau', 150.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-007'), 'materiel', 'Raccords et joints', 30.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-007'), 'total', 'Total intervention', 380.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-007'), 'marge', 'Marge', 380.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-008'), 'sst', 'Coût SST électricité', 220.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-008'), 'intervention', 'Mise aux normes', 180.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-008'), 'materiel', 'Prises et câbles', 45.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-008'), 'total', 'Total intervention', 445.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-008'), 'marge', 'Marge', 445.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-009'), 'sst', 'Coût SST serrurerie', 160.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-009'), 'materiel', 'Serrure multipoints', 85.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-009'), 'total', 'Total intervention', 245.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-009'), 'marge', 'Marge', 245.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-010'), 'sst', 'Coût SST peinture', 140.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-010'), 'materiel', 'Peinture et enduit', 90.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-010'), 'intervention', 'Préparation et peinture', 120.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-010'), 'total', 'Total intervention', 350.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-010'), 'marge', 'Marge', 350.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-011'), 'sst', 'Coût SST jardinage', 100.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-011'), 'intervention', 'Entretien jardin', 80.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-011'), 'materiel', 'Engrais et produits', 25.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-011'), 'total', 'Total intervention', 205.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-011'), 'marge', 'Marge', 205.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-012'), 'sst', 'Coût SST menuiserie', 300.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-012'), 'materiel', 'Bois chêne massif', 450.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-012'), 'intervention', 'Fabrication sur mesure', 250.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-012'), 'total', 'Total intervention', 1000.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-012'), 'marge', 'Marge', 1000.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-013'), 'sst', 'Coût SST climatisation', 0.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-013'), 'total', 'Total intervention', 0.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-013'), 'marge', 'Marge', 0.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-014'), 'sst', 'Coût SST vitrerie', 0.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-014'), 'total', 'Total intervention', 0.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-014'), 'marge', 'Marge', 0.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'sst', 'Coût SST rénovation', 400.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'materiel', 'Carrelage et faïence', 350.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'intervention', 'Travaux plomberie', 200.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'intervention', 'Travaux électricité', 150.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'total', 'Total intervention', 1100.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-015'), 'marge', 'Marge', 1100.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-016'), 'sst', 'Coût SST volets', 280.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-016'), 'materiel', 'Volets roulants électriques', 1200.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-016'), 'intervention', 'Installation et motorisation', 320.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-016'), 'total', 'Total intervention', 1800.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-016'), 'marge', 'Marge', 1800.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-017'), 'sst', 'Coût SST nuisibles', 120.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-017'), 'intervention', 'Diagnostic infestation', 80.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-017'), 'materiel', 'Produits traitement', 35.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-017'), 'total', 'Total intervention', 235.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-017'), 'marge', 'Marge', 235.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-018'), 'sst', 'Coût SST ménage', 80.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-018'), 'intervention', 'Nettoyage après travaux', 60.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-018'), 'materiel', 'Produits nettoyage', 15.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-018'), 'total', 'Total intervention', 155.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-018'), 'marge', 'Marge', 155.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'sst', 'Coût SST RDF', 180.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'materiel', 'Résine injection', 120.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'intervention', 'Réparation fissures', 100.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'total', 'Total intervention', 400.00, 'EUR', NULL, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), 'marge', 'Marge', 400.00, 'EUR', NULL, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-020'), 'sst', 'Coût SST déménagement', 150.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-020'), 'intervention', 'Transport mobilier', 200.00, 'EUR', NULL, NOW(), NOW()),
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-020'), 'materiel', 'Emballage et protection', 50.00, 'EUR', NULL, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-020'), 'total', 'Total intervention', 400.00, 'EUR', NULL, NOW(), NOW())
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-020'), 'marge', 'Marge', 400.00, 'EUR', NULL, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- ========================================

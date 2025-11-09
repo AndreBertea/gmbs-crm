@@ -1,6 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Overview } from "@/components/layout/overview"
 import { RecentSales } from "@/components/layout/recent-sales"
+import { InterventionStatsBarChart } from "@/components/dashboard/intervention-stats-barchart"
+import { ArtisanStatsBarChart } from "@/components/dashboard/artisan-stats-barchart"
+import { MarginStatsCard } from "@/components/dashboard/margin-stats-card"
+import { MarginTotalCard } from "@/components/dashboard/margin-total-card"
+import { GestionnaireRankingPodium } from "@/components/dashboard/gestionnaire-ranking-podium"
+import { WeeklyStatsTable } from "@/components/dashboard/weekly-stats-table"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { t } from "@/config/domain"
@@ -24,7 +30,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
-            <p className="text-muted-foreground">Vue d’ensemble de l’activité</p>
+            <p className="text-muted-foreground">Vue d'ensemble de l'activité</p>
           </div>
           <div className="flex gap-2">
             <Button asChild>
@@ -36,23 +42,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Statistiques rapides - Marge */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[
-            { title: "Interventions actives", value: "32" },
-            { title: "Artisans", value: "616" },
-            { title: "Tâches ouvertes", value: "18" },
-            { title: "CA (30 jours)", value: "€12,430" },
-          ].map((m) => (
-            <Card key={m.title}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">{m.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{m.value}</div>
-              </CardContent>
-            </Card>
-          ))}
+          <MarginStatsCard />
+          <MarginTotalCard />
         </div>
+
+        {/* Statistiques par statut - Bar charts horizontaux */}
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <InterventionStatsBarChart />
+          <ArtisanStatsBarChart />
+        </div>
+
+        {/* Classement des gestionnaires */}
+        <GestionnaireRankingPodium />
+
+        {/* Tableau des actions de la semaine */}
+        <WeeklyStatsTable />
 
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
           <Card className="col-span-1 lg:col-span-4">

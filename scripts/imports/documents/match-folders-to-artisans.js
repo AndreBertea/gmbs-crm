@@ -765,15 +765,13 @@ Options:
   --dry-run, -d          Mode simulation (aucune insertion en base)
   --skip-insert, -s     Faire le matching et la classification sans insérer
   --insert-only, -i     Insérer uniquement les documents déjà matchés (depuis JSON)
-  --skip-extraction, -e Utiliser le fichier JSON existant (ne pas réextraire depuis Drive)
   --help, -h            Afficher cette aide
 
 Exemples:
   npm run drive:import-documents                  # Extraction + Matching + Classification + Insertion
   npm run drive:import-documents --dry-run        # Simulation complète
   npm run drive:import-documents --skip-insert    # Extraction + Matching sans insertion
-  npm run drive:import-documents --skip-extraction # Utiliser JSON existant (plus rapide)
-  npm run drive:import-documents --insert-only   # Insertion depuis JSON existant
+  npm run drive:import-documents-artisans --insert-only   # Insertion depuis JSON existant
 `);
 }
 
@@ -847,32 +845,13 @@ async function main() {
   console.log('✅ Authentification Google Drive initialisée\n');
 
   try {
-    // 1. Extraire les dossiers depuis Google Drive OU charger depuis le JSON existant
-    const jsonPath = path.join(__dirname, '../../../data/docs_imports/artisans-subfolders.json');
+    // 1. Extraire les dossiers depuis Google Drive
     let folderData;
     let subFolders;
     
-    const skipExtraction = args.includes('--skip-extraction') || args.includes('-e');
-    const forceExtraction = args.includes('--force-extraction');
-    
-    // Détection automatique : utiliser le fichier existant si disponible (sauf si force-extraction)
-    const fileExists = fs.existsSync(jsonPath);
-    const shouldUseExistingFile = (skipExtraction || fileExists) && !forceExtraction;
-    
-    if (shouldUseExistingFile && fileExists) {
-      // Mode: utiliser le fichier existant
-      console.log(`📖 Lecture de ${jsonPath}...`);
-      folderData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-      subFolders = folderData.subFolders || [];
-      console.log(`✅ ${subFolders.length} sous-dossiers chargés depuis le fichier existant\n`);
-    } else {
-      // Mode: extraction depuis Google Drive
-      if (forceExtraction && fileExists) {
-        console.log('🔄 Mode FORCE EXTRACTION: réextraction depuis Google Drive (fichier existant ignoré)\n');
-      }
-      folderData = await extractFoldersFromDrive(drive);
-      subFolders = folderData.subFolders || [];
-    }
+    console.log('📁 Extraction des dossiers d\'artisans depuis Google Drive...\n');
+    folderData = await extractFoldersFromDrive(drive);
+    subFolders = folderData.subFolders || [];
     
     // Afficher quelques exemples pour confirmer l'utilisation
     if (subFolders.length > 0) {

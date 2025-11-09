@@ -6,6 +6,7 @@ import { supabase } from "../../supabase-client";
 import type {
   Artisan,
   ArtisanQueryParams,
+  ArtisanStatsByStatus,
   BulkOperationResult,
   CreateArtisanData,
   PaginatedResponse,
@@ -539,6 +540,84 @@ export const artisansApi = {
         limit,
         offset,
         hasMore: offset + limit < (count || 0),
+      },
+    };
+  },
+
+  /**
+   * Récupère les statistiques d'artisans par statut pour un gestionnaire
+   * @param gestionnaireId - ID du gestionnaire (utilisateur)
+   * @param startDate - Date de début (optionnelle, format ISO string)
+   * @param endDate - Date de fin (optionnelle, format ISO string)
+   * @returns Statistiques avec le nombre d'artisans par statut
+   */
+  async getStatsByGestionnaire(
+    gestionnaireId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<ArtisanStatsByStatus> {
+    if (!gestionnaireId) {
+      throw new Error("gestionnaireId is required");
+    }
+
+    // Construire la requête avec join sur artisan_statuses
+    let query = supabase
+      .from("artisans")
+      .select(
+        `
+        statut_id,
+        date_ajout,
+        status:artisan_statuses(id, code, label)
+        `,
+        { count: "exact" }
+      )
+      .eq("gestionnaire_id", gestionnaireId)
+      .eq("is_active", true); // Seulement les artisans actifs
+
+    // Appliquer les filtres de date si fournis
+    // date_ajout est de type date, donc on convertit les ISO strings en format date
+    if (startDate) {
+      const startDateOnly = new Date(startDate).toISOString().split('T')[0];
+      query = query.gte("date_ajout", startDateOnly);
+    }
+    if (endDate) {
+      const endDateOnly = new Date(endDate).toISOString().split('T')[0];
+      query = query.lte("date_ajout", endDateOnly);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
+    }
+
+    // Initialiser les compteurs
+    const byStatus: Record<string, number> = {};
+    const byStatusLabel: Record<string, number> = {};
+
+    // Compter les artisans par statut
+    (data || []).forEach((item: any) => {
+      const status = item.status;
+      if (status) {
+        const code = status.code || "SANS_STATUT";
+        const label = status.label || "Sans statut";
+
+        byStatus[code] = (byStatus[code] || 0) + 1;
+        byStatusLabel[label] = (byStatusLabel[label] || 0) + 1;
+      } else {
+        // Artisan sans statut
+        byStatus["SANS_STATUT"] = (byStatus["SANS_STATUT"] || 0) + 1;
+        byStatusLabel["Sans statut"] = (byStatusLabel["Sans statut"] || 0) + 1;
+      }
+    });
+
+    return {
+      total: count || 0,
+      by_status: byStatus,
+      by_status_label: byStatusLabel,
+      period: {
+        start_date: startDate || null,
+        end_date: endDate || null,
       },
     };
   },

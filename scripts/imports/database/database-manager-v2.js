@@ -189,21 +189,21 @@ class DatabaseManager {
       }
     }
 
-    // Coût total (calculé)
+    // Marge (calculée)
     if (costsData.total !== null && costsData.total !== undefined) {
       try {
         await interventionsApi.addCost(interventionId, {
-          cost_type: "total",
-          label: "Coût Total",
+          cost_type: "marge",
+          label: "Marge",
           amount: costsData.total,
           currency: "EUR",
         });
         results.success++;
-        this.log(`  ✓ Coût total inséré: ${costsData.total}€`, "verbose");
+        this.log(`  ✓ Marge insérée: ${costsData.total}€`, "verbose");
       } catch (error) {
         results.errors++;
-        results.details.push({ type: "total", error: error.message });
-        this.log(`  ✗ Erreur coût total: ${error.message}`, "warning");
+        results.details.push({ type: "marge", error: error.message });
+        this.log(`  ✗ Erreur marge: ${error.message}`, "warning");
       }
     }
 

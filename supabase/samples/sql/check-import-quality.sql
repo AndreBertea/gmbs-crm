@@ -59,7 +59,7 @@ SELECT
   COUNT(CASE WHEN ic.cost_type = 'sst' THEN 1 END) as cout_sst,
   COUNT(CASE WHEN ic.cost_type = 'materiel' THEN 1 END) as cout_materiel,
   COUNT(CASE WHEN ic.cost_type = 'intervention' THEN 1 END) as cout_intervention,
-  COUNT(CASE WHEN ic.cost_type = 'total' THEN 1 END) as cout_total,
+  COUNT(CASE WHEN ic.cost_type = 'marge' THEN 1 END) as cout_total,
   SUM(ic.amount) as montant_total
 FROM interventions i
 INNER JOIN intervention_costs ic ON i.id = ic.intervention_id

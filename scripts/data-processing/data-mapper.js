@@ -535,7 +535,7 @@ class DataMapper {
       if (mapped.costs.intervention !== null)
         costsDisplay.push(`Intervention: ${mapped.costs.intervention}€`);
       if (mapped.costs.total !== null)
-        costsDisplay.push(`Total: ${mapped.costs.total}€`);
+        costsDisplay.push(`Marge: ${mapped.costs.total}€`);
       console.log(
         `Coûts: ${costsDisplay.length > 0 ? costsDisplay.join(" | ") : "Aucun"}`
       );
@@ -589,13 +589,13 @@ class DataMapper {
       ? this.cleanString(csvRow["Numéro SST"])
       : null;
 
-    // Calculer le total (COUT INTER - COUT SST - COÛT MATERIEL)
-    let coutTotal = null;
+    // Calculer la marge (COUT INTER - COUT SST - COÛT MATERIEL)
+    let marge = null;
     if (coutIntervention !== null) {
-      coutTotal = coutIntervention;
-      if (coutSST !== null) coutTotal -= coutSST;
+      marge = coutIntervention;
+      if (coutSST !== null) marge -= coutSST;
       if (coutMaterielData.amount !== null)
-        coutTotal -= coutMaterielData.amount;
+        marge -= coutMaterielData.amount;
     }
 
     return {
@@ -603,7 +603,7 @@ class DataMapper {
       materiel: coutMaterielData.amount,
       materielUrl: coutMaterielData.url,
       intervention: coutIntervention,
-      total: coutTotal,
+      total: marge,
       numeroSST: numeroSST,
     };
   }
@@ -748,19 +748,19 @@ class DataMapper {
       });
     }
 
-    // Coût total (calculé)
-    let coutTotal = null;
+    // Marge (calculée)
+    let marge = null;
     if (coutIntervention !== null) {
-      coutTotal = coutIntervention;
-      if (coutSST !== null) coutTotal -= coutSST;
+      marge = coutIntervention;
+      if (coutSST !== null) marge -= coutSST;
       if (coutMaterielData.amount !== null)
-        coutTotal -= coutMaterielData.amount;
+        marge -= coutMaterielData.amount;
 
       costs.push({
         intervention_id: interventionId,
-        cost_type: "total",
-        label: "Coût Total",
-        amount: coutTotal,
+        cost_type: "marge",
+        label: "Marge",
+        amount: marge,
         currency: "EUR",
       });
     }
@@ -786,8 +786,8 @@ class DataMapper {
         }`
       );
       console.log(
-        `Coût Total (calculé): ${
-          coutTotal !== null ? coutTotal + " EUR" : "N/A"
+        `Marge (calculée): ${
+          marge !== null ? marge + " EUR" : "N/A"
         }`
       );
       console.log(`Nombre de coûts insérés: ${costs.length}`);

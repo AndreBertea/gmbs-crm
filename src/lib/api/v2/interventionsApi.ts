@@ -6,12 +6,23 @@ import { supabase } from "../../supabase-client";
 import type {
   BulkOperationResult,
   CreateInterventionData,
+  GestionnaireMarginRanking,
   Intervention,
   InterventionCost,
   InterventionPayment,
   InterventionQueryParams,
+  InterventionStatsByStatus,
+  MarginRankingResult,
+  MarginStats,
+  MonthlyStats,
   PaginatedResponse,
+  StatsPeriod,
   UpdateInterventionData,
+  WeeklyStats,
+  WeekDayStats,
+  MonthWeekStats,
+  YearMonthStats,
+  YearlyStats,
 } from "./common/types";
 import {
   SUPABASE_FUNCTIONS_URL,
@@ -512,7 +523,7 @@ export const interventionsApi = {
   async addCost(
     interventionId: string,
     data: {
-      cost_type: "sst" | "materiel" | "intervention" | "total";
+      cost_type: "sst" | "materiel" | "intervention" | "marge";
       label?: string;
       amount: number;
       currency?: string;
@@ -607,7 +618,7 @@ export const interventionsApi = {
   async insertInterventionCosts(
     costs: Array<{
       intervention_id: string;
-      cost_type: "sst" | "materiel" | "intervention" | "total";
+      cost_type: "sst" | "materiel" | "intervention" | "marge";
       label?: string;
       amount: number;
       currency?: string;
@@ -814,5 +825,813 @@ export const interventionsApi = {
       throw error;
     }
     return (data as InterventionStatus | null) ?? null;
+  },
+
+  /**
+   * Récupère les statistiques d'interventions par statut pour un utilisateur
+   * @param userId - ID de l'utilisateur
+   * @param startDate - Date de début (optionnelle, format ISO string)
+   * @param endDate - Date de fin (optionnelle, format ISO string)
+   * @returns Statistiques avec le nombre d'interventions par statut
+   */
+  async getStatsByUser(
+    userId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<InterventionStatsByStatus> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    // Construire la requête de base
+    let query = supabase
+      .from("interventions")
+      .select(
+        `
+        statut_id,
+        status:intervention_statuses(id, code, label)
+        `,
+        { count: "exact" }
+      )
+      .eq("assigned_user_id", userId)
+      .eq("is_active", true); // Seulement les interventions actives
+
+    // Appliquer les filtres de date si fournis
+    if (startDate) {
+      query = query.gte("date", startDate);
+    }
+    if (endDate) {
+      query = query.lte("date", endDate);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
+    }
+
+    // Initialiser les compteurs
+    const byStatus: Record<string, number> = {};
+    const byStatusLabel: Record<string, number> = {};
+
+    // Compter les interventions par statut
+    (data || []).forEach((item: any) => {
+      const status = item.status;
+      if (status) {
+        const code = status.code || "SANS_STATUT";
+        const label = status.label || "Sans statut";
+
+        byStatus[code] = (byStatus[code] || 0) + 1;
+        byStatusLabel[label] = (byStatusLabel[label] || 0) + 1;
+      } else {
+        // Intervention sans statut
+        byStatus["SANS_STATUT"] = (byStatus["SANS_STATUT"] || 0) + 1;
+        byStatusLabel["Sans statut"] = (byStatusLabel["Sans statut"] || 0) + 1;
+      }
+    });
+
+    return {
+      total: count || 0,
+      by_status: byStatus,
+      by_status_label: byStatusLabel,
+      period: {
+        start_date: startDate || null,
+        end_date: endDate || null,
+      },
+    };
+  },
+
+  /**
+   * Récupère les statistiques de marge pour un utilisateur
+   * @param userId - ID de l'utilisateur
+   * @param startDate - Date de début (optionnelle, format ISO string)
+   * @param endDate - Date de fin (optionnelle, format ISO string)
+   * @returns Statistiques de marge avec le pourcentage moyen
+   */
+  async getMarginStatsByUser(
+    userId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<MarginStats> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    // Construire la requête avec les coûts
+    let query = supabase
+      .from("interventions")
+      .select(
+        `
+        id,
+        intervention_costs (
+          id,
+          cost_type,
+          amount,
+          label
+        )
+        `
+      )
+      .eq("assigned_user_id", userId)
+      .eq("is_active", true); // Seulement les interventions actives
+
+    // Appliquer les filtres de date si fournis
+    if (startDate) {
+      query = query.gte("date", startDate);
+    }
+    if (endDate) {
+      query = query.lte("date", endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques de marge: ${error.message}`);
+    }
+
+    let totalRevenue = 0;
+    let totalCosts = 0;
+    let totalMargin = 0;
+    let interventionsWithCosts = 0;
+    let totalMarginPercentage = 0;
+
+    // Parcourir les interventions et calculer les marges
+    (data || []).forEach((intervention: any) => {
+      const costs = intervention.intervention_costs || [];
+      
+      if (costs.length === 0) {
+        return; // Ignorer les interventions sans coûts
+      }
+
+      // Extraire les coûts par type
+      let coutIntervention = 0;
+      let coutSST = 0;
+      let coutMateriel = 0;
+
+      costs.forEach((cost: InterventionCost) => {
+        switch (cost.cost_type) {
+          case "intervention":
+            coutIntervention = cost.amount || 0;
+            break;
+          case "sst":
+            coutSST = cost.amount || 0;
+            break;
+          case "materiel":
+            coutMateriel = cost.amount || 0;
+            break;
+        }
+      });
+
+      // Calculer la marge seulement si on a un coût d'intervention
+      if (coutIntervention > 0) {
+        const marge = coutIntervention - coutSST - coutMateriel;
+        const marginPercentage = (marge / coutIntervention) * 100;
+
+        totalRevenue += coutIntervention;
+        totalCosts += coutSST + coutMateriel;
+        totalMargin += marge;
+        totalMarginPercentage += marginPercentage;
+        interventionsWithCosts++;
+      }
+    });
+
+    // Calculer la moyenne du pourcentage de marge
+    const averageMarginPercentage = interventionsWithCosts > 0 
+      ? totalMarginPercentage / interventionsWithCosts 
+      : 0;
+
+    return {
+      average_margin_percentage: Math.round(averageMarginPercentage * 100) / 100, // Arrondir à 2 décimales
+      total_interventions: interventionsWithCosts,
+      total_revenue: Math.round(totalRevenue * 100) / 100,
+      total_costs: Math.round(totalCosts * 100) / 100,
+      total_margin: Math.round(totalMargin * 100) / 100,
+      period: {
+        start_date: startDate || null,
+        end_date: endDate || null,
+      },
+    };
+  },
+
+  /**
+   * Récupère le classement des gestionnaires par marge totale sur une période
+   * @param startDate - Date de début (optionnelle, format ISO string)
+   * @param endDate - Date de fin (optionnelle, format ISO string)
+   * @returns Classement des gestionnaires trié par marge totale décroissante
+   */
+  async getMarginRankingByPeriod(
+    startDate?: string,
+    endDate?: string
+  ): Promise<MarginRankingResult> {
+    // Récupérer tous les utilisateurs (gestionnaires)
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("id, firstname, lastname, code_gestionnaire, color")
+      .order("lastname", { ascending: true });
+
+    if (usersError) {
+      throw new Error(`Erreur lors de la récupération des utilisateurs: ${usersError.message}`);
+    }
+
+    if (!users || users.length === 0) {
+      return {
+        rankings: [],
+        period: {
+          start_date: startDate || null,
+          end_date: endDate || null,
+        },
+      };
+    }
+
+    // Pour chaque gestionnaire, calculer sa marge totale
+    const rankings: GestionnaireMarginRanking[] = [];
+
+    for (const user of users) {
+      try {
+        // Construire la requête avec les coûts pour ce gestionnaire
+        let query = supabase
+          .from("interventions")
+          .select(
+            `
+            id,
+            intervention_costs (
+              id,
+              cost_type,
+              amount,
+              label
+            )
+            `
+          )
+          .eq("assigned_user_id", user.id)
+          .eq("is_active", true);
+
+        // Appliquer les filtres de date si fournis
+        if (startDate) {
+          query = query.gte("date", startDate);
+        }
+        if (endDate) {
+          query = query.lte("date", endDate);
+        }
+
+        const { data: interventions, error: interventionsError } = await query;
+
+        if (interventionsError) {
+          console.warn(`Erreur pour l'utilisateur ${user.id}:`, interventionsError);
+          continue;
+        }
+
+        let totalRevenue = 0;
+        let totalCosts = 0;
+        let totalMargin = 0;
+        let interventionsWithCosts = 0;
+        let totalMarginPercentage = 0;
+
+        // Parcourir les interventions et calculer les marges
+        (interventions || []).forEach((intervention: any) => {
+          const costs = intervention.intervention_costs || [];
+
+          if (costs.length === 0) {
+            return; // Ignorer les interventions sans coûts
+          }
+
+          // Extraire les coûts par type
+          let coutIntervention = 0;
+          let coutSST = 0;
+          let coutMateriel = 0;
+
+          costs.forEach((cost: InterventionCost) => {
+            switch (cost.cost_type) {
+              case "intervention":
+                coutIntervention = cost.amount || 0;
+                break;
+              case "sst":
+                coutSST = cost.amount || 0;
+                break;
+              case "materiel":
+                coutMateriel = cost.amount || 0;
+                break;
+            }
+          });
+
+          // Calculer la marge seulement si on a un coût d'intervention
+          if (coutIntervention > 0) {
+            const marge = coutIntervention - coutSST - coutMateriel;
+            const marginPercentage = (marge / coutIntervention) * 100;
+
+            totalRevenue += coutIntervention;
+            totalCosts += coutSST + coutMateriel;
+            totalMargin += marge;
+            totalMarginPercentage += marginPercentage;
+            interventionsWithCosts++;
+          }
+        });
+
+        // Calculer la moyenne du pourcentage de marge
+        const averageMarginPercentage = interventionsWithCosts > 0
+          ? totalMarginPercentage / interventionsWithCosts
+          : 0;
+
+        // Ajouter au classement seulement si le gestionnaire a des interventions avec coûts
+        if (interventionsWithCosts > 0) {
+          const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim() || user.code_gestionnaire || "Utilisateur";
+
+          rankings.push({
+            user_id: user.id,
+            user_name: fullName,
+            user_code: user.code_gestionnaire,
+            user_color: user.color,
+            total_margin: Math.round(totalMargin * 100) / 100,
+            total_interventions: interventionsWithCosts,
+            average_margin_percentage: Math.round(averageMarginPercentage * 100) / 100,
+            rank: 0, // Sera calculé après le tri
+          });
+        }
+      } catch (error: any) {
+        console.warn(`Erreur lors du calcul de la marge pour ${user.id}:`, error);
+        continue;
+      }
+    }
+
+    // Trier par marge totale décroissante
+    rankings.sort((a, b) => b.total_margin - a.total_margin);
+
+    // Assigner les rangs
+    rankings.forEach((ranking, index) => {
+      ranking.rank = index + 1;
+    });
+
+    return {
+      rankings,
+      period: {
+        start_date: startDate || null,
+        end_date: endDate || null,
+      },
+    };
+  },
+
+  /**
+   * Récupère les statistiques hebdomadaires pour un utilisateur (semaine en cours)
+   * @param userId - ID de l'utilisateur
+   * @param weekStartDate - Date de début de la semaine (optionnelle, lundi de la semaine en cours par défaut)
+   * @returns Statistiques par jour de la semaine (Lundi à Vendredi)
+   */
+  async getWeeklyStatsByUser(
+    userId: string,
+    weekStartDate?: string
+  ): Promise<WeeklyStats> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    // Calculer les dates de la semaine (lundi à vendredi)
+    let monday: Date;
+    if (weekStartDate) {
+      monday = new Date(weekStartDate);
+      monday.setHours(0, 0, 0, 0);
+    } else {
+      // Trouver le lundi de la semaine en cours
+      const now = new Date();
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Ajuster pour que lundi = 1
+      monday = new Date(now.getFullYear(), now.getMonth(), diff);
+      monday.setHours(0, 0, 0, 0);
+    }
+
+    const tuesday = new Date(monday);
+    tuesday.setDate(monday.getDate() + 1);
+    const wednesday = new Date(monday);
+    wednesday.setDate(monday.getDate() + 2);
+    const thursday = new Date(monday);
+    thursday.setDate(monday.getDate() + 3);
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
+
+    // Formater les dates pour les requêtes (YYYY-MM-DD)
+    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+    const mondayStr = formatDate(monday);
+    const tuesdayStr = formatDate(tuesday);
+    const wednesdayStr = formatDate(wednesday);
+    const thursdayStr = formatDate(thursday);
+    const fridayStr = formatDate(friday);
+    const saturdayStr = formatDate(saturday); // Pour la fin de vendredi
+
+    // Récupérer les statuts d'intervention nécessaires
+    const { data: statuses, error: statusError } = await supabase
+      .from("intervention_statuses")
+      .select("id, code")
+      .in("code", ["DEVIS_ENVOYE", "INTER_EN_COURS", "INTER_TERMINEE"]);
+
+    if (statusError) {
+      throw new Error(`Erreur lors de la récupération des statuts: ${statusError.message}`);
+    }
+
+    const statusMap = new Map(statuses?.map((s: any) => [s.code, s.id]) || []);
+
+    // Fonction helper pour initialiser les stats d'un jour
+    const initDayStats = (): WeekDayStats => ({
+      lundi: 0,
+      mardi: 0,
+      mercredi: 0,
+      jeudi: 0,
+      vendredi: 0,
+      total: 0,
+    });
+
+    // Initialiser les compteurs
+    const devisEnvoye = initDayStats();
+    const interEnCours = initDayStats();
+    const interFactures = initDayStats();
+    const nouveauxArtisans = initDayStats();
+
+    // Récupérer les interventions de l'utilisateur pour la semaine
+    const { data: interventions, error: interventionsError } = await supabase
+      .from("interventions")
+      .select(`
+        id,
+        date,
+        statut_id,
+        status:intervention_statuses(code)
+      `)
+      .eq("assigned_user_id", userId)
+      .eq("is_active", true)
+      .gte("date", mondayStr)
+      .lt("date", saturdayStr); // Jusqu'à la fin de vendredi
+
+    if (interventionsError) {
+      throw new Error(`Erreur lors de la récupération des interventions: ${interventionsError.message}`);
+    }
+
+    // Compter les interventions par jour et par statut
+    (interventions || []).forEach((intervention: any) => {
+      const interventionDate = new Date(intervention.date);
+      const dateStr = formatDate(interventionDate);
+      const statusCode = intervention.status?.code;
+
+      if (!statusCode) return;
+
+      let dayKey: keyof WeekDayStats | null = null;
+      if (dateStr === mondayStr) dayKey = "lundi";
+      else if (dateStr === tuesdayStr) dayKey = "mardi";
+      else if (dateStr === wednesdayStr) dayKey = "mercredi";
+      else if (dateStr === thursdayStr) dayKey = "jeudi";
+      else if (dateStr === fridayStr) dayKey = "vendredi";
+
+      if (!dayKey) return;
+
+      // Compter selon le statut
+      if (statusCode === "DEVIS_ENVOYE") {
+        devisEnvoye[dayKey]++;
+        devisEnvoye.total++;
+      } else if (statusCode === "INTER_EN_COURS" || statusCode === "EN_COURS") {
+        interEnCours[dayKey]++;
+        interEnCours.total++;
+      } else if (statusCode === "INTER_TERMINEE" || statusCode === "TERMINE") {
+        interFactures[dayKey]++;
+        interFactures.total++;
+      }
+    });
+
+    // Récupérer les artisans créés par l'utilisateur pour la semaine
+    const { data: artisans, error: artisansError } = await supabase
+      .from("artisans")
+      .select("id, date_ajout, created_at, gestionnaire_id")
+      .eq("gestionnaire_id", userId)
+      .eq("is_active", true)
+      .gte("date_ajout", mondayStr)
+      .lt("date_ajout", saturdayStr);
+
+    if (artisansError) {
+      throw new Error(`Erreur lors de la récupération des artisans: ${artisansError.message}`);
+    }
+
+    // Compter les artisans par jour
+    (artisans || []).forEach((artisan: any) => {
+      // Utiliser date_ajout en priorité, sinon created_at
+      const artisanDate = artisan.date_ajout 
+        ? new Date(artisan.date_ajout)
+        : artisan.created_at 
+        ? new Date(artisan.created_at)
+        : null;
+
+      if (!artisanDate) return;
+
+      const dateStr = formatDate(artisanDate);
+      let dayKey: keyof WeekDayStats | null = null;
+      if (dateStr === mondayStr) dayKey = "lundi";
+      else if (dateStr === tuesdayStr) dayKey = "mardi";
+      else if (dateStr === wednesdayStr) dayKey = "mercredi";
+      else if (dateStr === thursdayStr) dayKey = "jeudi";
+      else if (dateStr === fridayStr) dayKey = "vendredi";
+
+      if (dayKey) {
+        nouveauxArtisans[dayKey]++;
+        nouveauxArtisans.total++;
+      }
+    });
+
+    return {
+      devis_envoye: devisEnvoye,
+      inter_en_cours: interEnCours,
+      inter_factures: interFactures,
+      nouveaux_artisans: nouveauxArtisans,
+      week_start: monday.toISOString(),
+      week_end: friday.toISOString(),
+    };
+  },
+
+  /**
+   * Récupère les statistiques par période pour un utilisateur (semaine, mois ou année)
+   * @param userId - ID de l'utilisateur
+   * @param period - Type de période ("week", "month", "year")
+   * @param startDate - Date de début (optionnelle, période en cours par défaut)
+   * @returns Statistiques selon la période choisie
+   */
+  async getPeriodStatsByUser(
+    userId: string,
+    period: StatsPeriod,
+    startDate?: string
+  ): Promise<WeeklyStats | MonthlyStats | YearlyStats> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+    if (period === "week") {
+      return this.getWeeklyStatsByUser(userId, startDate);
+    }
+
+    if (period === "month") {
+      // Calculer le mois (mois en cours par défaut)
+      let monthStart: Date;
+      if (startDate) {
+        monthStart = new Date(startDate);
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+      } else {
+        const now = new Date();
+        monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        monthStart.setHours(0, 0, 0, 0);
+      }
+
+      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59);
+      const monthStartStr = formatDate(monthStart);
+      const monthEndStr = formatDate(monthEnd);
+
+      // Calculer les semaines du mois
+      const weeks: { start: Date; end: Date }[] = [];
+      let currentWeekStart = new Date(monthStart);
+      
+      // Trouver le lundi de la première semaine
+      const firstDay = currentWeekStart.getDay();
+      const diffToMonday = firstDay === 0 ? -6 : 1 - firstDay;
+      currentWeekStart.setDate(currentWeekStart.getDate() + diffToMonday);
+
+      while (currentWeekStart <= monthEnd) {
+        const weekEnd = new Date(currentWeekStart);
+        weekEnd.setDate(currentWeekStart.getDate() + 4); // Vendredi
+        
+        if (currentWeekStart <= monthEnd) {
+          weeks.push({
+            start: new Date(currentWeekStart),
+            end: weekEnd <= monthEnd ? weekEnd : monthEnd,
+          });
+        }
+        
+        currentWeekStart.setDate(currentWeekStart.getDate() + 7); // Semaine suivante
+      }
+
+      // Initialiser les stats par semaine
+      const initWeekStats = (): MonthWeekStats => ({
+        semaine1: 0,
+        semaine2: 0,
+        semaine3: 0,
+        semaine4: 0,
+        semaine5: 0,
+        total: 0,
+      });
+
+      const devisEnvoye = initWeekStats();
+      const interEnCours = initWeekStats();
+      const interFactures = initWeekStats();
+      const nouveauxArtisans = initWeekStats();
+
+      // Récupérer les interventions du mois
+      const { data: interventions, error: interventionsError } = await supabase
+        .from("interventions")
+        .select(`
+          id,
+          date,
+          statut_id,
+          status:intervention_statuses(code)
+        `)
+        .eq("assigned_user_id", userId)
+        .eq("is_active", true)
+        .gte("date", monthStartStr)
+        .lte("date", monthEndStr);
+
+      if (interventionsError) {
+        throw new Error(`Erreur lors de la récupération des interventions: ${interventionsError.message}`);
+      }
+
+      // Compter par semaine
+      (interventions || []).forEach((intervention: any) => {
+        const interventionDate = new Date(intervention.date);
+        const statusCode = intervention.status?.code;
+        if (!statusCode) return;
+
+        // Trouver dans quelle semaine tombe cette intervention
+        for (let i = 0; i < weeks.length && i < 5; i++) {
+          const week = weeks[i];
+          if (interventionDate >= week.start && interventionDate <= week.end) {
+            const weekKey = `semaine${i + 1}` as keyof MonthWeekStats;
+            
+            if (statusCode === "DEVIS_ENVOYE") {
+              devisEnvoye[weekKey]++;
+              devisEnvoye.total++;
+            } else if (statusCode === "INTER_EN_COURS" || statusCode === "EN_COURS") {
+              interEnCours[weekKey]++;
+              interEnCours.total++;
+            } else if (statusCode === "INTER_TERMINEE" || statusCode === "TERMINE") {
+              interFactures[weekKey]++;
+              interFactures.total++;
+            }
+            break;
+          }
+        }
+      });
+
+      // Récupérer les artisans du mois
+      const { data: artisans, error: artisansError } = await supabase
+        .from("artisans")
+        .select("id, date_ajout, created_at, gestionnaire_id")
+        .eq("gestionnaire_id", userId)
+        .eq("is_active", true)
+        .gte("date_ajout", monthStartStr)
+        .lte("date_ajout", monthEndStr);
+
+      if (artisansError) {
+        throw new Error(`Erreur lors de la récupération des artisans: ${artisansError.message}`);
+      }
+
+      // Compter les artisans par semaine
+      (artisans || []).forEach((artisan: any) => {
+        const artisanDate = artisan.date_ajout 
+          ? new Date(artisan.date_ajout)
+          : artisan.created_at 
+          ? new Date(artisan.created_at)
+          : null;
+
+        if (!artisanDate) return;
+
+        for (let i = 0; i < weeks.length && i < 5; i++) {
+          const week = weeks[i];
+          if (artisanDate >= week.start && artisanDate <= week.end) {
+            const weekKey = `semaine${i + 1}` as keyof MonthWeekStats;
+            nouveauxArtisans[weekKey]++;
+            nouveauxArtisans.total++;
+            break;
+          }
+        }
+      });
+
+      return {
+        devis_envoye: devisEnvoye,
+        inter_en_cours: interEnCours,
+        inter_factures: interFactures,
+        nouveaux_artisans: nouveauxArtisans,
+        month_start: monthStart.toISOString(),
+        month_end: monthEnd.toISOString(),
+        month: monthStart.getMonth() + 1,
+        year: monthStart.getFullYear(),
+      };
+    }
+
+    if (period === "year") {
+      // Calculer l'année (année en cours par défaut)
+      let yearStart: Date;
+      if (startDate) {
+        yearStart = new Date(startDate);
+        yearStart.setMonth(0, 1);
+        yearStart.setHours(0, 0, 0, 0);
+      } else {
+        const now = new Date();
+        yearStart = new Date(now.getFullYear(), 0, 1);
+        yearStart.setHours(0, 0, 0, 0);
+      }
+
+      const yearEnd = new Date(yearStart.getFullYear(), 11, 31, 23, 59, 59);
+      const yearStartStr = formatDate(yearStart);
+      const yearEndStr = formatDate(yearEnd);
+
+      // Initialiser les stats par mois
+      const initMonthStats = (): YearMonthStats => ({
+        janvier: 0,
+        fevrier: 0,
+        mars: 0,
+        avril: 0,
+        mai: 0,
+        juin: 0,
+        juillet: 0,
+        aout: 0,
+        septembre: 0,
+        octobre: 0,
+        novembre: 0,
+        decembre: 0,
+        total: 0,
+      });
+
+      const devisEnvoye = initMonthStats();
+      const interEnCours = initMonthStats();
+      const interFactures = initMonthStats();
+      const nouveauxArtisans = initMonthStats();
+
+      const monthNames: (keyof YearMonthStats)[] = [
+        "janvier", "fevrier", "mars", "avril", "mai", "juin",
+        "juillet", "aout", "septembre", "octobre", "novembre", "decembre"
+      ];
+
+      // Récupérer les interventions de l'année
+      const { data: interventions, error: interventionsError } = await supabase
+        .from("interventions")
+        .select(`
+          id,
+          date,
+          statut_id,
+          status:intervention_statuses(code)
+        `)
+        .eq("assigned_user_id", userId)
+        .eq("is_active", true)
+        .gte("date", yearStartStr)
+        .lte("date", yearEndStr);
+
+      if (interventionsError) {
+        throw new Error(`Erreur lors de la récupération des interventions: ${interventionsError.message}`);
+      }
+
+      // Compter par mois
+      (interventions || []).forEach((intervention: any) => {
+        const interventionDate = new Date(intervention.date);
+        const monthIndex = interventionDate.getMonth();
+        const monthKey = monthNames[monthIndex];
+        const statusCode = intervention.status?.code;
+        if (!statusCode || !monthKey) return;
+
+        if (statusCode === "DEVIS_ENVOYE") {
+          devisEnvoye[monthKey]++;
+          devisEnvoye.total++;
+        } else if (statusCode === "INTER_EN_COURS" || statusCode === "EN_COURS") {
+          interEnCours[monthKey]++;
+          interEnCours.total++;
+        } else if (statusCode === "INTER_TERMINEE" || statusCode === "TERMINE") {
+          interFactures[monthKey]++;
+          interFactures.total++;
+        }
+      });
+
+      // Récupérer les artisans de l'année
+      const { data: artisans, error: artisansError } = await supabase
+        .from("artisans")
+        .select("id, date_ajout, created_at, gestionnaire_id")
+        .eq("gestionnaire_id", userId)
+        .eq("is_active", true)
+        .gte("date_ajout", yearStartStr)
+        .lte("date_ajout", yearEndStr);
+
+      if (artisansError) {
+        throw new Error(`Erreur lors de la récupération des artisans: ${artisansError.message}`);
+      }
+
+      // Compter les artisans par mois
+      (artisans || []).forEach((artisan: any) => {
+        const artisanDate = artisan.date_ajout 
+          ? new Date(artisan.date_ajout)
+          : artisan.created_at 
+          ? new Date(artisan.created_at)
+          : null;
+
+        if (!artisanDate) return;
+
+        const monthIndex = artisanDate.getMonth();
+        const monthKey = monthNames[monthIndex];
+        if (monthKey) {
+          nouveauxArtisans[monthKey]++;
+          nouveauxArtisans.total++;
+        }
+      });
+
+      return {
+        devis_envoye: devisEnvoye,
+        inter_en_cours: interEnCours,
+        inter_factures: interFactures,
+        nouveaux_artisans: nouveauxArtisans,
+        year_start: yearStart.toISOString(),
+        year_end: yearEnd.toISOString(),
+        year: yearStart.getFullYear(),
+      };
+    }
+
+    throw new Error(`Période non supportée: ${period}`);
   },
 };

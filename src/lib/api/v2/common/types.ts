@@ -98,7 +98,7 @@ export interface Intervention {
 export interface InterventionCost {
   id: string;
   intervention_id: string;
-  cost_type: "sst" | "materiel" | "intervention" | "total";
+  cost_type: "sst" | "materiel" | "intervention" | "marge";
   label: string | null;
   amount: number;
   currency: string | null;
@@ -499,6 +499,132 @@ export interface CommentStats {
   by_internal: { internal: number; external: number };
   recent_count: number;
 }
+
+export interface InterventionStatsByStatus {
+  total: number;
+  by_status: Record<string, number>; // Clé = code du statut (ex: "EN_COURS", "TERMINE")
+  by_status_label: Record<string, number>; // Clé = label du statut (ex: "En cours", "Terminé")
+  period?: {
+    start_date: string | null;
+    end_date: string | null;
+  };
+}
+
+export interface ArtisanStatsByStatus {
+  total: number;
+  by_status: Record<string, number>; // Clé = code du statut (ex: "EXPERT", "NOVICE")
+  by_status_label: Record<string, number>; // Clé = label du statut (ex: "Expert", "Novice")
+  period?: {
+    start_date: string | null;
+    end_date: string | null;
+  };
+}
+
+export interface MarginStats {
+  average_margin_percentage: number; // Pourcentage de marge moyen
+  total_interventions: number; // Nombre total d'interventions avec coûts
+  total_revenue: number; // Total des coûts d'intervention (revenus)
+  total_costs: number; // Total des coûts (SST + Matériel)
+  total_margin: number; // Marge totale (revenus - coûts)
+  period?: {
+    start_date: string | null;
+    end_date: string | null;
+  };
+}
+
+export interface GestionnaireMarginRanking {
+  user_id: string;
+  user_name: string;
+  user_code: string | null;
+  user_color: string | null;
+  total_margin: number;
+  total_interventions: number;
+  average_margin_percentage: number;
+  rank: number;
+}
+
+export interface MarginRankingResult {
+  rankings: GestionnaireMarginRanking[];
+  period?: {
+    start_date: string | null;
+    end_date: string | null;
+  };
+}
+
+export type StatsPeriod = "week" | "month" | "year";
+
+// Stats pour la semaine (jours de la semaine)
+export interface WeekDayStats {
+  lundi: number;
+  mardi: number;
+  mercredi: number;
+  jeudi: number;
+  vendredi: number;
+  total: number;
+}
+
+// Stats pour le mois (semaines du mois)
+export interface MonthWeekStats {
+  semaine1: number;
+  semaine2: number;
+  semaine3: number;
+  semaine4: number;
+  semaine5: number;
+  total: number;
+}
+
+// Stats pour l'année (mois de l'année)
+export interface YearMonthStats {
+  janvier: number;
+  fevrier: number;
+  mars: number;
+  avril: number;
+  mai: number;
+  juin: number;
+  juillet: number;
+  aout: number;
+  septembre: number;
+  octobre: number;
+  novembre: number;
+  decembre: number;
+  total: number;
+}
+
+// Union type pour les stats selon la période
+export type PeriodStats = WeekDayStats | MonthWeekStats | YearMonthStats;
+
+export interface WeeklyStats {
+  devis_envoye: WeekDayStats;
+  inter_en_cours: WeekDayStats;
+  inter_factures: WeekDayStats;
+  nouveaux_artisans: WeekDayStats;
+  week_start: string; // Date de début de la semaine (lundi)
+  week_end: string; // Date de fin de la semaine (vendredi)
+}
+
+export interface MonthlyStats {
+  devis_envoye: MonthWeekStats;
+  inter_en_cours: MonthWeekStats;
+  inter_factures: MonthWeekStats;
+  nouveaux_artisans: MonthWeekStats;
+  month_start: string; // Date de début du mois
+  month_end: string; // Date de fin du mois
+  month: number; // Mois (1-12)
+  year: number; // Année
+}
+
+export interface YearlyStats {
+  devis_envoye: YearMonthStats;
+  inter_en_cours: YearMonthStats;
+  inter_factures: YearMonthStats;
+  nouveaux_artisans: YearMonthStats;
+  year_start: string; // Date de début de l'année
+  year_end: string; // Date de fin de l'année
+  year: number; // Année
+}
+
+// Union type pour toutes les stats
+export type PeriodStatsResult = WeeklyStats | MonthlyStats | YearlyStats;
 
 // Types pour les utilitaires
 export interface FileUploadData {

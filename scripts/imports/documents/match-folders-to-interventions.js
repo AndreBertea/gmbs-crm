@@ -2,7 +2,7 @@
  * Script complet d'import des documents d'interventions depuis Google Drive
  * 
  * Ce script :
- * 1. Extrait les dossiers d'interventions depuis Google Drive (optionnel avec --skip-extraction)
+ * 1. Extrait les dossiers d'interventions depuis Google Drive
  * 2. Fait le matching avec les interventions en base de données
  * 3. Classe les documents (tous avec kind = "a classifier")
  * 4. Insère les documents en base de données
@@ -614,7 +614,6 @@ async function main() {
 Usage: npm run drive:import-documents-interventions [options]
 
 Options:
-  --skip-extraction, -e  Utiliser le fichier JSON existant (ne pas réextraire depuis Drive)
   --first-month-only    Traiter uniquement le premier mois (pour développement)
   --dry-run, -d         Mode simulation (aucune insertion en base)
   --skip-insert, -s     Faire le matching sans insérer les documents
@@ -623,14 +622,12 @@ Options:
 Exemples:
   npm run drive:import-documents-interventions                    # Extraction + Matching + Insertion
   npm run drive:import-documents-interventions --dry-run          # Simulation complète
-  npm run drive:import-documents-interventions --skip-extraction  # Utiliser JSON existant (plus rapide)
   npm run drive:import-documents-interventions --skip-insert      # Extraction + Matching sans insertion
   npm run drive:import-documents-interventions --first-month-only # Traitement du premier mois uniquement
 `);
     process.exit(0);
   }
 
-  const skipExtraction = args.includes('--skip-extraction') || args.includes('-e');
   const insertOnly = args.includes('--insert-only') || args.includes('-i');
   const firstMonthOnly = args.includes('--first-month-only');
   const dryRun = args.includes('--dry-run') || args.includes('-d');
@@ -653,7 +650,7 @@ Exemples:
   try {
     // Initialiser Google Drive API (nécessaire pour extraction et insertion de documents)
     let drive = null;
-    if (!skipExtraction || (!skipInsert && !dryRun)) {
+    if (!skipInsert && !dryRun) {
       console.log('🔐 Initialisation de l\'authentification Google Drive...');
       
       const credentials = googleDriveConfig.getCredentials();
@@ -676,32 +673,16 @@ Exemples:
       console.log('✅ Authentification Google Drive initialisée\n');
     }
 
-    // 1. Extraire les dossiers depuis Google Drive OU charger depuis le JSON existant
-    const jsonPath = path.join(__dirname, '../../../data/docs_imports/interventions-folders.json');
+    // 1. Extraire les dossiers depuis Google Drive
     let folderData;
     
-    const forceExtraction = args.includes('--force-extraction');
-    
-    // Détection automatique : utiliser le fichier existant si disponible (sauf si force-extraction)
-    const fileExists = fs.existsSync(jsonPath);
-    const shouldUseExistingFile = (skipExtraction || fileExists) && !forceExtraction;
-    
-    if (shouldUseExistingFile && fileExists) {
-      // Mode: utiliser le fichier existant
-      console.log(`📖 Lecture de ${jsonPath}...`);
-      folderData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-      console.log(`✅ ${folderData.totalInterFolders || 0} dossiers INTER chargés depuis le fichier existant\n`);
-    } else {
-      // Mode: extraction depuis Google Drive
-      if (forceExtraction && fileExists) {
-        console.log('🔄 Mode FORCE EXTRACTION: réextraction depuis Google Drive (fichier existant ignoré)\n');
-      }
-      if (!drive) {
-        console.error('❌ Google Drive API non initialisée. Impossible d\'extraire les dossiers.');
-        process.exit(1);
-      }
-      folderData = await extractFoldersFromDrive(drive);
+    if (!drive) {
+      console.error('❌ Google Drive API non initialisée. Impossible d\'extraire les dossiers.');
+      process.exit(1);
     }
+    
+    console.log('📁 Extraction des dossiers d\'interventions depuis Google Drive...\n');
+    folderData = await extractFoldersFromDrive(drive);
     
     // Limiter au premier mois si demandé
     let monthsToProcess = folderData.months || [];

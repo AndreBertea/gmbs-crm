@@ -437,7 +437,7 @@ export interface Intervention {
 export interface InterventionCost {
   id: string;
   intervention_id: string;
-  cost_type: "sst" | "materiel" | "intervention" | "total";
+  cost_type: "sst" | "materiel" | "intervention" | "marge";
   label: string | null;
   amount: number;
   currency: string | null;
@@ -1103,7 +1103,7 @@ export const interventionsApiV2 = {
   async addCost(
     interventionId: string,
     data: {
-      cost_type: "sst" | "materiel" | "intervention" | "total";
+      cost_type: "sst" | "materiel" | "intervention" | "marge";
       label?: string;
       amount: number;
       currency?: string;
@@ -1180,7 +1180,7 @@ export const interventionsApiV2 = {
   async insertInterventionCosts(
     costs: Array<{
       intervention_id: string;
-      cost_type: "sst" | "materiel" | "intervention" | "total";
+      cost_type: "sst" | "materiel" | "intervention" | "marge";
       label?: string;
       amount: number;
       currency?: string;
