@@ -165,11 +165,12 @@ function parseInterventionId(folderName) {
   const normalized = folderName.toUpperCase().trim();
   
   // Patterns à chercher (dans l'ordre de priorité)
+  // Supporte les variantes courantes : INTER, INTE, INTRER (faute de frappe)
   const patterns = [
-    // Format: "INTER 1831 ID 11778" ou "INTE 1831 ID 11778"
-    /(?:INTER|INTE)\s+\d+\s+ID\s+(\d+)/i,
-    // Format: "INTER 3319 FACTURE 1858" → prendre le premier nombre après INTER
-    /(?:INTER|INTE)\s+(\d+)/i,
+    // Format: "INTER 1831 ID 11778" ou "INTE 1831 ID 11778" ou "INTRER 1831 ID 11778"
+    /(?:INTER|INTE|INTRER)\s+\d+\s+ID\s+(\d+)/i,
+    // Format: "INTER 3319 FACTURE 1858" → prendre le premier nombre après INTER/INTE/INTRER
+    /(?:INTER|INTE|INTRER)\s+(\d+)/i,
   ];
 
   for (const pattern of patterns) {
