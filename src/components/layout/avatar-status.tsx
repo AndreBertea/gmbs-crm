@@ -124,44 +124,6 @@ export function AvatarStatus() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs text-muted-foreground">Statut</DropdownMenuLabel>
-          <DropdownMenuItem onSelect={() => setStatus('connected')}>
-            <div className="flex items-center gap-2 w-full">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />
-              <span className="flex-1">En ligne</span>
-              {status === 'connected' && (
-                <span className="ml-auto border rounded px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700 border-green-200">Actuel</span>
-              )}
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setStatus('busy')}>
-            <div className="flex items-center gap-2 w-full">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-orange-500" />
-              <span className="flex-1">Occupé</span>
-              {status === 'busy' && (
-                <span className="ml-auto border rounded px-1.5 py-0.5 text-[10px] bg-orange-50 text-orange-800 border-orange-200">Actuel</span>
-              )}
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setStatus('dnd')}>
-            <div className="flex items-center gap-2 w-full">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
-              <span className="flex-1">Ne pas déranger</span>
-              {status === 'dnd' && (
-                <span className="ml-auto border rounded px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200">Actuel</span>
-              )}
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setStatus('offline')}>
-            <div className="flex items-center gap-2 w-full">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-gray-400" />
-              <span className="flex-1">Hors ligne</span>
-              {status === 'offline' && (
-                <span className="ml-auto border rounded px-1.5 py-0.5 text-[10px] bg-gray-50 text-gray-700 border-gray-200">Actuel</span>
-              )}
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/settings/profile" className="flex items-center gap-2">
               <UserIcon className="h-4 w-4" />
