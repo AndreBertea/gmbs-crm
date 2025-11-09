@@ -28,7 +28,9 @@
     "drive:import-documents-artisans": "npx tsx scripts/imports/documents/match-folders-to-artisans.js",
     "drive:import-all-documents": "node scripts/imports/documents/import-all-documents.js",
     "drive:verify-documents": "npx tsx scripts/imports/documents/verify-documents-insertion.js",
-    "drive:verify-intervention-documents": "npx tsx scripts/imports/documents/verify-intervention-documents.js"
+    "drive:verify-intervention-documents": "npx tsx scripts/imports/documents/verify-intervention-documents.js",
+    "drive:verify-storage": "npx tsx scripts/imports/documents/verify-storage-upload.js",
+    "test:csv-interventions": "node scripts/test-interventions-folders-csv.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

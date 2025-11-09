@@ -1,3 +1,9 @@
 - checker les commentaires pour intervention et artisan
 - refacto migrations make one clean schema business operations, one for user
+- créer requête table dashboard (même faire un jet pour une première page)
+- modifier le script seed_mockup comme ça lorsque tu lances supabase db reset toutes les données s'importent depuis le csv
 - 
+- demander accès en tant que viewer à notre adresse bot
+- 
+
+- OCR pour documents

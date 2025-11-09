@@ -495,21 +495,40 @@ function prepareDocumentsForInsertion(documents) {
   }));
 }
 
+// Importer la fonction utilitaire pour télécharger depuis Google Drive
+const { downloadFileFromDrive } = require('../lib/google-drive-utils');
+
 /**
- * Insère un document en base de données via l'API v2
+ * Insère un document en base de données en téléchargeant depuis Google Drive
+ * et en l'uploadant dans Supabase Storage via l'API v2
  */
-async function insertDocumentToDatabase(interventionId, document) {
+async function insertDocumentToDatabase(interventionId, document, drive) {
   try {
-    // Utiliser l'API v2 pour insérer le document
-    // getSupabaseFunctionsUrl() est maintenant appelé dynamiquement à chaque requête
-    const result = await documentsApi.create({
+    // Télécharger le fichier depuis Google Drive
+    if (!document.id) {
+      throw new Error('ID du fichier Google Drive manquant');
+    }
+
+    if (process.argv.includes('--debug') || process.argv.includes('-v')) {
+      console.log(`    📥 Téléchargement de "${document.name}" depuis Google Drive...`);
+    }
+
+    const fileContentBase64 = await downloadFileFromDrive(drive, document.id);
+
+    if (process.argv.includes('--debug') || process.argv.includes('-v')) {
+      console.log(`    ✅ Fichier téléchargé (${(fileContentBase64.length * 3 / 4 / 1024).toFixed(2)} KB)`);
+      console.log(`    📤 Upload vers Supabase Storage...`);
+    }
+
+    // Upload vers Supabase Storage via l'API v2
+    const result = await documentsApi.upload({
       entity_id: interventionId,
       entity_type: 'intervention',
       kind: document.kind, // "a classifier"
-      url: document.driveUrl,
       filename: document.name,
-      mime_type: document.mimeType || null,
-      file_size: document.size || null
+      mime_type: document.mimeType || 'application/octet-stream',
+      file_size: document.size || fileContentBase64.length * 3 / 4, // Approximation si size manquant
+      content: fileContentBase64
     });
 
     return { success: true, data: result };
@@ -519,18 +538,13 @@ async function insertDocumentToDatabase(interventionId, document) {
       document: {
         name: document.name,
         kind: document.kind,
-        driveUrl: document.driveUrl?.substring(0, 50) + '...'
+        fileId: document.id
       }
     };
     
     // Afficher l'erreur en mode debug
     if (process.argv.includes('--debug') || process.argv.includes('-v')) {
       console.error('    ❌ Erreur détaillée:', JSON.stringify(errorDetails, null, 2));
-      
-      // Afficher l'URL utilisée pour debug
-      const { getSupabaseFunctionsUrl } = require('../../../src/lib/api/v2/common/utils');
-      const functionsUrl = getSupabaseFunctionsUrl();
-      console.error(`    🔗 URL Edge Functions: ${functionsUrl}/documents/documents`);
     }
     
     return { success: false, error: error.message, details: errorDetails };
@@ -540,7 +554,7 @@ async function insertDocumentToDatabase(interventionId, document) {
 /**
  * Insère tous les documents d'une intervention en base de données
  */
-async function insertInterventionDocuments(interventionId, documents, dryRun = false) {
+async function insertInterventionDocuments(interventionId, documents, drive, dryRun = false) {
   const results = {
     total: documents.length,
     inserted: 0,
@@ -549,12 +563,12 @@ async function insertInterventionDocuments(interventionId, documents, dryRun = f
   };
 
   if (dryRun) {
-    console.log(`    🔍 Mode DRY RUN: ${documents.length} document(s) seraient inséré(s)`);
+    console.log(`    🔍 Mode DRY RUN: ${documents.length} document(s) seraient téléchargé(s) et inséré(s)`);
     return results;
   }
 
   for (const doc of documents) {
-    const result = await insertDocumentToDatabase(interventionId, doc);
+    const result = await insertDocumentToDatabase(interventionId, doc, drive);
     
     if (result.success) {
       results.inserted++;
@@ -617,6 +631,7 @@ Exemples:
   }
 
   const skipExtraction = args.includes('--skip-extraction') || args.includes('-e');
+  const insertOnly = args.includes('--insert-only') || args.includes('-i');
   const firstMonthOnly = args.includes('--first-month-only');
   const dryRun = args.includes('--dry-run') || args.includes('-d');
   const skipInsert = args.includes('--skip-insert') || args.includes('-s');
@@ -626,6 +641,9 @@ Exemples:
   }
   if (skipInsert) {
     console.log('⏭️  Mode SKIP INSERT activé - Pas d\'insertion en base de données\n');
+  }
+  if (insertOnly) {
+    console.log('💾 Mode INSERT ONLY activé - Insertion des documents déjà matchés\n');
   }
 
   console.log('🔍 Matching des dossiers Google Drive avec les interventions en base (API v2)...\n');
@@ -662,13 +680,22 @@ Exemples:
     const jsonPath = path.join(__dirname, '../../../data/docs_imports/interventions-folders.json');
     let folderData;
     
-    if (skipExtraction && fs.existsSync(jsonPath)) {
+    const forceExtraction = args.includes('--force-extraction');
+    
+    // Détection automatique : utiliser le fichier existant si disponible (sauf si force-extraction)
+    const fileExists = fs.existsSync(jsonPath);
+    const shouldUseExistingFile = (skipExtraction || fileExists) && !forceExtraction;
+    
+    if (shouldUseExistingFile && fileExists) {
       // Mode: utiliser le fichier existant
       console.log(`📖 Lecture de ${jsonPath}...`);
       folderData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
       console.log(`✅ ${folderData.totalInterFolders || 0} dossiers INTER chargés depuis le fichier existant\n`);
     } else {
       // Mode: extraction depuis Google Drive
+      if (forceExtraction && fileExists) {
+        console.log('🔄 Mode FORCE EXTRACTION: réextraction depuis Google Drive (fichier existant ignoré)\n');
+      }
       if (!drive) {
         console.error('❌ Google Drive API non initialisée. Impossible d\'extraire les dossiers.');
         process.exit(1);
@@ -701,6 +728,91 @@ Exemples:
         console.log(`     ... et ${foldersWithId.length - 5} autres`);
       }
       console.log('');
+    }
+
+    // Mode INSERT ONLY : charger les matches existants et faire uniquement l'insertion
+    if (insertOnly) {
+      console.log('💾 Mode INSERT ONLY - Insertion des documents déjà matchés...\n');
+      // Charger les matches existants
+      const existingMatchesPath = path.join(__dirname, '../../../data/docs_imports/intervention-folder-matches.json');
+      if (fs.existsSync(existingMatchesPath)) {
+        const existingData = JSON.parse(fs.readFileSync(existingMatchesPath, 'utf8'));
+        const matches = existingData.matches || [];
+        console.log(`✅ ${matches.length} match(s) chargé(s) depuis le fichier existant\n`);
+        
+        // Initialiser Google Drive si nécessaire pour télécharger les fichiers
+        if (!drive && !skipInsert && !dryRun) {
+          console.log('🔐 Initialisation de l\'authentification Google Drive...');
+          
+          const credentials = googleDriveConfig.getCredentials();
+          
+          if (!credentials || !credentials.client_email || !credentials.private_key) {
+            console.error('\n❌ Configuration Google Drive incomplète.');
+            console.error('   Vérifiez que les variables d\'environnement sont correctement définies dans .env.local');
+            googleDriveConfig.displayConfig();
+            process.exit(1);
+          }
+
+          const auth = new google.auth.JWT({
+            email: credentials.client_email,
+            key: credentials.private_key,
+            scopes: ['https://www.googleapis.com/auth/drive.readonly']
+          });
+
+          drive = google.drive({ version: 'v3', auth });
+          console.log('✅ Authentification Google Drive initialisée\n');
+        }
+        
+        // Insérer les documents pour chaque match chargé
+        for (let i = 0; i < matches.length; i++) {
+          const match = matches[i];
+          if (match.intervention && match.documents && match.documents.length > 0 && !skipInsert && drive) {
+            // Reconstruire les documents avec les IDs pour le téléchargement
+            const documentsWithIds = match.documents.map(doc => {
+              // Essayer d'extraire l'ID depuis l'URL Google Drive si pas déjà présent
+              let fileId = doc.id;
+              if (!fileId && doc.driveUrl) {
+                // Format: https://drive.google.com/file/d/FILE_ID/view
+                const match = doc.driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (match) {
+                  fileId = match[1];
+                }
+              }
+              
+              return {
+                id: fileId,
+                name: doc.name,
+                mimeType: doc.mimeType,
+                size: doc.size,
+                kind: doc.kind || 'a classifier',
+                driveUrl: doc.driveUrl
+              };
+            }).filter(doc => doc.id); // Filtrer ceux qui ont un ID valide
+            
+            if (documentsWithIds.length > 0) {
+              const insertResults = await insertInterventionDocuments(
+                match.intervention.id,
+                documentsWithIds,
+                drive,
+                dryRun
+              );
+              match.documentsInsertion = insertResults;
+              
+              if ((i + 1) % 10 === 0) {
+                console.log(`  Traité ${i + 1}/${matches.length} interventions...`);
+              }
+            }
+          }
+        }
+        
+        console.log(`✅ Insertion terminée\n`);
+        // Sortir de la fonction après l'insertion
+        return;
+      } else {
+        console.error('❌ Fichier de matches non trouvé. Exécutez d\'abord le matching complet.');
+        console.error(`   Fichier attendu: ${path.join(__dirname, '../../../data/docs_imports/intervention-folder-matches.json')}`);
+        process.exit(1);
+      }
     }
 
     // 2. Récupérer toutes les interventions via l'API v2 (pour le cache)
@@ -756,6 +868,7 @@ Exemples:
           // Préparer les documents (tous avec kind = "a classifier")
           const preparedDocuments = prepareDocumentsForInsertion(driveDocuments);
           matchInfo.documents = preparedDocuments.map(d => ({
+            id: d.id, // Inclure l'ID pour faciliter l'insertion ultérieure
             name: d.name,
             kind: d.kind,
             mimeType: d.mimeType,
@@ -771,6 +884,7 @@ Exemples:
           const insertionResults = await insertInterventionDocuments(
             interventionId,
             preparedDocuments,
+            drive,
             dryRun
           );
           

@@ -121,6 +121,101 @@ export const documentsApi = {
 
   // Upload un document avec contenu
   async upload(data: FileUploadData): Promise<InterventionAttachment | ArtisanAttachment> {
+    // Dans Node.js, utiliser directement Supabase Storage (plus simple et fiable)
+    if (isNodeJs) {
+      const client = getSupabaseClientForNode();
+      
+      // Décoder le contenu base64
+      let fileBuffer: Buffer;
+      try {
+        // Enlever le préfixe "data:..." si présent
+        const base64Data = data.content.includes(',') 
+          ? data.content.split(',')[1] 
+          : data.content;
+        
+        // Décoder le base64 en buffer
+        fileBuffer = Buffer.from(base64Data, 'base64');
+      } catch (error: any) {
+        throw new Error(`Invalid base64 content: ${error.message}`);
+      }
+
+      // Générer un nom de fichier unique (comme dans l'Edge Function)
+      const timestamp = Date.now();
+      const extension = data.filename.split('.').pop() || 'bin';
+      
+      // Normaliser le kind pour les interventions (comme dans l'Edge Function)
+      let canonicalKind = data.kind;
+      if (data.entity_type === 'intervention') {
+        const trimmed = data.kind.trim();
+        const compact = trimmed.toLowerCase().replace(/[_\s-]/g, '');
+        if (compact === 'facturegmbs') {
+          canonicalKind = 'factureGMBS';
+        } else if (compact === 'factureartisan') {
+          canonicalKind = 'factureArtisan';
+        } else if (compact === 'facturemateriel') {
+          canonicalKind = 'factureMateriel';
+        } else {
+          canonicalKind = trimmed;
+        }
+      }
+      
+      const uniqueFilename = `${data.entity_type}_${data.entity_id}_${canonicalKind}_${timestamp}.${extension}`;
+
+      // Upload vers Supabase Storage
+      const storagePath = `${data.entity_type}/${data.entity_id}/${uniqueFilename}`;
+      const { data: uploadData, error: uploadError } = await client.storage
+        .from('documents')
+        .upload(storagePath, fileBuffer, {
+          contentType: data.mime_type,
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload to storage: ${uploadError.message}`);
+      }
+
+      // Obtenir l'URL publique du fichier uploadé
+      const { data: { publicUrl } } = client.storage
+        .from('documents')
+        .getPublicUrl(storagePath);
+
+      // Remplacer l'URL interne Docker par l'URL accessible
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+      const storageUrl = publicUrl.replace(
+        'http://kong:8000',
+        supabaseUrl.replace(/\/rest\/v1$/, '').replace(/\/$/, '') || 'http://127.0.0.1:54321'
+      );
+
+      // Créer l'enregistrement en base
+      const tableName = data.entity_type === 'artisan' ? 'artisan_attachments' : 'intervention_attachments';
+      const entityIdField = data.entity_type === 'artisan' ? 'artisan_id' : 'intervention_id';
+      
+      const { data: result, error } = await client
+        .from(tableName)
+        .insert([{
+          [entityIdField]: data.entity_id,
+          kind: canonicalKind,
+          url: storageUrl,
+          filename: data.filename,
+          mime_type: data.mime_type,
+          file_size: data.file_size,
+          created_by: data.created_by || null,
+          created_by_display: data.created_by_display || null,
+          created_by_code: data.created_by_code || null,
+          created_by_color: data.created_by_color || null,
+        }])
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(`Failed to create document: ${error.message}`);
+      }
+      
+      return result;
+    }
+    
+    // Dans le browser, utiliser les Edge Functions
     const headers = await getHeaders();
     const response = await fetch(
       `${getSupabaseFunctionsUrl()}/documents/documents/upload`,

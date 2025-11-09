@@ -10,6 +10,7 @@
 
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 /**
  * Exécute un script npm et retourne une promesse
@@ -44,6 +45,31 @@ function runNpmScript(scriptName, args = []) {
 }
 
 /**
+ * Vérifie si les fichiers de résultats existent et retourne les chemins
+ */
+function checkExistingFiles() {
+  const dataDir = path.join(__dirname, '../../../data/docs_imports');
+  
+  // Créer le répertoire s'il n'existe pas
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  
+  const artisanMatchesPath = path.join(dataDir, 'folder-artisan-matches.json');
+  const interventionMatchesPath = path.join(dataDir, 'intervention-folder-matches.json');
+  const artisanSubfoldersPath = path.join(dataDir, 'artisans-subfolders.json');
+  const interventionFoldersPath = path.join(dataDir, 'interventions-folders.json');
+  
+  return {
+    dataDir,
+    artisanMatches: fs.existsSync(artisanMatchesPath) ? artisanMatchesPath : null,
+    interventionMatches: fs.existsSync(interventionMatchesPath) ? interventionMatchesPath : null,
+    artisanSubfolders: fs.existsSync(artisanSubfoldersPath) ? artisanSubfoldersPath : null,
+    interventionFolders: fs.existsSync(interventionFoldersPath) ? interventionFoldersPath : null,
+  };
+}
+
+/**
  * Fonction principale
  */
 async function main() {
@@ -55,8 +81,10 @@ Usage: npm run drive:import-all-documents [options]
 
 Ce script exécute séquentiellement l'import des documents d'artisans et d'interventions.
 
+Le script détecte automatiquement les fichiers de résultats existants pour optimiser les itérations suivantes.
+
 Options:
-  --skip-extraction, -e  Utiliser les fichiers JSON existants (ne pas réextraire depuis Drive)
+  --force-extraction     Forcer l'extraction même si les fichiers existent
   --first-month-only     Traiter uniquement le premier mois pour les interventions (développement)
   --dry-run, -d         Mode simulation (aucune insertion en base)
   --skip-insert, -s     Faire le matching sans insérer les documents
@@ -65,9 +93,9 @@ Options:
   --help, -h            Afficher cette aide
 
 Exemples:
-  npm run drive:import-all-documents                    # Import complet (artisans + interventions)
+  npm run drive:import-all-documents                    # Import complet (détection auto des fichiers)
   npm run drive:import-all-documents --dry-run          # Simulation complète
-  npm run drive:import-all-documents --skip-extraction  # Utiliser JSON existants (plus rapide)
+  npm run drive:import-all-documents --force-extraction # Forcer la réextraction complète
   npm run drive:import-all-documents --artisans-only    # Import uniquement des artisans
   npm run drive:import-all-documents --interventions-only # Import uniquement des interventions
 `);
@@ -76,10 +104,46 @@ Exemples:
 
   const artisansOnly = args.includes('--artisans-only');
   const interventionsOnly = args.includes('--interventions-only');
-  const skipExtraction = args.includes('--skip-extraction') || args.includes('-e');
+  const forceExtraction = args.includes('--force-extraction');
   const firstMonthOnly = args.includes('--first-month-only');
   const dryRun = args.includes('--dry-run') || args.includes('-d');
   const skipInsert = args.includes('--skip-insert') || args.includes('-s');
+  
+  // Vérifier les fichiers existants
+  const existingFiles = checkExistingFiles();
+  
+  // Détecter automatiquement si on peut utiliser les fichiers existants
+  let useInsertOnly = false;
+  
+  if (!forceExtraction) {
+    // Pour les artisans : vérifier si on a les matches complets
+    if (!interventionsOnly && existingFiles.artisanMatches) {
+      console.log('📋 Fichier de matching artisans trouvé:', existingFiles.artisanMatches);
+      console.log('   → Utilisation du mode INSERT ONLY (plus rapide)\n');
+      useInsertOnly = true;
+    } else if (!interventionsOnly && existingFiles.artisanSubfolders) {
+      console.log('📋 Fichier d\'extraction artisans trouvé:', existingFiles.artisanSubfolders);
+      console.log('   → Le script utilisera automatiquement ce fichier (détection auto)\n');
+    }
+    
+    // Pour les interventions : vérifier si on a les matches complets
+    if (!artisansOnly && existingFiles.interventionMatches) {
+      console.log('📋 Fichier de matching interventions trouvé:', existingFiles.interventionMatches);
+      console.log('   → Utilisation du mode INSERT ONLY (plus rapide)\n');
+      useInsertOnly = true;
+    } else if (!artisansOnly && existingFiles.interventionFolders) {
+      console.log('📋 Fichier d\'extraction interventions trouvé:', existingFiles.interventionFolders);
+      console.log('   → Le script utilisera automatiquement ce fichier (détection auto)\n');
+    }
+    
+    if (!useInsertOnly && !existingFiles.artisanSubfolders && !existingFiles.interventionFolders) {
+      console.log('📋 Aucun fichier de résultats trouvé');
+      console.log('   → Extraction complète depuis Google Drive\n');
+    }
+  } else {
+    console.log('🔄 Mode FORCE EXTRACTION activé');
+    console.log('   → Réextraction complète depuis Google Drive (fichiers existants ignorés)\n');
+  }
 
   console.log('📦 Import unifié de tous les documents depuis Google Drive\n');
   console.log('Ce script va exécuter :');
@@ -92,13 +156,37 @@ Exemples:
   console.log('');
 
   // Préparer les arguments à passer aux scripts
-  const commonArgs = [];
-  if (skipExtraction) commonArgs.push('--skip-extraction');
-  if (dryRun) commonArgs.push('--dry-run');
-  if (skipInsert) commonArgs.push('--skip-insert');
-
-  const interventionArgs = [...commonArgs];
-  if (firstMonthOnly) interventionArgs.push('--first-month-only');
+  const artisanArgs = [];
+  const interventionArgs = [];
+  
+  // Arguments communs
+  // Note: --skip-extraction n'est plus nécessaire car les scripts détectent automatiquement les fichiers
+  // On le passe seulement si explicitement demandé par l'utilisateur
+  if (forceExtraction) {
+    artisanArgs.push('--force-extraction');
+    interventionArgs.push('--force-extraction');
+  }
+  if (dryRun) {
+    artisanArgs.push('--dry-run');
+    interventionArgs.push('--dry-run');
+  }
+  if (skipInsert) {
+    artisanArgs.push('--skip-insert');
+    interventionArgs.push('--skip-insert');
+  }
+  
+  // Mode INSERT ONLY si les fichiers de matching existent
+  if (useInsertOnly && !interventionsOnly && existingFiles.artisanMatches) {
+    artisanArgs.push('--insert-only');
+  }
+  if (useInsertOnly && !artisansOnly && existingFiles.interventionMatches) {
+    interventionArgs.push('--insert-only');
+  }
+  
+  // Arguments spécifiques aux interventions
+  if (firstMonthOnly) {
+    interventionArgs.push('--first-month-only');
+  }
 
   try {
     const startTime = Date.now();
@@ -107,7 +195,7 @@ Exemples:
     // 1. Import des documents d'artisans
     if (!interventionsOnly) {
       try {
-        await runNpmScript('drive:import-documents-artisans', commonArgs);
+        await runNpmScript('drive:import-documents-artisans', artisanArgs);
       } catch (error) {
         console.error(`\n❌ Erreur lors de l'import des documents d'artisans:`, error.message);
         errors.push('artisans');

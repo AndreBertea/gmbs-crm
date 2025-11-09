@@ -8,22 +8,58 @@ VALUES (
   'documents',
   'documents',
   true,
-  52428800, -- 50 MB
+  104857600, -- 100 MB (augmenté pour permettre les vidéos)
   ARRAY[
+    -- Images
     'image/jpeg',
     'image/png',
     'image/gif',
     'image/webp',
+    -- Documents
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    -- OpenDocument (LibreOffice/OpenOffice)
+    'application/vnd.oasis.opendocument.text',            -- .odt
+    'application/vnd.oasis.opendocument.spreadsheet',     -- .ods
+    'application/vnd.oasis.opendocument.presentation',    -- .odp
+    'application/vnd.oasis.opendocument.graphics',        -- .odg
+    'application/vnd.oasis.opendocument.formula',         -- .odf
+    'application/vnd.oasis.opendocument.chart',           -- .odc
+    'application/vnd.oasis.opendocument.database',        -- .odb
+    'application/vnd.oasis.opendocument.image',           -- .odi
     'text/plain',
-    'text/csv'
+    'text/csv',
+    -- Vidéos
+    'video/mp4',
+    'video/mpeg',
+    'video/quicktime',
+    'video/x-msvideo', -- AVI
+    'video/webm',
+    'video/x-matroska', -- MKV
+    -- Audio
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    'audio/x-wav',
+    'audio/ogg',
+    'audio/webm',
+    -- Archives
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed',
+    -- Autres formats courants
+    'application/json',
+    'application/xml',
+    'text/xml'
   ]
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  allowed_mime_types = EXCLUDED.allowed_mime_types,
+  file_size_limit = EXCLUDED.file_size_limit;
 
 -- Politique pour permettre la lecture publique des documents
 DO $$ BEGIN

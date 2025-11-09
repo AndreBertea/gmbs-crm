@@ -635,11 +635,14 @@ async function findMatchingArtisan(folderName, artisansCache = null) {
   }
 }
 
+// Importer la fonction utilitaire pour télécharger depuis Google Drive
+const { downloadFileFromDrive } = require('../lib/google-drive-utils');
+
 /**
- * Insère un document en base de données directement via Supabase (comme artisansApi)
- * Plus simple et plus fiable que les Edge Functions pour une simple insertion
+ * Insère un document en base de données en téléchargeant depuis Google Drive
+ * et en l'uploadant dans Supabase Storage via l'API v2
  */
-async function insertDocumentToDatabase(artisanId, document) {
+async function insertDocumentToDatabase(artisanId, document, drive) {
   try {
     // Normaliser le kind : utiliser "a classifier" (sans accent) pour compatibilité API
     let kind = document.kind;
@@ -647,44 +650,34 @@ async function insertDocumentToDatabase(artisanId, document) {
       kind = 'a classifier'; // L'API utilise "a classifier" (sans accent) - harmonisé avec utils.ts
     }
 
-    // Utiliser directement Supabase comme artisansApi (plus simple et fiable)
-    const { createClient } = require('@supabase/supabase-js');
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY requis');
+    // Télécharger le fichier depuis Google Drive
+    if (!document.id) {
+      throw new Error('ID du fichier Google Drive manquant');
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    // Debug: Afficher les données en mode debug
     if (process.argv.includes('--debug') || process.argv.includes('-v')) {
-      console.log(`    🔍 Tentative d'insertion directe:`);
-      console.log(`       Artisan ID: ${artisanId.substring(0, 8)}...`);
-      console.log(`       Document: ${document.name} (${kind})`);
-      console.log(`       URL: ${document.driveUrl?.substring(0, 50)}...`);
+      console.log(`    📥 Téléchargement de "${document.name}" depuis Google Drive...`);
     }
 
-    // Insérer directement dans artisan_attachments (comme artisansApi utilise directement supabase)
-    const { data, error } = await supabase
-      .from('artisan_attachments')
-      .insert([{
-        artisan_id: artisanId,
-        kind: kind,
-        url: document.driveUrl,
-        filename: document.name,
-        mime_type: document.mimeType || null,
-        file_size: document.size || null
-      }])
-      .select()
-      .single();
+    const fileContentBase64 = await downloadFileFromDrive(drive, document.id);
 
-    if (error) {
-      throw error;
+    if (process.argv.includes('--debug') || process.argv.includes('-v')) {
+      console.log(`    ✅ Fichier téléchargé (${(fileContentBase64.length * 3 / 4 / 1024).toFixed(2)} KB)`);
+      console.log(`    📤 Upload vers Supabase Storage...`);
     }
 
-    return { success: true, data: data };
+    // Upload vers Supabase Storage via l'API v2
+    const result = await documentsApi.upload({
+      entity_id: artisanId,
+      entity_type: 'artisan',
+      kind: kind,
+      filename: document.name,
+      mime_type: document.mimeType || 'application/octet-stream',
+      file_size: document.size || fileContentBase64.length * 3 / 4, // Approximation si size manquant
+      content: fileContentBase64
+    });
+
+    return { success: true, data: result };
   } catch (error) {
     // Améliorer le logging des erreurs pour debug
     const errorDetails = {
@@ -695,32 +688,13 @@ async function insertDocumentToDatabase(artisanId, document) {
       document: {
         name: document.name,
         kind: document.kind,
-        driveUrl: document.driveUrl?.substring(0, 50) + '...'
+        fileId: document.id
       }
     };
     
     // Afficher l'erreur complète en mode debug
     if (process.argv.includes('--debug') || process.argv.includes('-v')) {
       console.error('    ❌ Erreur détaillée:', JSON.stringify(errorDetails, null, 2));
-      
-      // Afficher l'URL utilisée pour debug
-      const explicitFunctionsUrl = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL || 
-                                   process.env.SUPABASE_FUNCTIONS_URL;
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-      
-      if (explicitFunctionsUrl) {
-        console.error(`    🔗 URL Edge Functions (explicite): ${explicitFunctionsUrl}/documents/documents`);
-      } else if (supabaseUrl) {
-        let functionsUrl = supabaseUrl.replace(/\/rest\/v1$/, '').replace(/\/$/, '');
-        if (!functionsUrl.endsWith('/functions/v1')) {
-          functionsUrl = functionsUrl + '/functions/v1';
-        }
-        console.error(`    🔗 URL Edge Functions (construite): ${functionsUrl}/documents/documents`);
-        console.error(`    📍 URL Supabase de base: ${supabaseUrl}`);
-      } else {
-        console.error(`    ⚠️ Aucune URL Supabase trouvée dans les variables d'environnement`);
-        console.error(`    💡 Vérifiez NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_URL dans .env.local`);
-      }
     }
     
     return { success: false, error: error.message, details: errorDetails };
@@ -730,7 +704,7 @@ async function insertDocumentToDatabase(artisanId, document) {
 /**
  * Insère tous les documents d'un artisan en base de données
  */
-async function insertArtisanDocuments(artisanId, documents, dryRun = false) {
+async function insertArtisanDocuments(artisanId, documents, drive, dryRun = false) {
   const results = {
     total: documents.length,
     inserted: 0,
@@ -740,12 +714,12 @@ async function insertArtisanDocuments(artisanId, documents, dryRun = false) {
   };
 
   if (dryRun) {
-    console.log(`    🔍 [DRY RUN] ${documents.length} document(s) seraient insérés`);
+    console.log(`    🔍 [DRY RUN] ${documents.length} document(s) seraient téléchargé(s) et inséré(s)`);
     return results;
   }
 
   for (const doc of documents) {
-    const result = await insertDocumentToDatabase(artisanId, doc);
+    const result = await insertDocumentToDatabase(artisanId, doc, drive);
     
     if (result.success) {
       results.inserted++;
@@ -879,8 +853,13 @@ async function main() {
     let subFolders;
     
     const skipExtraction = args.includes('--skip-extraction') || args.includes('-e');
+    const forceExtraction = args.includes('--force-extraction');
     
-    if (skipExtraction && fs.existsSync(jsonPath)) {
+    // Détection automatique : utiliser le fichier existant si disponible (sauf si force-extraction)
+    const fileExists = fs.existsSync(jsonPath);
+    const shouldUseExistingFile = (skipExtraction || fileExists) && !forceExtraction;
+    
+    if (shouldUseExistingFile && fileExists) {
       // Mode: utiliser le fichier existant
       console.log(`📖 Lecture de ${jsonPath}...`);
       folderData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
@@ -888,6 +867,9 @@ async function main() {
       console.log(`✅ ${subFolders.length} sous-dossiers chargés depuis le fichier existant\n`);
     } else {
       // Mode: extraction depuis Google Drive
+      if (forceExtraction && fileExists) {
+        console.log('🔄 Mode FORCE EXTRACTION: réextraction depuis Google Drive (fichier existant ignoré)\n');
+      }
       folderData = await extractFoldersFromDrive(drive);
       subFolders = folderData.subFolders || [];
     }
@@ -945,6 +927,7 @@ async function main() {
             const insertResults = await insertArtisanDocuments(
               match.artisan.id,
               match.documents,
+              drive,
               dryRun
             );
             match.insertResults = insertResults;
@@ -1036,6 +1019,7 @@ async function main() {
               const insertResults = await insertArtisanDocuments(
                 matchResult.artisan.id,
                 classification.documents,
+                drive,
                 dryRun
               );
               
