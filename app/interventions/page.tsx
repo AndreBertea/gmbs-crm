@@ -13,6 +13,7 @@ import TimelineView from "@/components/interventions/views/TimelineView"
 import { ViewTabs } from "@/components/interventions/views/ViewTabs"
 import ColumnConfigurationModal from "@/components/interventions/views/ColumnConfigurationModal"
 import { Button } from "@/components/ui/button"
+import Loader from "@/components/ui/Loader"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -1330,7 +1331,13 @@ export default function Page() {
         </div>
       )}
 
-      {renderActiveView()}
+      {loading && normalizedInterventions.length === 0 ? (
+        <div className="flex h-64 items-center justify-center">
+          <Loader />
+        </div>
+      ) : (
+        renderActiveView()
+      )}
 
       <ColumnConfigurationModal
         view={views.find((view) => view.id === columnConfigViewId) ?? null}

@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import type { ChangeEvent, ReactNode, CSSProperties } from "react"
-import { AlignCenter, AlignLeft, AlignRight, Bell, Bold, ChevronDown, Eye, Filter, Italic, Loader2, Send, X } from "lucide-react"
+import { AlignCenter, AlignLeft, AlignRight, Bell, Bold, ChevronDown, Eye, Filter, Italic, Send, X } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 
 import { useColumnResize } from "@/hooks/useColumnResize"
 import { useInterventionReminders } from "@/hooks/useInterventionReminders"
@@ -924,7 +925,7 @@ export function TableView({
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader />
       </div>
     )
   }

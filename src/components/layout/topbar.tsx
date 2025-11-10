@@ -21,6 +21,7 @@ import { useInterface } from "@/contexts/interface-context"
 import { t } from "@/config/domain"
 import { AnimatePresence, motion } from "framer-motion"
 import Image from "next/image"
+import { setPathname } from "@/lib/navigation-tracker"
 
 type ReminderFilter = "all" | "my_reminders" | "mentions"
 
@@ -72,6 +73,13 @@ export default function Topbar() {
   React.useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  // Tracker les changements de navigation pour permettre le rechargement automatique
+  React.useEffect(() => {
+    if (pathname) {
+      setPathname(pathname)
+    }
+  }, [pathname])
 
   React.useEffect(() => {
     refreshReminders()

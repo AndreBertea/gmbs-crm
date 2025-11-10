@@ -539,6 +539,55 @@ export const interventionsApi = {
     return result;
   },
 
+  // Mettre à jour ou créer un coût pour une intervention (upsert)
+  async upsertCost(
+    interventionId: string,
+    data: {
+      cost_type: "sst" | "materiel" | "intervention" | "total";
+      label?: string;
+      amount: number;
+      currency?: string;
+      metadata?: any;
+    }
+  ): Promise<InterventionCost> {
+    // Vérifier si le coût existe déjà
+    const { data: existingCost, error: findError } = await supabase
+      .from('intervention_costs')
+      .select('id')
+      .eq('intervention_id', interventionId)
+      .eq('cost_type', data.cost_type)
+      .maybeSingle();
+
+    if (findError && findError.code !== 'PGRST116') {
+      throw new Error(`Erreur lors de la recherche du coût: ${findError.message}`);
+    }
+
+    if (existingCost) {
+      // Mettre à jour le coût existant
+      const { data: result, error: updateError } = await supabase
+        .from('intervention_costs')
+        .update({
+          amount: data.amount,
+          label: data.label || null,
+          currency: data.currency || 'EUR',
+          metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingCost.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw new Error(`Erreur lors de la mise à jour du coût: ${updateError.message}`);
+      }
+
+      return result;
+    } else {
+      // Créer un nouveau coût
+      return this.addCost(interventionId, data);
+    }
+  },
+
   // Ajouter un paiement à une intervention
   async addPayment(
     interventionId: string,

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import Loader from "@/components/ui/Loader"
 import { runQuery } from "@/lib/query-engine"
 import { cn } from "@/lib/utils"
 import type { InterventionViewDefinition } from "@/types/intervention-views"
@@ -95,10 +96,8 @@ export function GalleryView({
 
   if (loading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="h-48 animate-pulse rounded-xl bg-muted" />
-        ))}
+      <div className="flex items-center justify-center py-12">
+        <Loader />
       </div>
     )
   }

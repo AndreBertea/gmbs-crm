@@ -4,6 +4,7 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock } from "lucide-react"
 import InterventionCard from "@/components/interventions/InterventionCard"
+import Loader from "@/components/ui/Loader"
 import { mapStatusFromDb, mapStatusToDb } from "@/lib/interventions/mappers"
 import useInterventionModal from "@/hooks/useInterventionModal"
 import type { InterventionStatusValue } from "@/types/interventions"
@@ -283,10 +284,8 @@ export default function Interventions({
             } ${scrollDirection === "left" ? "-translate-x-2 opacity-90" : ""}`}
           >
             {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-16 animate-pulse rounded bg-muted" />
-                ))}
+              <div className="flex items-center justify-center py-12">
+                <Loader />
               </div>
             ) : error ? (
               <div className="py-12 text-center text-sm text-destructive">{error}</div>

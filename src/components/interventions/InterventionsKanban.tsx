@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Loader2, Mail, Phone, MapPin, Calendar, User } from "lucide-react"
+import { Mail, Phone, MapPin, Calendar, User } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -133,7 +134,7 @@ export default function InterventionsKanban({
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader />
       </div>
     )
   }

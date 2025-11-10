@@ -25,6 +25,7 @@ import { useArtisanViews } from "@/hooks/useArtisanViews"
 import { ArtisanViewTabs } from "@/components/artisans/ArtisanViewTabs"
 import type { Artisan as ApiArtisan } from "@/lib/supabase-api-v2"
 import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Wrench } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 
 // Helper pour convertir hex en rgba
 function hexToRgba(hex: string, alpha: number): string | null {
@@ -456,8 +457,7 @@ export default function ArtisansPage(): ReactElement {
       <div className="flex flex-col min-h-screen">
         <div className="flex-1 p-6">
           <div className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-500"></div>
-            <p className="text-gray-600">Chargement des artisans...</p>
+            <Loader />
           </div>
         </div>
       </div>

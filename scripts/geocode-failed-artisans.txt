@@ -9765,3 +9765,3135 @@
   Raison: Aucune adresse disponible
   Adresse: Aucune adresse
 
+[2025-11-09T23:54:02.293Z] aaron toiture (ID: 939e7953-5971-4f7a-8703-b510708f6af8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.299Z] mulstiservices SUD (ID: b3ce7052-2250-4871-be2b-c26787994c00)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.299Z] Multiservices et plomberie (ID: 5186da23-11e9-46dd-99f1-c793ad60eb74)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.306Z] Abdi Sami (ID: 0fd13113-bf36-4d53-9879-3b6daa963969)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.306Z] Ax'décors (ID: 8a239979-50d6-4911-b23a-54ec0682bae7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.309Z] bayo Abdoulaye (ID: 555bf7cf-5c07-4337-9029-c51d29a3a849)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.310Z] Abid menuiserie (ID: 418ad6b5-07cb-4de2-83c7-7bbe30324552)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.310Z] Abraham Ludovic (ID: da641dd7-3196-46ee-bffd-56986a33b624)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.310Z] ADOLPH BOKWE (ID: 563d43d4-db24-41cf-a6cd-7d8c1fc77f35)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.312Z] Agnes (ID: c3037d51-7347-41cc-b4a8-9d7a7a14d7da)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:02.312Z] AID FINITIONS (ID: bf400f08-6533-4b8f-b991-9458c9e7749d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.117Z] ASELEC (ID: 020f156d-f455-48f7-80ba-aeab712c733b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.117Z] GwendoCLEAN (ID: a8eb0b3a-3990-4188-8025-79527a726a2e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.127Z] ALBAN ALB PLOMBERIE (ID: 65400441-4111-4b4e-a926-b2e9017a9b23)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.127Z] milamina multiservices (ID: 2025e3ce-b532-4709-9aa8-1838d062c44a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.128Z] SMAJLAJ Services (ID: cb2fe282-5943-48ab-a57a-4504863fed86)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.128Z] LAm multioservices 84 (ID: e2b31233-8787-44d3-b657-5da5c62be2f3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.128Z] alex breizh services renovation (ID: 22133c21-80e9-44c0-8703-54bedcbcd959)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.128Z] reparstore (ID: f3ec082e-0786-4a19-8f76-290ebb643aea)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.129Z] Alexandru Barbaneagra (ID: 86b05224-90ed-4cfa-908c-d38fe27b74ee)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.129Z] AC plomberie (ID: d697bd97-fb99-4e3a-9bde-073865caa526)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:04.129Z] Ali Dikme (ID: d069e55d-e6a6-42ef-a18e-d6d5c687cecb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.018Z] DD 67 (ID: 1b86f855-8562-4dd8-9311-3cb004e51e40)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.020Z] A C batiment (ID: f56387ec-b12c-44d5-a8dc-14589170edb3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.020Z] M&A Solution Multi-service (ID: a70b6669-a179-4339-b1d4-d51143c1ae00)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.020Z] Antony Ribeiro 66 (ID: 93be35ee-65af-43d7-a94e-e6363f3aaa36)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.021Z] as de pic (ID: ba6f2fca-04bd-4b52-ba18-4755dd12997a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.021Z] L'as du nettoyage (ID: 9c3c62d9-aaba-40c4-9af8-9b6b983232ec)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.021Z] Atbi my serrurerie (ID: 51d3a79a-fb5d-4531-adb8-dee83c824e3a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.021Z] thyllo peintre deco (ID: a2fbbfa1-fe4c-4ef1-96a0-53b8ff4472ae)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.021Z] BÔlogis (ID: 5d320666-b280-4be6-81d2-7c0328873bf6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:05.021Z] Docteur Clim (ID: 29ec65a9-2c41-4681-9067-e04484cbcd36)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.578Z] Aygun furkan (ID: 6cc7f76c-c010-41f7-b5f1-99a84ee266ca)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.579Z] APES 3D (ID: 5fa29821-79cd-4f25-96ed-d20a4ecc5e76)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.579Z] BN PLOMBERIE (ID: bcc67333-8a48-49cb-8403-854bad4ae2e4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.580Z] FW elec (ID: e5fcc2e1-4301-4744-959b-8acc77043334)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.580Z] Bacca Jean marcel (ID: 702b9de1-4fab-4d10-9da3-08f1a5c98e89)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.580Z] Sergey BAGDASSAROV (ID: 31b8027e-74aa-45a9-8f61-83ca26c4ccc9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.580Z] sps services (ID: 140c3187-6f3e-40bd-803e-3d96cb714d35)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.581Z] bhb plomberie (ID: 08a61e32-dbd5-4567-bd01-1e29c157e8b9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.581Z] Beaumont Julien (ID: bf242660-1cd7-4106-b445-f39928cf2389)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.581Z] BK-Watt (ID: a1e6390d-b561-4594-9d9b-b2e13b0f99c4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.581Z] S et P ÉNERGIES (ID: 71d8b7d3-34fe-4757-9c8a-7e0ec25db5b8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.581Z] Bellanger Yannick (ID: 45058044-1716-4ef1-a5c6-aaf19ca6a372)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.581Z] Bellec edouard (ID: 0b1fbc3c-7c0f-438d-9657-fb19411ad30b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.581Z] art et deko (ID: b6bb602e-29a5-49cc-be5c-64ddf6572d63)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.582Z] bwatts (ID: e6c99280-7e9a-4474-b39a-2aec1a40ec4a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:06.582Z] Fontaine renova (STRASBOURG TROP LOIN° (ID: 5e24fdd3-88fc-435d-b95b-64f82013d516)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:07.901Z] multiservices2b (ID: 68a086bb-6e2c-453f-9d12-27befeb3f576)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.936Z] ABANI BENKHADA (ID: 93cb1f94-9ded-484d-b3b1-e2d9f55f09cb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.946Z] benoit beaugendre (ID: 0cb119d6-047e-4e71-9080-55554947db75)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.946Z] JB paysage (ID: 8c42e43f-dd25-4840-aefa-fa16e5174cf4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.946Z] CEdric Bertrand (ID: 0db8f6a0-4c81-4f3b-9575-89ea4e258eb3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.946Z] bd colors (ID: d3bd467e-e125-48fc-b79b-c0fa0e212d32)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.946Z] Bilal Hocen (ID: 78d674fe-eb2a-4807-b79b-464c210e60a7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.946Z] bibi service (ID: ada6f8b0-f959-4b3f-bb61-2ea95f6e569f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.946Z] Said Bnouaffane (ID: f3caf63d-559e-4b9b-8e27-a8ec8b646971)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.947Z] Jeremy Bongiorni (ID: 9ea9acfe-fae8-4f20-8a82-f3b62acea4b7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.947Z] Boon Eddy (ID: fb11feed-51cb-4446-8ffb-61309e54221a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:08.947Z] Borgnet Yoann (ID: 050dc836-3c4d-444c-82bc-f52333126fde)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.057Z] Bouakba (ID: b2f9def7-209d-4071-847c-94d0717ebee2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] bouigue rourene abdel (ID: fcf7e510-fbb7-4fe3-bbe4-82e7ec07acd8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] Amsam (ID: c39f344d-751d-4d4e-9fa7-f97a0f5ecaee)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] BA service 27 (ID: d64607f7-efaf-42a1-ac42-a34cb0028657)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] Boyers Multiservices (serrure, plomberie, volet roulant) (ID: 80b9b12b-214b-485f-aa1d-efb2d80534bf)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] BCM menuiserie (fenetre, volet, parquet ectt) (ID: 085dcb03-6bcb-47e4-9bf6-6745e20cb8bb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] salopart (ID: 9497787a-42f8-4439-8335-5e5f7ebe4001)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] Briot Georges (ID: 4132474e-b077-4798-ae5e-eeeafcf3b19b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] Bruno Cramette (ID: 7f2fefff-f892-4f37-becf-6dbcab44dff4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:11.060Z] Dorkel Aménagements et Elevement (ID: b1709afa-cbda-49fd-9cab-cc1156211295)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.071Z] peinture et merveilles (ID: 5ff3402d-ad2c-4717-93bd-9a7c63389181)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.089Z] second oeuvre lc (ID: 7dac778d-c630-46c2-95d6-823e7a5595b0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.090Z] artisan capello (ID: 9cb462da-5c7d-4625-8eb9-fcac09ab62a4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.093Z] Art letal concept (ID: 642ef41b-2bd8-4694-b2f1-f44f3f02b527)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.093Z] Rspm (ID: edbbf7cc-c686-4b8b-b155-195577109c03)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.093Z] Clean’Up & Co (ID: 8f19f194-4f2a-47c0-9cd5-abfd178a61f7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.093Z] SOS BRICOLAGE (ID: 06cb8a8f-bd07-40ba-972e-2ebc988ae0a1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.094Z] jcp (ID: e68ce603-7664-425c-b908-dacde8407169)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:14.094Z] Idealys Rénovation (ID: 2dce7076-9281-49ed-bf42-6320b8e1118c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.920Z] ASN PLOMBERIE CHAUFFAGE (ID: f82f7008-6827-44c3-aa79-be77f4fb8995)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.921Z] Christelle (ID: 73aa5b71-8376-4a6d-96e2-a900d19dc5eb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.923Z] Christian Berlioz 73 (ID: 6fb40957-b884-4abd-af07-51169ac11347)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.923Z] michel baly / 06 65 71 19 01 Viville josephine (ID: b3d59af5-c234-4ff0-afd7-c528bc7350d6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.924Z] Piller Christian (ID: 7fdc7e69-fa89-46fc-bea8-c92d147174b6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.924Z] IBA SO'CLEAN (ID: caca055b-ccd0-4c3b-852c-7c4f51cea29c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.924Z] Eco energie 62 boulogne sur mer (ID: 1f7c8edb-2c0a-47c8-a6e9-7d7381a42045)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.924Z] claudin charly (ID: 17e11776-44da-4b88-ac65-cb405d173d2b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.925Z] CM ELEC trop lent (ID: c72e3a9d-f237-40d2-bdc2-3cceb2bf51b8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.925Z] Clemente capote (ID: 71a7b621-97d0-4cc0-b0cb-c652c45abdc2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.925Z] Compagnie des deboucheurs (ID: 2fa0650e-993a-4fd6-888a-f49d72074ad7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.925Z] A brifer (espace, menag e multi) (ID: c858bd88-61a6-40dc-abb5-0243050b16fc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.925Z] Diamand Nettoyage (ID: 2fa21205-4920-4a0b-8eb7-a99ff715d986)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.926Z] cousin espace vert (menuisier) (ID: 06e6c6bd-1730-4f0b-bb61-d88865d19c33)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.926Z] Hydrana (ID: d6210b3d-c19e-4b11-a214-6de16b5552c7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.926Z] bati reneuf (ID: d510a231-aabf-438a-aee0-8212fd603998)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:15.926Z] FER plomberie 84 (ID: b21e3040-dad5-42e2-94eb-39695b4d05ae)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.667Z] HAKKOUM (ID: adfe905f-20a1-41cb-9fac-be5e4e8b5f4e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.668Z] Dahnoa (ID: 96b6ea61-d58a-4689-916c-aa9ed11026db)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.668Z] Damian Augustinov (ID: ed52046d-566b-490b-b769-1cc08c113e98)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.668Z] Damien Navarro ami alhem mehdi (ID: df4bf661-21c0-4cdb-80f7-dfee4fb61a2a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.668Z] Eldan Sanitaire (ID: 3625bd7a-4eab-435a-b3a8-335fec15efdf)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.668Z] Dartant Sylver (ID: 7abc1203-bfa7-4c6e-83eb-bf732f5bb799)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.668Z] DB multiservices (ID: bc0a8d49-cf32-4460-96b1-5064d6cf84f3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.668Z] DECHOZ (ID: 34f720d8-2f78-49b4-a1f7-322b4c10c9dc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.668Z] Delente Dominique (ID: ef38e88d-2eda-4b3a-a05d-f5f5dbab6f67)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.669Z] volet roulant / portail / meneuiserie PVC (ID: aae71a55-2ff3-47c1-ad1d-0f4bc54533d6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:16.669Z] DR Multis (ID: 26ce7764-5e82-42d9-98de-1a807456f644)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:18.483Z] Fast elec (ID: e13cff5a-a02c-4468-81d9-934b41785db8)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:19.993Z] Eco therm 42 (ID: 0930885e-35fa-41b1-b6fe-741e370748c8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:19.994Z] Performance plombier 90 (ID: 6fcd7a35-d625-4e7d-b61c-ce3c19624565)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:19.994Z] DH plomberie (ID: 383c0b63-f4f9-44e7-8954-605f50d4701b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:20.012Z] al (ID: 76c29f72-9ff6-4505-8445-37fca0c0ad36)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:20.012Z] dim strasbourg (ID: bd1b9140-f2aa-4db3-9a72-74fab2b12767)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:20.012Z] dimitri crainet (ID: 011aeb0b-58bd-421b-9c6d-ae3f1dab1e53)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:20.013Z] GDS Elagage (ID: 161c24bc-6f8d-4faf-adbb-1b63bc5b2471)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:20.013Z] DLC habitat (ID: 29d8a451-36d1-4f75-a835-55690c4c4b11)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:20.013Z] lavonet63 (ID: 79d7ccf6-1c23-44d5-951b-5cf494fa5a7c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:20.013Z] 0,366666 (ID: c1009d0d-8954-47b3-b891-f75dd1a01140)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:20.039Z] Dorbeau Olivier (ID: 4143e9db-5ca6-41b1-8f79-1867af8778ff)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.153Z] Ducroux Fabrice jardinage essentiellement et bricole (ID: 228a5c1a-edef-4f49-8092-ddd96687fdbe)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.153Z] Serge Multiservices (ID: ef0999f5-e83a-4e57-9067-c27b503ebff5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.154Z] Durot laurent (ID: 87a7aa09-41eb-4544-be28-726a79b6cd68)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.154Z] Start etude (ID: 61f37c91-57ca-4c55-98da-7efb88106021)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.154Z] EB plomberie (ID: 50f82e46-d7da-4336-af1f-cceacb703e6e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.154Z] Emmanuel Fayolle Multiservices (ID: f0339184-648d-4ea1-8a01-bf8dbec2824d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.154Z] Enderess geoffroy (ID: 81411825-972f-4b20-a9e9-091f8ae0e8b6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.155Z] EB carrelage (ID: 71ebf63a-83ac-45b0-9dcd-e608a1f789c7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:22.155Z] sj-multiservices (ID: a2f787ea-671e-4e06-9daa-fa55313592a5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.505Z] Akservices (ID: 6d6a3c1e-0fad-49d4-8de6-78fc9effa0f0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.505Z] Etienne TOULLEC (ID: 1e030b56-017f-4406-b9ae-d8138cafd316)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.506Z] Eyal (ID: 6345fb4e-0ccb-4746-9b6d-d42849481547)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.506Z] Labarre Multi services (ID: ee78f8c2-183c-45cd-bdbb-4f80eaf80896)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.506Z] Albati + (ID: fc2b618b-2887-493e-b2f8-bd6f60303483)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.506Z] De La Vega (long) (ID: 1bbd7ac8-6701-4f1a-bca5-17cf159a4f22)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.506Z] thomas fabien (ID: fd9f804a-1de3-46ab-b524-f0588a4f390d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.507Z] MF Multiservices (ID: 7de2060a-e68e-4228-96ae-28e56832918a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.507Z] kanté 77 (ID: 61000601-46df-4c17-9587-3264ee2f1b72)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.507Z] Mr Fayolle (menuisier) (ID: 97bad156-651a-4bac-a799-e5ea3ea882f5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.507Z] FB SANITAIRE (ID: 661a883e-b8b8-42d6-ab86-1b90ee4531a1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.507Z] Feray Emilien (ID: 3587ad8b-bd0d-427e-9339-fbc0b4cb8c31)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.507Z] Deutekk (volet, menuiserie, portail....) (ID: deaa40ea-8720-4b5b-89da-3090777e187d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.508Z] lf multiservices (ID: a0f8487a-d538-4e70-8ea5-cd17cef87a68)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.508Z] Makeda home services (ID: 0f3e08c2-509d-4244-a0db-c2467c4e7e60)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.508Z] florian (menuisier) (ID: 37465f33-6a88-453f-a91c-ac56c4971370)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:24.508Z] flo3 services (ID: 88385a3b-bcd2-4151-8d8d-50142ae53951)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.059Z] les doigts de fay (ID: 3edfb863-6d95-4d4e-a88f-f9305c5ac3b5)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.650Z] Bricolage (ID: c617c36a-4b52-4550-8ecb-d4f0a42ca152)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.651Z] Foulquier Benjamin (ID: fc4b688e-724e-4fad-99e1-387f7521c4be)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.651Z] Francis (ID: 50bcb531-1fe9-4d25-ad05-2419aa6e7a76)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.651Z] Franck peinture (ID: 393f41c7-3d39-4314-9bf8-7888350504c1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.652Z] vitre O net 85 (ID: 8d51fa95-5ec6-4702-bf3b-cb3a5779f1c4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.652Z] Frederic Berger (ID: 3acd7d86-bd4a-4bf6-b9e2-8245d0de3f51)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.652Z] Fg chronodep (ID: 45d5a1b9-bd77-4bc8-b2ed-bfba0d0f51f3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.652Z] Gautier rochette (ID: 18c11e00-2387-4b03-9c14-2ab65bbc2e3f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:26.652Z] Gelin Pierre 76 (ID: a9c0939a-0ace-4181-b113-b77851d6807b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.939Z] Gildas le boucher (ID: 60bf6b9f-22c4-41a0-b2dc-681433b6d7aa)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.939Z] Gilles basset (ID: 95421129-aa91-44cf-b466-bc655296ea61)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.939Z] Goegan Fabrice (ID: 89378fca-5cba-4897-b479-e3563435fe9a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.939Z] NAZE A MORT (ID: add12c94-6c98-43e2-8a32-e6a0e397a691)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.939Z] tbn.entreprise.g@gmail.com (ID: 7038f4af-7d9f-4bce-815f-dee057cea4ff)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.939Z] greg (ID: 888b03a0-6d7c-4c83-afb1-62ee58396c12)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.939Z] Greg kozlak (ID: d418b64d-a62c-4c44-b648-5fc3d3b9a91d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.939Z] gl peinture (ID: 96237b25-45ba-4355-9fe1-8b1c9e41d834)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.940Z] Guelil Mustapha (ID: 6fdc134c-1196-45b8-a9a7-06c99f92f951)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.940Z] Alexandre Guerin (ID: 8e02f45a-eeac-4f8b-b22e-86eecb73b8d7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.940Z] Jgfermeture21 (ID: e083073b-aa60-4322-b082-bfecec20771b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.940Z] AGP (ID: 88f15a21-688d-488d-9b46-23e5444d4654)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:28.940Z] GDS (ID: b9c21943-6345-47f3-bcb1-23345ed816dc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.791Z] BRICOMEN SERVICES (ID: b534bb93-d0b2-4f17-8628-7a2035ab3f3b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.791Z] AD plombier (ID: 68499e37-4273-443a-b636-a704139d3659)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.791Z] Hamrouni Anys (ID: a9a72e8d-c282-4599-8312-e930ea221522)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.792Z] GUIGMA SOLUTIONS ENERGIES (ID: ba3d8cb7-764c-4157-bf80-dbe17c058ecf)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.792Z] Hassan ALLALI (ID: 7e31883d-09cb-458f-9a18-8e2d29a80108)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.792Z] Mor HASSAN (ID: 1391a6b4-abca-451b-a057-11e60982cc3c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.792Z] Kasaha et les seniors (ID: 0801ab3e-9b05-4b0b-b4f4-4a4ab4e39334)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.792Z] Herek SULEYMAN (ID: 3e0c3a16-2042-436c-b0f4-9745e37bac6b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:30.793Z] BATI'AD (ID: 222105e9-b72c-463c-b68e-02d0a0a10022)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:31.763Z] henrye damien (ID: ae606e02-912f-43ce-934c-0dfc060a4225)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.938Z] allo bassin services (ID: e0532480-f45b-4d78-8d0d-dbb8c6f1f5ee)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.939Z] Nettoyage MIM (ID: 18b654a2-df04-4956-8b86-27f73ca4e4cb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.939Z] AlloMyHouse (ID: 0402d649-4c42-44e2-923b-498ca3ecab75)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Bricolage et conseil (ID: dae101a1-477e-4ba9-aeb0-16049d317016)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] HP PLOMBERIE (ID: 269fefc7-ab7d-4c15-85a7-7da4368f08a9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Ismael el hajjioui (ID: 7c7c8b5e-efa0-4750-9483-62855669e496)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] NMNS (ID: a2f10799-5df0-42ab-a8be-bb7d2c8807d0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] am services (ID: 7a386d15-8174-40d1-bd3a-8e00fd4dbc1a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Francois Jackel (ID: c80d6f1d-a638-4477-a189-1745a7e5d39a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Jaffres Christian (ID: 3bd2c0ee-4974-4e03-861b-78761204e355)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Jamal Orléans 45 (ID: 486e9994-c3a3-4da1-a1aa-4da32bbb9068)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Jardin Christopher 14 (ID: f5117310-4d84-48c0-bac7-ac445d618803)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Jardonnet (ID: f43d1d1d-35f3-47a2-8a86-bd495e099223)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Jean jacque renaud (ID: fb11470b-18ff-4870-b865-39e33500d4db)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] JEAN LUC GREMEAUX (ID: 30246ca3-6a62-445d-9db3-4b8a17b69b23)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:32.940Z] Jean Patrice / / (ID: 03eecfc3-2e89-4f49-9d6a-33e05e36dc7b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.591Z] AN84 (ID: 5607527c-2fb2-4c90-94ee-ac083c345e17)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.936Z] JT SATED (ID: 89fbc39a-d8b9-4707-8033-06d3cc4aba3d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.936Z] Amor (ID: 6e0db10d-6efd-4536-bed0-911a06c8c3d6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.936Z] ATTENTE première facture / TOP PROFIL (ID: 84ee27dc-cc03-4935-9d6d-aa569167d12c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.936Z] jj store assitance (ID: 2933dc48-4e81-4e62-aa06-eebc6e4f7e67)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.936Z] Matyzen (ID: 7e743e8e-6ddd-4eac-befb-1bb5f47e579a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.937Z] Jerome Rosado (ID: 6ef439e5-9215-4516-b9a1-8b1df1840410)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.937Z] jf elec (ID: 4c137066-a06b-4b26-bdc2-78fadf3a3b15)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.937Z] ACROS SERVICE (ID: 7b01bf3e-893d-42e5-b368-4f8f91c72814)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.937Z] GAD ELEC (ID: f5834f7e-1e85-45a0-b7db-7f8cfeaaba39)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.939Z] aj elec 40 (ID: 44437a6c-3383-4ca1-aa28-4b7f98f4dd5a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.939Z] Jorge Cifuentes (ID: 92852924-0085-4fbe-8b9a-3243c48afb4e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:34.939Z] JG ESPACE (ID: da22d3e5-32c7-4837-a050-402f68940600)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.375Z] JB peinture (ID: 639ea90d-997d-4b15-bb96-d47ba85bf8ff)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] BK peinture et decoration (ID: 15318374-d99d-43bb-a134-8042fd15a271)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] Karim serrure 91 (ID: 8207cef2-a4d4-4387-9460-80e07aa91267)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] Kes Mk decor (ID: ff1f9431-f28c-4946-aa1c-5b07bbe33390)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] RK energie (ID: 0c10ce16-b488-43ca-8662-d8ae1312fc4e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] fk blaind 80 (ID: a457bc09-b2ea-4f5e-90dc-f07987a2b137)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] hmplomberie (ID: 65a434ff-107d-49bb-bb13-91fc51e12f31)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] KLAVB SERVICES (ID: a013f588-780a-4807-9fe1-75172d92c66b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] Kraemer Olivier (ID: d88f5eed-54f1-4846-93e8-129545f27d2c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.376Z] Kutz Alain (ID: ac18fec1-6d67-44c0-b268-38ba10cf4e1c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:36.377Z] La compagnie des déboucheurs lille (ID: b1c8eadb-e75a-4be8-a74d-f3eb77ee42f4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:37.635Z] STE MK SANITAIRE (ID: 1f28f1e9-1336-4603-9620-c7739679d359)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.261Z] La petite fait (ID: 85c2efe0-c4f6-4c3b-9065-83fc89a1453b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.262Z] LK elec (ID: 4eea5b09-78e7-4e92-8f80-51c9de0374a2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.262Z] brico - D (ID: 817b995a-4320-40cb-bfde-87fe48823eba)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.263Z] laurent edouard (ID: 6f2b23cd-9feb-421a-b567-15eeb8a2e96b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.263Z] Cofral 3D Nuisibles (ID: 3240c58b-2211-4598-9eaa-e035af2c6db7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.263Z] LBN TOITURE (ID: c0cf8337-acbd-493a-b2f4-8409db70936f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.266Z] Leija Tony 57 (ID: 4605ad0e-40e3-4d73-9d81-b978e301ee31)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.267Z] Abc ménage (ID: ab691477-f4a6-4ade-8405-ca660e376815)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.267Z] Leman (ID: 0af21ef0-4789-4e0c-b7f7-41c98365c79b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.267Z] Lemoine anthony (ID: c6b3534b-fbc9-4a12-ac7e-3c55f1d8674d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.268Z] Lemoine construction (ID: be179153-4372-4730-9a31-1f6632c43073)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.268Z] Atlantic stores et fenetres (ID: f0ce5990-207f-478e-889b-e5f40ed86c61)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:38.707Z] Batiment Lagrain (ID: 069aaeea-8eff-4827-8448-7ee8f3bc915b)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.439Z] lob services a la personne (ID: 5f613c3c-31e9-4379-aed2-fb55cf376c17)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.440Z] Ad ménage (ID: cd4cc033-6115-47dc-91f4-91f0015c156d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.440Z] FM pro services (ID: cdfb5a41-5e13-4bad-a00e-a336e4a31302)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.440Z] LC Dépannage (ID: f629cd3d-446d-4498-acd8-45893b0bc3bb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.440Z] Attente première facture / TOP PROFIL (ID: 1e0569d1-2d8e-4a84-9495-4f87609c3922)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.440Z] lnv menuiserie 06 (ID: 8d39fda7-6375-4b49-9706-2b4a947e4b1a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.440Z] Longuet Jordan (ID: a31bb224-50de-48be-9969-1e84034ccb02)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.440Z] Noxia 5d (ID: f5592d4a-0e64-4e6e-9548-f4f4cbcba9f8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.441Z] alvea (ID: 5a88096d-93a7-40b3-8478-cba5b78d9ba6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.441Z] LBR Multi services (ID: 97c7cb47-48c1-4217-b619-554bc3480d7e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.441Z] Luciano pereira (ID: d216c849-3738-4167-9b77-f2aea62b6206)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.442Z] Ludovic Trupin (ID: bf22cd03-0ca4-42c9-be43-b680c54841a7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.443Z] BPC PLOMBERIECHAUFFAGE (ID: 51512d6e-3fbb-48c6-a1c7-d5ff6624629e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.443Z] Dépannage Time (ID: 40e49bf7-0d25-4973-ac83-4e5669609a07)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.444Z] Maher Kalai (ID: ebd6f407-92e0-4879-83ed-050e575d8b34)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:39.444Z] AM renovation (ID: bd91e01f-3cfa-42d4-b9fa-b9401b5a3c5d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.530Z] ciec (ID: e37649ea-d51d-4690-b873-9eaff6a37dae)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.531Z] Martin MIRANDA 33 (ID: ad7fbb11-a82a-4562-9443-32c7c0d2c868)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.531Z] Martin Vivola (ID: 4e5da3ca-547d-4031-968e-64408aa02cf3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.531Z] Le ménage en rose (ID: 5a6c53d1-48ed-45c2-b304-b7168b3ccd93)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.532Z] Pose2Baies (con et chère) (ID: 1982cf75-c063-4f29-9e05-ca554675df53)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.532Z] Matthieu Racine (ID: 7bf8da4e-3fa6-4438-80e5-f52bc38b9c64)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.532Z] Matthieu (ID: 0f1a5ceb-3ab9-401a-8a18-b9dfb33c0ce5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.533Z] Max multiservices (ID: 20eb4ee3-a17e-4f4e-b276-0ad21ecddecc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.533Z] Max Noirmoutier (ID: 9cfd0199-a924-4b3c-8751-7ed9a1528853)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.540Z] Maxime Donfut (ID: 51332db7-c0da-42ca-a1cf-c79f34af660c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.543Z] MAZ ELECTRICITE (ID: ff9fe5b0-6459-4721-a7e0-cfc34e63055c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.544Z] MDE (ID: 1d7bd2eb-2c95-47a2-955f-f12e246bbb5f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.544Z] Medhi Boukezzouh (ID: 2281641b-13e2-4c70-a559-0b2ca5cb92fc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:41.544Z] Meleck Jason 77 (ID: fa62f274-bd92-4fa5-ba23-e9118d675edf)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:43.052Z] lkm (ID: d49f0936-82d0-46ef-a62c-255fec6fe6d2)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.028Z] Ms Plomberie (ID: 2464a81c-6ce7-45dd-a172-1dfcf02c96a7)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.039Z] AC DC ELEC 69 (ID: 60db4bdc-2156-4b88-b8e3-face74be4d5f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.039Z] KAIKO (ID: 1862ee95-98ff-419a-9e97-506b2229652f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.040Z] Ronan rp service (ID: 3bc1c2ea-9708-4227-8624-a05fe645d03d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.040Z] Meunier verveynne (ID: 7f58f3eb-0b98-47f5-9e0b-e25df37ce042)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.041Z] Seven Rénovation (elec, menuiserie, placo, peinture) (ID: 2fe3da60-179b-4a75-a828-0ce07f02fc9e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.041Z] Libery clean (ID: d4b16fa7-0ea4-49d8-9da2-2ea16384e69e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.041Z] Michel Bourmaud (ID: 30ba8b33-cac7-446c-a0ae-6379ae5b4f04)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.042Z] Mickael Breton (ID: 2013222c-c98f-455a-baf2-154483fb003c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.042Z] AM (ID: 2802e7a4-2a92-41cd-add8-a1a79eb4b471)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.042Z] MILADI Seyfeddine 77 (ID: 120625d4-9a8c-433d-9b3e-ded05d6d504a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.042Z] BMS (ID: ed3576ac-1219-4848-ad84-121fe238f6c0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.043Z] Rouen Miroiterie (ID: 01d145a0-e247-466d-9741-30e0ce03fe62)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.043Z] pro élec systeme (ID: 83ac1b29-5146-4ec1-bf65-2568b99da13c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:44.043Z] GROSSE MERDE (ID: 094e8898-75a6-41fb-9375-f1faf38f6503)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.638Z] MC'SERVICES (ID: a4ce3022-ed7a-4696-b1c5-d09fc49f2b2e)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] avs (ID: e7a20734-33cd-4cbc-a810-256c73a0de24)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] MJ Amenagement (ID: 516630b1-19b2-4ade-96a6-147948c74ab1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] Abaca (ID: e1761bff-f8eb-4ce5-8610-77c9b18a0ba8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] renov pro idf (ID: cdd6adfa-9e4b-43f9-b130-7c8dba904044)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] Mous.multiservices (ID: 8fcc869a-35a9-47d2-8dd3-e9a6315e90f5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] MR Deah (ID: c566d342-10f2-4119-a943-6bee13f98731)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] Mr durand florian (ID: 51143c63-de9c-4a14-9bb9-b0311ed3204e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] ACI HABITAT (ID: d487c9cc-dc67-44d6-9948-a5d52e1e2026)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] Le ménage en rose (ID: 87e1c290-3a48-420c-8dbd-1a53641e401e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:45.931Z] Mr Mazo (ID: 5ea6e447-903e-4970-b103-a03b838b8fc2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.071Z] GROSSE MERDE (ID: 37885a37-f9d5-4abd-9924-5ec1d91ef80e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.074Z] GK nettoyage (ID: 4403c4e3-e917-4c3a-bcf0-6878620a5310)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.075Z] GCE GÉNIE CLIMATIQUE ENTREPRISE (ID: 1dfcda00-b366-4553-ab06-0bb3bab84e2d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.075Z] nalbant safak (ID: 701d5794-54c3-43f9-891d-1b5cb1a1cf95)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.075Z] NMSERVICE (ID: e1ec6609-1f20-4d4c-9d96-493eb68b538c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.075Z] Nejia Hameur (ID: f6709a1d-e986-4e1f-9197-365ca3d848af)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.075Z] PAS INTERESSER (ID: 5e1b3ed7-6208-4423-9115-7c577f5725a0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.078Z] ND MULTISERVICES (ID: 528846ab-5fa9-4e36-98cb-f5da65ee845c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.078Z] Expert Multi-Services E.M.S (ID: f05f8551-5c1e-4525-ad5a-5646deb24130)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.078Z] Nicolas Plomberie (ID: af31d984-4ec9-4868-9d35-c41b037ca633)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.082Z] Patty's Cleaning Services (ID: b56de912-f95a-4d85-939b-129fae55c2dc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.082Z] Nourelec (ID: 5cd12338-1c8e-452e-b873-cbe38370b509)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.082Z] TOTAL Store (ID: 3b5ed47b-5d81-402a-953b-c33feb29efa2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.083Z] Normand David (ID: f39ba237-c812-4107-863f-0bf74629b0ac)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:47.083Z] Nouari Lilian (ID: e2e13642-3ea0-47ba-984e-72b205b250f1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.237Z] Nmax (ID: 7dc20d6d-d343-4a39-870d-4c9bfbae88dc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.237Z] mu et mu (ID: 390214d3-8ef0-412c-bcd9-c1f8ab425f79)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.238Z] Paris Ouest Protection (ID: dcef2191-37cc-410c-8d06-550d994ab47a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.241Z] Removo dijon - les volets dijonnais (ID: bc825059-1459-4382-8e8a-d132c51ec735)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.241Z] PATRICK LESCUR (ID: 6545079c-f0c8-4e87-b038-688379809060)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.242Z] Patrickservices 54 (ID: ea968533-6552-4e2f-ae5b-c50bc3150eb3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.242Z] Payen Kevin (ID: 1df878a0-135e-4d48-8040-7c32e8365132)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.242Z] Pepion 45 (ID: 47e9ea95-0dc7-4c2e-aeda-85e05c0c147e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.242Z] MP Multiservices (ID: 1dfda4d5-4fb3-4e13-b2d6-f19731039902)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.242Z] INSECTUM (ID: 74078ef9-96de-4438-b1c7-0611b470b046)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.243Z] PROPRETE MULTI SERVICES (ID: 67176514-364f-428e-8133-73a0b798b33f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.243Z] Marc Pétillon (ID: 1a2e5fd1-d520-4e18-9dc9-c30af2e030d5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:49.243Z] sos depannage elec cotentin (ID: 20d6fd5d-0e6b-4e7c-be90-4fba307093ca)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:50.907Z] TERANGA HTM (ID: 99a30d8d-89a3-4ac1-b385-e72e5154afd8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:50.908Z] Entreprise Saunier serrurerie, plomberie, peoiintrue, revetement mur et sol, vitrerie (ID: 430733e4-814b-4122-b2b3-f1a675631505)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:50.908Z] Imagin (ID: 6693145b-8fa9-4165-a8cd-e113d2fedc49)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:50.908Z] Ad'net&innov (ID: 64217b25-106b-4e6a-a86a-067c80ab06d6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:50.908Z] SERVICES ENERGIES (ID: f17d49a5-f3db-40c7-91fb-3b233c97a52e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:50.908Z] RAYMOND ELEC brest / NUL (ID: 45ea53e6-300f-4ce1-8458-970a15b8065c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:50.908Z] fuito (ID: 36920da5-e01a-4801-a4f5-ea60048a03c6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:50.908Z] Reda El Azouzi (ID: ddafa468-4c8b-4ac2-a29a-6536ce41d214)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:51.801Z] atlantic home energie (ID: 16fbbe79-57be-4f5e-8ea6-98eeeac96bc8)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.231Z] mr energies bordeaux (ID: 1289ae15-6dba-40a2-b9e1-f54a5e3c1416)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.231Z] neuilly et alentours (ID: 6fa4a98f-65a1-4b89-9a48-630afcfd1ed5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.231Z] Repar store melun (ID: bd54dc22-7349-4547-b5dc-77e0d1228d50)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.232Z] repar'store (ID: bc2efa72-981b-4571-9243-bb66097936b0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.232Z] Repar'store Brest (ID: 3a8bf9a9-0603-43bd-a00a-bc2096a6ebbf)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.232Z] reparstore (ID: 99192e30-7074-498d-a302-f6b4aca5d929)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.232Z] Repar'stores Gradignan (ID: 0cf6eaec-26eb-43b0-a25b-816674dec94e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.232Z] Orléans Répar'stores (ID: 37d59b51-f2e1-4d47-a668-9c2c5d7e3c25)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.233Z] reparstore 06 (ID: bcb58300-5932-4dbf-9428-60d09897a5c7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.233Z] reparstore 91 (ID: 3da7dcbf-571d-4d1b-8471-a52a2b3aef62)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.233Z] reparstore chartres (ID: 89a50744-3a33-49b7-9ee5-0a768b0730e1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.233Z] Reparstore delville les rouens (ID: b655b0f0-993f-4427-a4f7-3b4aad7ecf5e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.233Z] dijon Reparstore (ID: fceb2923-2079-435a-9e37-42983b72aeea)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.233Z] MTP Reparstore (ID: 933fe5ce-14e3-483f-9b82-72657840cdab)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.234Z] reparstore Perpignan (ID: 9a8bc0cf-b643-4d2b-8e9d-c56e6fdea688)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.234Z] reparstore pontoise (ID: 80ed6184-d126-405f-95ea-f2f4350276ff)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.234Z] Répar'stores Comines Tourcoing (ID: 97afe61b-cc89-49bb-b8a9-d8956e51c023)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.234Z] Resida Dibra (ID: ccdc516c-896a-4f54-a810-c9550c231ce7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.234Z] Bricoi europe electricite (ID: 9c4c5382-919e-4e27-b3af-c93c40bf61b6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.234Z] ricaudrepart (ID: 7ccad163-74a1-4517-87bc-905cfca52dbe)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.235Z] BIP BIP PLOMBERIE (ID: 8cc199e9-759a-4979-8b3b-703391ba7518)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:52.235Z] ROme didier (ID: 9c43f895-dd76-423e-a2fb-1a6f48dcd766)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:56.793Z] jerem renov (ID: cde91ded-85d1-4fc0-86c2-582a682de5dd)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.094Z] SAS BRESTOVCI (ID: d95925bf-995d-4860-909a-500c6dae3444)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.125Z] Roth Alexandre (ID: df086c5b-d2a1-4076-994d-792739b66275)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.125Z] Sarl Laeti'clean (ID: 81ab4bfd-e087-47d5-89cc-ce89c90a581f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.126Z] Dépannage plomberie 25 (ID: 879848fa-a19d-4df1-a0b8-add309bbbb9b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.126Z] Bellum Bestia (ID: cdb36752-fe10-473f-8ed8-4890ec60303d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.126Z] Mario plomberie (ID: 7c511e88-b893-450d-9c43-e7e1c28708d0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.126Z] De verre et de glace (ID: f3d1e196-62ce-4a87-aaa7-d24b44328ccd)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.126Z] PEAU DE PEINTURE (ID: 35655716-af86-4dfd-a12a-247ff8ec3e0f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.127Z] MITOMANE (ID: 99dab9cb-b033-466f-894b-8b0e0f6b374f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.127Z] SMG elec (ID: 557e8b23-7a12-478c-a9c5-3a6e3c6a1a68)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.127Z] SMDK ELEC (ID: 4759507e-b7cc-42a5-b3d4-5eebec38d19a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.127Z] Ban Amor Sami (ID: 5fe2849c-f5c9-44fc-98fc-b0fac0991374)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:54:58.127Z] Saoudi Sofiane (ID: 980d09d9-d04f-457c-9019-ab7658233186)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.152Z] Sautejeau (ID: 40c040f1-0cd9-4f42-997e-018de77115b3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.153Z] sbeastien multiservice (ID: 12eda5b7-ecf4-4549-8a9a-e41ffae19131)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.153Z] Sébastien Corbel (ID: 85724ea8-3529-43a9-893e-2ad2fc4c586f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.153Z] cornec sebastien (ID: f0f29c64-2784-498c-9f06-2f00eb58a340)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.153Z] Martin Peinture (ID: 812fae66-a5b3-4eb5-8a71-059e54593212)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.153Z] seb elec 37 (ID: e8ee3651-e36b-45d7-9495-923083b3b41a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.153Z] Beapropre (ID: ae4b6bb7-f963-48cc-9b5c-035b4823baaa)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.154Z] ESPACE + (ID: 969e3c29-29fd-4e58-8688-79b3c86a1cf6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.154Z] Shaydees Rusland kancel (ID: 8b37ff1d-8c07-43b8-a443-37fc4873eda2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.154Z] SBS multi services (ID: 65d71ce5-5a6f-4559-95bc-a58d51d4dc8c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.154Z] MONSIEUR SIMON HELFRICH (ID: 1ef41e67-d9c0-4e79-a2fa-922383f32cd8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.154Z] Soares Marco (ID: 3fed7460-7fb7-4a3c-a60e-4a83e87318ff)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.154Z] so elec (ID: 3c8e4901-221d-421d-b8fe-f968caa38da7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.154Z] R&Jelec (ID: c8b37d00-995c-4667-9f07-7923202d9a7d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.155Z] Soussi Moez (ID: a508e542-505d-4868-ac67-48d2f6e71402)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.155Z] Phils elec (ID: 145ee367-0697-4253-ac63-0f3e439dc79e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:00.620Z] setila plomberie (ID: a56cadb7-76ad-4a97-aacc-ab09dd4f740b)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.649Z] Uni'verre (ID: 41838b29-b214-4da7-b3a8-69ba7d5b8312)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.672Z] Steven Derrien (ID: d78659f5-a6d7-4241-a2bb-59517b311b31)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.672Z] Suarez (ID: 2e04150b-bc3f-4f86-8b1a-5dec5d7ec93a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.673Z] Alsacace volets roulants (ID: 6d9c0be4-700e-44c2-8db8-82546b0cd49f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.673Z] niort la rochelle (ID: 10efa941-72de-4deb-b8bd-e90d10f7f462)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.673Z] Tamerni yakine (ID: 6e6804c0-7ea2-45d6-908e-88ba23ef40bc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.673Z] Sanichauffe pro (ID: a373197c-482a-4e14-a66d-2ee5e28363d5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.673Z] Domicile clean (trop chère) (ID: aef73522-5703-4a1e-b31f-e5c39b26c1b3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.674Z] multi service (ID: 7c25c7f0-4593-4fd6-9965-b71c2144b8c1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:01.674Z] GP'nettoyage auto (ID: e5118deb-866e-40ce-9deb-e025178570ca)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.849Z] SOS PLOMBERIE CHAUFFAGE 28 (ID: 4d880598-b07a-4629-adae-e36d32c5cbe1)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.851Z] Thierry BOISSON (ID: 6cff1a10-39d5-43a5-a4be-73b01827b39b)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.858Z] eurl surhomme réno (ID: 5ac55417-72a0-4f65-a380-e50987d0b768)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.860Z] L'ATELIER DES BRUYERES (ID: 77453cb8-5967-4b93-9400-716343d2ab85)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.861Z] MONSIEUR THIERRY MARTIN (ID: 5935b780-807d-4035-a6f3-7a4786ace845)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.861Z] Rémy artisan (ID: 3f796eaf-2ff7-43ab-82d3-d15133f033b2)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.862Z] MJT PLOMBERIE (ID: c1b9c398-9e23-411e-8a51-b0a97b22ce03)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.867Z] Gard Eau Chaud et Froid (ID: edb57a8f-aef5-4de7-b3bd-a482cd6833af)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.873Z] SP eco-propreté (ID: 290a9262-2fda-438d-a106-cc7c2e6b49eb)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:02.920Z] TD plomberie ITS (ID: fe99755b-424e-4ee8-8931-71e54ba90e72)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:03.272Z] devisbricolage.com (ID: 5c2d96a7-fb48-4059-95cf-8bbb0323a6f4)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:03.436Z] STÉPHANE DÉPANNAGE (ID: c2956e27-77dc-406c-845d-ec678af5bde6)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:04.159Z] DT MENUISERIE (ID: 1d6c9c5e-d4aa-49e5-a102-cc3d88e1b6e0)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:04.937Z] AMS 276 (ID: 9e91a0d8-1c34-40fd-a0a3-cd8b90e30524)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:05.148Z] PARIS BATI PRO (ID: 907c8cf1-5767-4893-8fe5-873bf4e90046)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:06.366Z] Sylvain LODS 27 (ID: e2b89730-2b01-474e-aa94-90615e63f29d)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:07.084Z] CS Propreté (ID: 4ddcfee1-d949-4df1-8f72-f51fb12192de)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:08.244Z] IZAI/REPAR'STORES (ID: 2182d937-cecc-42c5-bf36-5aeca96d25d1)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:08.284Z] STORE 2000 (ID: 708657c9-cc68-4706-a523-c449eacdd49b)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:08.793Z] ENTREPRISE RIVIERE (ID: ed56c848-e26e-45da-ac22-5d649e5c7b62)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:09.309Z] Top nettoyage (ID: 3abfa8b7-a9f1-4a58-a517-b47f6af86e0e)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:09.920Z] Stéphane Galati (ID: b2f01ea1-947d-4bd0-847c-9f6acce9772b)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:10.159Z] M.T Peinture 84 (ID: 52b6e27b-dea5-42ac-83f6-4427ce6121e1)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:11.279Z] SERRURERIE 06 - HYGIENE PRO (ID: 76f1426d-5e80-488b-8a2e-f4f91d453170)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.238Z] JÉROME SYLVESTRE (ID: dbcdc16f-0bcd-460c-bc1b-4b4ec11e28aa)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.319Z] TECHNI'GAZ76 (ID: 5d94b33b-ca7a-4e47-97b3-7384d311105c)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.882Z] ATP propreté (peinture aussi) (ID: 0a74ac29-ea52-43e1-ad75-8f7f519b950e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.883Z] TROEHLER Raymond ( fermeture de boite paul ) (ID: 153a1577-12b1-4dbe-b759-7d1fd77234fd)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.883Z] LT RENOV (ID: 0ba37614-1f34-4de0-9630-c0a0641f3246)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.883Z] SARL.TROP CHER (ID: f9ffae5c-e929-4201-840c-0d87231dfae7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.883Z] VB plomberie (ID: 8de50f5c-43d8-4c96-8f46-32e147b6fc1b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.883Z] Valero Nathanael (ID: c9406f71-13d9-4b8b-a556-3233e97358aa)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.884Z] Van biervliet (ID: c7151582-2eca-4801-99b8-471d7d0765d8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.884Z] NPE nettoyage (ID: 2db5ee4b-df85-41c5-9ee8-0a321d36081f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.884Z] eddy Vignier (ID: 165632cf-ac6d-4580-af26-15f0193cd16e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.884Z] Vincent Bruille (ID: d2f74143-0f1f-42a0-b0f6-3e3f65a061e9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.884Z] VuKovic Danilo (ID: 8b60aae9-d5f1-485d-a6c5-5200c261bdce)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.884Z] Walid Ayari (ID: 5e39ccd7-b856-4685-ad0c-d14735193a00)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:12.885Z] Walter Heraut IDF (ID: bdc4b50b-60d6-496f-b8f5-bcfc4665a51f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:13.945Z] MONSIEUR TOUFFIK BENAMRAOUI (ID: e574779e-f91d-4159-b2d7-401f8cdfaddc)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.074Z] vaudron plomberie (ID: 61990645-0508-45f0-af4e-4653cbe29531)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.078Z] Menuiserie Dema (ID: cd62a650-f07b-444e-be6a-bdf06265d3e9)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.079Z] Vignon Maxime (ID: 6e88a021-c399-466f-ac43-2b37c8684bf4)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.079Z] MONSIEUR VINCENT MICHALAK (ID: 74c92ce3-b490-45a6-81ea-ec5b0d9d23eb)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.080Z] Viollet Jonathan (ID: 9a3834d8-c9c9-4770-8c27-6e74422cacb9)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.110Z] PROXIMIX MULTISERVICES (ID: 06e33de2-fafe-4721-b9e6-8554cfb88712)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.116Z] Trashi (ID: 29ae5746-b348-4a84-86d9-ef5049830d23)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.118Z] Totale Serrure (ID: 275e9077-7019-4a74-8a57-e3c226b5c79f)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.119Z] fabio vairelle (ID: b924b5ce-0123-4502-8552-e795b3b897f7)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.239Z] Mise en eouvre 21 (ID: e800d8c1-884d-49a5-b246-4f030a84eb0d)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.246Z] Un coup de fraicheur (ID: de5f17cd-6cac-473f-88ef-26badea292dd)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.248Z] LEGELEG (ID: 5e3dc17d-c583-455a-b920-2a0e7b4b3122)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.249Z] l'effet plombier 66 (ID: 0195c7c7-27e6-46ed-b7b6-01961588398c)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.257Z] Serrurier Metz Mazelle - AS2M (ID: 6f6d98d5-dc2b-450e-801e-d57fa2c107c5)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.260Z] DMZ FACILITY/SOAPPY (ID: 34c19450-1c37-4b6c-874d-3e367295a437)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.261Z] uzm menuiserie (ID: b40a19d3-da6a-479f-8416-611184388c72)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.263Z] EURL REAUTE (ID: 26345d45-37f2-4d7a-b0ab-6261513e6459)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.263Z] vr nettoyage (ID: d84ab693-3f75-4dac-8c64-06a9c1166711)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.358Z] Le jardin ensoleillé (ID: 2b452b11-6a3e-4e61-8d10-305b63318f05)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:14.971Z] Tourelec SAS (ID: 1565cab2-aafe-46de-9c2f-43e8a7548a60)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:15.281Z] Menage BLV (ID: 3431b59f-7e6d-40af-9401-3bd5745488c8)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:16.225Z] LBS (ID: 5044a789-a7e4-441f-93f1-9b59fe442293)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:18.026Z] enculé (ID: 2291fc7b-dfc2-4361-86cf-665ca8ed87a2)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:18.942Z] H2 eau (ID: e34313d0-25eb-41f7-bdb0-79f28f4ec868)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:20.083Z] vincent ghestem (ID: de9b307d-e8c6-4902-85c0-35ba037b2a07)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:20.979Z] VALÉRY TAIKA (ID: 1479b638-e0bb-4820-9120-083f976e7c80)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:22.053Z] vitet antoine 17 (ID: 5beb3b00-ff8a-4b3c-a43b-9ad16fa016ab)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.911Z] VB SOLUTIONS 21 (ID: cdbbfc8c-7257-49da-8864-ae917fe8383b)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.937Z] France Depann (ID: ff8562d8-3af5-4133-854c-9eb945168d7c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.937Z] WB.Multi Renov' (ID: cad09b6c-12cd-42a0-89d2-ec59b1f3f36c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.937Z] domo-services (ID: d9ac781e-e068-4d82-b666-74b7efdcb8f9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.938Z] k y propreté (ID: 0623fd6f-6075-4518-b4f1-0858dccfe0d5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.938Z] BS2P 73 (ID: f52fbd6d-f3d3-452e-bacd-b963b8f48ae7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.938Z] D I S plomberie (ID: baf457b1-ea69-48f2-941d-5d5e538726a6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.938Z] CGF AIR EAU (ID: 5e7b1e1e-cd5d-4e0c-8791-a057a38b646a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.938Z] MAPHabitation (ID: b018d786-86b7-4f1b-a1ec-94b91d597357)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:23.939Z] serrureiere menuisiser fusion (ID: 3596ad62-f06c-4fde-b9ad-a6f9873f8d23)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:25.929Z] BZ PLOMBERIE (ID: 512d88b7-3fdc-4478-9f8b-66215647ff7f)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:25.935Z] SAINT SERVICES (ID: e943c37d-f177-47de-85c3-d3fddab142da)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:25.937Z] yo elec (ID: 180e004a-911e-49f8-bcf1-77cb766a0a5a)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:25.960Z] Lou WINTERSTEIN (ID: 06e992ad-c249-40a2-92c9-fb5e6d6fefce)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:25.962Z] Y B Serrurier 13 (ID: 544c71a1-8eac-410d-b52e-7a5bb84d27af)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:25.968Z] Cpm confort (ID: 492d604b-e0ba-46dd-b749-8e7842557c15)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:26.319Z] Yannick Decroi (ID: 18a4cb67-5ec5-4579-bd4b-7cc6886d9b5a)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:28.054Z] SAS cleantech (ID: 2f4a5db4-8efe-4ced-a239-2541c09c401d)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:28.968Z] Yeta Renov (ID: b4aa83c3-13a4-4b73-91eb-6474041c644b)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:29.021Z] Yilmaz Elec (ID: 62846a68-fb8f-4b9e-b200-3a458b5daebd)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:29.973Z] THERMOCEANE (ID: 5061f4c3-5129-4616-a430-b635cc05d2d3)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:30.780Z] ADR CLIM (ID: 6042c43a-effe-4eb6-9384-c65ee338f12f)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:30.835Z] YVAN ASCENCIO (ID: f745ae45-c3a3-46e2-9701-0b708065d297)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:32.833Z] Rushiti SARL (ID: 7b820c5e-2597-4f28-965d-c1ce352f9611)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:32.843Z] WISSEM BEN ABDALLAH (ID: 7ee5e54b-79a2-483e-8f3a-4ad8085dfe08)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:32.844Z] Harmony service (ID: eb623e75-38a1-4a70-8d71-7f0571be5f1b)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:33.741Z] allkeys (ID: a19bf346-b00c-44a9-9863-b37ac424950a)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:34.111Z] KD SERRURERIE (ID: 37d61247-89cd-4fef-be21-6bc42e871c96)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:34.152Z] Aquaservice (ID: f9e6afe9-18c3-43cc-bc58-4c654847a947)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:34.262Z] mitariprestservice (ID: 63b24e1b-3aa7-4535-8c0c-6160c191de95)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:34.263Z] Ami nettoyage (ID: b9bdfcd3-01bd-4398-bd12-02a9145a1b14)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:34.264Z] Xavier Novkovic (ID: 65b131a2-58f7-4c18-984a-4f3b49a4d492)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:34.264Z] Aisance Énergies (ID: 3e890492-f54b-4b8a-8238-ea08cb3aed68)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:34.357Z] Pearlclean83 PEINTURE ET MENAGE (ID: ba597700-dd3d-4a79-990a-632ab6883371)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:34.859Z] PLB blot (ID: 603ab160-5c5c-4da8-a85f-ffc0598489fd)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:35.448Z] Confort travaux (ID: 03758103-b8d0-48ec-9986-a2f6ea04f4c5)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:35.454Z] Océa nettoyage (ID: a33343eb-8b24-47ae-98ed-4dda98fd2c9f)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:35.906Z] SANIFRANCE (ID: 2be87d86-25ec-48de-a37c-ae27c41ed73a)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:37.784Z] Yoann Plisson (ID: df78e5c4-b30c-4258-bae5-10a586aab839)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:38.771Z] UB DEPANNAGE SANAITAIRE CHAUFFAGE (ID: 264b05b7-91eb-4094-95f1-1e562aca443e)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:40.883Z] Yevhenii KHLODNIAK (ID: 0dfb0ad5-2b4d-4656-8e7c-85399a22b78d)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:41.805Z] MULTI PRO ELEC (ID: cd5b1b14-60f2-4967-b7ca-a309286cf281)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.716Z] Yacine BENNIA 93/ IDF (ID: 2c72be20-5122-463d-b408-70f323d9eef7)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.736Z] a1d73812-cf1a-4b7b-8723-8fbfd9f00c1d (ID: a1d73812-cf1a-4b7b-8723-8fbfd9f00c1d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.737Z] 3e0b2520-6ff9-42ba-aabf-c329687d3a87 (ID: 3e0b2520-6ff9-42ba-aabf-c329687d3a87)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.737Z] 4536937f-7d77-48f1-acf9-a44bb5565490 (ID: 4536937f-7d77-48f1-acf9-a44bb5565490)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.737Z] 8816e9e7-dd8e-4b63-9e54-b71e39fd2a34 (ID: 8816e9e7-dd8e-4b63-9e54-b71e39fd2a34)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.737Z] 9a31fa9b-a3b4-4bde-845e-9b835a36548e (ID: 9a31fa9b-a3b4-4bde-845e-9b835a36548e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.737Z] 979fc7aa-1516-4fe4-858e-8cddc9434c95 (ID: 979fc7aa-1516-4fe4-858e-8cddc9434c95)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.737Z] 4bef2a59-01ce-4d68-96cd-a9af9821dfe4 (ID: 4bef2a59-01ce-4d68-96cd-a9af9821dfe4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.738Z] 4474840b-c076-4ce2-b277-e552b793225b (ID: 4474840b-c076-4ce2-b277-e552b793225b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.738Z] ebb0bb9a-ba5a-46a2-9604-5d92688c7808 (ID: ebb0bb9a-ba5a-46a2-9604-5d92688c7808)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.744Z] f84cd0da-db9c-49dd-988e-3fcdb5c26b04 (ID: f84cd0da-db9c-49dd-988e-3fcdb5c26b04)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.770Z] ae4e7ace-a313-46fc-a581-a72bbbeb5824 (ID: ae4e7ace-a313-46fc-a581-a72bbbeb5824)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.770Z] 1418eb0e-cbd4-41a2-9e44-67b306b2e96c (ID: 1418eb0e-cbd4-41a2-9e44-67b306b2e96c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.770Z] f2a3712f-2d99-4bcb-a50a-56655e765dc8 (ID: f2a3712f-2d99-4bcb-a50a-56655e765dc8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.771Z] 1339d3e8-d25d-49ba-9d62-61d026e0431e (ID: 1339d3e8-d25d-49ba-9d62-61d026e0431e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.771Z] 267eb244-e956-4169-b260-b905a3bd14ce (ID: 267eb244-e956-4169-b260-b905a3bd14ce)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.771Z] bd4d794b-6aaa-48c2-98cc-25015db908d7 (ID: bd4d794b-6aaa-48c2-98cc-25015db908d7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.771Z] 93611785-5409-4a94-bc80-e7f2169d5549 (ID: 93611785-5409-4a94-bc80-e7f2169d5549)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.771Z] 49c08f8a-97fc-4e57-90be-214c5c18ba38 (ID: 49c08f8a-97fc-4e57-90be-214c5c18ba38)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.772Z] 55c73c87-42aa-4dd1-bce9-ca886b669830 (ID: 55c73c87-42aa-4dd1-bce9-ca886b669830)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.777Z] ac62e79c-3e8d-4ca3-b0ac-a8b5fc240182 (ID: ac62e79c-3e8d-4ca3-b0ac-a8b5fc240182)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.778Z] 45a35431-0bf1-4f46-83d3-3ad597cf7fc5 (ID: 45a35431-0bf1-4f46-83d3-3ad597cf7fc5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.778Z] fc18693f-a5d9-4151-9aaf-10cc3944b09f (ID: fc18693f-a5d9-4151-9aaf-10cc3944b09f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.778Z] cfccbab5-5c45-4c4b-9b38-9b4289155485 (ID: cfccbab5-5c45-4c4b-9b38-9b4289155485)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.778Z] 342b93c5-10d5-4eae-aa0c-bf0a45ab5fc4 (ID: 342b93c5-10d5-4eae-aa0c-bf0a45ab5fc4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.778Z] 69959126-c711-425c-b11f-ad9ec77d3690 (ID: 69959126-c711-425c-b11f-ad9ec77d3690)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.778Z] ceefc461-6bd1-4b64-b103-6a8990dad574 (ID: ceefc461-6bd1-4b64-b103-6a8990dad574)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.779Z] b3fcbb9e-daa1-4077-85bb-e9778d4811d6 (ID: b3fcbb9e-daa1-4077-85bb-e9778d4811d6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.779Z] bb1de524-1dad-4c4b-81f6-6d04efe7d570 (ID: bb1de524-1dad-4c4b-81f6-6d04efe7d570)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.779Z] e13f449c-d0cc-4187-8b57-67d940c6850d (ID: e13f449c-d0cc-4187-8b57-67d940c6850d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.779Z] befce899-5016-4382-8abb-be56e9f16470 (ID: befce899-5016-4382-8abb-be56e9f16470)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.780Z] abcbbd49-f1a1-4553-a0d4-2e97934bb03f (ID: abcbbd49-f1a1-4553-a0d4-2e97934bb03f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.780Z] 7364138f-fd7f-4345-9738-4ae8e35c2215 (ID: 7364138f-fd7f-4345-9738-4ae8e35c2215)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.780Z] 89b1400e-8b8d-4e41-b068-8272ef417a60 (ID: 89b1400e-8b8d-4e41-b068-8272ef417a60)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.780Z] 8f257545-93a0-4580-90b5-22f5db9cf28c (ID: 8f257545-93a0-4580-90b5-22f5db9cf28c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.780Z] d3d0bb45-77b7-46fe-80e3-79ffe3194cd3 (ID: d3d0bb45-77b7-46fe-80e3-79ffe3194cd3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.781Z] a75ce553-49ed-48ce-a510-9254913a393f (ID: a75ce553-49ed-48ce-a510-9254913a393f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.781Z] b142baae-3b48-4085-820a-a18fbd332e18 (ID: b142baae-3b48-4085-820a-a18fbd332e18)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.785Z] a8b9a6bb-ca7c-4108-b55c-3eef40a9620a (ID: a8b9a6bb-ca7c-4108-b55c-3eef40a9620a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.785Z] 17499c2d-e7a9-4bc7-aaa0-37d41ae5962d (ID: 17499c2d-e7a9-4bc7-aaa0-37d41ae5962d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.785Z] 05710d27-cd86-4cf4-83a2-d025801d5e97 (ID: 05710d27-cd86-4cf4-83a2-d025801d5e97)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.785Z] e5ce0a6c-c097-404f-a993-b0c813329c5f (ID: e5ce0a6c-c097-404f-a993-b0c813329c5f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:49.785Z] b02b51cf-a25b-46fb-8bb6-323465a76e06 (ID: b02b51cf-a25b-46fb-8bb6-323465a76e06)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:50.386Z] Maison zepp (ID: b6bbd983-43b4-447f-bab6-e7478fb4b0fd)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:51.322Z] ziani plomberie sauvage (ID: 5b527f46-44dc-4303-b067-e83d98dbf5d6)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:52.283Z] INSTAELEC (ID: 5137798b-3db0-4ebd-a661-06bb5eaf37ad)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:53.181Z] Zizert Jordan (ID: 7a88651c-6de0-443f-b967-a55eabe3a61d)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:55.316Z] bati agencement (ID: 5c538b95-55c2-46ce-86ac-47c9d96e704f)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.314Z] BENCHARIF MOHAMED (ID: 28af0f0a-1541-4ff0-87d0-d9b77c00dead)
+  Raison: Aucun résultat trouvé après 1 tentatives
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.329Z] e74d1caa-2e8d-429b-901b-5d5de952b37a (ID: e74d1caa-2e8d-429b-901b-5d5de952b37a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.329Z] 44c66ae1-a519-41fc-9716-e87e76cba4c8 (ID: 44c66ae1-a519-41fc-9716-e87e76cba4c8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.329Z] 7746051f-ce00-482c-bbc5-d4175fd96b7b (ID: 7746051f-ce00-482c-bbc5-d4175fd96b7b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.329Z] b0b775f5-354a-4afd-ad7e-1c028004222b (ID: b0b775f5-354a-4afd-ad7e-1c028004222b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.330Z] 542e7756-3240-4d90-b7ac-a65e9b688aa8 (ID: 542e7756-3240-4d90-b7ac-a65e9b688aa8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.330Z] 12810954-9c25-4434-93db-2c751300c4a0 (ID: 12810954-9c25-4434-93db-2c751300c4a0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.330Z] 035fd61c-b697-49fa-99e4-3251a153c7db (ID: 035fd61c-b697-49fa-99e4-3251a153c7db)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.330Z] 57377ea5-ba2a-4195-a834-ecdb162f2042 (ID: 57377ea5-ba2a-4195-a834-ecdb162f2042)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.330Z] fdf9b110-fe95-4164-b65b-da31ebe8512d (ID: fdf9b110-fe95-4164-b65b-da31ebe8512d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.331Z] e99a88ee-3462-4900-8378-3e42ba2f96b4 (ID: e99a88ee-3462-4900-8378-3e42ba2f96b4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.331Z] e8fb0d68-7f84-473b-8786-d71f8d7e0656 (ID: e8fb0d68-7f84-473b-8786-d71f8d7e0656)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.331Z] 0656215c-c7e6-49a3-b27c-cd6f81a9a9fb (ID: 0656215c-c7e6-49a3-b27c-cd6f81a9a9fb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.331Z] 91df530c-d057-4adb-a454-4ffced1a4962 (ID: 91df530c-d057-4adb-a454-4ffced1a4962)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.331Z] 0b7b3460-1c77-4ff5-bd74-d3ddadcfe124 (ID: 0b7b3460-1c77-4ff5-bd74-d3ddadcfe124)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.332Z] bd3dcaa1-1cbd-4bce-850f-3e7cc3d6ddd3 (ID: bd3dcaa1-1cbd-4bce-850f-3e7cc3d6ddd3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.332Z] 8bdaa694-7c7e-45c8-b640-3fda214a2992 (ID: 8bdaa694-7c7e-45c8-b640-3fda214a2992)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.332Z] 6689ffc6-be3c-486a-ac62-114309ffad80 (ID: 6689ffc6-be3c-486a-ac62-114309ffad80)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.332Z] c5275810-ee84-49db-b581-39740314c654 (ID: c5275810-ee84-49db-b581-39740314c654)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.339Z] 0992a867-740e-44b6-87cc-a86c3f8e3b25 (ID: 0992a867-740e-44b6-87cc-a86c3f8e3b25)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.339Z] f5a81202-6624-400b-8edb-0123b6377564 (ID: f5a81202-6624-400b-8edb-0123b6377564)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] 9a503c74-bb69-4468-ad3e-485903d65d2d (ID: 9a503c74-bb69-4468-ad3e-485903d65d2d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] 61329818-fb2a-4b22-873c-bb38e0ff16b7 (ID: 61329818-fb2a-4b22-873c-bb38e0ff16b7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] 9a602769-959b-4b31-bbee-37995657c1cf (ID: 9a602769-959b-4b31-bbee-37995657c1cf)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] 14761297-a0da-4f9a-bc9c-caaaccc0a8eb (ID: 14761297-a0da-4f9a-bc9c-caaaccc0a8eb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] 26ce358d-8476-45df-9f96-e92dfa0a8c2b (ID: 26ce358d-8476-45df-9f96-e92dfa0a8c2b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] e1ff5af6-80b9-4022-9d23-f34e1ae3efbd (ID: e1ff5af6-80b9-4022-9d23-f34e1ae3efbd)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] 9ee8d4f6-6456-41db-82ac-a1f6cfd7f59f (ID: 9ee8d4f6-6456-41db-82ac-a1f6cfd7f59f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] d6c2dde0-a5a2-4580-a6e8-693656cda24d (ID: d6c2dde0-a5a2-4580-a6e8-693656cda24d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.340Z] 6901c942-62bf-4cf3-816f-972374edc8e1 (ID: 6901c942-62bf-4cf3-816f-972374edc8e1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] ddc6ec64-57fa-4c14-962a-f934ce3ef8cf (ID: ddc6ec64-57fa-4c14-962a-f934ce3ef8cf)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 37b35f2e-ffec-4be0-ac48-5609687b52fe (ID: 37b35f2e-ffec-4be0-ac48-5609687b52fe)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 9c47d9d5-b724-47aa-9666-bb3f1c477c4f (ID: 9c47d9d5-b724-47aa-9666-bb3f1c477c4f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] d36d3450-8307-4145-96ca-3323f7de5e77 (ID: d36d3450-8307-4145-96ca-3323f7de5e77)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 4bfc7f14-d4a7-467d-9cf8-07ec97406283 (ID: 4bfc7f14-d4a7-467d-9cf8-07ec97406283)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] bcb9be37-9841-4b2b-a3d8-bad6c85a26be (ID: bcb9be37-9841-4b2b-a3d8-bad6c85a26be)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] d9fa075a-113c-4087-9b81-bc34e479afcc (ID: d9fa075a-113c-4087-9b81-bc34e479afcc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 58fdc9f7-48f0-45f2-8856-2ec523608ef7 (ID: 58fdc9f7-48f0-45f2-8856-2ec523608ef7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] c23ed9c9-0ccb-4fee-a2af-2e6d47cd71c0 (ID: c23ed9c9-0ccb-4fee-a2af-2e6d47cd71c0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 3e0f1450-dd70-48c0-849f-4988e2d539d7 (ID: 3e0f1450-dd70-48c0-849f-4988e2d539d7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] c5cbcbe0-a8f0-41b6-82be-7d7b209abbf5 (ID: c5cbcbe0-a8f0-41b6-82be-7d7b209abbf5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 97210d32-45ca-4aa9-a53f-21179b1bba1d (ID: 97210d32-45ca-4aa9-a53f-21179b1bba1d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 67a3842b-5c4f-4658-9d5a-5e14e3762f74 (ID: 67a3842b-5c4f-4658-9d5a-5e14e3762f74)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] a6dab665-7ec5-4df4-8ce1-8d84fa3a44fb (ID: a6dab665-7ec5-4df4-8ce1-8d84fa3a44fb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] e97a9d35-26cd-4ab6-8b0e-8e751c801a2f (ID: e97a9d35-26cd-4ab6-8b0e-8e751c801a2f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] bf07e41d-d600-4c7b-9555-c1085b26178c (ID: bf07e41d-d600-4c7b-9555-c1085b26178c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 3c075f15-df27-41e4-b60c-ec1c711ef427 (ID: 3c075f15-df27-41e4-b60c-ec1c711ef427)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.341Z] 6d0c5534-d173-433b-b3da-73c10190c01d (ID: 6d0c5534-d173-433b-b3da-73c10190c01d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.342Z] 8544ff5d-9c86-456c-b21b-cd22bfaf6619 (ID: 8544ff5d-9c86-456c-b21b-cd22bfaf6619)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.342Z] 913ed9aa-e515-4ced-800b-6d7733ccd22a (ID: 913ed9aa-e515-4ced-800b-6d7733ccd22a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.342Z] 9de38441-1479-435a-ad9e-33d32e5e5f8b (ID: 9de38441-1479-435a-ad9e-33d32e5e5f8b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.396Z] 69740456-2ec5-4dac-b397-60477990cfef (ID: 69740456-2ec5-4dac-b397-60477990cfef)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.396Z] 2d993653-0656-4faa-b441-67a47c84fb8e (ID: 2d993653-0656-4faa-b441-67a47c84fb8e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.396Z] 295e1411-bc02-4a96-b668-92d71ac05326 (ID: 295e1411-bc02-4a96-b668-92d71ac05326)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.396Z] 9aafc5f7-59d5-4731-952c-3fc225c0e43f (ID: 9aafc5f7-59d5-4731-952c-3fc225c0e43f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.396Z] 898e3f61-9014-421f-a266-eb5603e2f8e6 (ID: 898e3f61-9014-421f-a266-eb5603e2f8e6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.396Z] 7c0f808f-b87c-457f-90e0-3fdd0c83999b (ID: 7c0f808f-b87c-457f-90e0-3fdd0c83999b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.396Z] a8e1ca3e-be98-4591-984b-af6bbcee9258 (ID: a8e1ca3e-be98-4591-984b-af6bbcee9258)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.396Z] 043d5de3-eeaf-41c2-a9ce-cce0cd0ce20c (ID: 043d5de3-eeaf-41c2-a9ce-cce0cd0ce20c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 509b6bfb-a877-4053-bdee-5ab42a878574 (ID: 509b6bfb-a877-4053-bdee-5ab42a878574)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 7759b9b4-b00c-422b-ae2d-c7123c05f349 (ID: 7759b9b4-b00c-422b-ae2d-c7123c05f349)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 14fe995c-693a-4321-9718-a6e481822378 (ID: 14fe995c-693a-4321-9718-a6e481822378)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] f89f20a9-57d8-456b-80ba-92e1ff0106dd (ID: f89f20a9-57d8-456b-80ba-92e1ff0106dd)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 22f8efb0-80f6-4d95-920c-74d444ece661 (ID: 22f8efb0-80f6-4d95-920c-74d444ece661)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] bf38d443-7b01-40c2-bd7b-3422a2bcae5d (ID: bf38d443-7b01-40c2-bd7b-3422a2bcae5d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 47d99a8f-da79-4ae5-8951-0ef5d633ae83 (ID: 47d99a8f-da79-4ae5-8951-0ef5d633ae83)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] e47278e2-8cf7-4f2d-ae67-4a197baedcc3 (ID: e47278e2-8cf7-4f2d-ae67-4a197baedcc3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] b2c35fa3-1555-45c0-833e-d6b8a6f4fb26 (ID: b2c35fa3-1555-45c0-833e-d6b8a6f4fb26)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] ed9f5a3f-89a9-48c5-9cd7-4221739d35af (ID: ed9f5a3f-89a9-48c5-9cd7-4221739d35af)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 51749474-9a29-46a6-9535-fcf16c80461a (ID: 51749474-9a29-46a6-9535-fcf16c80461a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 381d9353-d3bf-4465-84f3-0342056d4b7c (ID: 381d9353-d3bf-4465-84f3-0342056d4b7c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 8537535a-459c-458a-bea8-2a42ffee7129 (ID: 8537535a-459c-458a-bea8-2a42ffee7129)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] f077290d-75f5-4665-929c-b10a90c1872d (ID: f077290d-75f5-4665-929c-b10a90c1872d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 460afb86-5e1e-4b50-ae50-95d5ef878459 (ID: 460afb86-5e1e-4b50-ae50-95d5ef878459)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 54b14c81-36ff-442a-ba70-4aae5b612773 (ID: 54b14c81-36ff-442a-ba70-4aae5b612773)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.397Z] 255846e2-3266-40dd-bc7c-3e0dce27ddc1 (ID: 255846e2-3266-40dd-bc7c-3e0dce27ddc1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] e887904d-f437-4ec3-824b-107aa28d2e6d (ID: e887904d-f437-4ec3-824b-107aa28d2e6d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] e624b697-0280-4a84-a6b6-7184b1fc0a86 (ID: e624b697-0280-4a84-a6b6-7184b1fc0a86)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] 0a29394b-8abf-4900-b509-8ea04320983d (ID: 0a29394b-8abf-4900-b509-8ea04320983d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] d0c2a655-bf0e-4aad-8c1b-3ebfb50d5c07 (ID: d0c2a655-bf0e-4aad-8c1b-3ebfb50d5c07)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] a8478b8b-cde0-4b5c-aaa4-f9e20eb0f9f8 (ID: a8478b8b-cde0-4b5c-aaa4-f9e20eb0f9f8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] 23fbc706-fbba-440d-8806-5df824c9d6a6 (ID: 23fbc706-fbba-440d-8806-5df824c9d6a6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] 1e7bbaf7-28b4-44c5-bbd1-b9bd9be13496 (ID: 1e7bbaf7-28b4-44c5-bbd1-b9bd9be13496)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] 9d1a845b-4ff6-4f21-b7b4-547858855c13 (ID: 9d1a845b-4ff6-4f21-b7b4-547858855c13)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] 1f9912f7-9dfb-44fe-a42b-c87000bdfa51 (ID: 1f9912f7-9dfb-44fe-a42b-c87000bdfa51)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] 4d02ec65-b856-4ecd-8458-467050d67663 (ID: 4d02ec65-b856-4ecd-8458-467050d67663)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] 3d7f5afc-ddfe-4a59-9759-780dd1c301d1 (ID: 3d7f5afc-ddfe-4a59-9759-780dd1c301d1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] c46800fa-8395-40b3-83ec-b6c2cfc2c071 (ID: c46800fa-8395-40b3-83ec-b6c2cfc2c071)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] 5bc4144b-c89d-4d6e-b488-952ba2a6f049 (ID: 5bc4144b-c89d-4d6e-b488-952ba2a6f049)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.398Z] b178b825-ba63-4369-8ed8-b0a4a9335656 (ID: b178b825-ba63-4369-8ed8-b0a4a9335656)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] 398baf89-76bc-4f46-8b79-bfcb29a9a2fa (ID: 398baf89-76bc-4f46-8b79-bfcb29a9a2fa)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] e1f88e75-ba79-442c-8006-a39ad74e0bbd (ID: e1f88e75-ba79-442c-8006-a39ad74e0bbd)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] ef43b30c-f965-4dd2-8d84-fc0ab22a81c4 (ID: ef43b30c-f965-4dd2-8d84-fc0ab22a81c4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] 8ab1e1ed-23b9-4703-82e3-59b251e21c3b (ID: 8ab1e1ed-23b9-4703-82e3-59b251e21c3b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] 2adf75a9-edb6-4d47-b6fb-36fd3c0e582f (ID: 2adf75a9-edb6-4d47-b6fb-36fd3c0e582f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] 6a59861d-006e-450f-97b0-bb22cb0b20b8 (ID: 6a59861d-006e-450f-97b0-bb22cb0b20b8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] e7944288-8bcf-48cc-861a-3335c5b975e4 (ID: e7944288-8bcf-48cc-861a-3335c5b975e4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] b2f9bc3b-77f2-434b-9c71-b381e7cf997f (ID: b2f9bc3b-77f2-434b-9c71-b381e7cf997f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] 60a029d6-e13c-4b88-bc39-94e14d215c8a (ID: 60a029d6-e13c-4b88-bc39-94e14d215c8a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] 4759d9a0-15ad-47ff-becb-25672167391e (ID: 4759d9a0-15ad-47ff-becb-25672167391e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.399Z] aee90615-9b5e-465d-93f8-eb9b8a0cac41 (ID: aee90615-9b5e-465d-93f8-eb9b8a0cac41)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.434Z] 450b02af-e986-4eac-a56a-8d6aca4d6b91 (ID: 450b02af-e986-4eac-a56a-8d6aca4d6b91)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.434Z] 11be4f37-7a1a-41aa-bc40-d8d73e073887 (ID: 11be4f37-7a1a-41aa-bc40-d8d73e073887)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.434Z] b1daafdf-8879-4237-aa59-f6211925a9c2 (ID: b1daafdf-8879-4237-aa59-f6211925a9c2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.434Z] e5b32320-8fb3-41fa-8c30-7bb74b079624 (ID: e5b32320-8fb3-41fa-8c30-7bb74b079624)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 75123382-c1bb-4dbc-8bcd-e16c7f56c2bc (ID: 75123382-c1bb-4dbc-8bcd-e16c7f56c2bc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] b9240ce8-1e09-429e-9803-e804124710b6 (ID: b9240ce8-1e09-429e-9803-e804124710b6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 1132fb43-ea0e-488d-b32a-346d3ad30cee (ID: 1132fb43-ea0e-488d-b32a-346d3ad30cee)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 3cabe2a3-480a-41e2-a68f-6908d52c16ac (ID: 3cabe2a3-480a-41e2-a68f-6908d52c16ac)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 98929934-114f-48b6-bf0f-90da8d686d3b (ID: 98929934-114f-48b6-bf0f-90da8d686d3b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 5a22dbe2-a44b-4fef-9b43-fb303833ea03 (ID: 5a22dbe2-a44b-4fef-9b43-fb303833ea03)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] ea0d26fe-ae2f-413f-a7de-6e603549da00 (ID: ea0d26fe-ae2f-413f-a7de-6e603549da00)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] b4a1127c-3351-4ae5-9143-c1e77ae60e47 (ID: b4a1127c-3351-4ae5-9143-c1e77ae60e47)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 8c211524-96c9-4bc6-b64c-b51e8a69d91c (ID: 8c211524-96c9-4bc6-b64c-b51e8a69d91c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] c5f5c6e4-21bb-4505-b131-e322e8cf4474 (ID: c5f5c6e4-21bb-4505-b131-e322e8cf4474)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 37081746-6ee5-4e98-8b16-c5bf554797a9 (ID: 37081746-6ee5-4e98-8b16-c5bf554797a9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 0cebeda5-a70c-4cfc-ac3a-f5bce430389d (ID: 0cebeda5-a70c-4cfc-ac3a-f5bce430389d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 13812561-2e1b-4e89-9519-6e6fe094b877 (ID: 13812561-2e1b-4e89-9519-6e6fe094b877)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 87757cc2-6aab-4615-b2a2-e263152597a5 (ID: 87757cc2-6aab-4615-b2a2-e263152597a5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 4ce40c91-d9b3-4e75-b8d6-7d41e752ff90 (ID: 4ce40c91-d9b3-4e75-b8d6-7d41e752ff90)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 8ea0520c-aafb-4be6-b4dc-942e6f1a7a8d (ID: 8ea0520c-aafb-4be6-b4dc-942e6f1a7a8d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 99cdb574-0ac2-4d20-8b88-eeb1e6ee5041 (ID: 99cdb574-0ac2-4d20-8b88-eeb1e6ee5041)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] dc5f7609-8606-481a-abd3-cc99d09647bc (ID: dc5f7609-8606-481a-abd3-cc99d09647bc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 94a683e0-d2c7-4fa1-aa22-3553cd0776ae (ID: 94a683e0-d2c7-4fa1-aa22-3553cd0776ae)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] f7bd594d-7f5c-4b87-a9f3-136af0c65b34 (ID: f7bd594d-7f5c-4b87-a9f3-136af0c65b34)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 5bc00285-d958-4b1c-9742-7577483d6e3c (ID: 5bc00285-d958-4b1c-9742-7577483d6e3c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] f956b9fe-4182-402e-93fb-f47d3e96ac7d (ID: f956b9fe-4182-402e-93fb-f47d3e96ac7d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.435Z] 78dec1dd-62aa-47ef-838f-d1e127e140c0 (ID: 78dec1dd-62aa-47ef-838f-d1e127e140c0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 62055a3c-4263-4eb7-8a07-bf8af12b999b (ID: 62055a3c-4263-4eb7-8a07-bf8af12b999b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 14c72b34-f556-4706-bbd3-386425f2d958 (ID: 14c72b34-f556-4706-bbd3-386425f2d958)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 7b408bf9-2b22-4909-a5b2-936c3e541e6b (ID: 7b408bf9-2b22-4909-a5b2-936c3e541e6b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 942ddb00-6eaa-49aa-9f36-a3aef6ab130b (ID: 942ddb00-6eaa-49aa-9f36-a3aef6ab130b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] ceed97ec-d268-4e0c-a4db-4f40ae0a3cf6 (ID: ceed97ec-d268-4e0c-a4db-4f40ae0a3cf6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] ffdd4a7a-c49c-40fd-a1a5-9099d340c3fc (ID: ffdd4a7a-c49c-40fd-a1a5-9099d340c3fc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 91e5a254-7b0d-486a-be63-fc82e40b8fcc (ID: 91e5a254-7b0d-486a-be63-fc82e40b8fcc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 248721e6-703f-48c7-8301-b96e43323739 (ID: 248721e6-703f-48c7-8301-b96e43323739)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 3fe9d12f-430f-4ad2-82e1-bbab2e22f2f1 (ID: 3fe9d12f-430f-4ad2-82e1-bbab2e22f2f1)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 4b8ae5bf-6b7b-4fac-9f72-a0e9d34c529b (ID: 4b8ae5bf-6b7b-4fac-9f72-a0e9d34c529b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 2c8ed59b-d9e4-4f96-ab5e-98a372ba5483 (ID: 2c8ed59b-d9e4-4f96-ab5e-98a372ba5483)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] bb6e64d4-89ba-43ee-ad3f-47011f306fdc (ID: bb6e64d4-89ba-43ee-ad3f-47011f306fdc)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] e91f3a3f-edd3-411c-a15a-18fd79d84740 (ID: e91f3a3f-edd3-411c-a15a-18fd79d84740)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 9877389e-505c-46b7-80e9-2864f72000d8 (ID: 9877389e-505c-46b7-80e9-2864f72000d8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 54f43759-d611-4056-98f4-611d4eaaf44a (ID: 54f43759-d611-4056-98f4-611d4eaaf44a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] c1060c8a-19e4-439c-b63f-31960b2d11bf (ID: c1060c8a-19e4-439c-b63f-31960b2d11bf)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 1e1d18f7-b39f-433c-bbc2-98ba05ee5e25 (ID: 1e1d18f7-b39f-433c-bbc2-98ba05ee5e25)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 520a1122-9ac3-4dc1-9441-f1f15e0e9d78 (ID: 520a1122-9ac3-4dc1-9441-f1f15e0e9d78)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] ee44b4bf-cbd9-4790-b125-b061a309091a (ID: ee44b4bf-cbd9-4790-b125-b061a309091a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] 23fac756-be64-43b5-befe-844f6df313a6 (ID: 23fac756-be64-43b5-befe-844f6df313a6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] d2e43914-273d-4f72-b2a2-766b8ced3327 (ID: d2e43914-273d-4f72-b2a2-766b8ced3327)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] d1d292e6-1eeb-46e5-8f74-72e5aa104b5a (ID: d1d292e6-1eeb-46e5-8f74-72e5aa104b5a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.436Z] a54989b3-73f8-4a92-989f-dcaa1692fc0a (ID: a54989b3-73f8-4a92-989f-dcaa1692fc0a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.463Z] dbc844c8-8c71-4860-8bf1-0126734dce2f (ID: dbc844c8-8c71-4860-8bf1-0126734dce2f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] b817b039-67ee-4431-ab1b-48a794b3bfd9 (ID: b817b039-67ee-4431-ab1b-48a794b3bfd9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] cf4c6a66-8f9f-462a-90f0-9d911962561a (ID: cf4c6a66-8f9f-462a-90f0-9d911962561a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] 814d8b2c-895a-4846-a30a-79cfa6bb2899 (ID: 814d8b2c-895a-4846-a30a-79cfa6bb2899)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] 72041fac-602e-42c3-9147-1b5c32defaa7 (ID: 72041fac-602e-42c3-9147-1b5c32defaa7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] 35acf26f-5893-48bc-b9a5-45ae1d975b5e (ID: 35acf26f-5893-48bc-b9a5-45ae1d975b5e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] 0b610855-1b1e-4dc3-b032-18e6519e0060 (ID: 0b610855-1b1e-4dc3-b032-18e6519e0060)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] 00042b90-613c-4577-a443-dc9d348c9a8e (ID: 00042b90-613c-4577-a443-dc9d348c9a8e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] ef5d612b-f14a-4bd9-8fc8-42daeb67f053 (ID: ef5d612b-f14a-4bd9-8fc8-42daeb67f053)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] 2132a7aa-d65c-4322-9a7b-3ae92bb5b013 (ID: 2132a7aa-d65c-4322-9a7b-3ae92bb5b013)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] 7b64821e-823c-4f8d-a7b3-98d65c4a5f05 (ID: 7b64821e-823c-4f8d-a7b3-98d65c4a5f05)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] bd08ecb4-4665-450b-a053-ca6c1d459257 (ID: bd08ecb4-4665-450b-a053-ca6c1d459257)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.464Z] 473326ef-e051-40bf-8906-6d861b333617 (ID: 473326ef-e051-40bf-8906-6d861b333617)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.466Z] ceff26ed-0497-4ad3-92d3-3e847bc5b6a2 (ID: ceff26ed-0497-4ad3-92d3-3e847bc5b6a2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.466Z] 662a811f-e810-49a7-982e-37fff54acf09 (ID: 662a811f-e810-49a7-982e-37fff54acf09)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.466Z] ece23a18-550c-4049-972e-ee0d49cb6aba (ID: ece23a18-550c-4049-972e-ee0d49cb6aba)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.466Z] a8bcc6de-7494-4054-a51c-6d8adb7d7ce0 (ID: a8bcc6de-7494-4054-a51c-6d8adb7d7ce0)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] f781dc3d-e24f-4e44-8011-0eed5b740090 (ID: f781dc3d-e24f-4e44-8011-0eed5b740090)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 12c41e1f-2696-4957-be56-4657b4150c4b (ID: 12c41e1f-2696-4957-be56-4657b4150c4b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 822518cc-f35d-447e-a98b-4e644b762bba (ID: 822518cc-f35d-447e-a98b-4e644b762bba)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 9a385a73-b1d5-40b8-96f8-359966b31e9c (ID: 9a385a73-b1d5-40b8-96f8-359966b31e9c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 55134e9f-7708-409e-b371-4a4e9c468f56 (ID: 55134e9f-7708-409e-b371-4a4e9c468f56)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 7cd8089f-2ba8-444f-b6b6-6377ac7d41a6 (ID: 7cd8089f-2ba8-444f-b6b6-6377ac7d41a6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 21a44823-c005-47d7-b367-d343aa00b5b2 (ID: 21a44823-c005-47d7-b367-d343aa00b5b2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 577136c9-e639-409d-beb8-15c743c9795c (ID: 577136c9-e639-409d-beb8-15c743c9795c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] a8f6489b-61a7-4a09-8238-692a82027885 (ID: a8f6489b-61a7-4a09-8238-692a82027885)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 6ec20ccd-4902-4366-a7e3-2ebc7750fa13 (ID: 6ec20ccd-4902-4366-a7e3-2ebc7750fa13)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] d889e21c-e451-4de0-844a-bae313c6b574 (ID: d889e21c-e451-4de0-844a-bae313c6b574)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 6eeb869b-bbb5-4959-9768-4bbf4b9ef403 (ID: 6eeb869b-bbb5-4959-9768-4bbf4b9ef403)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] f0589ebf-49e7-4e64-8039-f48eabddff9e (ID: f0589ebf-49e7-4e64-8039-f48eabddff9e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] b2855473-1fd6-485e-ae88-35f854e8fc6a (ID: b2855473-1fd6-485e-ae88-35f854e8fc6a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] acc77664-c5be-469c-965c-2726918be1b4 (ID: acc77664-c5be-469c-965c-2726918be1b4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 50ef7ea4-364c-495f-bedc-a41f65acb0a8 (ID: 50ef7ea4-364c-495f-bedc-a41f65acb0a8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 84edc542-8dde-44f3-8a76-fd688c4fb304 (ID: 84edc542-8dde-44f3-8a76-fd688c4fb304)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] feb1eb31-8a0e-4f96-8d4f-9b47a63a5e1e (ID: feb1eb31-8a0e-4f96-8d4f-9b47a63a5e1e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] f32b7a76-ee66-470d-a811-f0580f6be90e (ID: f32b7a76-ee66-470d-a811-f0580f6be90e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] bfb48695-77e5-4ea8-b0dc-93d33766f11c (ID: bfb48695-77e5-4ea8-b0dc-93d33766f11c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 5f2bf6ec-ae33-4e52-9bf6-b8a60869a458 (ID: 5f2bf6ec-ae33-4e52-9bf6-b8a60869a458)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] dd30575e-f7bb-41fa-acca-6d044ac2af82 (ID: dd30575e-f7bb-41fa-acca-6d044ac2af82)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] da53ca32-7752-43a7-bc02-7e8379e6fb8e (ID: da53ca32-7752-43a7-bc02-7e8379e6fb8e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 936b8cf0-755b-4411-891c-0465b73d8e4e (ID: 936b8cf0-755b-4411-891c-0465b73d8e4e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] 3528c042-4a3e-4046-9b83-a77ba5236912 (ID: 3528c042-4a3e-4046-9b83-a77ba5236912)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.467Z] bdccfac9-611a-4889-9231-a9e9a4b361bd (ID: bdccfac9-611a-4889-9231-a9e9a4b361bd)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.468Z] b8765c2a-afc5-467f-800a-5ffad348cfe3 (ID: b8765c2a-afc5-467f-800a-5ffad348cfe3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.468Z] ba424871-65af-4a06-9f84-9ea55cef00c8 (ID: ba424871-65af-4a06-9f84-9ea55cef00c8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.468Z] 3467b7ce-121b-4995-a838-3819c7d4397f (ID: 3467b7ce-121b-4995-a838-3819c7d4397f)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.468Z] 8e923861-8160-49d9-8884-536e6306760c (ID: 8e923861-8160-49d9-8884-536e6306760c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.468Z] 54800e54-5d67-4329-b91b-866a2d68499a (ID: 54800e54-5d67-4329-b91b-866a2d68499a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.468Z] 3a86e523-5b4c-4bd4-8cf2-6bbce5ffd705 (ID: 3a86e523-5b4c-4bd4-8cf2-6bbce5ffd705)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.468Z] 29ebc248-a6cc-48b4-84e3-e1889973d7b2 (ID: 29ebc248-a6cc-48b4-84e3-e1889973d7b2)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 2d8cd974-3cc4-4f67-ab07-eb0da3cdf536 (ID: 2d8cd974-3cc4-4f67-ab07-eb0da3cdf536)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 6435190f-cef4-4bfe-8853-30736c12cef4 (ID: 6435190f-cef4-4bfe-8853-30736c12cef4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 182fe11d-135b-4340-ac21-0bec5173a9af (ID: 182fe11d-135b-4340-ac21-0bec5173a9af)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] b257c600-9cc4-46b4-8d96-70253da90721 (ID: b257c600-9cc4-46b4-8d96-70253da90721)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 3b24d66f-3d0a-47b9-8b16-8266a86d3c36 (ID: 3b24d66f-3d0a-47b9-8b16-8266a86d3c36)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 1ad0aea9-b48c-4b7e-9acd-317611c180df (ID: 1ad0aea9-b48c-4b7e-9acd-317611c180df)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 70878432-c9eb-4129-9600-c03ebdd121c4 (ID: 70878432-c9eb-4129-9600-c03ebdd121c4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 0b288cc8-fca4-4968-ac3f-e31d432431c6 (ID: 0b288cc8-fca4-4968-ac3f-e31d432431c6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 739a2c93-26ce-4b08-946b-c552b209a178 (ID: 739a2c93-26ce-4b08-946b-c552b209a178)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 34aeb581-ded4-4819-be2c-f2b4f857311e (ID: 34aeb581-ded4-4819-be2c-f2b4f857311e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] f9b6edfb-5761-4a8b-ae28-f86440ef957c (ID: f9b6edfb-5761-4a8b-ae28-f86440ef957c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 77cc2866-37c0-4b29-b63b-c8c92352c87a (ID: 77cc2866-37c0-4b29-b63b-c8c92352c87a)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] d7e15e7c-58c0-434e-9814-6370bbf4c123 (ID: d7e15e7c-58c0-434e-9814-6370bbf4c123)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 0ff403ac-4d84-456a-a2fe-3ca4698ec43b (ID: 0ff403ac-4d84-456a-a2fe-3ca4698ec43b)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.504Z] 692c082e-03dd-469f-9fb3-c8ad3942a073 (ID: 692c082e-03dd-469f-9fb3-c8ad3942a073)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] 4b823600-7bbf-44c1-93f0-935d5a7594a3 (ID: 4b823600-7bbf-44c1-93f0-935d5a7594a3)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] a97f2023-37d9-407d-a2a1-9960bc490f05 (ID: a97f2023-37d9-407d-a2a1-9960bc490f05)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] dffb99b5-7eed-47a9-a878-26c3f9b1e9a4 (ID: dffb99b5-7eed-47a9-a878-26c3f9b1e9a4)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] cf2a8694-5a0f-4f44-8efe-a391ae9041a8 (ID: cf2a8694-5a0f-4f44-8efe-a391ae9041a8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] 42100680-101c-477f-9800-7ad3ecd61fc6 (ID: 42100680-101c-477f-9800-7ad3ecd61fc6)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] b3737402-2b46-4758-bcc6-6f694bfe36bb (ID: b3737402-2b46-4758-bcc6-6f694bfe36bb)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] 3efc51aa-8c9d-42f5-84d8-fbcdd55b4541 (ID: 3efc51aa-8c9d-42f5-84d8-fbcdd55b4541)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] 903cd47f-a82e-41d7-9246-2db7443b1fc8 (ID: 903cd47f-a82e-41d7-9246-2db7443b1fc8)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] ee3e87e1-b85a-4761-9756-09663b7562e5 (ID: ee3e87e1-b85a-4761-9756-09663b7562e5)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] 3d89e160-8066-478a-8723-0bee75d9da33 (ID: 3d89e160-8066-478a-8723-0bee75d9da33)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] ea3d89cd-53f8-4010-8f2b-abdcb30b7f70 (ID: ea3d89cd-53f8-4010-8f2b-abdcb30b7f70)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] b1bd6ff4-4480-4756-97f8-106943ee7519 (ID: b1bd6ff4-4480-4756-97f8-106943ee7519)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] 49d62590-e35e-4f2e-b051-68d7e94e69f9 (ID: 49d62590-e35e-4f2e-b051-68d7e94e69f9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] b64971ca-7792-4bf6-967c-e2a02364ddee (ID: b64971ca-7792-4bf6-967c-e2a02364ddee)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] 4dd00479-ae60-48ba-94e4-787d5eea89a9 (ID: 4dd00479-ae60-48ba-94e4-787d5eea89a9)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] 127e6cc4-1715-4f29-9e05-7bfe0947ed5c (ID: 127e6cc4-1715-4f29-9e05-7bfe0947ed5c)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] b71d429b-87a7-4094-8413-845bbdeba85e (ID: b71d429b-87a7-4094-8413-845bbdeba85e)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] fa78a9b1-bed2-4b02-a365-81f50aaa829d (ID: fa78a9b1-bed2-4b02-a365-81f50aaa829d)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] bc719cfd-a209-403b-be7e-848c8a363ef7 (ID: bc719cfd-a209-403b-be7e-848c8a363ef7)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] f9c042be-3647-4b24-9492-793f338ead38 (ID: f9c042be-3647-4b24-9492-793f338ead38)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+
+[2025-11-09T23:55:57.505Z] da6b4c9d-08ba-4e91-9416-5d851fb49164 (ID: da6b4c9d-08ba-4e91-9416-5d851fb49164)
+  Raison: Aucune adresse disponible
+  Adresse: Aucune adresse
+

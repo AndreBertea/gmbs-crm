@@ -583,6 +583,38 @@ export function InterventionEditForm({
 
       const updated = await interventionsApi.update(intervention.id, updateData)
 
+      // Mettre à jour les coûts
+      const costsToUpdate: Array<{ cost_type: "sst" | "materiel" | "intervention"; amount: number }> = []
+      
+      const coutSSTValue = parseFloat(formData.coutSST) || 0
+      const coutMaterielValue = parseFloat(formData.coutMateriel) || 0
+      const coutInterventionValue = parseFloat(formData.coutIntervention) || 0
+
+      if (coutSSTValue >= 0) {
+        costsToUpdate.push({ cost_type: "sst", amount: coutSSTValue })
+      }
+      if (coutMaterielValue >= 0) {
+        costsToUpdate.push({ cost_type: "materiel", amount: coutMaterielValue })
+      }
+      if (coutInterventionValue >= 0) {
+        costsToUpdate.push({ cost_type: "intervention", amount: coutInterventionValue })
+      }
+
+      // Mettre à jour chaque coût
+      for (const cost of costsToUpdate) {
+        try {
+          await interventionsApi.upsertCost(intervention.id, {
+            cost_type: cost.cost_type,
+            label: cost.cost_type === "sst" ? "Coût SST" : cost.cost_type === "materiel" ? "Coût Matériel" : "Coût Intervention",
+            amount: cost.amount,
+            currency: "EUR",
+          })
+        } catch (costError) {
+          console.error(`[InterventionEditForm] Erreur lors de la mise à jour du coût ${cost.cost_type}:`, costError)
+          // Ne pas bloquer la soumission si un coût échoue
+        }
+      }
+
       const currentPrimaryId = primaryArtisanIdRef.current
       const nextPrimaryId = selectedArtisanId ?? null
 
@@ -591,6 +623,9 @@ export function InterventionEditForm({
       if (currentPrimaryId !== nextPrimaryId) {
         await interventionsApi.setPrimaryArtisan(intervention.id, nextPrimaryId)
         primaryArtisanIdRef.current = nextPrimaryId
+        payload = await interventionsApi.getById(intervention.id)
+      } else {
+        // Recharger les données pour avoir les coûts à jour
         payload = await interventionsApi.getById(intervention.id)
       }
 
@@ -1023,11 +1058,13 @@ export function InterventionEditForm({
                     </Label>
                     <Input
                       id="coutIntervention"
+                      type="number"
+                      step="0.01"
+                      min="0"
                       value={formData.coutIntervention}
                       onChange={(event) => handleInputChange("coutIntervention", event.target.value)}
                       placeholder="0.00 €"
                       className="h-8 text-sm"
-                      disabled
                     />
                   </div>
                   <div>
@@ -1036,11 +1073,13 @@ export function InterventionEditForm({
                     </Label>
                     <Input
                       id="coutSST"
+                      type="number"
+                      step="0.01"
+                      min="0"
                       value={formData.coutSST}
                       onChange={(event) => handleInputChange("coutSST", event.target.value)}
                       placeholder="0.00 €"
                       className="h-8 text-sm"
-                      disabled
                     />
                   </div>
                   <div>
@@ -1049,11 +1088,13 @@ export function InterventionEditForm({
                     </Label>
                     <Input
                       id="coutMateriel"
+                      type="number"
+                      step="0.01"
+                      min="0"
                       value={formData.coutMateriel}
                       onChange={(event) => handleInputChange("coutMateriel", event.target.value)}
                       placeholder="0.00 €"
                       className="h-8 text-sm"
-                      disabled
                     />
                   </div>
                   <div className="md:col-span-2">

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import Loader from "@/components/ui/Loader"
 import { runQuery } from "@/lib/query-engine"
 import { cn } from "@/lib/utils"
 import type { InterventionViewDefinition, TimelineLayoutOptions } from "@/types/intervention-views"
@@ -202,8 +203,8 @@ export function TimelineView({
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-border/60 p-8 text-sm text-muted-foreground">
-        Chargement de la chronologie…
+      <div className="flex items-center justify-center py-12">
+        <Loader />
       </div>
     )
   }
