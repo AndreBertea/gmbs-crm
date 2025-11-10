@@ -40,6 +40,13 @@ import { supabase } from "@/lib/supabase-client"
 import { getReasonTypeForTransition, type StatusReasonType } from "@/lib/comments/statusReason"
 import { cn } from "@/lib/utils"
 import type { ModalDisplayMode } from "@/types/modal-display"
+import { REGEXP_ONLY_DIGITS } from "input-otp"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
 
 type ArtisanWithRelations = Artisan & {
   artisan_metiers?: Array<{
@@ -232,27 +239,38 @@ const mapArtisanToForm = (artisan: ArtisanWithRelations | any): ArtisanFormValue
   }
 }
 
-const buildUpdatePayload = (values: ArtisanFormValues) => ({
-  raison_sociale: values.raison_sociale || null,
-  prenom: values.prenom || null,
-  nom: values.nom || null,
-  telephone: values.telephone || null,
-  telephone2: values.telephone2 || null,
-  email: values.email || null,
-  adresse_intervention: values.adresse_intervention || null,
-  code_postal_intervention: values.code_postal_intervention || null,
-  ville_intervention: values.ville_intervention || null,
-  adresse_siege_social: values.adresse_siege_social || null,
-  code_postal_siege_social: values.code_postal_siege_social || null,
-  ville_siege_social: values.ville_siege_social || null,
-  statut_juridique: values.statut_juridique || null,
-  siret: values.siret || null,
-  zones: values.zone_intervention ? [values.zone_intervention] : [],
-  metiers: values.metiers ?? [],
-  gestionnaire_id: values.gestionnaire_id || null,
-  statut_id: values.statut_id || null,
-  numero_associe: values.numero_associe || null,
-})
+const buildUpdatePayload = (values: ArtisanFormValues) => {
+  // Normaliser le SIRET : soit vide, soit exactement 14 chiffres
+  const normalizedSiret = (() => {
+    const siret = values.siret?.trim() || ""
+    if (siret.length === 0) return null
+    if (siret.length === 14 && /^\d+$/.test(siret)) return siret
+    // Si partiellement rempli, retourner null (ne pas enregistrer)
+    return null
+  })()
+
+  return {
+    raison_sociale: values.raison_sociale || null,
+    prenom: values.prenom || null,
+    nom: values.nom || null,
+    telephone: values.telephone || null,
+    telephone2: values.telephone2 || null,
+    email: values.email || null,
+    adresse_intervention: values.adresse_intervention || null,
+    code_postal_intervention: values.code_postal_intervention || null,
+    ville_intervention: values.ville_intervention || null,
+    adresse_siege_social: values.adresse_siege_social || null,
+    code_postal_siege_social: values.code_postal_siege_social || null,
+    ville_siege_social: values.ville_siege_social || null,
+    statut_juridique: values.statut_juridique || null,
+    siret: normalizedSiret,
+    zones: values.zone_intervention ? [values.zone_intervention] : [],
+    metiers: values.metiers ?? [],
+    gestionnaire_id: values.gestionnaire_id || null,
+    statut_id: values.statut_id || null,
+    numero_associe: values.numero_associe || null,
+  }
+}
 
 export function ArtisanModalContent({
   artisanId,
@@ -282,7 +300,7 @@ export function ArtisanModalContent({
     handleSubmit,
     reset,
     getValues,
-    formState: { isDirty },
+    formState: { isDirty, errors },
   } = useForm<ArtisanFormValues>({
     defaultValues: {
       raison_sociale: "",
@@ -801,14 +819,64 @@ export function ArtisanModalContent({
                   <Input id="statut_juridique" placeholder="Ex. SAS, SARL..." {...register("statut_juridique")} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="siret">Siret</Label>
-                  <Input id="siret" placeholder="000 000 000 00000" {...register("siret")} />
+                  <Label htmlFor="numero_associe">Numéro associé</Label>
+                  <Input id="numero_associe" placeholder="Code interne" {...register("numero_associe")} />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="numero_associe">Numéro associé</Label>
-                <Input id="numero_associe" placeholder="Code interne" {...register("numero_associe")} />
+                <Label htmlFor="siret">Siret</Label>
+                <Controller
+                  name="siret"
+                  control={control}
+                  rules={{
+                    validate: (value) => {
+                      const siret = value?.trim() || ""
+                      if (siret.length === 0) return true // Vide est valide
+                      if (siret.length === 14 && /^\d+$/.test(siret)) return true // 14 chiffres est valide
+                      return "Le SIRET doit être soit vide, soit contenir exactement 14 chiffres"
+                    },
+                  }}
+                  render={({ field, fieldState }) => (
+                    <div className="space-y-1">
+                      <InputOTP
+                        maxLength={14}
+                        pattern={REGEXP_ONLY_DIGITS}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                        </InputOTPGroup>
+                        <InputOTPSeparator />
+                        <InputOTPGroup>
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                        <InputOTPSeparator />
+                        <InputOTPGroup>
+                          <InputOTPSlot index={6} />
+                          <InputOTPSlot index={7} />
+                          <InputOTPSlot index={8} />
+                        </InputOTPGroup>
+                        <InputOTPSeparator />
+                        <InputOTPGroup>
+                          <InputOTPSlot index={9} />
+                          <InputOTPSlot index={10} />
+                          <InputOTPSlot index={11} />
+                          <InputOTPSlot index={12} />
+                          <InputOTPSlot index={13} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                      {fieldState.error && (
+                        <p className="text-sm text-destructive">{fieldState.error.message}</p>
+                      )}
+                    </div>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>

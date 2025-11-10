@@ -23,6 +23,13 @@ import { useToast } from "@/hooks/use-toast"
 import { artisansApiV2 } from "@/lib/supabase-api-v2"
 import { cn } from "@/lib/utils"
 import type { ModalDisplayMode } from "@/types/modal-display"
+import { REGEXP_ONLY_DIGITS } from "input-otp"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
 
 type NewArtisanFormValues = {
   prenom: string
@@ -109,7 +116,7 @@ export function NewArtisanModalContent({ mode, onClose, onCycleMode }: Props) {
     )?.id || "";
   }, [referenceData]);
 
-  const { control, register, handleSubmit, reset } = useForm<NewArtisanFormValues>({
+  const { control, register, handleSubmit, reset, formState: { errors } } = useForm<NewArtisanFormValues>({
     defaultValues: {
       ...buildDefaultFormValues(),
       statut_id: defaultCandidatStatusId,
@@ -367,17 +374,67 @@ export function NewArtisanModalContent({ mode, onClose, onCycleMode }: Props) {
                     <CardContent className="space-y-4">
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                          <Label htmlFor="siret">SIRET</Label>
-                          <Input id="siret" placeholder="000 000 000 00000" {...register("siret")} />
-                        </div>
-                        <div className="space-y-2">
                           <Label htmlFor="statut_juridique">Statut juridique</Label>
                           <Input id="statut_juridique" placeholder="SARL, SAS..." {...register("statut_juridique")} />
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="numero_associe">Numéro associé</Label>
+                          <Input id="numero_associe" placeholder="Code interne" {...register("numero_associe")} />
+                        </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="numero_associe">Numéro associé</Label>
-                        <Input id="numero_associe" placeholder="Code interne" {...register("numero_associe")} />
+                        <Label htmlFor="siret">Siret</Label>
+                        <Controller
+                          name="siret"
+                          control={control}
+                          rules={{
+                            validate: (value) => {
+                              const siret = value?.trim() || ""
+                              if (siret.length === 0) return true // Vide est valide
+                              if (siret.length === 14 && /^\d+$/.test(siret)) return true // 14 chiffres est valide
+                              return "Le SIRET doit être soit vide, soit contenir exactement 14 chiffres"
+                            },
+                          }}
+                          render={({ field, fieldState }) => (
+                            <div className="space-y-1">
+                              <InputOTP
+                                maxLength={14}
+                                pattern={REGEXP_ONLY_DIGITS}
+                                value={field.value}
+                                onChange={(value) => field.onChange(value)}
+                              >
+                                <InputOTPGroup>
+                                  <InputOTPSlot index={0} />
+                                  <InputOTPSlot index={1} />
+                                  <InputOTPSlot index={2} />
+                                </InputOTPGroup>
+                                <InputOTPSeparator />
+                                <InputOTPGroup>
+                                  <InputOTPSlot index={3} />
+                                  <InputOTPSlot index={4} />
+                                  <InputOTPSlot index={5} />
+                                </InputOTPGroup>
+                                <InputOTPSeparator />
+                                <InputOTPGroup>
+                                  <InputOTPSlot index={6} />
+                                  <InputOTPSlot index={7} />
+                                  <InputOTPSlot index={8} />
+                                </InputOTPGroup>
+                                <InputOTPSeparator />
+                                <InputOTPGroup>
+                                  <InputOTPSlot index={9} />
+                                  <InputOTPSlot index={10} />
+                                  <InputOTPSlot index={11} />
+                                  <InputOTPSlot index={12} />
+                                  <InputOTPSlot index={13} />
+                                </InputOTPGroup>
+                              </InputOTP>
+                              {fieldState.error && (
+                                <p className="text-sm text-destructive">{fieldState.error.message}</p>
+                              )}
+                            </div>
+                          )}
+                        />
                       </div>
                     </CardContent>
                   </Card>
