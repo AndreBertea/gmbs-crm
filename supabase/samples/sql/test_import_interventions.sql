@@ -32,7 +32,7 @@ SELECT
     SUM(CASE WHEN ic.cost_type = 'sst' THEN ic.amount ELSE 0 END) as cout_sst_total,
     SUM(CASE WHEN ic.cost_type = 'materiel' THEN ic.amount ELSE 0 END) as cout_materiel_total,
     SUM(CASE WHEN ic.cost_type = 'intervention' THEN ic.amount ELSE 0 END) as cout_intervention_total,
-    SUM(CASE WHEN ic.cost_type = 'total' THEN ic.amount ELSE 0 END) as cout_total,
+    SUM(CASE WHEN ic.cost_type = 'marge' THEN ic.amount ELSE 0 END) as cout_total,
     SUM(ic.amount) as cout_global
 FROM interventions i
 LEFT JOIN intervention_costs ic ON i.id = ic.intervention_id

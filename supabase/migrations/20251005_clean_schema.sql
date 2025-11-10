@@ -313,7 +313,7 @@ CREATE TABLE IF NOT EXISTS public.intervention_artisans (
 CREATE TABLE IF NOT EXISTS public.intervention_costs (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   intervention_id uuid REFERENCES public.interventions(id) ON DELETE CASCADE,
-  cost_type text NOT NULL CHECK (cost_type IN ('sst','materiel','intervention','total')),
+  cost_type text NOT NULL CHECK (cost_type IN ('sst','materiel','intervention','marge')),
   label text,
   amount numeric(12,2) NOT NULL,
   currency text DEFAULT 'EUR',

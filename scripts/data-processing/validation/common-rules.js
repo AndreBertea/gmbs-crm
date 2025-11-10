@@ -186,7 +186,7 @@ class CommonValidationRules {
    * @returns {Object} - Résultat de validation
    */
   static validateCostType(costType) {
-    const validTypes = ['sst', 'materiel', 'intervention', 'total'];
+    const validTypes = ['sst', 'materiel', 'intervention', 'marge'];
     const isValid = validTypes.includes(costType);
     
     return {

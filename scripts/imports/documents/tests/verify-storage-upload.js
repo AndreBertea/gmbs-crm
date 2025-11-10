@@ -388,7 +388,7 @@ async function main() {
 // Afficher l'aide
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
   console.log(`
-Usage: npx tsx scripts/imports/documents/tests/verify-storage-upload.js [options]
+Usage: npx tsx scripts/imports/documents/verify-storage-upload.js [options]
 
 Options:
   --artisan --id=<id>     Vérifier les documents d'un artisan spécifique
@@ -398,16 +398,16 @@ Options:
 
 Exemples:
   # Vérifier 10 documents récents
-  npx tsx scripts/imports/documents/tests/verify-storage-upload.js
+  npx tsx scripts/imports/documents/verify-storage-upload.js
 
   # Vérifier 50 documents récents
-  npx tsx scripts/imports/documents/tests/verify-storage-upload.js --sample=50
+  npx tsx scripts/imports/documents/verify-storage-upload.js --sample=50
 
   # Vérifier les documents d'une intervention spécifique
-  npx tsx scripts/imports/documents/tests/verify-storage-upload.js --intervention --id=<intervention_id>
+  npx tsx scripts/imports/documents/verify-storage-upload.js --intervention --id=<intervention_id>
 
   # Vérifier les documents d'un artisan spécifique
-  npx tsx scripts/imports/documents/tests/verify-storage-upload.js --artisan --id=<artisan_id>
+  npx tsx scripts/imports/documents/verify-storage-upload.js --artisan --id=<artisan_id>
 `);
   process.exit(0);
 }

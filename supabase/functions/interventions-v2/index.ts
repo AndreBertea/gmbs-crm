@@ -98,7 +98,7 @@ interface CreateAttachmentRequest {
 
 interface CreateCostRequest {
   intervention_id: string;
-  cost_type: 'sst' | 'materiel' | 'intervention' | 'total';
+  cost_type: 'sst' | 'materiel' | 'intervention' | 'marge';
   label?: string;
   amount: number;
   currency?: string;

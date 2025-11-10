@@ -37,7 +37,56 @@ class GoogleSheetsConfig {
       return;
     }
 
+    // Afficher un message d'erreur détaillé
+    this.displayDiagnosticInfo();
+  }
+
+  /**
+   * Affiche des informations de diagnostic pour aider à résoudre les problèmes de configuration
+   */
+  displayDiagnosticInfo() {
     console.warn('⚠️  Aucune configuration Google Sheets trouvée');
+    console.log('\n📋 Diagnostic de configuration:');
+    
+    // Vérifier les variables d'environnement
+    const credentialsPath = process.env.GOOGLE_CREDENTIALS_PATH;
+    const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
+    const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+    const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
+    const altSpreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+    
+    console.log('\n🔍 Variables d\'environnement détectées:');
+    console.log(`  GOOGLE_CREDENTIALS_PATH: ${credentialsPath || '❌ Non définie'}`);
+    if (credentialsPath) {
+      console.log(`    Fichier existe: ${fs.existsSync(credentialsPath) ? '✅ Oui' : '❌ Non'}`);
+    }
+    console.log(`  GOOGLE_SHEETS_ID: ${spreadsheetId || '❌ Non définie'}`);
+    console.log(`  GOOGLE_SHEETS_CLIENT_EMAIL: ${clientEmail || '❌ Non définie'}`);
+    console.log(`  GOOGLE_SHEETS_PRIVATE_KEY: ${privateKey ? '✅ Définie (' + privateKey.length + ' caractères)' : '❌ Non définie'}`);
+    console.log(`  GOOGLE_SHEETS_SPREADSHEET_ID: ${altSpreadsheetId || '❌ Non définie'}`);
+    
+    // Vérifier les fichiers
+    const envLocalPath = path.join(process.cwd(), '.env.local');
+    const credentialsJsonPath = './credentials.json';
+    
+    console.log('\n📁 Fichiers de configuration:');
+    console.log(`  .env.local: ${fs.existsSync(envLocalPath) ? '✅ Existe' : '❌ N\'existe pas'}`);
+    console.log(`  credentials.json: ${fs.existsSync(credentialsJsonPath) ? '✅ Existe' : '❌ N\'existe pas'}`);
+    
+    console.log('\n💡 Solutions possibles:');
+    console.log('  1. Définir GOOGLE_CREDENTIALS_PATH pointant vers un fichier credentials.json valide');
+    console.log('  2. OU définir GOOGLE_SHEETS_CLIENT_EMAIL et GOOGLE_SHEETS_PRIVATE_KEY');
+    console.log('  3. Vérifier que le fichier .env.local contient les bonnes variables');
+    console.log('  4. Voir env.example pour un exemple de configuration');
+  }
+
+  /**
+   * Recharge la configuration (utile après le chargement de dotenv)
+   */
+  reloadConfig() {
+    this.credentials = null;
+    this.spreadsheetId = null;
+    this.loadConfig();
   }
 
   /**

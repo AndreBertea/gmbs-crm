@@ -1,7 +1,14 @@
-- prendre des tests et pouvoir checker l'import des données dand la base de données
-- mettre en place les validations des champs numériques surtout pour les coûts
-- 
 
+- demander GMBS accès drive
+
+
+npx tsx scripts/geocode-artisans.ts à ajouter dans le package.json
 
 - checker les commentaires pour intervention et artisan
-- split the .sql file into different one, one for crm data only, one for subscription and payment, one for 
+- refacto migrations make one clean schema business operations, one for user
+- créer requête table dashboard (même faire un jet pour une première page)
+- modifier le script seed_mockup comme ça lorsque tu lances supabase db reset toutes les données s'importent depuis le csv
+- demander accès en tant que viewer à notre adresse bot
+- 
+
+- OCR pour documents

@@ -90,7 +90,7 @@ BEGIN
     costs_summary AS (
         SELECT 
             intervention_id,
-            SUM(CASE WHEN cost_type = 'total' THEN amount ELSE 0 END) as cout_total,
+            SUM(CASE WHEN cost_type = 'marge' THEN amount ELSE 0 END) as cout_total,
             SUM(CASE WHEN cost_type = 'sst' THEN amount ELSE 0 END) as cout_sst,
             SUM(CASE WHEN cost_type = 'materiel' THEN amount ELSE 0 END) as cout_materiel,
             SUM(CASE WHEN cost_type = 'intervention' THEN amount ELSE 0 END) as cout_intervention

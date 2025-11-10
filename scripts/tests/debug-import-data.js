@@ -94,7 +94,7 @@ async function main() {
             if (mapped.costs.sst !== null) console.log(`     - SST: ${mapped.costs.sst}€`);
             if (mapped.costs.materiel !== null) console.log(`     - Matériel: ${mapped.costs.materiel}€`);
             if (mapped.costs.intervention !== null) console.log(`     - Intervention: ${mapped.costs.intervention}€`);
-            if (mapped.costs.total !== null) console.log(`     - Total: ${mapped.costs.total}€`);
+            if (mapped.costs.total !== null) console.log(`     - Marge: ${mapped.costs.total}€`);
             if (mapped.costs.numeroSST) console.log(`     - Numéro SST: ${mapped.costs.numeroSST}`);
           } else {
             console.log(`  ❌ Aucun coût (tous null)`);

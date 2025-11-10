@@ -112,15 +112,16 @@ Exemples:
   // Vérifier les fichiers existants
   const existingFiles = checkExistingFiles();
   
-  // Détecter automatiquement si on peut utiliser les fichiers existants
-  let useInsertOnly = false;
+  // Détecter automatiquement si on peut utiliser les fichiers existants (flags séparés pour chaque type)
+  let useInsertOnlyArtisans = false;
+  let useInsertOnlyInterventions = false;
   
   if (!forceExtraction) {
     // Pour les artisans : vérifier si on a les matches complets
     if (!interventionsOnly && existingFiles.artisanMatches) {
       console.log('📋 Fichier de matching artisans trouvé:', existingFiles.artisanMatches);
       console.log('   → Utilisation du mode INSERT ONLY (plus rapide)\n');
-      useInsertOnly = true;
+      useInsertOnlyArtisans = true;
     } else if (!interventionsOnly && existingFiles.artisanSubfolders) {
       console.log('📋 Fichier d\'extraction artisans trouvé:', existingFiles.artisanSubfolders);
       console.log('   → Le script utilisera automatiquement ce fichier (détection auto)\n');
@@ -130,13 +131,16 @@ Exemples:
     if (!artisansOnly && existingFiles.interventionMatches) {
       console.log('📋 Fichier de matching interventions trouvé:', existingFiles.interventionMatches);
       console.log('   → Utilisation du mode INSERT ONLY (plus rapide)\n');
-      useInsertOnly = true;
+      useInsertOnlyInterventions = true;
     } else if (!artisansOnly && existingFiles.interventionFolders) {
       console.log('📋 Fichier d\'extraction interventions trouvé:', existingFiles.interventionFolders);
       console.log('   → Le script utilisera automatiquement ce fichier (détection auto)\n');
     }
     
-    if (!useInsertOnly && !existingFiles.artisanSubfolders && !existingFiles.interventionFolders) {
+    // Message si aucun fichier de résultats trouvé
+    const hasArtisanFiles = existingFiles.artisanMatches || existingFiles.artisanSubfolders;
+    const hasInterventionFiles = existingFiles.interventionMatches || existingFiles.interventionFolders;
+    if (!hasArtisanFiles && !hasInterventionFiles) {
       console.log('📋 Aucun fichier de résultats trouvé');
       console.log('   → Extraction complète depuis Google Drive\n');
     }
@@ -175,11 +179,11 @@ Exemples:
     interventionArgs.push('--skip-insert');
   }
   
-  // Mode INSERT ONLY si les fichiers de matching existent
-  if (useInsertOnly && !interventionsOnly && existingFiles.artisanMatches) {
+  // Mode INSERT ONLY si les fichiers de matching existent (utiliser les flags séparés)
+  if (useInsertOnlyArtisans && !interventionsOnly) {
     artisanArgs.push('--insert-only');
   }
-  if (useInsertOnly && !artisansOnly && existingFiles.interventionMatches) {
+  if (useInsertOnlyInterventions && !artisansOnly) {
     interventionArgs.push('--insert-only');
   }
   

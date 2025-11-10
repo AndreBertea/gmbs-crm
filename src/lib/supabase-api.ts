@@ -215,7 +215,7 @@ export interface Intervention {
 export interface InterventionCost {
   id: string;
   intervention_id: string;
-  cost_type: 'sst' | 'materiel' | 'intervention' | 'total';
+  cost_type: 'sst' | 'materiel' | 'intervention' | 'marge';
   label: string | null;
   amount: number;
   currency: string | null;

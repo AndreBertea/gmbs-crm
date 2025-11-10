@@ -37,60 +37,6 @@ function getSupabaseClientForNode() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
-function normalizeInterventionKindValue(kind: string): string {
-  if (!kind) return kind;
-
-  const trimmed = kind.trim();
-  if (!trimmed) return kind;
-
-  const lower = trimmed.toLowerCase();
-  const compact = lower.replace(/[_\s-]/g, '');
-
-  const needsClassification = [
-    'aclasser',
-    'aclassifier',
-    'àclasser',
-    'àclassifier',
-    'aclasse',
-    'àclasse'
-  ];
-
-  if (
-    needsClassification.includes(compact) ||
-    lower === 'a classer' ||
-    lower === 'a classifier' ||
-    lower === 'à classer' ||
-    lower === 'à classifier'
-  ) {
-    return 'a_classe';
-  }
-
-  const canonicalMap: Record<string, string> = {
-    facturegmbs: 'facturesGMBS',
-    facturesgmbs: 'facturesGMBS',
-    factureartisan: 'facturesArtisans',
-    facturesartisan: 'facturesArtisans',
-    facturemateriel: 'facturesMateriel',
-    facturesmateriel: 'facturesMateriel'
-  };
-  if (canonicalMap[compact]) {
-    return canonicalMap[compact];
-  }
-
-  const legacyToAutre = new Set([
-    'rapportintervention',
-    'plan',
-    'schema',
-    'intervention',
-    'cout'
-  ]);
-  if (legacyToAutre.has(compact)) {
-    return 'autre';
-  }
-
-  return trimmed;
-}
-
 export const documentsApi = {
   // Récupérer tous les documents
   async getAll(params?: DocumentQueryParams): Promise<PaginatedResponse<InterventionAttachment | ArtisanAttachment>> {
@@ -135,15 +81,12 @@ export const documentsApi = {
       const client = getSupabaseClientForNode();
       const tableName = data.entity_type === 'artisan' ? 'artisan_attachments' : 'intervention_attachments';
       const entityIdField = data.entity_type === 'artisan' ? 'artisan_id' : 'intervention_id';
-      const canonicalKind = data.entity_type === 'intervention'
-        ? normalizeInterventionKindValue(data.kind)
-        : data.kind;
       
       const { data: result, error } = await client
         .from(tableName)
         .insert([{
           [entityIdField]: data.entity_id,
-          kind: canonicalKind,
+          kind: data.kind,
           url: data.url,
           filename: data.filename || null,
           mime_type: data.mime_type || null,
@@ -201,9 +144,20 @@ export const documentsApi = {
       const extension = data.filename.split('.').pop() || 'bin';
       
       // Normaliser le kind pour les interventions (comme dans l'Edge Function)
-      const canonicalKind = data.entity_type === 'intervention'
-        ? normalizeInterventionKindValue(data.kind)
-        : data.kind;
+      let canonicalKind = data.kind;
+      if (data.entity_type === 'intervention') {
+        const trimmed = data.kind.trim();
+        const compact = trimmed.toLowerCase().replace(/[_\s-]/g, '');
+        if (compact === 'facturegmbs') {
+          canonicalKind = 'factureGMBS';
+        } else if (compact === 'factureartisan') {
+          canonicalKind = 'factureArtisan';
+        } else if (compact === 'facturemateriel') {
+          canonicalKind = 'factureMateriel';
+        } else {
+          canonicalKind = trimmed;
+        }
+      }
       
       const uniqueFilename = `${data.entity_type}_${data.entity_id}_${canonicalKind}_${timestamp}.${extension}`;
 
