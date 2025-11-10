@@ -3,7 +3,7 @@
 import React, { useMemo, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useMutation } from "@tanstack/react-query"
-import { ChevronRight, X } from "lucide-react"
+import { ChevronRight, X, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,6 +20,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ModeIcons } from "@/components/ui/mode-selector"
 import { useReferenceData } from "@/hooks/useReferenceData"
 import { useToast } from "@/hooks/use-toast"
+import { useSiretVerification } from "@/hooks/useSiretVerification"
+import { validateSiret } from "@/lib/siret-validation"
 import { artisansApiV2 } from "@/lib/supabase-api-v2"
 import { cn } from "@/lib/utils"
 import type { ModalDisplayMode } from "@/types/modal-display"
@@ -116,12 +118,14 @@ export function NewArtisanModalContent({ mode, onClose, onCycleMode }: Props) {
     )?.id || "";
   }, [referenceData]);
 
-  const { control, register, handleSubmit, reset, formState: { errors } } = useForm<NewArtisanFormValues>({
+  const { control, register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<NewArtisanFormValues>({
     defaultValues: {
       ...buildDefaultFormValues(),
       statut_id: defaultCandidatStatusId,
     },
   })
+
+  const { verifySiret, isLoading: isVerifyingSiret, isUnavailable } = useSiretVerification()
 
   const createArtisan = useMutation({
     mutationFn: (payload: ReturnType<typeof buildCreatePayload>) => artisansApiV2.create(payload),
@@ -197,6 +201,51 @@ export function NewArtisanModalContent({ mode, onClose, onCycleMode }: Props) {
   const handleSubmitClick = () => {
     if (formRef.current) {
       formRef.current.requestSubmit()
+    }
+  }
+
+  const handleSiretComplete = async (siret: string) => {
+    // Ne pas vérifier si service indisponible
+    if (isUnavailable) return
+
+    if (siret.length === 14) {
+      const result = await verifySiret(siret)
+      if (result) {
+        // Pré-remplir UNIQUEMENT les champs vides
+        if (result.raison_sociale && !watch("raison_sociale")) {
+          setValue("raison_sociale", result.raison_sociale)
+        }
+        if (result.nom && !watch("nom")) {
+          setValue("nom", result.nom)
+        }
+        if (result.prenom && !watch("prenom")) {
+          setValue("prenom", result.prenom)
+        }
+        if (result.statut_juridique && !watch("statut_juridique")) {
+          setValue("statut_juridique", result.statut_juridique)
+        }
+        // Ne JAMAIS toucher à l'email (API Sirene ne le fournit pas)
+
+        // Pré-remplir l'adresse si disponible et vide
+        if (result.adresse) {
+          if (!watch("adresse_siege_social")) {
+            const adresseComplete = [
+              result.adresse.numero,
+              result.adresse.type_voie,
+              result.adresse.voie,
+            ]
+              .filter(Boolean)
+              .join(" ")
+            setValue("adresse_siege_social", adresseComplete)
+          }
+          if (!watch("code_postal_siege_social")) {
+            setValue("code_postal_siege_social", result.adresse.code_postal)
+          }
+          if (!watch("ville_siege_social")) {
+            setValue("ville_siege_social", result.adresse.ville)
+          }
+        }
+      }
     }
   }
 
@@ -395,45 +444,113 @@ export function NewArtisanModalContent({ mode, onClose, onCycleMode }: Props) {
                               return "Le SIRET doit être soit vide, soit contenir exactement 14 chiffres"
                             },
                           }}
-                          render={({ field, fieldState }) => (
-                            <div className="space-y-1">
-                              <InputOTP
-                                maxLength={14}
-                                pattern={REGEXP_ONLY_DIGITS}
-                                value={field.value}
-                                onChange={(value) => field.onChange(value)}
-                              >
-                                <InputOTPGroup>
-                                  <InputOTPSlot index={0} />
-                                  <InputOTPSlot index={1} />
-                                  <InputOTPSlot index={2} />
-                                </InputOTPGroup>
-                                <InputOTPSeparator />
-                                <InputOTPGroup>
-                                  <InputOTPSlot index={3} />
-                                  <InputOTPSlot index={4} />
-                                  <InputOTPSlot index={5} />
-                                </InputOTPGroup>
-                                <InputOTPSeparator />
-                                <InputOTPGroup>
-                                  <InputOTPSlot index={6} />
-                                  <InputOTPSlot index={7} />
-                                  <InputOTPSlot index={8} />
-                                </InputOTPGroup>
-                                <InputOTPSeparator />
-                                <InputOTPGroup>
-                                  <InputOTPSlot index={9} />
-                                  <InputOTPSlot index={10} />
-                                  <InputOTPSlot index={11} />
-                                  <InputOTPSlot index={12} />
-                                  <InputOTPSlot index={13} />
-                                </InputOTPGroup>
-                              </InputOTP>
-                              {fieldState.error && (
-                                <p className="text-sm text-destructive">{fieldState.error.message}</p>
-                              )}
-                            </div>
-                          )}
+                          render={({ field, fieldState }) => {
+                            const siretValue = field.value?.replace(/\s/g, "") || ""
+                            const siretValidation = validateSiret(siretValue)
+                            const isSiretValid = siretValidation.isValid && siretValue.length === 14
+                            const canVerify = isSiretValid && !isVerifyingSiret && !isUnavailable
+                            const showValidationFeedback = siretValue.length > 0
+
+                            return (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 relative">
+                                    <InputOTP
+                                      maxLength={14}
+                                      pattern={REGEXP_ONLY_DIGITS}
+                                      value={field.value}
+                                      onChange={(value) => field.onChange(value)}
+                                    >
+                                      <InputOTPGroup>
+                                        <InputOTPSlot index={0} />
+                                        <InputOTPSlot index={1} />
+                                        <InputOTPSlot index={2} />
+                                      </InputOTPGroup>
+                                      <InputOTPSeparator />
+                                      <InputOTPGroup>
+                                        <InputOTPSlot index={3} />
+                                        <InputOTPSlot index={4} />
+                                        <InputOTPSlot index={5} />
+                                      </InputOTPGroup>
+                                      <InputOTPSeparator />
+                                      <InputOTPGroup>
+                                        <InputOTPSlot index={6} />
+                                        <InputOTPSlot index={7} />
+                                        <InputOTPSlot index={8} />
+                                      </InputOTPGroup>
+                                      <InputOTPSeparator />
+                                      <InputOTPGroup>
+                                        <InputOTPSlot index={9} />
+                                        <InputOTPSlot index={10} />
+                                        <InputOTPSlot index={11} />
+                                        <InputOTPSlot index={12} />
+                                        <InputOTPSlot index={13} />
+                                      </InputOTPGroup>
+                                    </InputOTP>
+                                    {showValidationFeedback && (
+                                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                        {isSiretValid ? (
+                                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        ) : siretValue.length === 14 ? (
+                                          <AlertCircle className="h-4 w-4 text-destructive" />
+                                        ) : null}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleSiretComplete(siretValue)}
+                                    disabled={!canVerify}
+                                    className="shrink-0"
+                                  >
+                                    {isVerifyingSiret ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Vérification...
+                                      </>
+                                    ) : (
+                                      "Vérifier"
+                                    )}
+                                  </Button>
+                                </div>
+                                {fieldState.error && (
+                                  <p className="text-sm text-destructive">{fieldState.error.message}</p>
+                                )}
+                                {showValidationFeedback && !fieldState.error && (
+                                  <p
+                                    className={cn(
+                                      "text-sm",
+                                      isSiretValid
+                                        ? "text-green-600"
+                                        : siretValidation.errorMessage
+                                          ? "text-destructive"
+                                          : "text-muted-foreground"
+                                    )}
+                                  >
+                                    {isSiretValid ? (
+                                      "SIRET valide"
+                                    ) : siretValidation.errorMessage ? (
+                                      siretValidation.errorMessage
+                                    ) : siretValue.length > 0 && siretValue.length < 14 ? (
+                                      `Saisissez ${14 - siretValue.length} chiffre${14 - siretValue.length > 1 ? "s" : ""} supplémentaire${14 - siretValue.length > 1 ? "s" : ""}`
+                                    ) : null}
+                                  </p>
+                                )}
+                                {isUnavailable && (
+                                  <div className="space-y-1">
+                                    <p className="text-sm text-destructive font-medium">
+                                      Service de vérification indisponible
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      Vérifiez que la variable d'environnement INSEE_API_KEY (clé API simple) OU INSEE_CLIENT_ID et INSEE_CLIENT_SECRET (OAuth2) sont configurées dans .env.local et redémarrez le serveur.
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }}
                         />
                       </div>
                     </CardContent>
