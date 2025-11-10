@@ -82,7 +82,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Classement des gestionnaires</CardTitle>
+          <CardTitle>Podium</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[400px]">
@@ -97,7 +97,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Classement des gestionnaires</CardTitle>
+          <CardTitle>Podium</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-destructive">{error}</p>
@@ -110,7 +110,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Classement des gestionnaires</CardTitle>
+          <CardTitle>Podium</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -122,86 +122,125 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
   }
 
   const top3 = ranking.rankings.slice(0, 3)
+  // Pour le bottom 3, on prend les 3 derniers et on les inverse pour avoir l'ordre croissant
   const bottom3 = ranking.rankings.length >= 3 
-    ? ranking.rankings.slice(-3) // Les 3 derniers dans l'ordre croissant (8, 9, 10)
+    ? ranking.rankings.slice(-3) // Les 3 derniers dans l'ordre croissant
     : []
 
-  const renderRankingItem = (item: typeof ranking.rankings[0], isTop: boolean) => {
-    const marginColor = item.total_margin >= 0 ? "text-green-600" : "text-red-600"
+  // Emojis pour le top 3
+  const top3Emojis = ["🥇", "🥈", "🥉"]
+  const top3ExtraEmojis = ["🔥", "👑", "💪"]
+  
+  // Emojis pour le bottom 3 selon la position relative dans le tableau
+  const totalRankings = ranking.rankings.length
+  const getBottomEmoji = (rank: number) => {
+    // Les 3 derniers rangs sont : totalRankings - 2, totalRankings - 1, totalRankings
+    const lastRank = totalRankings
+    const secondLastRank = totalRankings - 1
+    const thirdLastRank = totalRankings - 2
     
+    if (rank === thirdLastRank) return "🏌️‍♂️" // Avant-dernier avant-dernier
+    if (rank === secondLastRank) return "🕯️" // Avant-dernier
+    if (rank === lastRank) return "‼️" // Dernier
+    return "📊" // Fallback
+  }
+
+  const renderRankingItem = (item: typeof ranking.rankings[0], isTop: boolean, index: number) => {
+    const marginColor = item.total_margin >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+    const emoji = isTop 
+      ? (index < 3 ? top3Emojis[index] : top3ExtraEmojis[(index - 3) % 3])
+      : getBottomEmoji(item.rank)
+    
+    // Définir les couleurs pour les top 3 : or, argent, bronze
+    let avatarBorderColor = ""
+    let bgGradient = ""
+    
+    if (isTop && item.rank <= 3) {
+      if (item.rank === 1) {
+        // Or pour le premier
+        avatarBorderColor = "#fbbf24" // amber-400
+        bgGradient = "bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20"
+      } else if (item.rank === 2) {
+        // Argent pour le deuxième
+        avatarBorderColor = "#94a3b8" // slate-400
+        bgGradient = "bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-950/30 dark:to-slate-900/20"
+      } else if (item.rank === 3) {
+        // Bronze pour le troisième
+        avatarBorderColor = "#cd7f32" // bronze
+        bgGradient = "bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20"
+      }
+    } else {
+      // Pour les autres, fond neutre
+      bgGradient = "bg-muted/30"
+      avatarBorderColor = "hsl(var(--border))"
+    }
+
     return (
       <div
         key={item.user_id}
-        className={`flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-          isTop 
-            ? "bg-green-50 border-green-200 hover:bg-green-100" 
-            : "bg-red-50 border-red-200 hover:bg-red-100"
-        }`}
+        className={`p-2 rounded-lg ${bgGradient} transition-all duration-200 hover:shadow-sm`}
       >
-        <div className="flex items-center gap-3 flex-1">
-          <div className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold ${
-            isTop ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}>
-            {item.rank}
-          </div>
+        {/* Première ligne : Avatar Code Marge Emoji */}
+        <div className="flex items-center gap-2">
+          {/* Avatar avec bordure or/argent/bronze */}
           <Avatar
-            className="h-10 w-10 border-2"
+            className="h-10 w-10 border-2 flex-shrink-0"
             style={{ 
               backgroundColor: item.user_color || undefined,
-              borderColor: isTop ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)"
+              borderColor: avatarBorderColor,
+              borderWidth: (isTop && item.rank <= 3) ? "3px" : "2px"
             }}
           >
-            <AvatarFallback className="text-xs font-semibold">
+            <AvatarFallback className="text-xs font-semibold text-foreground">
               {getInitials(item.user_name)}
             </AvatarFallback>
           </Avatar>
+          
+          {/* Code du gestionnaire */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">{item.user_name}</p>
-            {item.user_code && (
-              <p className="text-xs text-muted-foreground">{item.user_code}</p>
+            {item.user_code ? (
+              <p className="text-sm font-medium truncate text-foreground">{item.user_code}</p>
+            ) : (
+              <p className="text-sm font-medium truncate text-foreground">{item.user_name}</p>
             )}
           </div>
-        </div>
-        <div className="text-right">
-          <div className="flex items-center gap-1 justify-end">
-            {isTop ? (
-              <TrendingUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-600" />
-            )}
-            <p className={`text-base font-bold ${marginColor}`}>
+          
+          {/* Marge et Emoji à droite */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <p className={`text-sm font-bold ${marginColor} whitespace-nowrap`}>
               {formatCurrency(item.total_margin)}
             </p>
+            <span className="text-lg">{emoji}</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {item.total_interventions} intervention{item.total_interventions > 1 ? "s" : ""}
-          </p>
+        </div>
+        
+        {/* Deuxième ligne : Nb intervention */}
+        <div className="mt-1 ml-12 text-xs text-muted-foreground">
+          {item.total_interventions} intervention{item.total_interventions > 1 ? "s" : ""}
         </div>
       </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Classement des gestionnaires</CardTitle>
-        {ranking.period?.start_date && ranking.period?.end_date && (
-          <p className="text-sm text-muted-foreground">
-            Période: {new Date(ranking.period.start_date).toLocaleDateString("fr-FR")} -{" "}
-            {new Date(ranking.period.end_date).toLocaleDateString("fr-FR")}
-          </p>
-        )}
+    <Card className="shadow-lg">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl font-bold">Podium</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         {/* Top 3 */}
         {top3.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              <h3 className="text-sm font-semibold text-green-700">Top 3 - Meilleurs gestionnaires</h3>
+              <span className="text-lg">🏆</span>
+              <h3 className="text-sm font-semibold">Top 3</h3>
             </div>
             <div className="space-y-2">
-              {top3.map((item) => renderRankingItem(item, true))}
+              {top3.map((item, index) => (
+                <div key={item.user_id} className="relative">
+                  {renderRankingItem(item, true, index)}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -210,11 +249,15 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
         {bottom3.length > 0 && ranking.rankings.length > 3 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <TrendingDown className="h-5 w-5 text-red-600" />
-              <h3 className="text-sm font-semibold text-red-700">Bottom 3 - À améliorer</h3>
+              <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <h3 className="text-sm font-semibold">Bottom 3</h3>
             </div>
             <div className="space-y-2">
-              {bottom3.map((item) => renderRankingItem(item, false))}
+              {bottom3.map((item, index) => (
+                <div key={item.user_id} className="relative">
+                  {renderRankingItem(item, false, index)}
+                </div>
+              ))}
             </div>
           </div>
         )}

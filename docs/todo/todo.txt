@@ -1,14 +1,21 @@
 
-- demander GMBS accès drive
+- dans la page artisan pouvoir combiner plusieurs filtres pour le statut
+        synchro à faire avec DD
 
+- implémenter les logiques des interventions CHECK dans la page DashBoard
+
+    CHECK = due date dépassé + STATUT C {ENCOURS, VISITE TECHNIQUE}
+
+
+- gérer les sécurités paramètres pour gestionnaire classique (pas de team)
+    team seulement pour admin
+
+- le menu prend encore un peu trop de place
 
 npx tsx scripts/geocode-artisans.ts à ajouter dans le package.json
 
 - checker les commentaires pour intervention et artisan
 - refacto migrations make one clean schema business operations, one for user
-- créer requête table dashboard (même faire un jet pour une première page)
-- modifier le script seed_mockup comme ça lorsque tu lances supabase db reset toutes les données s'importent depuis le csv
-- demander accès en tant que viewer à notre adresse bot
-- 
+- refacto seed_mockup bien avoir des fichiers clairs
 
 - OCR pour documents

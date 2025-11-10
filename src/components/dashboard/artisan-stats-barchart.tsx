@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { artisansApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
 import type { ArtisanStatsByStatus } from "@/lib/api/v2"
-import { Loader2 } from "lucide-react"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
+import { Loader2, FileText, Plus } from "lucide-react"
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface ArtisanStatsBarChartProps {
   period?: {
@@ -20,6 +22,7 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const router = useRouter()
 
   // Charger l'utilisateur actuel
   useEffect(() => {
@@ -116,22 +119,22 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
     }
   }, [userId, period?.startDate, period?.endDate])
 
-  // Préparer les données pour le graphique
-  const chartData = stats?.by_status_label
+  // Préparer les données pour la liste (statuts avec nombre > 0)
+  const listItems = stats?.by_status_label
     ? Object.entries(stats.by_status_label)
         .map(([label, count]) => ({
-          name: label,
-          value: count,
+          label,
+          count,
         }))
-        .filter((item) => item.value > 0)
-        .sort((a, b) => b.value - a.value) // Trier par valeur décroissante
+        .filter((item) => item.count > 0)
+        .sort((a, b) => b.count - a.count) // Trier par nombre décroissant
     : []
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Artisans par statut</CardTitle>
+          <CardTitle>Mes Artisans</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[350px]">
@@ -146,7 +149,7 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Artisans par statut</CardTitle>
+          <CardTitle>Mes Artisans</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-destructive">{error}</p>
@@ -159,7 +162,7 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Artisans par statut</CardTitle>
+          <CardTitle>Mes Artisans</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -170,11 +173,13 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
     )
   }
 
-  if (chartData.length === 0) {
+  const hasData = listItems.length > 0 || (stats?.dossiers_a_completer ?? 0) > 0
+
+  if (!hasData) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Artisans par statut</CardTitle>
+          <CardTitle>Mes Artisans</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -186,54 +191,59 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Artisans par statut</CardTitle>
-        {stats?.period?.start_date && stats?.period?.end_date ? (
-          <p className="text-sm text-muted-foreground">
-            Période: {new Date(stats.period.start_date).toLocaleDateString("fr-FR")} -{" "}
-            {new Date(stats.period.end_date).toLocaleDateString("fr-FR")} • Total: {stats?.total || 0} artisans actifs
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Total: {stats?.total || 0} artisans actifs
-          </p>
-        )}
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
-          >
-            <XAxis type="number" stroke="#888888" fontSize={12} />
-            <YAxis
-              type="category"
-              dataKey="name"
-              stroke="#888888"
-              fontSize={12}
-              width={90}
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "6px",
-              }}
-            />
-            <Bar
-              dataKey="value"
-              fill="hsl(var(--primary))"
-              radius={[0, 4, 4, 0]}
-              label={{ position: "right", fill: "#888888", fontSize: 12 }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <Card>
+          <CardHeader>
+            <CardTitle>Mes Artisans</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {/* Liste des statuts */}
+              {listItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                >
+                  <span className="text-sm font-medium">{item.label}</span>
+                  <span className="text-sm font-semibold text-muted-foreground">{item.count}</span>
+                </div>
+              ))}
+
+              {/* Ligne pour les dossiers à compléter */}
+              {(stats?.dossiers_a_completer ?? 0) > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    // Stocker l'intention de filtre dans sessionStorage
+                    sessionStorage.setItem('pending-artisan-filter', JSON.stringify({
+                      viewId: "ma-liste-artisans", // Activer la vue "Ma liste artisans"
+                      statusFilter: "Potentiel" // Activer le filtre de statut "Potentiel"
+                    }))
+                    // Naviguer vers la page artisans
+                    router.push("/artisans")
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-lg border bg-amber-50 border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-900">Dossiers à compléter</span>
+                  </div>
+                  <span className="text-sm font-semibold text-amber-700">{stats.dossiers_a_completer}</span>
+                </button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem asChild>
+          <Link href="/artisans/new" className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Nouveau Artisan
+          </Link>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
-

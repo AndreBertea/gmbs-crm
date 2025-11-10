@@ -159,7 +159,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Actions</CardTitle>
+          <CardTitle>Statistiques</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px]">
@@ -174,7 +174,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Actions</CardTitle>
+          <CardTitle>Statistiques</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-destructive">{error}</p>
@@ -187,7 +187,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Actions</CardTitle>
+          <CardTitle>Statistiques</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -203,7 +203,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Actions</CardTitle>
+            <CardTitle>Statistiques</CardTitle>
             {!externalPeriod && (
               <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
                 <SelectTrigger className="w-[180px]">
@@ -265,7 +265,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Actions de la semaine</CardTitle>
+              <CardTitle>Statistiques de la semaine</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Semaine du {formatDate(weekStats.week_start)} au {formatDate(weekStats.week_end)}
               </p>
@@ -336,7 +336,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Actions du mois</CardTitle>
+              <CardTitle>Statistiques du mois</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {monthName.charAt(0).toUpperCase() + monthName.slice(1)} {monthStats.year}
               </p>
@@ -409,7 +409,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Actions de l'année</CardTitle>
+              <CardTitle>Statistiques de l'année</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Année {yearStats.year}
               </p>

@@ -546,6 +546,37 @@ INSERT INTO public.interventions (
    'Installation verrou haute sécurité.', 'Pose verrou additionnel porte entrée.', NULL, 'Devis détaillé envoyé.',
    '97 Avenue de la Resistance', '83000', 'TOULON', 43.118889, 5.931667,
    true, NOW(), NOW()
+  ),
+  -- Interventions avec statut CHECK (due_date dépassée + INTER_EN_COURS ou VISITE_TECHNIQUE)
+  (uuid_generate_v4(), 'INT-2025-051', (SELECT id FROM public.agencies WHERE code = 'OQORO'), (SELECT id FROM public.tenants WHERE external_ref = 'TEN-2025-001'), (SELECT id FROM public.owner WHERE external_ref = 'OWN-2025-001'), (SELECT id FROM public.users WHERE username = 'olivier'), (SELECT id FROM public.intervention_statuses WHERE code = 'INTER_EN_COURS'), (SELECT id FROM public.metiers WHERE code = 'PLOMBERIE'),
+   '2024-12-15 09:00:00+01', NULL, '2024-12-15 10:00:00+01', '2024-12-20 17:00:00+01',
+   'Réparation fuite d''eau urgente - due date dépassée.', 'Vérifier et réparer la fuite dans la salle de bain.', NULL, 'Intervention en retard, nécessite un suivi.',
+   '12 Rue de Rivoli', '75001', 'PARIS', 48.856614, 2.352221,
+   true, NOW(), NOW()
+  ),
+  (uuid_generate_v4(), 'INT-2025-052', (SELECT id FROM public.agencies WHERE code = 'IMODIRECT'), (SELECT id FROM public.tenants WHERE external_ref = 'TEN-2025-002'), (SELECT id FROM public.owner WHERE external_ref = 'OWN-2025-002'), (SELECT id FROM public.users WHERE username = 'badr'), (SELECT id FROM public.intervention_statuses WHERE code = 'VISITE_TECHNIQUE'), (SELECT id FROM public.metiers WHERE code = 'ELECTRICITE'),
+   '2024-12-10 14:00:00+01', NULL, '2024-12-10 15:00:00+01', '2024-12-15 17:00:00+01',
+   'Visite technique tableau électrique - due date dépassée.', 'Diagnostic complet du tableau électrique pour mise aux normes.', NULL, 'Visite technique en retard, client à recontacter.',
+   '25 Boulevard des Belges', '69006', 'LYON', 45.764043, 4.835659,
+   true, NOW(), NOW()
+  ),
+  (uuid_generate_v4(), 'INT-2025-053', (SELECT id FROM public.agencies WHERE code = 'FLATLOOKER'), (SELECT id FROM public.tenants WHERE external_ref = 'TEN-2025-003'), (SELECT id FROM public.owner WHERE external_ref = 'OWN-2025-003'), (SELECT id FROM public.users WHERE username = 'andrea'), (SELECT id FROM public.intervention_statuses WHERE code = 'INTER_EN_COURS'), (SELECT id FROM public.metiers WHERE code = 'PEINTURE'),
+   '2024-12-05 08:30:00+01', NULL, '2024-12-05 12:00:00+01', '2024-12-10 17:00:00+01',
+   'Peinture appartement - due date dépassée.', 'Rénovation complète peinture des murs et plafonds.', 'Aider au masquage des meubles.', 'Travaux en cours mais en retard.',
+   '8 Rue de la République', '13001', 'MARSEILLE', 43.296482, 5.369780,
+   true, NOW(), NOW()
+  ),
+  (uuid_generate_v4(), 'INT-2025-054', (SELECT id FROM public.agencies WHERE code = 'AFEDIM'), (SELECT id FROM public.tenants WHERE external_ref = 'TEN-2025-004'), (SELECT id FROM public.owner WHERE external_ref = 'OWN-2025-004'), (SELECT id FROM public.users WHERE username = 'tom'), (SELECT id FROM public.intervention_statuses WHERE code = 'VISITE_TECHNIQUE'), (SELECT id FROM public.metiers WHERE code = 'CHAUFFAGE'),
+   '2024-12-01 10:00:00+01', NULL, '2024-12-01 12:00:00+01', '2024-12-05 17:00:00+01',
+   'Visite technique chaudière - due date dépassée.', 'Diagnostic chaudière en panne, plus de chauffage.', NULL, 'Urgence hivernale, visite technique en retard.',
+   '14 Rue des Roses', '59000', 'LILLE', 50.629250, 3.057256,
+   true, NOW(), NOW()
+  ),
+  (uuid_generate_v4(), 'INT-2025-055', (SELECT id FROM public.agencies WHERE code = 'HOMEPILOT'), (SELECT id FROM public.tenants WHERE external_ref = 'TEN-2025-005'), (SELECT id FROM public.owner WHERE external_ref = 'OWN-2025-005'), (SELECT id FROM public.users WHERE username = 'paul'), (SELECT id FROM public.intervention_statuses WHERE code = 'INTER_EN_COURS'), (SELECT id FROM public.metiers WHERE code = 'PLOMBERIE'),
+   '2024-11-25 08:00:00+01', NULL, '2024-11-25 10:00:00+01', '2024-11-30 17:00:00+01',
+   'Installation sanitaires - due date dépassée.', 'Remplacement WC et lavabo dans salle de bain.', 'Assister pour le démontage de l''ancien.', 'Intervention en cours mais très en retard.',
+   '7 Place de la Liberté', '33000', 'BORDEAUX', 44.837789, -0.579180,
+   true, NOW(), NOW()
   )
 ON CONFLICT (id_inter) DO NOTHING;
 
@@ -599,7 +630,13 @@ INSERT INTO public.intervention_artisans (
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-019'), (SELECT id FROM public.artisans WHERE email = 'francois.lacroix@example.com'), 'primary', true, NOW(), NOW()),
   
   (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-020'), (SELECT id FROM public.artisans WHERE email = 'francois.lacroix@example.com'), 'primary', true, NOW(), NOW()),
-  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-020'), (SELECT id FROM public.artisans WHERE email = 'laura.bertrand@example.com'), 'secondary', false, NOW(), NOW())
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-020'), (SELECT id FROM public.artisans WHERE email = 'laura.bertrand@example.com'), 'secondary', false, NOW(), NOW()),
+  -- Assignations pour les interventions CHECK
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-051'), (SELECT id FROM public.artisans WHERE email = 'luc.moreau@example.com'), 'primary', true, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-052'), (SELECT id FROM public.artisans WHERE email = 'sophie.lefevre@example.com'), 'primary', true, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-053'), (SELECT id FROM public.artisans WHERE email = 'claire.roux@example.com'), 'primary', true, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-054'), (SELECT id FROM public.artisans WHERE email = 'thomas.garnier@example.com'), 'primary', true, NOW(), NOW()),
+  (uuid_generate_v4(), (SELECT id FROM public.interventions WHERE id_inter = 'INT-2025-055'), (SELECT id FROM public.artisans WHERE email = 'luc.moreau@example.com'), 'primary', true, NOW(), NOW())
 ON CONFLICT (intervention_id, artisan_id) DO NOTHING;
 
 -- ========================================

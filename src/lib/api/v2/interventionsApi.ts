@@ -3,6 +3,7 @@
 
 import { referenceApi } from "../../reference-api";
 import { supabase } from "../../supabase-client";
+import { isCheckStatus } from "../../interventions/checkStatus";
 import type {
   BulkOperationResult,
   CreateInterventionData,
@@ -899,6 +900,7 @@ export const interventionsApi = {
       .select(
         `
         statut_id,
+        date_prevue,
         status:intervention_statuses(id, code, label)
         `,
         { count: "exact" }
@@ -923,10 +925,19 @@ export const interventionsApi = {
     // Initialiser les compteurs
     const byStatus: Record<string, number> = {};
     const byStatusLabel: Record<string, number> = {};
+    let interventionsAChecker = 0;
 
     // Compter les interventions par statut
     (data || []).forEach((item: any) => {
       const status = item.status;
+      const statusCode = status?.code || null;
+      const datePrevue = item.date_prevue || null;
+      
+      // Vérifier si c'est une intervention CHECK
+      if (isCheckStatus(statusCode, datePrevue)) {
+        interventionsAChecker++;
+      }
+      
       if (status) {
         const code = status.code || "SANS_STATUT";
         const label = status.label || "Sans statut";
@@ -944,6 +955,7 @@ export const interventionsApi = {
       total: count || 0,
       by_status: byStatus,
       by_status_label: byStatusLabel,
+      interventions_a_checker: interventionsAChecker,
       period: {
         start_date: startDate || null,
         end_date: endDate || null,

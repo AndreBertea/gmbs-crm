@@ -54,31 +54,18 @@ export default function LoginPage() {
   useEffect(() => {
     if (!isAnimating || !isAuthenticated) return
 
-    // Attendre la fin de l'animation (3 secondes) puis remplacer le contenu
+    // Attendre la fin de l'animation (3 secondes) puis naviguer vers le dashboard
     const timer = setTimeout(() => {
-      // Une fois l'animation terminée, on peut permettre les interactions avec l'iframe
-      if (dashboardContainerRef.current) {
-        const iframe = dashboardContainerRef.current.querySelector('iframe')
-        if (iframe) {
-          // Permettre les interactions
-          iframe.style.pointerEvents = 'auto'
-          dashboardContainerRef.current.style.pointerEvents = 'auto'
-          
-          // Rendre l'iframe pleine page en retirant le clipPath
-          dashboardContainerRef.current.style.clipPath = 'none'
-          dashboardContainerRef.current.style.webkitClipPath = 'none'
-          
-          // Masquer la page login
-          const loginPage = document.querySelector('[style*="zIndex: 20"]') as HTMLElement
-          if (loginPage) {
-            loginPage.style.display = 'none'
-          }
-        }
-      }
+      // Récupérer l'URL de redirection
+      const url = new URL(window.location.href)
+      const redirect = url.searchParams.get('redirect') || '/dashboard'
+      
+      // Naviguer vers le dashboard (remplace l'URL actuelle)
+      router.replace(redirect)
     }, 3000) // 3000ms = 3 secondes = durée de l'animation
 
     return () => clearTimeout(timer)
-  }, [isAnimating, isAuthenticated])
+  }, [isAnimating, isAuthenticated, router])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()

@@ -6,7 +6,11 @@ import { interventionsApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
 import { Loader2 } from "lucide-react"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts"
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
+import Link from "next/link"
+import { Plus, AlertCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface InterventionStatsBarChartProps {
   period?: {
@@ -20,6 +24,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const router = useRouter()
 
   // Charger l'utilisateur actuel
   useEffect(() => {
@@ -116,22 +121,45 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     }
   }, [userId, period?.startDate, period?.endDate])
 
-  // Préparer les données pour le graphique
+  // Statuts fondamentaux à afficher
+  const fundamentalStatuses = ["Demandé", "Inter en cours", "Visite technique", "Accepté", "Check"]
+
+  // Préparer les données pour le graphique (uniquement les statuts fondamentaux)
   const chartData = stats?.by_status_label
     ? Object.entries(stats.by_status_label)
         .map(([label, count]) => ({
           name: label,
           value: count,
+          isCheck: false, // Pour identifier les barres normales
         }))
-        .filter((item) => item.value > 0)
-        .sort((a, b) => b.value - a.value) // Trier par valeur décroissante
+        .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
+        .sort((a, b) => {
+          // Trier selon l'ordre des statuts fondamentaux
+          const indexA = fundamentalStatuses.indexOf(a.name)
+          const indexB = fundamentalStatuses.indexOf(b.name)
+          if (indexA === -1) return 1
+          if (indexB === -1) return -1
+          return indexA - indexB
+        })
+        .concat(
+          // Ajouter la barre "Check" si elle existe
+          stats.interventions_a_checker && stats.interventions_a_checker > 0
+            ? [
+                {
+                  name: "Check",
+                  value: stats.interventions_a_checker,
+                  isCheck: true, // Pour identifier la barre Check
+                },
+              ]
+            : []
+        )
     : []
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Interventions par statut</CardTitle>
+          <CardTitle>Mes interventions</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[350px]">
@@ -146,7 +174,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Interventions par statut</CardTitle>
+          <CardTitle>Mes interventions</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-destructive">{error}</p>
@@ -159,7 +187,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Interventions par statut</CardTitle>
+          <CardTitle>Mes interventions</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -174,7 +202,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Interventions par statut</CardTitle>
+          <CardTitle>Mes interventions</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -186,50 +214,104 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Interventions par statut</CardTitle>
-        {stats?.period?.start_date && stats?.period?.end_date && (
-          <p className="text-sm text-muted-foreground">
-            Période: {new Date(stats.period.start_date).toLocaleDateString("fr-FR")} -{" "}
-            {new Date(stats.period.end_date).toLocaleDateString("fr-FR")}
-          </p>
-        )}
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
-          >
-            <XAxis type="number" stroke="#888888" fontSize={12} />
-            <YAxis
-              type="category"
-              dataKey="name"
-              stroke="#888888"
-              fontSize={12}
-              width={90}
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "6px",
-              }}
-            />
-            <Bar
-              dataKey="value"
-              fill="hsl(var(--primary))"
-              radius={[0, 4, 4, 0]}
-              label={{ position: "right", fill: "#888888", fontSize: 12 }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <Card>
+          <CardHeader>
+            <CardTitle>Mes interventions</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4">
+            <div className="w-full overflow-x-auto">
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart
+                  data={chartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                >
+                  <XAxis type="number" stroke="#888888" fontSize={12} domain={[0, 'dataMax']} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    stroke="#888888"
+                    fontSize={12}
+                    width={120}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "6px",
+                  }}
+                />
+                <Bar
+                  dataKey="value"
+                  fill="hsl(var(--primary))"
+                  radius={[0, 4, 4, 0]}
+                  label={{ position: "right", fill: "#888888", fontSize: 12 }}
+                  onClick={(data: any, index: number) => {
+                    const clickedBar = chartData[index]
+                    if (clickedBar?.isCheck) {
+                      // Clic sur la barre Check
+                      sessionStorage.setItem('pending-intervention-filter', JSON.stringify({
+                        property: "isCheck",
+                        operator: "eq",
+                        value: true
+                      }))
+                      router.push("/interventions")
+                    }
+                  }}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.isCheck ? "#EF4444" : "hsl(var(--primary))"}
+                      style={{ cursor: entry.isCheck ? "pointer" : "default" }}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            </div>
+
+            {/* Ligne pour les interventions à checker */}
+            {stats && (stats.interventions_a_checker ?? 0) > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    // Stocker l'intention de filtre dans sessionStorage
+                    sessionStorage.setItem('pending-intervention-filter', JSON.stringify({
+                      property: "isCheck",
+                      operator: "eq",
+                      value: true
+                    }))
+                    // Naviguer vers la page interventions
+                    router.push("/interventions")
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-lg border bg-red-50 border-red-200 hover:bg-red-100 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <span className="text-sm font-medium text-red-900">Interventions à checker</span>
+                  </div>
+                  <span className="text-sm font-semibold text-red-700">{stats.interventions_a_checker}</span>
+                </button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem asChild>
+          <Link href="/interventions/new" className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Nouvelle intervention
+          </Link>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
 

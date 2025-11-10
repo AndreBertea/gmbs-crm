@@ -217,11 +217,38 @@ class DatabaseManager {
       success: 0,
       errors: 0,
       details: [],
+      withoutName: [], // Liste des artisans sans nom
     };
 
     for (let i = 0; i < artisans.length; i++) {
       const artisan = artisans[i];
       const currentGlobalIndex = globalIndex + i;
+
+      // Vérifier si l'artisan a un nom - rejeter si absent
+      const hasNoName = !artisan.nom || artisan.nom.trim() === '';
+      if (hasNoName) {
+        results.withoutName.push({
+          index: currentGlobalIndex,
+          artisan: artisan,
+          prenom: artisan.prenom || '',
+          telephone: artisan.telephone || '',
+          email: artisan.email || '',
+          raison_sociale: artisan.raison_sociale || '',
+        });
+        results.errors++;
+        results.details.push({
+          index: currentGlobalIndex,
+          artisan: artisan,
+          error: 'Artisan rejeté: nom manquant',
+          skipped: true,
+          withoutName: true,
+        });
+        this.log(
+          `❌ Artisan ${currentGlobalIndex + 1} rejeté (sans nom): ${artisan.prenom || 'N/A'} (tél: ${artisan.telephone || 'N/A'})`,
+          "warning"
+        );
+        continue; // Ne pas insérer cet artisan
+      }
 
       if (this.options.dryRun) {
         results.success++;
@@ -232,9 +259,7 @@ class DatabaseManager {
           dryRun: true,
         });
         this.log(
-          `[DRY-RUN] Artisan ${currentGlobalIndex + 1}: ${artisan.prenom} ${
-            artisan.nom
-          }`,
+          `[DRY-RUN] Artisan ${currentGlobalIndex + 1}: ${artisan.prenom} ${artisan.nom}`,
           "verbose"
         );
         
@@ -302,9 +327,7 @@ class DatabaseManager {
             success: true,
           });
           this.log(
-            `✅ Artisan ${currentGlobalIndex + 1}: ${artisan.prenom} ${
-              artisan.nom
-            }`,
+            `✅ Artisan ${currentGlobalIndex + 1}: ${artisan.prenom} ${artisan.nom}`,
             "verbose"
           );
         } catch (error) {
@@ -517,6 +540,7 @@ class DatabaseManager {
       success: 0,
       errors: 0,
       details: [],
+      withoutName: [], // Liste consolidée des artisans sans nom
     };
 
     // Traitement par lots
@@ -527,12 +551,21 @@ class DatabaseManager {
       results.success += batchResults.success;
       results.errors += batchResults.errors;
       results.details.push(...batchResults.details);
+      results.withoutName.push(...(batchResults.withoutName || []));
 
       this.log(
         `📊 Lot ${Math.floor(i / this.options.batchSize) + 1}: ${
           batchResults.success
         } succès, ${batchResults.errors} erreurs`,
         "info"
+      );
+    }
+
+    // Afficher le rapport des artisans sans nom
+    if (results.withoutName.length > 0) {
+      this.log(
+        `⚠️ ${results.withoutName.length} artisan(s) rejeté(s) car sans nom`,
+        "warning"
       );
     }
 

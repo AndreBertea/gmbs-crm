@@ -28,6 +28,7 @@ import {
   Moon,
   Monitor,
   Workflow,
+  Target,
   Settings,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
@@ -35,9 +36,7 @@ import { useInterface } from "@/contexts/interface-context"
 import { ACCENT_PRESETS, type ColorMode, type AccentOption, type AccentPresetName, applyTheme } from "@/lib/themes"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase-client"
-import Link from "next/link"
-
-// SettingsTab type declared below with export
+import { TargetsSettings } from "./TargetsSettings"
 
 type TeamUser = {
   id: string
@@ -57,7 +56,7 @@ type TeamUser = {
 
 const ACCENT_ORDER: AccentOption[] = ["indigo", "emerald", "violet", "amber", "rose", "custom"]
 
-export type SettingsTab = "profile" | "interface" | "team" | "security"
+export type SettingsTab = "profile" | "interface" | "team" | "security" | "targets"
 
 export default function SettingsPage({ activeTab = "profile", embedHeader = true }: { activeTab?: SettingsTab; embedHeader?: boolean }) {
   const { toast } = useToast()
@@ -69,6 +68,48 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
   const [tempColorMode, setTempColorMode] = useState<ColorMode>(colorMode)
   const [tempAccent, setTempAccent] = useState<AccentOption>(accent)
   const [tempCustomAccent, setTempCustomAccent] = useState<string>(customAccent ?? "#6366f1")
+  const [currentUserRoles, setCurrentUserRoles] = useState<string[]>([])
+  const [rolesLoading, setRolesLoading] = useState(true)
+
+  // Charger les rôles de l'utilisateur actuel
+  useEffect(() => {
+    const loadUserRoles = async () => {
+      try {
+        setRolesLoading(true)
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        const res = await fetch("/api/auth/me", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        const json = await res.json()
+        const user = json?.user || null
+        if (user) {
+          console.log("[SettingsRoot] Rôles de l'utilisateur:", user.roles)
+          setCurrentUserRoles(user.roles || [])
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des rôles:", error)
+      } finally {
+        setRolesLoading(false)
+      }
+    }
+    loadUserRoles()
+  }, [])
+
+  // Vérifier si l'utilisateur a les permissions (admin ou manager)
+  // Comparaison insensible à la casse pour gérer "admin", "ADMIN", "manager", "MANAGER", etc.
+  const canManageTargets = !rolesLoading && currentUserRoles.some(
+    (role) => {
+      const roleLower = (role || "").toLowerCase().trim()
+      const hasPermission = roleLower === "admin" || roleLower === "manager"
+      if (hasPermission) {
+        console.log("[SettingsRoot] Permission accordée pour le rôle:", role)
+      }
+      return hasPermission
+    }
+  )
+  
+  console.log("[SettingsRoot] canManageTargets:", canManageTargets, "roles:", currentUserRoles, "loading:", rolesLoading)
 
   // Synchroniser les états temporaires avec les valeurs persistées
   useEffect(() => {
@@ -380,7 +421,7 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
               <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
               <p className="text-muted-foreground">Manage your account settings and preferences</p>
             </div>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className={`grid w-full ${canManageTargets ? "grid-cols-5" : "grid-cols-4"}`}>
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Profile
@@ -393,6 +434,12 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
                 <Users className="h-4 w-4" />
                 Team
               </TabsTrigger>
+              {canManageTargets && (
+                <TabsTrigger value="targets" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Objectifs
+                </TabsTrigger>
+              )}
               <TabsTrigger value="security" className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
                 Security
@@ -1063,6 +1110,12 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
               </DialogContent>
             </Dialog>
           </TabsContent>
+
+          {canManageTargets && (
+            <TabsContent value="targets" className="space-y-6">
+              <TargetsSettings />
+            </TabsContent>
+          )}
 
           <TabsContent value="security" className="space-y-6 relative">
             {/* Filigrane DEMO PAGE en mosaïque */}

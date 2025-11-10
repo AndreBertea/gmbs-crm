@@ -6,6 +6,7 @@ import { interventionsApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
 import type { MarginStats } from "@/lib/api/v2"
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react"
+import { Speedometer } from "./speedometer"
 
 interface MarginStatsCardProps {
   period?: {
@@ -181,8 +182,22 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
     ? (stats.average_margin_percentage < 0 ? "< -1000%" : "> 1000%")
     : `${stats.average_margin_percentage.toFixed(2)}%`
   
-  const marginColor = stats.average_margin_percentage >= 0 ? "text-green-600" : "text-red-600"
   const TrendIcon = stats.average_margin_percentage >= 0 ? TrendingUp : TrendingDown
+  
+  // Calculer le pourcentage réel affiché dans le speedometer (basé sur max=100)
+  const speedometerPercentage = Math.min(Math.max(Math.abs(stats.average_margin_percentage), 0), 100)
+  
+  // Déterminer la couleur basée sur le pourcentage du speedometer (cohérent avec l'aiguille)
+  const getPercentageColor = () => {
+    if (speedometerPercentage >= 95) return "text-purple-500 dark:text-purple-400"
+    if (speedometerPercentage >= 90) return "text-green-600 dark:text-green-400"
+    if (speedometerPercentage >= 75) return "text-green-600 dark:text-green-400"
+    if (speedometerPercentage >= 50) return "text-yellow-600 dark:text-yellow-400"
+    if (speedometerPercentage >= 25) return "text-orange-600 dark:text-orange-400"
+    return "text-red-600 dark:text-red-400"
+  }
+  
+  const percentageColor = getPercentageColor()
 
   return (
     <Card>
@@ -190,21 +205,36 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
         <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-2">
-          <TrendIcon className={`h-5 w-5 ${marginColor}`} />
-          <div className="text-2xl font-bold" style={{ color: stats.average_margin_percentage >= 0 ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}>
-            {displayPercentage}
+        <div className="space-y-4">
+          {/* Cadran de vitesse */}
+          <div className="flex justify-center">
+            <Speedometer
+              value={Math.abs(stats.average_margin_percentage)}
+              max={100}
+              size={140}
+              strokeWidth={14}
+              label={displayPercentage}
+            />
+          </div>
+
+          {/* Informations */}
+          <div className="space-y-1 mt-2">
+            <div className="flex items-center justify-between">
+              <div className="flex-1"></div>
+              <div className="flex items-center gap-2">
+                <TrendIcon className={`h-4 w-4 ${percentageColor}`} />
+                <div className={`text-lg font-bold ${percentageColor}`}>
+                  {displayPercentage}
+                </div>
+              </div>
+              <div className="flex-1 flex justify-end">
+                <div className="text-[10px] text-muted-foreground font-light tracking-wide">
+                  Objectif: 100%
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        {stats.period?.start_date && stats.period?.end_date && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {new Date(stats.period.start_date).toLocaleDateString("fr-FR")} -{" "}
-            {new Date(stats.period.end_date).toLocaleDateString("fr-FR")}
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-1">
-          {stats.total_interventions} intervention{stats.total_interventions > 1 ? "s" : ""}
-        </p>
       </CardContent>
     </Card>
   )
