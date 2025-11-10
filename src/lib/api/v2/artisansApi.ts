@@ -557,7 +557,7 @@ export const artisansApi = {
    * @param gestionnaireId - ID du gestionnaire (utilisateur)
    * @param startDate - Date de début (optionnelle, format ISO string)
    * @param endDate - Date de fin (optionnelle, format ISO string)
-   * @returns Statistiques avec le nombre d'artisans par statut
+   * @returns Statistiques avec le nombre d'artisans par statut et le nombre de dossiers à compléter
    */
   async getStatsByGestionnaire(
     gestionnaireId: string,
@@ -575,6 +575,7 @@ export const artisansApi = {
         `
         statut_id,
         date_ajout,
+        statut_dossier,
         status:artisan_statuses(id, code, label)
         `,
         { count: "exact" }
@@ -602,8 +603,9 @@ export const artisansApi = {
     // Initialiser les compteurs
     const byStatus: Record<string, number> = {};
     const byStatusLabel: Record<string, number> = {};
+    let dossiersACompleter = 0;
 
-    // Compter les artisans par statut
+    // Compter les artisans par statut et les dossiers à compléter
     (data || []).forEach((item: any) => {
       const status = item.status;
       if (status) {
@@ -617,12 +619,18 @@ export const artisansApi = {
         byStatus["SANS_STATUT"] = (byStatus["SANS_STATUT"] || 0) + 1;
         byStatusLabel["Sans statut"] = (byStatusLabel["Sans statut"] || 0) + 1;
       }
+
+      // Compter les dossiers à compléter
+      if (item.statut_dossier === "À compléter") {
+        dossiersACompleter++;
+      }
     });
 
     return {
       total: count || 0,
       by_status: byStatus,
       by_status_label: byStatusLabel,
+      dossiers_a_completer: dossiersACompleter,
       period: {
         start_date: startDate || null,
         end_date: endDate || null,

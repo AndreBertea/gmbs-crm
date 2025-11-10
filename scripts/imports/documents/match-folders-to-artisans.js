@@ -323,15 +323,15 @@ async function listDocumentsInFolder(drive, folderId) {
 
 /**
  * Mappe le type de document classifié vers le kind pour la base de données
- * Si le document n'est pas classifié (type "autre"), retourne "à classifier"
+ * Si le document n'est pas classifié (type "autre"), retourne "a_classe"
  */
 function mapDocumentTypeToKind(documentType) {
   // Si le type est valide et différent de "autre", utiliser le type directement
   if (isValidDocumentType(documentType) && documentType !== 'autre') {
     return documentType;
   }
-  // Sinon, marquer comme "à classifier"
-  return 'à classifier';
+  // Sinon, marquer comme "a_classe"
+  return 'a_classe';
 }
 
 /**
@@ -644,10 +644,10 @@ const { downloadFileFromDrive } = require('../lib/google-drive-utils');
  */
 async function insertDocumentToDatabase(artisanId, document, drive) {
   try {
-    // Normaliser le kind : utiliser "a classifier" (sans accent) pour compatibilité API
+    // Normaliser le kind : utiliser "a_classe" (avec underscore) pour compatibilité avec la contrainte DB
     let kind = document.kind;
-    if (kind === 'à classifier') {
-      kind = 'a classifier'; // L'API utilise "a classifier" (sans accent) - harmonisé avec utils.ts
+    if (kind === 'à classifier' || kind === 'a classifier') {
+      kind = 'a_classe'; // La DB utilise "a_classe" (avec underscore)
     }
 
     // Télécharger le fichier depuis Google Drive

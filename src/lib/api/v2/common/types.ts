@@ -517,6 +517,7 @@ export interface ArtisanStatsByStatus {
   total: number;
   by_status: Record<string, number>; // Clé = code du statut (ex: "EXPERT", "NOVICE")
   by_status_label: Record<string, number>; // Clé = label du statut (ex: "Expert", "Novice")
+  dossiers_a_completer?: number; // Nombre de dossiers à compléter
   period?: {
     start_date: string | null;
     end_date: string | null;

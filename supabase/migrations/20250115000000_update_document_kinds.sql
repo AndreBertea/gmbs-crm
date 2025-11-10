@@ -4,6 +4,7 @@
 --   - Ajout des nouveaux kinds: 'autre' et 'a_classe' pour interventions
 --   - Mise à jour des kinds pour artisans: ajout de 'photo_profil' et 'a_classe'
 --   - Retrait des kinds obsolètes
+--   - Migration de 'a classifier' (avec espace) vers 'a_classe' (avec underscore)
 
 -- ========================================
 -- 1. INTERVENTIONS - Mise à jour contrainte CHECK
@@ -11,28 +12,41 @@
 
 -- Vérifier que la table existe avant de la modifier
 DO $$ 
+DECLARE
+  constraint_name text;
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'intervention_attachments') THEN
--- Supprimer l'ancienne contrainte
-ALTER TABLE public.intervention_attachments 
-DROP CONSTRAINT IF EXISTS intervention_attachments_kind_check;
+    -- Trouver et supprimer l'ancienne contrainte
+    SELECT tc.constraint_name INTO constraint_name
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.constraint_column_usage ccu 
+      ON tc.constraint_name = ccu.constraint_name
+    WHERE tc.table_schema = 'public'
+      AND tc.table_name = 'intervention_attachments'
+      AND tc.constraint_type = 'CHECK'
+      AND ccu.column_name = 'kind'
+    LIMIT 1;
+    
+    IF constraint_name IS NOT NULL THEN
+      EXECUTE 'ALTER TABLE public.intervention_attachments DROP CONSTRAINT ' || quote_ident(constraint_name);
+    END IF;
 
--- Ajouter la nouvelle contrainte avec les kinds mis à jour
-ALTER TABLE public.intervention_attachments 
-ADD CONSTRAINT intervention_attachments_kind_check 
-CHECK (kind IN (
-  'devis',
-  'photos',
-  'facturesGMBS',
-  'facturesArtisans',
-  'facturesMateriel',
-  'autre',
-  'a_classe'
-));
+    -- Ajouter la nouvelle contrainte avec les kinds mis à jour
+    ALTER TABLE public.intervention_attachments 
+    ADD CONSTRAINT intervention_attachments_kind_check 
+    CHECK (kind IN (
+      'devis',
+      'photos',
+      'facturesGMBS',
+      'facturesArtisans',
+      'facturesMateriel',
+      'autre',
+      'a_classe'
+    ));
 
--- Commentaire sur la contrainte
-COMMENT ON CONSTRAINT intervention_attachments_kind_check ON public.intervention_attachments 
-IS 'Contraint les kinds de documents pour les interventions. Nouveaux kinds: autre, a_classe. Format factures avec s.';
+    -- Commentaire sur la contrainte
+    COMMENT ON CONSTRAINT intervention_attachments_kind_check ON public.intervention_attachments 
+    IS 'Contraint les kinds de documents pour les interventions. Nouveaux kinds: autre, a_classe. Format factures avec s.';
   END IF;
 END $$;
 
@@ -76,46 +90,51 @@ END $$;
 DO $$ 
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'intervention_attachments') THEN
--- factureGMBS -> facturesGMBS
-UPDATE public.intervention_attachments 
-SET kind = 'facturesGMBS' 
-WHERE kind = 'factureGMBS';
+    -- Migrer 'a classifier' (avec espace) vers 'a_classe' (avec underscore)
+    UPDATE public.intervention_attachments 
+    SET kind = 'a_classe' 
+    WHERE kind = 'a classifier';
 
--- factureArtisan -> facturesArtisans
-UPDATE public.intervention_attachments 
-SET kind = 'facturesArtisans' 
-WHERE kind = 'factureArtisan';
+    -- factureGMBS -> facturesGMBS
+    UPDATE public.intervention_attachments 
+    SET kind = 'facturesGMBS' 
+    WHERE kind = 'factureGMBS';
 
--- factureMateriel -> facturesMateriel
-UPDATE public.intervention_attachments 
-SET kind = 'facturesMateriel' 
-WHERE kind = 'factureMateriel';
+    -- factureArtisan -> facturesArtisans
+    UPDATE public.intervention_attachments 
+    SET kind = 'facturesArtisans' 
+    WHERE kind = 'factureArtisan';
 
--- Migrer les anciens kinds obsolètes vers 'autre' ou 'a_classe'
--- intervention -> autre (ou a_classe selon contexte)
-UPDATE public.intervention_attachments 
-SET kind = 'autre' 
-WHERE kind = 'intervention';
+    -- factureMateriel -> facturesMateriel
+    UPDATE public.intervention_attachments 
+    SET kind = 'facturesMateriel' 
+    WHERE kind = 'factureMateriel';
 
--- cout -> autre
-UPDATE public.intervention_attachments 
-SET kind = 'autre' 
-WHERE kind = 'cout';
+    -- Migrer les anciens kinds obsolètes vers 'autre' ou 'a_classe'
+    -- intervention -> autre (ou a_classe selon contexte)
+    UPDATE public.intervention_attachments 
+    SET kind = 'autre' 
+    WHERE kind = 'intervention';
 
--- rapport_intervention -> autre
-UPDATE public.intervention_attachments 
-SET kind = 'autre' 
-WHERE kind = 'rapport_intervention';
+    -- cout -> autre
+    UPDATE public.intervention_attachments 
+    SET kind = 'autre' 
+    WHERE kind = 'cout';
 
--- plan -> autre
-UPDATE public.intervention_attachments 
-SET kind = 'autre' 
-WHERE kind = 'plan';
+    -- rapport_intervention -> autre
+    UPDATE public.intervention_attachments 
+    SET kind = 'autre' 
+    WHERE kind = 'rapport_intervention';
 
--- schema -> autre
-UPDATE public.intervention_attachments 
-SET kind = 'autre' 
-WHERE kind = 'schema';
+    -- plan -> autre
+    UPDATE public.intervention_attachments 
+    SET kind = 'autre' 
+    WHERE kind = 'plan';
+
+    -- schema -> autre
+    UPDATE public.intervention_attachments 
+    SET kind = 'autre' 
+    WHERE kind = 'schema';
   END IF;
 END $$;
 

@@ -38,7 +38,7 @@ const SUPPORTED_DOCUMENT_TYPES = {
     'photo_profil',
     'portfolio',
     'autre',
-    'a classifier' // Documents non classifiés automatiquement (sans accent pour compatibilité)
+    'a_classe' // Documents non classifiés automatiquement
   ]
 };
 
