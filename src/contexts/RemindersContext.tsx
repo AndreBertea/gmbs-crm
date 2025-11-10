@@ -194,28 +194,29 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
   const toggleReminder = useCallback(
     async (id: string) => {
       const record = state.records.get(id)
+
       if (record) {
         try {
           await remindersApi.deleteReminder(record.id)
         } catch (error) {
           console.warn("Unable to delete reminder", error)
         }
-      }
-      updateState((prev) => {
-        const next = cloneState(prev)
-        if (next.reminders.has(id)) {
+
+        updateState((prev) => {
+          const next = cloneState(prev)
           next.reminders.delete(id)
           next.notes.delete(id)
           next.mentions.delete(id)
           next.dueDates.delete(id)
           next.records.delete(id)
-        } else {
-          next.reminders.add(id)
-        }
-        return next
-      })
+          return next
+        })
+        return
+      }
+
+      await saveReminder({ interventionId: id })
     },
-    [state.records, updateState],
+    [saveReminder, state.records, updateState],
   )
 
   const hasReminder = useCallback((id: string) => {
