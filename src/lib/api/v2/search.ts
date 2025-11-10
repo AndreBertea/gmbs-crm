@@ -172,6 +172,9 @@ export function scoreIntervention(intervention: InterventionSearchRecord, query:
     return { score: 0, matchedFields: [] }
   }
 
+  // Get primary artisan once at the beginning for reuse
+  const primaryArtisan = getPrimaryArtisanFromIntervention(intervention)
+
   const idInter = intervention.id_inter
   if (idInter) {
     const normalizedId = normalizeString(idInter)
@@ -184,6 +187,53 @@ export function scoreIntervention(intervention: InterventionSearchRecord, query:
     } else if (normalizedId.includes(normalizedQuery) && normalizedQuery.length > 0) {
       score = incrementScore(score, 80)
       matchedFields.add("interventionId")
+    }
+  }
+
+  // numero_sst corresponds to the artisan's telephone
+  // Search in primary artisan's telephone and telephone2
+  if (primaryArtisan) {
+    const telephoneCandidates = [
+      primaryArtisan.telephone,
+      primaryArtisan.telephone2
+    ].filter(Boolean)
+    
+    for (const phone of telephoneCandidates) {
+      if (!phone) continue
+      const sanitized = sanitizePhone(phone)
+      const normalizedPhone = normalizeString(phone)
+      
+      // Exact match on sanitized phone (digits only)
+      if (digitsQuery && sanitized === digitsQuery) {
+        score = incrementScore(score, 85)
+        matchedFields.add("numeroSst")
+        break
+      }
+      // Starts with or contains in normalized phone
+      if (normalizedPhone.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+        score = incrementScore(score, 75)
+        matchedFields.add("numeroSst")
+        break
+      } else if (normalizedPhone.includes(normalizedQuery) && normalizedQuery.length > 0) {
+        score = incrementScore(score, 65)
+        matchedFields.add("numeroSst")
+        break
+      }
+    }
+  }
+
+  const contexte = intervention.contexte_intervention
+  if (contexte) {
+    const normalizedContexte = normalizeString(contexte)
+    if (normalizedContexte === normalizedQuery && normalizedQuery.length > 0) {
+      score = incrementScore(score, 85)
+      matchedFields.add("contexte")
+    } else if (normalizedContexte.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 75)
+      matchedFields.add("contexte")
+    } else if (normalizedContexte.includes(normalizedQuery) && normalizedQuery.length > 0) {
+      score = incrementScore(score, 65)
+      matchedFields.add("contexte")
     }
   }
 
@@ -277,7 +327,7 @@ export function scoreIntervention(intervention: InterventionSearchRecord, query:
     }
   }
 
-  const primaryArtisan = getPrimaryArtisanFromIntervention(intervention)
+  // Score by numero_associe (artisan code)
   if (primaryArtisan?.numero_associe) {
     const normalizedPrimaryCode = normalizeString(primaryArtisan.numero_associe)
     if (normalizedPrimaryCode === normalizedQuery && normalizedQuery.length > 0) {
@@ -286,6 +336,26 @@ export function scoreIntervention(intervention: InterventionSearchRecord, query:
     } else if (normalizedPrimaryCode.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
       score = incrementScore(score, 70)
       matchedFields.add("assignedArtisan")
+    }
+  }
+
+  // Score by artisan name (prenom nom)
+  if (primaryArtisan) {
+    const artisanNameParts = [primaryArtisan.prenom, primaryArtisan.nom].filter(
+      (part) => Boolean(part),
+    ) as string[]
+    if (artisanNameParts.length > 0) {
+      const artisanFullName = normalizeString(artisanNameParts.join(" "))
+      if (artisanFullName === normalizedQuery && normalizedQuery.length > 0) {
+        score = incrementScore(score, 75)
+        matchedFields.add("assignedArtisanName")
+      } else if (artisanFullName.startsWith(normalizedQuery) && normalizedQuery.length > 0) {
+        score = incrementScore(score, 65)
+        matchedFields.add("assignedArtisanName")
+      } else if (artisanFullName.includes(normalizedQuery) && normalizedQuery.length > 0) {
+        score = incrementScore(score, 55)
+        matchedFields.add("assignedArtisanName")
+      }
     }
   }
 
@@ -491,6 +561,10 @@ const searchInterventions = async (
   
   // PostgREST .or() syntax: "column.operator.pattern"
   // Only search on direct columns, not relations (PostgREST limitation with .or())
+  // Note: numero_sst corresponds to artisan's telephone, so it's searched client-side
+  // via the intervention_artisans relation in scoreIntervention function
+  // Note: PostgREST may have issues with NULL values in .or() filters, so we use a workaround:
+  // Instead of filtering NULL columns, we fetch more results and filter client-side
   const orFilters = [
     `id_inter.ilike.*${pattern}*`,
     `contexte_intervention.ilike.*${pattern}*`,
@@ -500,6 +574,10 @@ const searchInterventions = async (
     `commentaire_agent.ilike.*${pattern}*`,
     `consigne_intervention.ilike.*${pattern}*`,
   ]
+  
+  // Build the filter string - PostgREST requires comma-separated filters
+  // If this causes 400 errors, it's likely due to NULL handling in PostgREST
+  const orFilterString = orFilters.join(",")
 
   // Fetch more results since we'll filter/score with relations client-side
   const baseLimit = Math.max(limit * 5, limit + 10)
@@ -559,17 +637,28 @@ const searchInterventions = async (
             id,
             prenom,
             nom,
-            numero_associe
+            numero_associe,
+            telephone,
+            telephone2
           )
         )
       `,
       { count: "exact" },
     )
-    .or(orFilters.join(","))
+    .or(orFilterString)
     .order("date", { ascending: false, nullsLast: true })
     .limit(baseLimit)
 
   if (error) {
+    console.error("[searchInterventions] PostgREST error:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+      fullError: error,
+      query: trimmed,
+      orFilters: orFilterString,
+    })
     throw error
   }
 
@@ -637,12 +726,35 @@ export async function universalSearch(
     options?.interventionLimit ??
     (context === "intervention" ? Math.max(DEFAULT_INTERVENTION_LIMIT, 8) : DEFAULT_INTERVENTION_LIMIT)
 
+  const resolvedArtisanLimit =
+    options?.artisanLimit !== undefined
+      ? artisanLimit
+      : context === "intervention"
+        ? Math.min(artisanLimit, 3)
+        : artisanLimit
+
+  const resolvedInterventionLimit =
+    options?.interventionLimit !== undefined
+      ? interventionLimit
+      : context === "artisan"
+        ? Math.min(interventionLimit, 5)
+        : interventionLimit
+
   const start = performanceNow()
 
-  const [artisanResults, interventionResults] = await Promise.all([
-    context === "intervention" ? searchArtisans(trimmed, Math.min(artisanLimit, 3)) : searchArtisans(trimmed, artisanLimit),
-    context === "artisan" ? searchInterventions(trimmed, Math.min(interventionLimit, 5)) : searchInterventions(trimmed, interventionLimit),
-  ])
+  let artisanResults: SearchResultsGroup<ArtisanSearchRecord>
+  let interventionResults: SearchResultsGroup<InterventionSearchRecord>
+
+  try {
+    [artisanResults, interventionResults] = await Promise.all([
+      searchArtisans(trimmed, resolvedArtisanLimit),
+      searchInterventions(trimmed, resolvedInterventionLimit),
+    ])
+  } catch (err) {
+    console.error("[universalSearch] Error in parallel searches:", err)
+    // If one search fails, return empty results for both to avoid partial results
+    throw err
+  }
 
   const searchTime = Math.round(performanceNow() - start)
 

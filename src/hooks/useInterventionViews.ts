@@ -61,12 +61,17 @@ const VIEW_TEMPLATES: Record<ViewLayout, InterventionViewDefinition> = {
     sorts: [{ property: "dateIntervention", direction: "desc" }],
     layoutOptions: {
       layout: "table",
-      columnWidths: {},
+      columnWidths: {
+        attribueA: 50,
+      },
       hiddenColumns: [],
       rowDensity: "dense",
       rowDisplayMode: "stripes",
       useAccentColor: true,
       showStatusBorder: false,
+      columnStyles: {
+        attribueA: { appearance: "none" },
+      },
     },
     description: "Vue en tableau avec colonnes configurables et tri multi-colonnes",
     isDefault: true,
@@ -253,10 +258,15 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
     title: "Liste générale",
     description: "Liste complète de toutes les interventions sans filtres",
     filters: [],
+    showBadge: true,
     layoutOptions: {
       showStatusBorder: true,
       statusBorderSize: "m",
       showStatusFilter: true,
+      columnStyles: {
+        statusValue: { appearance: "badge" },
+        attribueA: { appearance: "none" },
+      },
     },
   },
   {
@@ -277,6 +287,11 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
       "codePostal",
       "datePrevue",
     ],
+    layoutOptions: {
+      columnStyles: {
+        attribueA: { appearance: "none" },
+      },
+    },
   },
   {
     id: "mes-demandes",
@@ -286,6 +301,12 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
       { property: "statusValue", operator: "eq", value: "DEMANDE" },
       { property: "attribueA", operator: "eq", value: CURRENT_USER_PLACEHOLDER },
     ],
+    showBadge: true,
+    layoutOptions: {
+      columnStyles: {
+        attribueA: { appearance: "none" },
+      },
+    },
   },
   {
     id: "ma-liste-en-cours",
@@ -295,6 +316,12 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
       { property: "statusValue", operator: "eq", value: "EN_COURS" },
       { property: "attribueA", operator: "eq", value: CURRENT_USER_PLACEHOLDER },
     ],
+    showBadge: true,
+    layoutOptions: {
+      columnStyles: {
+        attribueA: { appearance: "none" },
+      },
+    },
   },
   {
     id: "mes-visites-technique",
@@ -304,6 +331,12 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
       { property: "statusValue", operator: "eq", value: "VISITE_TECHNIQUE" },
       { property: "attribueA", operator: "eq", value: CURRENT_USER_PLACEHOLDER },
     ],
+    showBadge: true,
+    layoutOptions: {
+      columnStyles: {
+        attribueA: { appearance: "none" },
+      },
+    },
   },
   {
     id: "ma-liste-accepte",
@@ -313,15 +346,53 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
       { property: "statusValue", operator: "eq", value: "ACCEPTE" },
       { property: "attribueA", operator: "eq", value: CURRENT_USER_PLACEHOLDER },
     ],
+    showBadge: true,
+    layoutOptions: {
+      columnStyles: {
+        attribueA: { appearance: "none" },
+      },
+    },
+  },
+  {
+    id: "calendar",
+    title: "Calendrier",
+    description: "Vue calendrier des interventions",
+    filters: [],
+    layoutOptions: {
+      layout: "calendar",
+      dateProperty: "dateIntervention",
+      endDateProperty: "dateIntervention",
+      viewMode: "month",
+    } as any,
   },
 ]
 
 const DEFAULT_VIEWS: InterventionViewDefinition[] = DEFAULT_VIEW_PRESETS.map((preset) => {
-  const base = cloneViewDefinition(VIEW_TEMPLATES.table)
-  const baseTableOptions = base.layoutOptions as TableLayoutOptions
-  const mergedLayoutOptions = preset.layoutOptions
-    ? mergeTableLayoutOptions(baseTableOptions, preset.layoutOptions)
-    : baseTableOptions
+  // Détecter le layout depuis layoutOptions ou utiliser "table" par défaut
+  const layout = (preset.layoutOptions?.layout as ViewLayout) ?? "table"
+  const base = cloneViewDefinition(VIEW_TEMPLATES[layout] ?? VIEW_TEMPLATES.table)
+  
+  // Si c'est une vue table, utiliser mergeTableLayoutOptions
+  if (layout === "table") {
+    const baseTableOptions = base.layoutOptions as TableLayoutOptions
+    const mergedLayoutOptions = preset.layoutOptions
+      ? mergeTableLayoutOptions(baseTableOptions, preset.layoutOptions)
+      : baseTableOptions
+    const view: InterventionViewDefinition = {
+      ...base,
+      id: preset.id,
+      title: preset.title,
+      description: preset.description,
+      filters: preset.filters,
+      visibleProperties: preset.visibleProperties ?? base.visibleProperties,
+      layoutOptions: mergedLayoutOptions,
+      showBadge: preset.showBadge ?? false,
+      isDefault: true,
+    }
+    return USER_SCOPED_VIEW_IDS.has(view.id) ? applyUserScopedFilters(view, null) : view
+  }
+  
+  // Pour les autres layouts (calendar, etc.)
   const view: InterventionViewDefinition = {
     ...base,
     id: preset.id,
@@ -329,7 +400,7 @@ const DEFAULT_VIEWS: InterventionViewDefinition[] = DEFAULT_VIEW_PRESETS.map((pr
     description: preset.description,
     filters: preset.filters,
     visibleProperties: preset.visibleProperties ?? base.visibleProperties,
-    layoutOptions: mergedLayoutOptions,
+    layoutOptions: preset.layoutOptions ? { ...base.layoutOptions, ...preset.layoutOptions } : base.layoutOptions,
     showBadge: preset.showBadge ?? false,
     isDefault: true,
   }

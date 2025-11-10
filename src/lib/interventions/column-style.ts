@@ -26,10 +26,10 @@ export const normalizeColumnStyle = (
 
   const normalized: TableColumnStyle = {}
 
+  // Sauvegarder l'apparence si la colonne est éligible
+  // "solid" est la valeur par défaut mais doit être sauvegardée si explicitement définie
   if (STYLE_ELIGIBLE_COLUMNS.has(columnKey) && style.appearance) {
-    if (style.appearance !== "solid") {
-      normalized.appearance = style.appearance
-    }
+    normalized.appearance = style.appearance
   }
 
   if (style.textSize && style.textSize !== "md" && TABLE_TEXT_SIZE_VALUES.includes(style.textSize)) {

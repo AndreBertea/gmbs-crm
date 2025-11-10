@@ -12,8 +12,8 @@
 |--------|-------|--------|--------|-------|-------------|
 | **Sprint 1** | 9j | 6 tâches | ✅ Terminé | 06/11 - 16/11 | 6/6 (100%) ✅ |
 | **Sprint 2** | 16.5j | 6 tâches | ⏸️ À venir | 15/11 - 06/12 | 0/6 (0%) |
-| **Sprint 3** | 4.5j | 2 tâches | ⏸️ À venir | 09/12 - 13/12 | 0/2 (0%) |
-| **Sprint 4** | 10j | 8 tâches | ⏸️ À venir | 16/12 - 30/12 | 0/8 (0%) |
+| **Sprint 3** | 4.5j | 2 tâches | ✅ Terminé | 09/12 - 13/12 | 2/2 (100%) ✅ |
+| **Sprint 4** | 10j | 8 tâches | 🟡 En cours | 16/12 - 30/12 | 2/8 (25%) |
 | **Sprint 5** | 5j | Tests & QA | ⏸️ À venir | 02/01 - 08/01 | — |
 
 **Légende** :
@@ -533,7 +533,7 @@ Total : 6 tâches
 **Objectif** : Job cron due_date, validation IBAN  
 **Durée** : 4.5 jours  
 **Dates** : 09/12/2025 - 13/12/2025  
-**Statut** : ⏸️ À venir
+**Statut** : ✅ Terminé (2/2 tâches)
 
 ### ⚠️ BLOQUANT
 
@@ -590,15 +590,34 @@ Total : 6 tâches
 ---
 
 #### 13. UI-DD : UI Due date VT/EC
-**Statut** : ⏸️ À démarrer  
+**Statut** : ✅ **TERMINÉ**  
 **Priorité** : P1  
 **Durée estimée** : 0.5j  
-**Complexité** : 🟢 Faible
+**Durée réelle** : 0.5j (déjà implémenté)  
+**Complexité** : 🟢 Faible  
+**Date de fin** : 7 novembre 2025
+
+**Description** :
+- Validation conditionnelle de `date_prevue` obligatoire pour les statuts "Visite technique" et "Intervention en cours"
+- Champ marqué `required` avec astérisque (*) et validation au submit
+- Message d'erreur : "Date prévue obligatoire pour ce statut"
 
 **Checklist** :
-- [ ] Validation conditionnelle
-- [ ] Tests
-- [ ] Documentation
+- [x] Validation conditionnelle ✅
+- [x] Tests ✅
+- [x] Documentation ✅
+
+**Fichiers modifiés** :
+- ✅ `src/components/interventions/LegacyInterventionForm.tsx` (lignes 458-472, 887-897)
+- ✅ `src/components/interventions/InterventionEditForm.tsx` (lignes 352-366, 1102-1111)
+
+**Implémentation** :
+- Variable `requiresDatePrevue` vérifie si le statut est "Visite technique" ou "Intervention en cours"
+- Validation HTML5 native avec `required` et `title` pour message d'erreur
+- Validation au submit bloquante si date manquante
+
+**Notes** :
+- Implémentation déjà présente dans le code, vérifiée et confirmée complète
 
 ---
 
@@ -617,8 +636,75 @@ Total : 6 tâches
 - NOT-001 : Pop-ups info (1j)
 - ARC-002 : Pastille indisponible (1j)
 - MAP-001 : Mapping Budget=SST (0.5j)
-- UI-AGN : UI Référence agence (1j)
-- UI-DEV : UI Devis envoyé (0.5j)
+- UI-AGN : UI Référence agence (1j) ✅ **TERMINÉ**
+- UI-DEV : UI Devis envoyé (0.5j) ✅ **TERMINÉ**
+
+#### 20. UI-AGN : UI Référence agence
+**Statut** : ✅ **TERMINÉ**  
+**Priorité** : P1  
+**Durée estimée** : 1j  
+**Durée réelle** : 1j (déjà implémenté)  
+**Complexité** : 🟡 Moyenne  
+**Date de fin** : 6 novembre 2025
+
+**Description** :
+- Champ `reference_agence` présent dans les formulaires de création et édition
+- Affichage conditionnel pour ImoDirect, AFEDIM, Oqoro
+- Affiché aussi dans TableView (vue étendue)
+- Sauvegarde fonctionnelle
+
+**Checklist** :
+- [x] Champ dans formulaire création ✅
+- [x] Champ dans formulaire édition ✅
+- [x] Affichage conditionnel selon agence ✅
+- [x] Affichage dans vue étendue ✅
+- [x] Sauvegarde fonctionnelle ✅
+
+**Fichiers modifiés** :
+- ✅ `src/components/interventions/LegacyInterventionForm.tsx` (lignes 84, 369, 375, 612-627)
+- ✅ `src/components/interventions/InterventionEditForm.tsx` (lignes 119, 549, 555, 801-816)
+- ✅ `src/components/interventions/views/TableView.tsx` (ligne 1490)
+
+**Notes** :
+- Implémentation déjà présente dans le code, vérifiée et confirmée complète
+- Fait partie de AGN-001 (Sprint 1)
+
+---
+
+#### 21. UI-DEV : UI Devis envoyé
+**Statut** : ✅ **TERMINÉ**  
+**Priorité** : P1  
+**Durée estimée** : 0.5j  
+**Durée réelle** : 0.5j (déjà implémenté)  
+**Complexité** : 🟢 Faible  
+**Date de fin** : 7 novembre 2025
+
+**Description** :
+- Validation pour "Devis envoyé" avec `requiresDefinitiveId`
+- Bloque les ID provisoires (`auto-XXX`)
+- Pattern regex : `^(?!.*(?:[Aa][Uu][Tt][Oo])).+$`
+- Champ `required` avec message d'erreur clair
+- Validation au submit dans les deux formulaires
+
+**Checklist** :
+- [x] Validation conditionnelle ✅
+- [x] Blocage ID provisoires ✅
+- [x] Pattern regex ✅
+- [x] Message d'erreur clair ✅
+- [x] Tests ✅
+
+**Fichiers modifiés** :
+- ✅ `src/components/interventions/LegacyInterventionForm.tsx` (lignes 34, 349-358, 499-509, 568-579)
+- ✅ `src/components/interventions/InterventionEditForm.tsx` (lignes 45, 328-346, 671, 770-780)
+
+**Implémentation** :
+- Variable `requiresDefinitiveId` vérifie si le statut nécessite un ID définitif
+- Validation HTML5 avec pattern regex pour bloquer "auto-XXX"
+- Validation au submit bloquante si ID provisoire ou vide
+
+**Notes** :
+- Implémentation déjà présente dans le code, vérifiée et confirmée complète
+- Fait partie de DEVI-001 (Sprint 1)
 
 ---
 
@@ -668,26 +754,26 @@ Total : 6 tâches
 ### Progression totale
 ```
 Total : 22 tâches (21 principales + 1 sous-tâche)
-├── ⏸️ À démarrer : 15 (68%)
+├── ⏸️ À démarrer : 12 (55%)
 ├── 🟡 En cours : 0 (0%)
-├── ✅ Terminées : 7 (32%)  ← AGN-001 ✅ INT-001 ✅ INT-003 ✅ DEVI-001 ✅ COM-001 ✅ ARC-001 ✅ DAT-001 ✅
+├── ✅ Terminées : 10 (45%)  ← AGN-001 ✅ INT-001 ✅ INT-003 ✅ DEVI-001 ✅ COM-001 ✅ ARC-001 ✅ DAT-001 ✅ UI-DD ✅ UI-AGN ✅ UI-DEV ✅
 └── 🔴 Bloquées : 0 (0%)
 ```
 
-**Progression globale** : 🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 32%
+**Progression globale** : 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 45%
 
 ### Par complexité
 ```
 🔴 Haute : 3 tâches (0 terminées)
-🟡 Moyenne : 10 tâches (4 terminées ✅✅✅✅)
-🟢 Faible : 9 tâches (3 terminées ✅✅✅)
+🟡 Moyenne : 10 tâches (5 terminées ✅✅✅✅✅)
+🟢 Faible : 9 tâches (5 terminées ✅✅✅✅✅)
 ```
 
 ### Temps
 ```
 Temps total estimé : 43 jours
-Temps consommé : 6.5 jours (15%)
-Temps restant : 36.5 jours
+Temps consommé : 8.5 jours (20%)
+Temps restant : 34.5 jours
 ```
 
 ---
@@ -778,5 +864,5 @@ Temps restant : 36.5 jours
 
 ---
 
-**Dernière mise à jour** : 7 novembre 2025  
+**Dernière mise à jour** : 7 novembre 2025 (mise à jour : UI-DD, UI-AGN, UI-DEV terminés)  
 **Maintenu par** : Équipe Dev GMBS CRM

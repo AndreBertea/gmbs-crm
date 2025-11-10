@@ -24,7 +24,7 @@ import { useArtisanModal } from "@/hooks/useArtisanModal"
 import { useArtisanViews } from "@/hooks/useArtisanViews"
 import { ArtisanViewTabs } from "@/components/artisans/ArtisanViewTabs"
 import type { Artisan as ApiArtisan } from "@/lib/supabase-api-v2"
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Wrench } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Wrench, X } from "lucide-react"
 import Loader from "@/components/ui/Loader"
 
 // Helper pour convertir hex en rgba
@@ -282,7 +282,7 @@ export default function ArtisansPage(): ReactElement {
 
   const [contacts, setContacts] = useState<Contact[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [artisanStatuses, setArtisanStatuses] = useState<any[]>([])
   const [metierFilter, setMetierFilter] = useState<string>("all")
   const [loadingMore, setLoadingMore] = useState(false)
@@ -353,7 +353,7 @@ export default function ArtisansPage(): ReactElement {
       contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.position.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || contact.statutArtisan === statusFilter
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(contact.statutArtisan || "")
     const matchesMetier = metierFilter === "all" || contact.metiers?.some((m) => m === metierFilter)
     return matchesSearch && matchesStatus && matchesMetier
   })
@@ -454,11 +454,9 @@ export default function ArtisansPage(): ReactElement {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <div className="flex-1 p-6">
-          <div className="text-center">
-            <Loader />
-          </div>
+      <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+        <div style={{ transform: 'scale(1.25)' }}>
+          <Loader />
         </div>
       </div>
     )
@@ -503,13 +501,13 @@ export default function ArtisansPage(): ReactElement {
                       <span className="text-sm font-medium text-muted-foreground">Statut:</span>
                       <div className="flex items-center space-x-1">
                         <button
-                          onClick={() => setStatusFilter("all")}
+                          onClick={() => setSelectedStatuses([])}
                           className={`
                             flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm
                             ${
-                              statusFilter === "all"
+                              selectedStatuses.length === 0
                                 ? "border-gray-500 bg-gray-500 text-white"
-                                : "border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                : "border-gray-200 bg-transparent text-gray-700 hover:bg-gray-50"
                             }
                           `}
                         >
@@ -517,24 +515,48 @@ export default function ArtisansPage(): ReactElement {
                         </button>
 
                         {artisanStatuses.filter(s => s.is_active !== false).map((status) => {
-                          const isActive = statusFilter === status.label
-                          const style = isActive && status.color 
-                            ? { backgroundColor: status.color, color: '#fff', border: `1px solid ${status.color}` }
-                            : status.color 
-                            ? { ...computeBadgeStyle(status.color), border: `1px solid ${status.color}40` }
-                            : {}
+                          const isSelected = selectedStatuses.includes(status.label)
+                          const statusColor = status.color || "#666"
                           
                           return (
                             <button
                               key={status.id}
-                              onClick={() => setStatusFilter(status.label)}
-                              className="flex items-center gap-1 rounded-full px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm"
-                              style={style}
+                              onClick={() => {
+                                setSelectedStatuses((prev) => {
+                                  if (prev.includes(status.label)) {
+                                    return prev.filter((s) => s !== status.label)
+                                  } else {
+                                    return [...prev, status.label]
+                                  }
+                                })
+                              }}
+                              className={`flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm ${
+                                isSelected
+                                  ? ""
+                                  : "border-border bg-transparent hover:bg-muted/50"
+                              }`}
+                              style={isSelected ? {
+                                backgroundColor: `${statusColor}15`,
+                                borderColor: statusColor,
+                                color: statusColor
+                              } : {}}
                             >
                               {status.label} ({getContactCountByStatus(status.label)})
                             </button>
                           )
                         })}
+                        
+                        {selectedStatuses.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => setSelectedStatuses([])}
+                            title="Réinitialiser les filtres"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
 

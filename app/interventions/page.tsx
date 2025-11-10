@@ -42,6 +42,7 @@ import {
   Table,
   X,
 } from "lucide-react"
+import { getStatusDisplay } from "@/lib/interventions/status-display"
 import { ModeIcons } from "@/components/ui/mode-selector/ModeIcons"
 import { MODE_OPTIONS } from "@/components/ui/mode-selector/ModeSelector"
 import { useModalDisplay } from "@/contexts/ModalDisplayContext"
@@ -193,7 +194,7 @@ export default function Page() {
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null })
   const [sortField, setSortField] = useState<SortField>("cree")
   const [sortDir, setSortDir] = useState<SortDir>("desc")
-  const [selectedStatus, setSelectedStatus] = useState<InterventionStatusValue | null>(null)
+  const [selectedStatuses, setSelectedStatuses] = useState<InterventionStatusValue[]>([])
   const [isReorderMode, setIsReorderMode] = useState(false)
   const [workflowConfig, setWorkflowConfig] = useState<WorkflowConfig>(DEFAULT_WORKFLOW_CONFIG)
   
@@ -302,11 +303,12 @@ export default function Page() {
         console.log('⚡ Mise à jour optimiste détectée pour', id)
         updateInterventionOptimistic(id, data)
         
-        // Rafraîchir quand même en arrière-plan après un court délai
+        // Rafraîchir quand même en arrière-plan après un délai plus long pour éviter les rafraîchissements trop fréquents
+        // Le délai de 2000ms permet d'éviter les multiples rafraîchissements si plusieurs mises à jour arrivent rapidement
         setTimeout(() => {
           console.log('🔄 Rafraîchissement en arrière-plan après mise à jour optimiste')
           refresh()
-        }, 500)
+        }, 2000)
       } else {
         // Mise à jour normale : rafraîchir immédiatement
         console.log('🔄 Rafraîchissement complet suite à mise à jour')
@@ -424,11 +426,19 @@ export default function Page() {
   useEffect(() => {
     if (!activeView) return
     const statusFilter = activeView.filters.find((filter) => filter.property === managedFilterKeys.status)
-    const statusValue =
-      statusFilter && typeof statusFilter.value === "string"
-        ? (statusFilter.value as InterventionStatusValue)
-        : null
-    setSelectedStatus((prev) => (prev === statusValue ? prev : statusValue))
+    
+    let statusValues: InterventionStatusValue[] = []
+    if (statusFilter) {
+      if (statusFilter.operator === "in" && Array.isArray(statusFilter.value)) {
+        // Filtre avec plusieurs statuts
+        statusValues = statusFilter.value as InterventionStatusValue[]
+      } else if (statusFilter.operator === "eq" && typeof statusFilter.value === "string") {
+        // Ancien format avec un seul statut (rétrocompatibilité)
+        statusValues = [statusFilter.value as InterventionStatusValue]
+      }
+    }
+    
+    setSelectedStatuses(statusValues)
 
     const userFilter = activeView.filters.find((filter) => filter.property === managedFilterKeys.user)
     const userValue = userFilter && typeof userFilter.value === "string" ? (userFilter.value as string) : ""
@@ -511,12 +521,14 @@ export default function Page() {
       }
     })
 
-    if (selectedStatus && !seen.has(selectedStatus)) {
-      order.push(selectedStatus)
-    }
+    selectedStatuses.forEach((status) => {
+      if (!seen.has(status)) {
+        order.push(status)
+      }
+    })
 
     return order
-  }, [workflowPinnedStatuses, uniqueStatuses, selectedStatus])
+  }, [workflowPinnedStatuses, uniqueStatuses, selectedStatuses])
 
   const additionalStatuses = useMemo(
     () =>
@@ -528,15 +540,16 @@ export default function Page() {
 
   const combinedViewCounts = useMemo(() => localViewCounts, [localViewCounts])
 
-  // Comptage par statut - basé sur le filtrage client
+  // Comptage par statut - basé sur TOUTES les interventions (sans filtres)
+  // Les comptages doivent refléter le total réel de chaque statut, indépendamment des filtres actifs
   const getCountByStatus = useCallback(
     (status: InterventionStatusValue | null) => {
       if (!status) {
-        return filteredInterventions.length
+        return normalizedInterventions.length
       }
-      return filteredInterventions.filter((intervention) => intervention.statusValue === status).length
+      return normalizedInterventions.filter((intervention) => intervention.statusValue === status).length
     },
-    [filteredInterventions],
+    [normalizedInterventions],
   )
 
   const handlePinStatus = useCallback(
@@ -555,13 +568,30 @@ export default function Page() {
 
   const handleSelectStatus = useCallback(
     (status: InterventionStatusValue | null) => {
-      setSelectedStatus(status)
-      updateFilterForProperty(
-        managedFilterKeys.status,
-        status
-          ? { property: managedFilterKeys.status, operator: "eq", value: status }
-          : null,
-      )
+      if (status === null) {
+        // "Toutes" réinitialise tous les filtres de statut
+        setSelectedStatuses([])
+        updateFilterForProperty(managedFilterKeys.status, null)
+        return
+      }
+      
+      // Toggle du statut : ajouter s'il n'est pas présent, retirer s'il est présent
+      setSelectedStatuses((prev) => {
+        const isSelected = prev.includes(status)
+        const next = isSelected 
+          ? prev.filter((s) => s !== status)
+          : [...prev, status]
+        
+        // Mettre à jour le filtre avec l'opérateur "in" pour plusieurs valeurs
+        updateFilterForProperty(
+          managedFilterKeys.status,
+          next.length > 0
+            ? { property: managedFilterKeys.status, operator: "in", value: next }
+            : null,
+        )
+        
+        return next
+      })
     },
     [updateFilterForProperty],
   )
@@ -825,7 +855,7 @@ export default function Page() {
             interventions={viewInterventions}
             loading={loading}
             error={error}
-            selectedStatus={selectedStatus}
+            selectedStatus={selectedStatuses.length > 0 ? selectedStatuses[0] : null}
             displayedStatuses={displayedStatuses}
             onSelectStatus={handleSelectStatus}
             getCountByStatus={getCountByStatus}
@@ -1278,7 +1308,7 @@ export default function Page() {
           sortDir={sortDir}
           onSortDir={setSortDir}
           displayedStatuses={displayedStatuses}
-          selectedStatus={selectedStatus}
+          selectedStatus={selectedStatuses}
           onSelectStatus={handleSelectStatus}
           pinnedStatuses={workflowPinnedStatuses}
           onPinStatus={handlePinStatus}
@@ -1295,45 +1325,61 @@ export default function Page() {
           <div className="text-sm text-muted-foreground">Statut:</div>
           <button
             onClick={() => handleSelectStatus(null)}
-            className={`status-chip ${selectedStatus === null ? "bg-foreground/90 text-background ring-2 ring-foreground/20" : "bg-muted text-foreground hover:bg-muted/80"} transition-[opacity,transform,shadow] duration-150 ease-out`}
+            className={`status-chip ${selectedStatuses.length === 0 ? "bg-foreground/90 text-background ring-2 ring-foreground/20" : "bg-transparent border border-border text-foreground hover:bg-muted/50"} transition-[opacity,transform,shadow] duration-150 ease-out`}
           >
             Toutes ({getCountByStatus(null)})
           </button>
           {displayedStatuses.map((status) => {
             const label = INTERVENTION_STATUS[status]?.label ?? mapStatusToDb(status)
             const Icon = INTERVENTION_STATUS[status]?.icon ?? Settings
+            const isSelected = selectedStatuses.includes(status)
+            const statusColor = workflowConfig.statuses.find((s) => s.key === status)?.color ?? INTERVENTION_STATUS[status]?.color ?? "#666"
+            const statusDisplay = getStatusDisplay(status, { workflow: workflowConfig })
+            const finalColor = statusDisplay.color
+            
             return (
               <button
                 key={status}
                 onClick={() => handleSelectStatus(status)}
-                className={`status-chip status-${label} ${selectedStatus === status ? "ring-2 ring-foreground/20" : "hover:shadow-card"} transition-[opacity,transform,shadow] duration-150 ease-out`}
+                className={`status-chip transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5 ${
+                  isSelected
+                    ? "ring-2 ring-foreground/20"
+                    : "hover:shadow-card border border-border bg-transparent"
+                }`}
+                style={isSelected ? { 
+                  backgroundColor: `${finalColor}15`, 
+                  borderColor: finalColor,
+                  color: finalColor 
+                } : {}}
                 title={label}
               >
                 <span className="inline-flex items-center">
                   <Icon className="h-3.5 w-3.5 mr-1" />
                   {label}
-                </span>{" "}
-                ({getCountByStatus(status)})
+                </span>
+                <span className="text-muted-foreground">({getCountByStatus(status)})</span>
               </button>
             )
           })}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => {
-              if (!activeView || activeView.layout !== "table") return
-              updateLayoutOptions(activeView.id, { showStatusFilter: false })
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          {selectedStatuses.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={() => handleSelectStatus(null)}
+              title="Réinitialiser les filtres"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
 
       {loading && normalizedInterventions.length === 0 ? (
-        <div className="flex h-64 items-center justify-center">
-          <Loader />
+        <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+          <div style={{ transform: 'scale(1.25)' }}>
+            <Loader />
+          </div>
         </div>
       ) : (
         renderActiveView()

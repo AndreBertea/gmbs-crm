@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useMotionValue, useSpring } from 'framer-motion'
+import { useMotionValue, animate } from 'framer-motion'
 
 type ButtonPosition = {
   x: number
@@ -13,7 +13,9 @@ type UseRevealTransitionReturn = {
   circleSizeMotion: ReturnType<typeof useMotionValue<number>>
   buttonPosition: ButtonPosition | null
   startAnimation: (buttonRef: React.RefObject<HTMLButtonElement>) => void
+  startAnimationFromPosition: (position: ButtonPosition) => void
   maxCircleSize: number
+  circleSize: number
 }
 
 const ANIMATION_DURATION = 3 // 3 secondes
@@ -22,6 +24,7 @@ const EASE_OUT_CUBIC = [0.33, 1, 0.68, 1] as [number, number, number, number]
 export function useRevealTransition(): UseRevealTransitionReturn {
   const [isAnimating, setIsAnimating] = useState(false)
   const [buttonPosition, setButtonPosition] = useState<ButtonPosition | null>(null)
+  const [circleSize, setCircleSize] = useState(0)
   const maxCircleSizeRef = useRef(0)
 
   // Calculer la taille maximale du cercle
@@ -34,10 +37,6 @@ export function useRevealTransition(): UseRevealTransitionReturn {
 
   // Motion value pour l'animation du cercle
   const circleSizeMotion = useMotionValue(0)
-  const circleSizeSpring = useSpring(circleSizeMotion, {
-    duration: ANIMATION_DURATION * 1000,
-    ease: EASE_OUT_CUBIC,
-  })
 
   // Initialiser la taille max du cercle
   useEffect(() => {
@@ -51,6 +50,14 @@ export function useRevealTransition(): UseRevealTransitionReturn {
     return () => window.removeEventListener('resize', handleResize)
   }, [calculateMaxCircleSize])
 
+  // Suivre la taille du cercle pour l'exposer
+  useEffect(() => {
+    const unsubscribe = circleSizeMotion.on('change', (size: number) => {
+      setCircleSize(size)
+    })
+    return () => unsubscribe()
+  }, [circleSizeMotion])
+
   const startAnimation = useCallback((buttonRef: React.RefObject<HTMLButtonElement>) => {
     if (!buttonRef.current) return
 
@@ -63,15 +70,32 @@ export function useRevealTransition(): UseRevealTransitionReturn {
 
     // Démarrer l'animation du cercle
     circleSizeMotion.set(0)
-    circleSizeSpring.set(maxCircleSizeRef.current)
-  }, [circleSizeMotion, circleSizeSpring])
+    animate(circleSizeMotion, maxCircleSizeRef.current, {
+      duration: ANIMATION_DURATION,
+      ease: EASE_OUT_CUBIC,
+    })
+  }, [circleSizeMotion])
+
+  const startAnimationFromPosition = useCallback((position: ButtonPosition) => {
+    setButtonPosition(position)
+    setIsAnimating(true)
+
+    // Démarrer l'animation du cercle
+    circleSizeMotion.set(0)
+    animate(circleSizeMotion, maxCircleSizeRef.current, {
+      duration: ANIMATION_DURATION,
+      ease: EASE_OUT_CUBIC,
+    })
+  }, [circleSizeMotion])
 
   return {
     isAnimating,
-    circleSizeMotion: circleSizeSpring,
+    circleSizeMotion,
     buttonPosition,
     startAnimation,
+    startAnimationFromPosition,
     maxCircleSize: maxCircleSizeRef.current,
+    circleSize,
   }
 }
 

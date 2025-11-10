@@ -4,7 +4,7 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Bell, Calendar, FileText, Plus, X, Home, Users, Settings } from "lucide-react"
+import { Search, Bell, Calendar, FileText, Plus, X, Home, HardHat, Settings, Wrench } from "lucide-react"
 import { AvatarStatus } from "@/components/layout/avatar-status"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
@@ -44,8 +44,8 @@ type NavItem = { type: "link"; name: string; href: string; icon: React.Component
 const navigation: NavItem[] = [
   { type: "link", name: t("dashboard"), href: "/dashboard", icon: Home },
   { type: "spacer" },
-  { type: "link", name: t("deals"), href: "/interventions", icon: FileText },
-  { type: "link", name: t("contacts"), href: "/artisans", icon: Users },
+  { type: "link", name: t("deals"), href: "/interventions", icon: Wrench },
+  { type: "link", name: t("contacts"), href: "/artisans", icon: HardHat },
   { type: "spacer" },
   { type: "link", name: "Paramètres", href: "/settings", icon: Settings },
 ]
@@ -312,6 +312,8 @@ export default function Topbar() {
     isSearching: isUniversalSearching,
     error: universalSearchError,
     clearSearch,
+    loadMore: loadMoreResults,
+    isLoadingMore: isLoadingMoreResults,
   } = useUniversalSearch()
   const searchOpen = searchPinned || searchHovering
   const trimmedSearchQuery = React.useMemo(() => searchQuery.trim(), [searchQuery])
@@ -603,6 +605,8 @@ export default function Topbar() {
                 query={searchQuery}
                 onItemClick={handleSearchItemClick}
                 onClose={handleCloseSearch}
+                onLoadMore={loadMoreResults}
+                isLoadingMore={isLoadingMoreResults}
               />
             ) : null}
           </div>

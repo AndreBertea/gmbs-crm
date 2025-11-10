@@ -43,11 +43,17 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
   const isFirstLoadRef = useRef(true)
   const isFetchingRef = useRef(false)
   const lastRequestParamsRef = useRef<string>("")
+  const interventionsRef = useRef<InterventionView[]>([])
 
   const [interventions, setInterventions] = useState<InterventionView[]>([])
   const [loading, setLoading] = useState<boolean>(autoLoad)
   const [error, setError] = useState<string | null>(null)
   const [totalCount, setTotalCount] = useState<number>(0)
+
+  // Mettre à jour la ref quand les interventions changent
+  useEffect(() => {
+    interventionsRef.current = interventions
+  }, [interventions])
 
   useEffect(() => {
     // Réinitialiser les refs au montage du composant pour forcer le rechargement
@@ -165,7 +171,25 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
 
       // Mettre à jour le state seulement si c'est la requête active
       console.log(`[useInterventions] Mise à jour des données pour la requête ${requestId}, ${result.data.length} interventions`)
+      
+      // Log pour diagnostiquer les disparitions d'interventions
+      const previousInterventions = interventionsRef.current
+      if (previousInterventions.length > 0 && result.data.length !== previousInterventions.length) {
+        const previousIds = new Set(previousInterventions.map(i => i.id))
+        const newIds = new Set(result.data.map(i => i.id))
+        const disappeared = Array.from(previousIds).filter(id => !newIds.has(id))
+        const appeared = Array.from(newIds).filter(id => !previousIds.has(id))
+        
+        if (disappeared.length > 0) {
+          console.warn(`[useInterventions] ⚠️ ${disappeared.length} intervention(s) ont disparu:`, disappeared.slice(0, 5))
+        }
+        if (appeared.length > 0) {
+          console.log(`[useInterventions] ✅ ${appeared.length} nouvelle(s) intervention(s) apparue(s):`, appeared.slice(0, 5))
+        }
+      }
+      
       setInterventions(result.data)
+      interventionsRef.current = result.data // Mettre à jour la ref pour les prochains logs
       setTotalCount(result.total ?? result.data.length)
       lastLoadTimeRef.current = Date.now()
       isFirstLoadRef.current = false
@@ -261,8 +285,8 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
   }, [autoLoad, fetchAll, shouldFetch])
 
   const refresh = useCallback(async () => {
-    setInterventions([])
-    setTotalCount(0)
+    // Ne pas vider la liste immédiatement pour éviter les disparitions visuelles
+    // Le loading state gérera l'affichage pendant le rechargement
     // refresh() ignore le throttling pour forcer un rechargement immédiat
     return fetchAll(true)
   }, [fetchAll])

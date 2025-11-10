@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { InterventionStatsBarChart } from "@/components/dashboard/intervention-stats-barchart"
 import { ArtisanStatsBarChart } from "@/components/dashboard/artisan-stats-barchart"
 import { MarginStatsCard } from "@/components/dashboard/margin-stats-card"
@@ -11,11 +11,125 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { t } from "@/config/domain"
+import { useRevealTransition } from "@/hooks/useRevealTransition"
 
 type PeriodType = "week" | "month" | "year"
 
+type ButtonPosition = {
+  x: number
+  y: number
+}
+
 export default function DashboardPage() {
   const [periodType, setPeriodType] = useState<PeriodType>("month")
+  const [showTransition, setShowTransition] = useState(false)
+  const [buttonPosition, setButtonPosition] = useState<ButtonPosition | null>(null)
+  const dashboardContentRef = useRef<HTMLDivElement>(null)
+  const loginIframeRef = useRef<HTMLDivElement>(null)
+  const { isAnimating, circleSizeMotion, circleSize, startAnimationFromPosition } = useRevealTransition()
+
+  // Détecter la transition depuis login
+  useEffect(() => {
+    // Vérifier si on vient de login
+    const transitionData = sessionStorage.getItem('revealTransition')
+    if (transitionData) {
+      try {
+        const data = JSON.parse(transitionData)
+        // Vérifier que c'est récent (moins de 5 secondes)
+        if (data.from === 'login' && Date.now() - data.timestamp < 5000) {
+          setButtonPosition(data.buttonPosition)
+          setShowTransition(true)
+          
+          // Nettoyer sessionStorage
+          sessionStorage.removeItem('revealTransition')
+          
+          // Démarrer l'animation après un court délai pour laisser le DOM se charger
+          setTimeout(() => {
+            if (data.buttonPosition) {
+              startAnimationFromPosition(data.buttonPosition)
+            }
+          }, 100)
+        }
+      } catch (e) {
+        console.error('Erreur lors de la lecture de revealTransition:', e)
+        sessionStorage.removeItem('revealTransition')
+      }
+    }
+  }, [startAnimationFromPosition])
+
+  // Gérer l'animation du clipPath pour le dashboard (visible à l'intérieur du cercle)
+  useEffect(() => {
+    if (!showTransition || !isAnimating || !buttonPosition || !dashboardContentRef.current) return
+    
+    const unsubscribe = circleSizeMotion.on('change', (size) => {
+      const clipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+      const webkitClipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+      
+      if (dashboardContentRef.current) {
+        dashboardContentRef.current.style.clipPath = clipPath
+        ;(dashboardContentRef.current.style as any).webkitClipPath = webkitClipPath
+      }
+    })
+    
+    return () => unsubscribe()
+  }, [showTransition, isAnimating, buttonPosition, circleSizeMotion])
+
+  // Gérer l'animation du clipPath inversé pour l'iframe login (visible à l'extérieur du cercle)
+  useEffect(() => {
+    if (!showTransition || !buttonPosition || !loginIframeRef.current) return
+    
+    const updateMask = (size: number) => {
+      // Mask inversé : visible partout SAUF à l'intérieur du cercle
+      // Au début (size = 0), tout est visible (black partout)
+      // Pendant l'animation, l'intérieur devient transparent, l'extérieur reste visible
+      const mask = size === 0 
+        ? 'black' // Tout visible au début
+        : `radial-gradient(circle ${size}px at ${buttonPosition.x}px ${buttonPosition.y}px, transparent ${size}px, black ${size + 0.1}px)`
+      const webkitMask = size === 0
+        ? 'black'
+        : `radial-gradient(circle ${size}px at ${buttonPosition.x}px ${buttonPosition.y}px, transparent ${size}px, black ${size + 0.1}px)`
+      
+      if (loginIframeRef.current) {
+        loginIframeRef.current.style.mask = mask
+        ;(loginIframeRef.current.style as any).webkitMask = webkitMask
+      }
+    }
+    
+    // Initialiser le mask au début
+    if (!isAnimating) {
+      updateMask(0)
+      return
+    }
+    
+    // Mettre à jour le mask pendant l'animation
+    const unsubscribe = circleSizeMotion.on('change', (size) => {
+      updateMask(size)
+    })
+    
+    return () => unsubscribe()
+  }, [showTransition, isAnimating, buttonPosition, circleSizeMotion])
+
+  // Fin de l'animation - retirer le clipPath et masquer l'iframe login
+  useEffect(() => {
+    if (!showTransition || !isAnimating) return
+    
+    const timer = setTimeout(() => {
+      if (dashboardContentRef.current) {
+        dashboardContentRef.current.style.clipPath = 'none'
+        dashboardContentRef.current.style.webkitClipPath = 'none'
+      }
+      if (loginIframeRef.current) {
+        loginIframeRef.current.style.opacity = '0'
+        loginIframeRef.current.style.pointerEvents = 'none'
+      }
+      // Masquer complètement l'iframe après la transition d'opacité
+      setTimeout(() => {
+        setShowTransition(false)
+      }, 300) // Délai pour la transition d'opacité
+    }, 3000) // 3 secondes
+    
+    return () => clearTimeout(timer)
+  }, [showTransition, isAnimating])
 
   // Calculer les dates selon la période sélectionnée
   const period = useMemo(() => {
@@ -71,8 +185,43 @@ export default function DashboardPage() {
   }, [periodType])
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex-1 p-6 space-y-6">
+    <div className="flex flex-col min-h-screen relative">
+      {/* Iframe de la page login - visible à l'extérieur du cercle */}
+      {showTransition && buttonPosition && (
+        <div
+          ref={loginIframeRef}
+          className="fixed inset-0 z-[90]"
+          style={{
+            pointerEvents: 'none',
+            opacity: showTransition ? 1 : 0,
+            transition: 'opacity 0.3s ease-out',
+          }}
+        >
+          <iframe
+            src="/login"
+            className="w-full h-full border-0"
+            style={{
+              pointerEvents: 'none',
+            }}
+            aria-hidden="true"
+            title="Login"
+            loading="eager"
+          />
+        </div>
+      )}
+      
+      <div 
+        ref={dashboardContentRef}
+        className="flex-1 p-6 space-y-6 relative z-10"
+        style={{
+          clipPath: showTransition && buttonPosition 
+            ? `circle(0px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+            : 'none',
+          WebkitClipPath: showTransition && buttonPosition
+            ? `circle(0px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+            : 'none',
+        }}
+      >
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
