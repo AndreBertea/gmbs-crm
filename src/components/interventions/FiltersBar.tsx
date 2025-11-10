@@ -7,6 +7,7 @@ import {
   Settings,
   Pin,
   PinOff,
+  X,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -61,7 +62,7 @@ export function FiltersBar({
   sortDir: SortDir
   onSortDir: (d: SortDir) => void
   displayedStatuses: InterventionStatusValue[]
-  selectedStatus: InterventionStatusValue | null
+  selectedStatus: InterventionStatusValue[]
   onSelectStatus: (s: InterventionStatusValue | null) => void
   pinnedStatuses: InterventionStatusValue[]
   onPinStatus: (s: InterventionStatusValue) => void
@@ -94,8 +95,10 @@ export function FiltersBar({
       return displayedStatuses
     }
 
-    if (selectedStatus && !effectivePinnedStatuses.includes(selectedStatus)) {
-      return Array.from(new Set([...effectivePinnedStatuses, selectedStatus]))
+    // Inclure les statuts sélectionnés qui ne sont pas dans les épinglés
+    const selectedNotPinned = selectedStatus.filter((s) => !effectivePinnedStatuses.includes(s))
+    if (selectedNotPinned.length > 0) {
+      return Array.from(new Set([...effectivePinnedStatuses, ...selectedNotPinned]))
     }
 
     return effectivePinnedStatuses
@@ -115,18 +118,33 @@ export function FiltersBar({
         <div className="text-sm text-muted-foreground ml-2">Statut:</div>
         <button
           onClick={() => onSelectStatus(null)}
-          className={`status-chip ${selectedStatus === null ? "bg-foreground/90 text-background ring-2 ring-foreground/20" : "bg-muted text-foreground hover:bg-muted/80"} transition-[opacity,transform,shadow] duration-150 ease-out`}
+          className={`status-chip ${
+            selectedStatus.length === 0 
+              ? "bg-foreground/90 text-background ring-2 ring-foreground/20" 
+              : "bg-transparent border border-border text-foreground hover:bg-muted/50"
+          } transition-[opacity,transform,shadow] duration-150 ease-out`}
         >
           Toutes ({getCountByStatus(null)})
         </button>
         {statusesToRender.map((status) => {
           const statusDisplay = getStatusDisplay(status, { workflow })
-          const isSelected = selectedStatus === status
+          const isSelected = selectedStatus.includes(status)
+          const statusColor = statusDisplay.color
+          
           return (
             <button
               key={status}
               onClick={() => onSelectStatus(status)}
-              className={`status-chip status-${statusDisplay.label} ${isSelected ? "ring-2 ring-foreground/20" : "hover:shadow-card"} transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5`}
+              className={`status-chip transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5 ${
+                isSelected
+                  ? "ring-2 ring-foreground/20"
+                  : "hover:shadow-card border border-border bg-transparent"
+              }`}
+              style={isSelected ? { 
+                backgroundColor: `${statusColor}15`, 
+                borderColor: statusColor,
+                color: statusColor 
+              } : {}}
               title={statusDisplay.label}
             >
               {statusDisplay.icon && (
@@ -141,6 +159,17 @@ export function FiltersBar({
             </button>
           )
         })}
+        {selectedStatus.length > 0 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            onClick={() => onSelectStatus(null)}
+            title="Réinitialiser les filtres"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
         <Popover open={isStatusSettingsOpen} onOpenChange={setStatusSettingsOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -236,8 +265,14 @@ export function FiltersBar({
               <div className="px-2 py-2 space-y-2">
                 <div className="text-xs text-muted-foreground">Statut</div>
                 <Select
-                  value={selectedStatus ?? "__ALL__"}
-                  onValueChange={(value) => onSelectStatus(value === "__ALL__" ? null : (value as InterventionStatusValue))}
+                  value={selectedStatus.length === 0 ? "__ALL__" : selectedStatus[0] ?? "__ALL__"}
+                  onValueChange={(value) => {
+                    if (value === "__ALL__") {
+                      onSelectStatus(null)
+                    } else {
+                      onSelectStatus(value as InterventionStatusValue)
+                    }
+                  }}
                 >
                   <SelectTrigger className="w-full"><SelectValue placeholder="Filtrer par statut" /></SelectTrigger>
                   <SelectContent>
