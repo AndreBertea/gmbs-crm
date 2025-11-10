@@ -302,11 +302,12 @@ export default function Page() {
         console.log('⚡ Mise à jour optimiste détectée pour', id)
         updateInterventionOptimistic(id, data)
         
-        // Rafraîchir quand même en arrière-plan après un court délai
+        // Rafraîchir quand même en arrière-plan après un délai plus long pour éviter les rafraîchissements trop fréquents
+        // Le délai de 2000ms permet d'éviter les multiples rafraîchissements si plusieurs mises à jour arrivent rapidement
         setTimeout(() => {
           console.log('🔄 Rafraîchissement en arrière-plan après mise à jour optimiste')
           refresh()
-        }, 500)
+        }, 2000)
       } else {
         // Mise à jour normale : rafraîchir immédiatement
         console.log('🔄 Rafraîchissement complet suite à mise à jour')
@@ -1332,8 +1333,10 @@ export default function Page() {
       )}
 
       {loading && normalizedInterventions.length === 0 ? (
-        <div className="flex h-64 items-center justify-center">
-          <Loader />
+        <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+          <div style={{ transform: 'scale(1.25)' }}>
+            <Loader />
+          </div>
         </div>
       ) : (
         renderActiveView()

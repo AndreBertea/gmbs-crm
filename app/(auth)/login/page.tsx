@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -9,76 +9,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { useRevealTransition } from '@/hooks/useRevealTransition'
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [shouldPreloadDashboard, setShouldPreloadDashboard] = useState(false)
   const router = useRouter()
   const buttonRef = useRef<HTMLButtonElement>(null)
-  const dashboardContainerRef = useRef<HTMLDivElement>(null)
-  
-  const { isAnimating, circleSizeMotion, buttonPosition, startAnimation, maxCircleSize } = useRevealTransition()
-
-  // Précharger le dashboard au chargement
-  useEffect(() => {
-    router.prefetch('/dashboard')
-  }, [router])
-
-  // Gérer l'animation du clipPath
-  useEffect(() => {
-    if (!isAnimating || !buttonPosition) return
-
-    const unsubscribe = circleSizeMotion.on('change', (size) => {
-      // ClipPath pour le dashboard (visible à l'intérieur du cercle)
-      const clipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-      const webkitClipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-      
-      if (dashboardContainerRef.current) {
-        dashboardContainerRef.current.style.clipPath = clipPath
-        ;(dashboardContainerRef.current.style as any).webkitClipPath = webkitClipPath
-      }
-      
-      // Pas besoin d'overlay : la page login reste visible à l'extérieur naturellement
-      // car elle est en dessous (z-index 20) et le dashboard n'est visible qu'à l'intérieur (clipPath)
-    })
-
-    return () => unsubscribe()
-  }, [isAnimating, buttonPosition, circleSizeMotion])
-
-  // Navigation après l'animation - remplacer la page actuelle par l'iframe une fois l'animation terminée
-  useEffect(() => {
-    if (!isAnimating || !isAuthenticated) return
-
-    // Attendre la fin de l'animation (3 secondes) puis remplacer le contenu
-    const timer = setTimeout(() => {
-      // Une fois l'animation terminée, on peut permettre les interactions avec l'iframe
-      if (dashboardContainerRef.current) {
-        const iframe = dashboardContainerRef.current.querySelector('iframe')
-        if (iframe) {
-          // Permettre les interactions
-          iframe.style.pointerEvents = 'auto'
-          dashboardContainerRef.current.style.pointerEvents = 'auto'
-          
-          // Rendre l'iframe pleine page en retirant le clipPath
-          dashboardContainerRef.current.style.clipPath = 'none'
-          dashboardContainerRef.current.style.webkitClipPath = 'none'
-          
-          // Masquer la page login
-          const loginPage = document.querySelector('[style*="zIndex: 20"]') as HTMLElement
-          if (loginPage) {
-            loginPage.style.display = 'none'
-          }
-        }
-      }
-    }, 3000) // 3000ms = 3 secondes = durée de l'animation
-
-    return () => clearTimeout(timer)
-  }, [isAnimating, isAuthenticated])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -103,20 +41,26 @@ export default function LoginPage() {
         await fetch('/api/auth/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: 'connected' }) })
       }
       
-      // Marquer comme authentifié et démarrer l'animation
-      setIsAuthenticated(true)
-      // Précharger l'iframe après l'authentification pour qu'elle ait accès aux cookies
-      setShouldPreloadDashboard(true)
+      // Calculer la position du bouton AVANT navigation
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        const buttonPosition = {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        }
+        
+        // Stocker la position dans sessionStorage pour la page dashboard
+        sessionStorage.setItem('revealTransition', JSON.stringify({
+          from: 'login',
+          buttonPosition,
+          timestamp: Date.now()
+        }))
+      }
       
-      // Naviguer immédiatement pour que Next.js commence à charger la page en arrière-plan
+      // Naviguer immédiatement vers dashboard
       const url = new URL(window.location.href)
       const redirect = url.searchParams.get('redirect') || '/dashboard'
-      router.prefetch(redirect)
-      
-      // Utiliser setTimeout pour s'assurer que le DOM est mis à jour et que l'iframe commence à charger
-      setTimeout(() => {
-        startAnimation(buttonRef as React.RefObject<HTMLButtonElement>)
-      }, 100) // Petit délai pour laisser l'iframe commencer à charger
+      router.replace(redirect)
     } catch (e: any) {
       setError(e?.message || 'Erreur inconnue')
       setLoading(false)
@@ -125,8 +69,25 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* Page login (z-index: 20) */}
-      <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 relative" style={{ zIndex: 20 }}>
+      {/* Iframe cachée pour précharger la page login - sera utilisée sur le dashboard */}
+      <iframe
+        src="/login"
+        className="absolute opacity-0 pointer-events-none"
+        style={{
+          position: 'fixed',
+          top: '-9999px',
+          left: '-9999px',
+          width: '1px',
+          height: '1px',
+          border: 'none',
+          visibility: 'hidden',
+        }}
+        aria-hidden="true"
+        title="Login preload"
+        loading="eager"
+      />
+      
+      <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 relative">
         {/* Left brand / illustration */}
         <div className="hidden md:flex flex-col justify-between p-10 bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white relative overflow-hidden">
           <div className="z-10 flex flex-col items-center justify-center flex-1">
@@ -182,42 +143,6 @@ export default function LoginPage() {
           </Card>
         </div>
       </div>
-
-      {/* Dashboard conteneur masqué (z-index: 30) - visible à l'intérieur du cercle */}
-      {/* Précharger l'iframe même avant l'animation pour qu'elle soit prête */}
-      {shouldPreloadDashboard && (
-        <div
-          ref={dashboardContainerRef}
-          className="fixed inset-0 bg-background"
-          style={{
-            zIndex: isAnimating ? 30 : -1,
-            clipPath: isAnimating && buttonPosition 
-              ? `circle(0px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-              : 'none',
-            WebkitClipPath: isAnimating && buttonPosition
-              ? `circle(0px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-              : 'none',
-            pointerEvents: 'none',
-            opacity: isAnimating ? 1 : 0,
-            visibility: isAnimating ? 'visible' : 'hidden',
-          }}
-          aria-hidden="true"
-        >
-          <iframe
-            src="/dashboard"
-            className="w-full h-full border-0"
-            style={{ 
-              pointerEvents: 'none',
-              opacity: 1,
-              visibility: 'visible',
-            }}
-            aria-hidden="true"
-            title="Dashboard"
-            loading="eager"
-          />
-        </div>
-      )}
-
     </>
   )
 }

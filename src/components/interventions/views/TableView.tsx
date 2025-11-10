@@ -1101,10 +1101,13 @@ export function TableView({
                             <React.Fragment key={intervention.id}>
                               <tr
                                 data-intervention-id={intervention.id}
+                                data-row-index={rowIndex}
                                 className={cn(
                                   "group cursor-pointer border-b border-border/30 transition-colors duration-150 hover:bg-accent/10 data-[state=selected]:hover:bg-muted",
                                   statusBorderEnabled && "table-row-status-border",
                                   isExpanded && "bg-muted/30",
+                                  // Classe pour stripes alternées basée sur l'index réel dans le dataset
+                                  rowIndex % 2 === 0 ? "table-row-even" : "table-row-odd",
                                 )}
                                 style={
                                   {
