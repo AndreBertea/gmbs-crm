@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Implémentation d'une animation de transition fluide entre la page de connexion et le dashboard utilisant un effet de cercle révélateur. Le cercle s'agrandit depuis le bouton "Se connecter" pour révéler progressivement le dashboard en dessous, tandis que la page de login reste visible à l'extérieur du cercle pendant toute l'animation.
+Implémentation d'une animation de transition fluide entre la page de connexion et le dashboard utilisant un effet de cercle révélateur. **Navigation immédiate vers `/dashboard`** après authentification réussie, avec animation de révélation du dashboard depuis le bouton "Se connecter". La page login reste visible à l'extérieur du cercle via une iframe qui disparaît progressivement.
 
 ## Architecture technique
 
@@ -10,8 +10,17 @@ Implémentation d'une animation de transition fluide entre la page de connexion 
 
 L'animation utilise un système de couches empilées avec des z-index spécifiques :
 
-1. **Page login (z-index: 20)** : Page de connexion visible normalement, reste visible à l'extérieur du cercle pendant l'animation
-2. **Dashboard conteneur (z-index: 30)** : Conteneur fixe contenant l'iframe du dashboard, masqué avec `clipPath` et révélé progressivement à l'intérieur du cercle
+1. **Iframe login (z-index: 90)** : Iframe contenant la page login, visible à l'extérieur du cercle avec un mask inversé, disparaît progressivement
+2. **Dashboard contenu (z-index: 10)** : Page dashboard principale, révélée progressivement à l'intérieur du cercle avec `clipPath`
+
+### Principe de fonctionnement
+
+**Logique inversée par rapport à l'approche précédente** :
+- ✅ **Navigation immédiate** : `router.replace('/dashboard')` dès l'authentification réussie
+- ✅ **URL correcte** : L'URL change immédiatement vers `/dashboard` (pas de problème de reload/reconnexion)
+- ✅ **Dashboard = page principale** : Le dashboard est la vraie page Next.js, pas une iframe
+- ✅ **Login = iframe** : La page login est chargée dans une iframe pour l'animation
+- ✅ **SessionStorage** : Position du bouton stockée dans `sessionStorage` pour passer de login à dashboard
 
 ### Composants impliqués
 
@@ -21,11 +30,11 @@ L'animation utilise un système de couches empilées avec des z-index spécifiqu
 
 **Responsabilités** :
 - Gérer l'état de l'animation (`isAnimating`)
-- Calculer la position du bouton via `getBoundingClientRect()`
 - Calculer la taille maximale du cercle : `Math.sqrt(window.innerWidth² + window.innerHeight²)`
-- Animer la taille du cercle avec Framer Motion (`useMotionValue` + `useSpring`)
+- Animer la taille du cercle avec Framer Motion (`useMotionValue` + `animate`)
 - Courbe d'animation : `easeOutCubic` ([0.33, 1, 0.68, 1])
 - Durée : 3 secondes (3000ms)
+- Exposer la taille actuelle du cercle (`circleSize`) pour le mask de l'iframe
 
 **API retournée** :
 ```typescript
@@ -34,7 +43,9 @@ L'animation utilise un système de couches empilées avec des z-index spécifiqu
   circleSizeMotion: MotionValue<number>
   buttonPosition: { x: number, y: number } | null
   startAnimation: (buttonRef: RefObject<HTMLButtonElement>) => void
+  startAnimationFromPosition: (position: ButtonPosition) => void
   maxCircleSize: number
+  circleSize: number
 }
 ```
 
@@ -43,113 +54,239 @@ L'animation utilise un système de couches empilées avec des z-index spécifiqu
 **Fichier** : `app/(auth)/login/page.tsx`
 
 **Modifications principales** :
-- Ajout du hook `useRevealTransition`
-- Préchargement du dashboard avec `router.prefetch('/dashboard')`
-- Refs pour le bouton et le conteneur dashboard
-- Gestion de l'état `isAuthenticated` et `shouldPreloadDashboard`
-- Animation du `clipPath` synchronisée avec le motion value
-- Gestion de la transition finale (retrait du clipPath, masquage de la page login)
+- **Suppression de l'iframe dashboard** : Plus besoin d'afficher le dashboard dans une iframe
+- **Suppression des états d'animation** : Plus de `isAuthenticated`, `shouldPreloadDashboard`, etc.
+- **Préchargement de l'iframe login** : Iframe cachée qui précharge `/login` pour être utilisée sur le dashboard
+- **Stockage de la position** : Calcul et stockage de la position du bouton dans `sessionStorage` avant navigation
+- **Navigation immédiate** : `router.replace('/dashboard')` dès l'authentification réussie
+
+**Code clé** :
+```typescript
+// Calculer la position du bouton AVANT navigation
+if (buttonRef.current) {
+  const rect = buttonRef.current.getBoundingClientRect()
+  const buttonPosition = {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2
+  }
+  
+  // Stocker dans sessionStorage
+  sessionStorage.setItem('revealTransition', JSON.stringify({
+    from: 'login',
+    buttonPosition,
+    timestamp: Date.now()
+  }))
+}
+
+// Naviguer immédiatement
+router.replace('/dashboard')
+```
+
+#### 3. Page dashboard modifiée
+
+**Fichier** : `app/dashboard/page.tsx`
+
+**Modifications principales** :
+- **Détection de transition** : Vérifie `sessionStorage` pour détecter si on vient de login
+- **Iframe login** : Affiche une iframe contenant `/login` avec mask inversé
+- **Animation clipPath** : Applique un `clipPath` au contenu dashboard pour révélation progressive
+- **Gestion de la fin** : Retire le clipPath et masque l'iframe après 3 secondes
+
+**Code clé** :
+```typescript
+// Détecter la transition depuis login
+useEffect(() => {
+  const transitionData = sessionStorage.getItem('revealTransition')
+  if (transitionData) {
+    const data = JSON.parse(transitionData)
+    if (data.from === 'login' && Date.now() - data.timestamp < 5000) {
+      setButtonPosition(data.buttonPosition)
+      setShowTransition(true)
+      sessionStorage.removeItem('revealTransition')
+      setTimeout(() => {
+        startAnimationFromPosition(data.buttonPosition)
+      }, 100)
+    }
+  }
+}, [startAnimationFromPosition])
+```
 
 ## Flux d'exécution détaillé
 
-### Phase 1 : Initialisation
+### Phase 1 : Initialisation sur la page login
 
 1. **Au chargement de la page login** :
-   - `router.prefetch('/dashboard')` précharge la route dashboard
-   - Le hook `useRevealTransition` initialise les motion values
-   - Calcul de la taille maximale du cercle au chargement et au resize
+   - Iframe cachée précharge `/login` pour être utilisée sur le dashboard
+   - Le hook `useRevealTransition` n'est pas utilisé sur la page login (seulement sur dashboard)
 
 ### Phase 2 : Authentification réussie
 
 2. **Après soumission du formulaire et authentification réussie** :
    ```typescript
-   setIsAuthenticated(true)
-   setShouldPreloadDashboard(true)
-   router.prefetch(redirect) // Préchargement supplémentaire
-   setTimeout(() => {
-     startAnimation(buttonRef)
-   }, 100) // Délai pour laisser l'iframe commencer à charger
+   // Calculer la position du bouton
+   const rect = buttonRef.current.getBoundingClientRect()
+   const buttonPosition = {
+     x: rect.left + rect.width / 2,
+     y: rect.top + rect.height / 2
+   }
+   
+   // Stocker dans sessionStorage
+   sessionStorage.setItem('revealTransition', JSON.stringify({
+     from: 'login',
+     buttonPosition,
+     timestamp: Date.now()
+   }))
+   
+   // Naviguer immédiatement vers dashboard
+   router.replace('/dashboard')
    ```
 
-3. **Démarrage de l'animation** :
-   - Calcul de la position du bouton : `rect.left + rect.width/2, rect.top + rect.height/2`
-   - Initialisation de `buttonPosition` avec les coordonnées calculées
-   - `isAnimating` passe à `true`
-   - L'animation du cercle démarre : `circleSizeMotion.set(0)` → `circleSizeSpring.set(maxCircleSize)`
+3. **Navigation immédiate** :
+   - L'URL change vers `/dashboard` immédiatement
+   - Next.js commence à charger la page dashboard
+   - La page login reste visible pendant le chargement (pas de flash blanc)
 
-### Phase 3 : Animation du cercle (0-3000ms)
+### Phase 3 : Détection et démarrage de l'animation sur dashboard
 
-4. **Rendu des conteneurs** :
-   - La page login reste visible (z-index: 20)
-   - Le conteneur dashboard apparaît (z-index: 30) avec `clipPath: circle(0px at X Y)`
-   - L'iframe commence à charger `/dashboard` en arrière-plan
+4. **Au chargement de la page dashboard** :
+   - Vérification de `sessionStorage.getItem('revealTransition')`
+   - Si les données sont présentes et récentes (< 5 secondes), démarrage de l'animation
+   - Nettoyage immédiat de `sessionStorage`
 
-5. **Animation du clipPath** :
+5. **Démarrage de l'animation** :
+   ```typescript
+   setButtonPosition(data.buttonPosition)
+   setShowTransition(true)
+   setTimeout(() => {
+     startAnimationFromPosition(data.buttonPosition)
+   }, 100) // Délai pour laisser le DOM se charger
+   ```
+
+### Phase 4 : Animation du cercle (0-3000ms)
+
+6. **Rendu des conteneurs** :
+   - **Iframe login** (z-index: 90) : Affiche `/login` avec mask inversé (visible à l'extérieur du cercle)
+   - **Dashboard contenu** (z-index: 10) : Contenu principal avec `clipPath` (visible à l'intérieur du cercle)
+
+7. **Animation du clipPath pour le dashboard** :
    ```typescript
    circleSizeMotion.on('change', (size) => {
      const clipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-     // Application du clipPath au conteneur dashboard
-     dashboardContainerRef.current.style.clipPath = clipPath
-     dashboardContainerRef.current.style.webkitClipPath = clipPath
+     dashboardContentRef.current.style.clipPath = clipPath
+     dashboardContentRef.current.style.webkitClipPath = clipPath
    })
    ```
 
-6. **Effet visuel** :
-   - Le cercle s'agrandit depuis le centre du bouton "Se connecter"
-   - À l'intérieur du cercle : le dashboard apparaît progressivement
-   - À l'extérieur du cercle : la page login reste visible
-   - Courbe d'animation `easeOutCubic` pour un effet naturel
-
-### Phase 4 : Fin de l'animation (après 3000ms)
-
-7. **Transition finale** :
+8. **Animation du mask inversé pour l'iframe login** :
    ```typescript
-   setTimeout(() => {
-     // Retirer le clipPath pour rendre l'iframe pleine page
-     dashboardContainerRef.current.style.clipPath = 'none'
-     dashboardContainerRef.current.style.webkitClipPath = 'none'
-     
-     // Activer les interactions
-     iframe.style.pointerEvents = 'auto'
-     dashboardContainerRef.current.style.pointerEvents = 'auto'
-     
-     // Masquer la page login
-     loginPage.style.display = 'none'
-   }, 3000)
+   circleSizeMotion.on('change', (size) => {
+     const mask = size === 0 
+       ? 'black' // Tout visible au début
+       : `radial-gradient(circle ${size}px at ${buttonPosition.x}px ${buttonPosition.y}px, transparent ${size}px, black ${size + 0.1}px)`
+     loginIframeRef.current.style.mask = mask
+     loginIframeRef.current.style.webkitMask = webkitMask
+   })
    ```
 
-8. **Résultat** :
-   - L'iframe dashboard prend le contrôle complet de l'écran
-   - La page login est masquée
-   - Les interactions sont activées
-   - **Aucun rechargement** : l'iframe reste en place
+9. **Effet visuel** :
+   - Le cercle s'agrandit depuis le centre du bouton "Se connecter"
+   - **À l'intérieur du cercle** : Le dashboard apparaît progressivement (clipPath)
+   - **À l'extérieur du cercle** : La page login reste visible (mask inversé sur iframe)
+   - Courbe d'animation `easeOutCubic` pour un effet naturel
+
+### Phase 5 : Fin de l'animation (après 3000ms)
+
+10. **Transition finale** :
+    ```typescript
+    setTimeout(() => {
+      // Retirer le clipPath du dashboard
+      dashboardContentRef.current.style.clipPath = 'none'
+      dashboardContentRef.current.style.webkitClipPath = 'none'
+      
+      // Masquer l'iframe login avec transition d'opacité
+      loginIframeRef.current.style.opacity = '0'
+      loginIframeRef.current.style.pointerEvents = 'none'
+      
+      // Masquer complètement après transition
+      setTimeout(() => {
+        setShowTransition(false)
+      }, 300)
+    }, 3000)
+    ```
+
+11. **Résultat** :
+    - Le dashboard prend le contrôle complet de l'écran
+    - L'iframe login disparaît avec une transition d'opacité
+    - Les interactions sont normales (pas d'iframe, vraie navigation Next.js)
+    - **URL correcte** : `/dashboard` (pas de problème de reload/reconnexion)
 
 ## Détails techniques critiques
 
-### ClipPath et compatibilité navigateurs
+### ClipPath pour le dashboard
 
-**ClipPath pour le dashboard** :
+**ClipPath pour révéler le dashboard** :
 ```css
 clipPath: circle(size px at x px y px)
 -webkitClipPath: circle(size px at x px y px) /* Safari */
 ```
 
-**Pourquoi pas d'overlay blanc ?**
-- Initialement prévu un overlay blanc (z-index: 25) pour masquer l'extérieur
-- Finalement supprimé car le clipPath du dashboard limite naturellement sa visibilité
-- La page login reste visible à l'extérieur grâce à son z-index inférieur (20)
+- Le dashboard est visible **à l'intérieur** du cercle
+- Le cercle grandit depuis la position du bouton
+- À la fin, le clipPath est retiré (`'none'`)
 
-### Gestion de l'iframe
+### Mask inversé pour l'iframe login
 
-**Pourquoi une iframe ?**
-- Permet de précharger le dashboard sans naviguer immédiatement
-- L'iframe charge `/dashboard` avec les cookies de session après authentification
-- Évite le rechargement visible en gardant l'iframe en place après l'animation
+**Mask pour masquer progressivement l'iframe login** :
+```css
+/* Au début (size = 0) */
+mask: black; /* Tout visible */
+
+/* Pendant l'animation */
+mask: radial-gradient(
+  circle size px at x px y px,
+  transparent size px,  /* Intérieur transparent (masqué) */
+  black size+0.1 px      /* Extérieur visible */
+);
+```
+
+- L'iframe login est visible **à l'extérieur** du cercle
+- L'intérieur devient transparent progressivement
+- À la fin, l'iframe disparaît complètement avec `opacity: 0`
+
+### Gestion de l'iframe login
+
+**Pourquoi une iframe pour la page login ?**
+- Permet de garder la page login visible pendant l'animation
+- La page login disparaît progressivement à l'intérieur du cercle
+- L'iframe est préchargée sur la page login elle-même pour être prête
 
 **Optimisations** :
+- **Préchargement** : Iframe cachée sur `/login` qui précharge `/login` pour être utilisée sur dashboard
 - `loading="eager"` pour charger l'iframe rapidement
 - `pointerEvents: 'none'` pendant l'animation pour éviter les interactions accidentelles
-- Création de l'iframe seulement après authentification (`shouldPreloadDashboard`) pour avoir accès aux cookies
+- Transition d'opacité à la fin pour une disparition fluide
+
+### Stockage de la position dans sessionStorage
+
+**Format des données** :
+```typescript
+{
+  from: 'login',
+  buttonPosition: { x: number, y: number },
+  timestamp: number
+}
+```
+
+**Pourquoi sessionStorage ?**
+- Persiste pendant la navigation mais se vide à la fermeture de l'onglet
+- Accessible immédiatement après navigation
+- Pas de problème de sécurité (données temporaires)
+- Nettoyage automatique après utilisation
+
+**Vérification de validité** :
+- Vérifie que `from === 'login'`
+- Vérifie que `Date.now() - timestamp < 5000` (moins de 5 secondes)
+- Nettoie automatiquement après lecture
 
 ### Calcul de la taille maximale du cercle
 
@@ -176,59 +313,59 @@ const y = rect.top + rect.height / 2 // Centre vertical
 **Pourquoi `getBoundingClientRect()` ?**
 - Calcul dynamique de la position réelle du bouton dans le viewport
 - Fonctionne même si le bouton change de position (responsive, scroll, etc.)
-- Calculé au moment du déclenchement pour garantir la précision
+- Calculé **avant** la navigation pour garantir la précision
 
 ## Solutions aux problèmes rencontrés
 
-### Problème 1 : Le dashboard ne s'affichait pas
+### Problème 1 : URL reste sur `/login` après connexion
 
-**Cause** : L'iframe était créée avant l'authentification, donc sans accès aux cookies de session.
+**Cause** : L'ancienne approche utilisait une iframe pour le dashboard, donc l'URL ne changeait pas.
 
-**Solution** : Créer l'iframe seulement après authentification réussie :
-```typescript
-setIsAuthenticated(true)
-setShouldPreloadDashboard(true) // Crée l'iframe après auth
-```
+**Solution** : Navigation immédiate avec `router.replace('/dashboard')` dès l'authentification réussie.
 
-### Problème 2 : Rechargement visible après 3 secondes
+### Problème 2 : Rechargement = reconnexion
 
-**Cause** : Navigation avec `router.push()` ou `router.replace()` causait un rechargement complet.
+**Cause** : L'URL restait sur `/login`, donc un reload ramenait sur la page login.
 
-**Solution** : Ne pas naviguer, mais rendre l'iframe pleine page :
-```typescript
-// Retirer le clipPath au lieu de naviguer
-dashboardContainerRef.current.style.clipPath = 'none'
-loginPage.style.display = 'none'
-```
+**Solution** : L'URL change immédiatement vers `/dashboard`, donc un reload garde l'utilisateur sur `/dashboard`.
 
-### Problème 3 : La page login disparaissait à l'extérieur du cercle
+### Problème 3 : Navigation interne limitée
 
-**Cause** : Overlay blanc masquait tout l'écran.
+**Cause** : Les liens dans l'iframe naviguaient dans l'iframe, pas dans la page principale.
 
-**Solution** : Supprimer l'overlay blanc. Le clipPath du dashboard limite naturellement sa visibilité, laissant la page login visible à l'extérieur grâce au z-index.
+**Solution** : Plus d'iframe pour le dashboard, navigation normale Next.js.
 
-### Problème 4 : Compatibilité Safari
+### Problème 4 : Page login disparaît immédiatement
 
-**Cause** : Safari nécessite le préfixe `-webkit-` pour clipPath.
+**Cause** : Quand on navigue vers `/dashboard`, la page login disparaît immédiatement.
+
+**Solution** : Iframe contenant `/login` affichée sur le dashboard avec mask inversé pour rester visible à l'extérieur du cercle.
+
+### Problème 5 : Compatibilité Safari
+
+**Cause** : Safari nécessite le préfixe `-webkit-` pour clipPath et mask.
 
 **Solution** : Application des deux propriétés :
 ```typescript
 element.style.clipPath = clipPath
 element.style.webkitClipPath = clipPath
+element.style.mask = mask
+element.style.webkitMask = webkitMask
 ```
 
 ## Optimisations de performance
 
-1. **Préchargement** : `router.prefetch('/dashboard')` au chargement de la page login
-2. **Délai avant animation** : 100ms pour laisser l'iframe commencer à charger
+1. **Préchargement de l'iframe login** : Iframe cachée sur `/login` qui précharge `/login` pour être utilisée sur dashboard
+2. **Délai avant animation** : 100ms pour laisser le DOM du dashboard se charger
 3. **Motion values** : Utilisation de Framer Motion pour des animations performantes avec `requestAnimationFrame`
 4. **Cleanup** : Nettoyage des event listeners et timers dans les `useEffect`
+5. **SessionStorage** : Nettoyage automatique après utilisation
 
 ## Accessibilité
 
-- `aria-hidden="true"` sur les conteneurs d'animation
+- `aria-hidden="true"` sur l'iframe login
 - `pointerEvents: 'none'` pendant l'animation pour éviter les interactions accidentelles
-- Titre descriptif sur l'iframe : `title="Dashboard"`
+- Titre descriptif sur l'iframe : `title="Login"`
 
 ## Responsive
 
@@ -248,15 +385,24 @@ element.style.webkitClipPath = clipPath
 **3 secondes (3000ms)**
 - Assez long pour être visible et appréciable
 - Assez court pour ne pas être frustrant
-- Permet à l'iframe de charger pendant l'animation
+- Permet au dashboard de charger pendant l'animation
+
+## Avantages de cette solution
+
+1. ✅ **URL correcte** : `/dashboard` immédiatement après connexion
+2. ✅ **Pas de reconnexion** : Reload garde l'utilisateur sur `/dashboard`
+3. ✅ **Navigation normale** : Les liens fonctionnent normalement (pas d'iframe)
+4. ✅ **Animation fluide** : Transition visuelle préservée avec effet de révélation circulaire
+5. ✅ **Code propre** : Pas d'iframe pour le dashboard, navigation standard Next.js
+6. ✅ **Page login visible** : Reste visible à l'extérieur du cercle pendant l'animation
 
 ## Résultat final
 
 Une transition fluide et moderne où :
-1. ✅ Le cercle part du bouton "Se connecter"
-2. ✅ Le dashboard apparaît progressivement à l'intérieur du cercle
-3. ✅ La page login reste visible à l'extérieur du cercle
-4. ✅ Aucun rechargement visible après l'animation
-5. ✅ L'iframe prend le contrôle de l'écran une fois l'animation terminée
-6. ✅ Expérience utilisateur fluide et moderne
-
+1. ✅ L'utilisateur clique sur "Se connecter"
+2. ✅ Navigation immédiate vers `/dashboard` (URL change)
+3. ✅ Le cercle part du bouton "Se connecter"
+4. ✅ Le dashboard apparaît progressivement à l'intérieur du cercle
+5. ✅ La page login reste visible à l'extérieur du cercle (via iframe)
+6. ✅ À la fin, l'iframe login disparaît et seul le dashboard reste
+7. ✅ Navigation normale Next.js, pas de problème de reload/reconnexion

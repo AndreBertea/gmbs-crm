@@ -625,34 +625,68 @@
      ═══════════════════════════════════════════════════════ */
 
   /* Mode STRIPES (par défaut) - Sans accent */
-  .data-table tbody tr:nth-child(even) td,
-  .shadcn-table tbody tr:nth-child(even) td {
+  /* Utiliser data-row-index au lieu de :nth-child pour éviter les problèmes de re-render */
+  .data-table tbody tr.table-row-even td,
+  .shadcn-table tbody tr.table-row-even td {
     --cell-base-color: color-mix(in oklab, var(--bg-light), black 1.5%);
   }
 
-  .data-table tbody tr:nth-child(odd) td,
-  .shadcn-table tbody tr:nth-child(odd) td {
+  .data-table tbody tr.table-row-odd td,
+  .shadcn-table tbody tr.table-row-odd td {
     --cell-base-color: var(--bg-light);
   }
 
-  :root[data-theme="dark"] .data-table tbody tr:nth-child(even) td,
-  :root[data-theme="dark"] .shadcn-table tbody tr:nth-child(even) td {
+  /* Fallback pour compatibilité avec :nth-child si data-row-index n'est pas disponible */
+  .data-table tbody tr:not([data-row-index]):nth-child(even) td,
+  .shadcn-table tbody tr:not([data-row-index]):nth-child(even) td {
+    --cell-base-color: color-mix(in oklab, var(--bg-light), black 1.5%);
+  }
+
+  .data-table tbody tr:not([data-row-index]):nth-child(odd) td,
+  .shadcn-table tbody tr:not([data-row-index]):nth-child(odd) td {
+    --cell-base-color: var(--bg-light);
+  }
+
+  :root[data-theme="dark"] .data-table tbody tr.table-row-even td,
+  :root[data-theme="dark"] .shadcn-table tbody tr.table-row-even td {
     --cell-base-color: color-mix(in oklab, var(--bg-light), black 9%);
   }
 
-  :root[data-theme="dark"] .data-table tbody tr:nth-child(odd) td,
-  :root[data-theme="dark"] .shadcn-table tbody tr:nth-child(odd) td {
+  :root[data-theme="dark"] .data-table tbody tr.table-row-odd td,
+  :root[data-theme="dark"] .shadcn-table tbody tr.table-row-odd td {
+    --cell-base-color: color-mix(in oklab, var(--bg-light), black 6%);
+  }
+
+  /* Fallback dark mode */
+  :root[data-theme="dark"] .data-table tbody tr:not([data-row-index]):nth-child(even) td,
+  :root[data-theme="dark"] .shadcn-table tbody tr:not([data-row-index]):nth-child(even) td {
+    --cell-base-color: color-mix(in oklab, var(--bg-light), black 9%);
+  }
+
+  :root[data-theme="dark"] .data-table tbody tr:not([data-row-index]):nth-child(odd) td,
+  :root[data-theme="dark"] .shadcn-table tbody tr:not([data-row-index]):nth-child(odd) td {
     --cell-base-color: color-mix(in oklab, var(--bg-light), black 6%);
   }
 
   /* Mode STRIPES - Avec accent color */
-  .data-table[style*="--use-accent-color"] tbody tr:nth-child(even) td,
-  .shadcn-table[style*="--use-accent-color"] tbody tr:nth-child(even) td {
+  .data-table[style*="--use-accent-color"] tbody tr.table-row-even td,
+  .shadcn-table[style*="--use-accent-color"] tbody tr.table-row-even td {
     --cell-base-color: color-mix(in oklab, var(--accent-color), var(--bg-light) 94%);
   }
 
-  :root[data-theme="dark"] .data-table[style*="--use-accent-color"] tbody tr:nth-child(even) td,
-  :root[data-theme="dark"] .shadcn-table[style*="--use-accent-color"] tbody tr:nth-child(even) td {
+  :root[data-theme="dark"] .data-table[style*="--use-accent-color"] tbody tr.table-row-even td,
+  :root[data-theme="dark"] .shadcn-table[style*="--use-accent-color"] tbody tr.table-row-even td {
+    --cell-base-color: color-mix(in oklab, var(--accent-color), var(--bg-light) 90%);
+  }
+
+  /* Fallback avec accent */
+  .data-table[style*="--use-accent-color"] tbody tr:not([data-row-index]):nth-child(even) td,
+  .shadcn-table[style*="--use-accent-color"] tbody tr:not([data-row-index]):nth-child(even) td {
+    --cell-base-color: color-mix(in oklab, var(--accent-color), var(--bg-light) 94%);
+  }
+
+  :root[data-theme="dark"] .data-table[style*="--use-accent-color"] tbody tr:not([data-row-index]):nth-child(even) td,
+  :root[data-theme="dark"] .shadcn-table[style*="--use-accent-color"] tbody tr:not([data-row-index]):nth-child(even) td {
     --cell-base-color: color-mix(in oklab, var(--accent-color), var(--bg-light) 90%);
   }
 

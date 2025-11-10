@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import type { ChangeEvent, ReactNode, CSSProperties } from "react"
@@ -76,6 +76,8 @@ import {
 } from "@/lib/interventions/column-style"
 import { TABLE_ALIGNMENT_OPTIONS } from "./column-alignment-options"
 import type { InterventionModalOpenOptions } from "@/hooks/useInterventionModal"
+import { iconForStatus } from "@/lib/interventions/status-icons"
+import { getStatusDisplay } from "@/lib/interventions/status-display"
 
 const DEFAULT_TABLE_HEIGHT = "calc(100vh - var(--table-view-offset))"
 
@@ -87,8 +89,34 @@ type NoteDialogContentProps = React.ComponentPropsWithoutRef<typeof AlertDialogP
 const NoteDialogContent = React.forwardRef<HTMLDivElement, NoteDialogContentProps>(
   ({ className, ...props }, ref) => (
     <AlertDialogPortal>
-      <AlertDialogPrimitive.Overlay className="fixed inset-0 z-[55] bg-black/20 pointer-events-none" />
-      <AlertDialogPrimitive.Content ref={ref} className={className} {...props} />
+      <AlertDialogPrimitive.Overlay 
+        className="fixed inset-0 z-[55] bg-black/20" 
+        onClick={(e) => {
+          // Empêcher la fermeture du modal si on clique sur l'overlay
+          // Le modal ne se fermera que via les boutons ou Escape
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+      />
+      <AlertDialogPrimitive.Content 
+        ref={ref} 
+        className={className} 
+        onPointerDownOutside={(e) => {
+          const target = e.target as HTMLElement
+          // Vérifier si le clic est dans un conteneur de dropdown/select/popover
+          const dropdownContainer = target.closest('[data-radix-popper-content-wrapper], [data-radix-select-content], [data-radix-popover-content]')
+          
+          // Si le clic est sur un élément interactif dans le dropdown (menu item, select item, etc.)
+          // permettre la fermeture normale du dropdown
+          const isInteractiveElement = target.closest('[role="menuitem"], [data-radix-dropdown-menu-item], [data-radix-select-item], [role="option"], button, a')
+          
+          // Empêcher la fermeture seulement si on clique dans le conteneur mais pas sur un élément interactif
+          if (dropdownContainer && !isInteractiveElement) {
+            e.preventDefault()
+          }
+        }}
+        {...props} 
+      />
     </AlertDialogPortal>
   ),
 )
@@ -176,33 +204,41 @@ const renderCell = (
 
   if (property === "statusValue") {
     if (!value) return { content: "—" }
-    const option = schema.options?.find((item) => item.value === value)
-    const statusInfo = (intervention as any).status as { color?: string; label?: string } | undefined
-    const hex =
-      statusInfo?.color ??
-      (intervention as any).statusColor ??
-      option?.color ??
-      "#3B82F6"
-    const label = statusInfo?.label ?? option?.label ?? String(value)
+    const statusInfo = (intervention as any).status as { code?: string; color?: string; label?: string } | undefined
+    const statusCode = (statusInfo?.code ?? value ?? "") as string
+    
+    // Utiliser getStatusDisplay pour obtenir label, color et icon de manière centralisée
+    const statusDisplay = getStatusDisplay(statusCode, {
+      statusFromDb: statusInfo ? {
+        code: statusInfo.code ?? statusCode,
+        label: statusInfo.label ?? String(value),
+        color: statusInfo.color ?? null,
+      } : undefined,
+    })
     
     // DAT-001 : Vérifier si l'intervention doit afficher le statut "Check"
     const datePrevue = (intervention as any).date_prevue ?? (intervention as any).datePrevue ?? null
-    // Utiliser le code du statut depuis l'objet status si disponible, sinon utiliser statusValue
-    const statusCode = (statusInfo?.code ?? value ?? "") as string
     const isCheck = isCheckStatus(statusCode, datePrevue)
     
     // Si Check, remplacer complètement le label par "CHECK"
-    const displayLabel = isCheck ? "CHECK" : label
-    const displayColor = isCheck ? "#EF4444" : hex // Rouge pour Check
+    const displayLabel = isCheck ? "CHECK" : statusDisplay.label
+    const displayColor = isCheck ? "#EF4444" : statusDisplay.color // Rouge pour Check
     
     const appearance: TableColumnAppearance = style?.appearance ?? "solid"
+    const statusIcon = !isCheck ? statusDisplay.icon : null
+    
     if (appearance === "none") {
       return { 
         content: isCheck ? (
           <span className="check-status-badge inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold text-white bg-red-500">
             CHECK
           </span>
-        ) : displayLabel
+        ) : (
+          <span className="inline-flex items-center gap-1.5">
+            {statusIcon}
+            {displayLabel}
+          </span>
+        )
       }
     }
     if (appearance === "badge") {
@@ -211,11 +247,12 @@ const renderCell = (
         content: (
           <span
             className={cn(
-              "inline-flex items-center justify-center rounded-full px-2 py-0.5 leading-tight",
+              "inline-flex items-center justify-center gap-1.5 rounded-full px-2 py-0.5 leading-tight",
               isCheck && "check-status-badge"
             )}
             style={{ backgroundColor: displayColor, color: textColor }}
           >
+            {statusIcon}
             {displayLabel}
           </span>
         ),
@@ -228,7 +265,12 @@ const renderCell = (
         <span className="check-status-badge inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold text-white bg-red-500">
           CHECK
         </span>
-      ) : displayLabel,
+      ) : (
+        <span className="inline-flex items-center gap-1.5">
+          {statusIcon}
+          {displayLabel}
+        </span>
+      ),
       backgroundColor: isCheck ? "#FEE2E2" : pastel, // Fond rouge clair si Check
       defaultTextColor: themeMode === "dark" ? "#F3F4F6" : "#111827",
       cellClassName: "font-medium",
@@ -242,9 +284,9 @@ const renderCell = (
         )`
         : `linear-gradient(
         to bottom,
-        color-mix(in oklab, ${hex}, white 20%) 0%,
-        ${hex} 50%,
-        color-mix(in oklab, ${hex}, black 20%) 100%
+        color-mix(in oklab, ${statusDisplay.color}, white 20%) 0%,
+        ${statusDisplay.color} 50%,
+        color-mix(in oklab, ${statusDisplay.color}, black 20%) 100%
       )`,
     }
   }
@@ -255,27 +297,81 @@ const renderCell = (
       (typeof value === "string" ? value : value == null ? "" : String(value))
     if (!assignedCode) return { content: "—" }
     const color = (intervention as any).assignedUserColor as string | undefined
-    const appearance: TableColumnAppearance = style?.appearance ?? "solid"
-    if (!color || appearance === "none") {
-      return { content: assignedCode }
+    const assignedUserName = (intervention as any).assignedUserName as string | undefined
+    
+    // Calculer les initiales à partir du nom complet ou du code
+    const getInitials = (): string => {
+      if (assignedUserName) {
+        const parts = assignedUserName.trim().split(/\s+/)
+        if (parts.length >= 2) {
+          return ((parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '')).toUpperCase() || 'U'
+        }
+        if (parts.length === 1 && parts[0]) {
+          return parts[0].substring(0, 2).toUpperCase() || 'U'
+        }
+      }
+      // Fallback sur le code gestionnaire (première lettre)
+      return assignedCode.substring(0, 2).toUpperCase() || 'U'
     }
-    if (appearance === "badge") {
-      const textColor = style?.textColor ?? getReadableTextColor(color, "#111827")
+    
+    const initials = getInitials()
+    const appearance: TableColumnAppearance = style?.appearance ?? "solid"
+    
+    if (!color || appearance === "none") {
+      // Même sans couleur, afficher le badge circulaire
       return {
         content: (
-          <span
-            className="inline-flex items-center justify-center rounded-full px-2 py-0.5 leading-tight"
-            style={{ backgroundColor: color, color: textColor }}
+          <div
+            className="relative inline-flex h-8 w-8 select-none items-center justify-center rounded-full border-2 text-xs font-semibold uppercase"
+            style={{
+              borderColor: color || '#e5e7eb',
+              background: color || undefined,
+              color: color ? '#ffffff' : '#1f2937',
+            }}
+            title={assignedUserName || assignedCode}
           >
-            {assignedCode}
-          </span>
+            {initials}
+          </div>
+        ),
+      }
+    }
+    
+    if (appearance === "badge") {
+      // Mode badge : afficher le badge circulaire
+      return {
+        content: (
+          <div
+            className="relative inline-flex h-8 w-8 select-none items-center justify-center rounded-full border-2 text-xs font-semibold uppercase"
+            style={{
+              borderColor: color,
+              background: color,
+              color: '#ffffff',
+            }}
+            title={assignedUserName || assignedCode}
+          >
+            {initials}
+          </div>
         ),
         cellClassName: "font-medium",
       }
     }
+    
+    // Mode solid : afficher le badge circulaire avec fond pastel
     const pastel = toSoftColor(color, themeMode, themeMode === "dark" ? "#1f2937" : "#e2e8f0")
     return {
-      content: assignedCode,
+      content: (
+        <div
+          className="relative inline-flex h-8 w-8 select-none items-center justify-center rounded-full border-2 text-xs font-semibold uppercase"
+          style={{
+            borderColor: color,
+            background: color,
+            color: '#ffffff',
+          }}
+          title={assignedUserName || assignedCode}
+        >
+          {initials}
+        </div>
+      ),
       backgroundColor: pastel,
       defaultTextColor: themeMode === "dark" ? "#E5E7EB" : "#111827",
       cellClassName: "font-medium",
@@ -632,13 +728,25 @@ export function TableView({
     (property: string, nextAlignment: TableColumnAlignment) => {
       if (!onLayoutOptionsChange) return
       const nextAlignments = { ...columnAlignment }
+      const currentExplicitAlignment = columnAlignment[property]
+      const currentAlignment = (currentExplicitAlignment ?? "center") as TableColumnAlignment
+      
+      // Si on clique sur "center"
       if (nextAlignment === "center") {
-        if (!columnAlignment[property]) return
-        delete nextAlignments[property]
+        // Si "center" est déjà défini explicitement, on le supprime (retour à "center" par défaut)
+        if (currentExplicitAlignment === "center") {
+          delete nextAlignments[property]
+          onLayoutOptionsChange({ columnAlignment: nextAlignments })
+          return
+        }
+        // Sinon, on définit explicitement "center"
+        nextAlignments[property] = "center"
         onLayoutOptionsChange({ columnAlignment: nextAlignments })
         return
       }
-      if (columnAlignment[property] === nextAlignment) return
+      // Si on clique sur le même alignement que celui actuel, ne rien faire
+      if (currentAlignment === nextAlignment) return
+      // Sinon, définir le nouvel alignement
       nextAlignments[property] = nextAlignment
       onLayoutOptionsChange({ columnAlignment: nextAlignments })
     },
@@ -707,6 +815,8 @@ export function TableView({
 
   const handleNoteDialogOpenChange = useCallback((open: boolean) => {
     if (!open) {
+      // Fermer le modal immédiatement
+      // La gestion des dropdowns est faite dans onPointerDownOutside
       setShowNoteDialog(false)
       setNoteDialogInterventionId(null)
       setNoteValue("")
@@ -1373,7 +1483,7 @@ function TruncatedCell({ content, className }: { content: ReactNode; className?:
   const [isOverflowing, setIsOverflowing] = useState(false)
   const [portalElement, setPortalElement] = useState<HTMLElement | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = cellRef.current
     if (!element) return
     
@@ -1382,13 +1492,15 @@ function TruncatedCell({ content, className }: { content: ReactNode; className?:
       setIsOverflowing(element.scrollWidth > element.clientWidth)
     }
     
+    // Vérifier immédiatement après le rendu
     checkOverflow()
     
+    // Le ResizeObserver détectera les changements de taille ultérieurs
     const resizeObserver = new ResizeObserver(checkOverflow)
     resizeObserver.observe(element)
     
     return () => resizeObserver.disconnect()
-  }, [content])
+  })
 
   const contentStr = typeof content === "string" ? content : 
                      typeof content === "number" ? String(content) : ""

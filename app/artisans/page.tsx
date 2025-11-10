@@ -482,11 +482,9 @@ export default function ArtisansPage(): ReactElement {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <div className="flex-1 p-6">
-          <div className="text-center">
-            <Loader />
-          </div>
+      <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+        <div style={{ transform: 'scale(1.25)' }}>
+          <Loader />
         </div>
       </div>
     )

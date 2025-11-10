@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -9,15 +9,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { useRevealTransition } from '@/hooks/useRevealTransition'
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [shouldPreloadDashboard, setShouldPreloadDashboard] = useState(false)
   const router = useRouter()
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dashboardContainerRef = useRef<HTMLDivElement>(null)
@@ -90,20 +87,26 @@ export default function LoginPage() {
         await fetch('/api/auth/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: 'connected' }) })
       }
       
-      // Marquer comme authentifié et démarrer l'animation
-      setIsAuthenticated(true)
-      // Précharger l'iframe après l'authentification pour qu'elle ait accès aux cookies
-      setShouldPreloadDashboard(true)
+      // Calculer la position du bouton AVANT navigation
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        const buttonPosition = {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        }
+        
+        // Stocker la position dans sessionStorage pour la page dashboard
+        sessionStorage.setItem('revealTransition', JSON.stringify({
+          from: 'login',
+          buttonPosition,
+          timestamp: Date.now()
+        }))
+      }
       
-      // Naviguer immédiatement pour que Next.js commence à charger la page en arrière-plan
+      // Naviguer immédiatement vers dashboard
       const url = new URL(window.location.href)
       const redirect = url.searchParams.get('redirect') || '/dashboard'
-      router.prefetch(redirect)
-      
-      // Utiliser setTimeout pour s'assurer que le DOM est mis à jour et que l'iframe commence à charger
-      setTimeout(() => {
-        startAnimation(buttonRef as React.RefObject<HTMLButtonElement>)
-      }, 100) // Petit délai pour laisser l'iframe commencer à charger
+      router.replace(redirect)
     } catch (e: any) {
       setError(e?.message || 'Erreur inconnue')
       setLoading(false)
@@ -112,8 +115,25 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* Page login (z-index: 20) */}
-      <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 relative" style={{ zIndex: 20 }}>
+      {/* Iframe cachée pour précharger la page login - sera utilisée sur le dashboard */}
+      <iframe
+        src="/login"
+        className="absolute opacity-0 pointer-events-none"
+        style={{
+          position: 'fixed',
+          top: '-9999px',
+          left: '-9999px',
+          width: '1px',
+          height: '1px',
+          border: 'none',
+          visibility: 'hidden',
+        }}
+        aria-hidden="true"
+        title="Login preload"
+        loading="eager"
+      />
+      
+      <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 relative">
         {/* Left brand / illustration */}
         <div className="hidden md:flex flex-col justify-between p-10 bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white relative overflow-hidden">
           <div className="z-10 flex flex-col items-center justify-center flex-1">
@@ -169,42 +189,6 @@ export default function LoginPage() {
           </Card>
         </div>
       </div>
-
-      {/* Dashboard conteneur masqué (z-index: 30) - visible à l'intérieur du cercle */}
-      {/* Précharger l'iframe même avant l'animation pour qu'elle soit prête */}
-      {shouldPreloadDashboard && (
-        <div
-          ref={dashboardContainerRef}
-          className="fixed inset-0 bg-background"
-          style={{
-            zIndex: isAnimating ? 30 : -1,
-            clipPath: isAnimating && buttonPosition 
-              ? `circle(0px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-              : 'none',
-            WebkitClipPath: isAnimating && buttonPosition
-              ? `circle(0px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-              : 'none',
-            pointerEvents: 'none',
-            opacity: isAnimating ? 1 : 0,
-            visibility: isAnimating ? 'visible' : 'hidden',
-          }}
-          aria-hidden="true"
-        >
-          <iframe
-            src="/dashboard"
-            className="w-full h-full border-0"
-            style={{ 
-              pointerEvents: 'none',
-              opacity: 1,
-              visibility: 'visible',
-            }}
-            aria-hidden="true"
-            title="Dashboard"
-            loading="eager"
-          />
-        </div>
-      )}
-
     </>
   )
 }

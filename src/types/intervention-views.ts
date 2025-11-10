@@ -85,12 +85,15 @@ export type TableColumnAppearance = "solid" | "none" | "badge"
 
 export type TableColumnTextSize = "xs" | "sm" | "md" | "lg" | "xl"
 
+export type TableStatusDisplayMode = "text" | "icon"
+
 export type TableColumnStyle = {
   appearance?: TableColumnAppearance
   textSize?: TableColumnTextSize
   bold?: boolean
   italic?: boolean
   textColor?: string | null
+  statusDisplayMode?: TableStatusDisplayMode
 }
 
 export type TableColumnAlignment = "left" | "center" | "right"

@@ -1,18 +1,18 @@
 # 📊 Progression Visuelle - Livrable 2025-11-04
 
-**Dernière mise à jour** : 7 novembre 2025, 18h00  
-**Sprint actuel** : Sprint 1 terminé ✅ - Sprint 2 à démarrer  
-**Progression globale** : 7/22 tâches (32%)
+**Dernière mise à jour** : 7 novembre 2025, 20h00  
+**Sprint actuel** : Sprint 1 terminé ✅ - Sprint 2 à démarrer - Sprint 3 terminé ✅ - Sprint 4 en cours 🟡  
+**Progression globale** : 10/22 tâches (45%)
 
 ---
 
 ## 🎯 Progression Globale
 
 ```
-Projet complet : 🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 32% (7/22 tâches)
+Projet complet : 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 45% (10/22 tâches)
 
-Temps total : 6.5j / 43j consommés (15%)
-Reste : 36.5 jours
+Temps total : 8.5j / 43j consommés (20%)
+Reste : 34.5 jours
 ```
 
 **Note** : COM-001 (pré-requis ARC-001) et AUT-001 (auth commentaires) ajoutées au backlog.
@@ -25,8 +25,8 @@ Reste : 36.5 jours
 |--------|-----|--------|------|-------------|
 | **Sprint 1** ✅ | Fondations BDD | 6 | Terminé | 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 100% |
 | **Sprint 2** ⏸️ | Fonctionnalités métier | 6 | À venir | ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0% |
-| **Sprint 3** ⏸️ | Automatisations | 2 | À venir | 🟩⬜⬜⬜ 50% (DAT-001 terminé) |
-| **Sprint 4** ⏸️ | UI/UX | 8 | À venir | ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0% |
+| **Sprint 3** ✅ | Automatisations | 2 | Terminé | 🟩🟩🟩🟩🟩 100% (DAT-001 + UI-DD terminés) |
+| **Sprint 4** 🟡 | UI/UX | 8 | En cours | 🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜ 25% (UI-AGN + UI-DEV terminés) |
 | **Sprint 5** ⏸️ | Tests & QA | 5 | À venir | ⬜⬜⬜⬜⬜ 0% |
 
 ---
@@ -77,14 +77,14 @@ Temps: 0j / 16.5j
 
 ---
 
-## 📊 Sprint 3 : Automatisations (À venir ⏸️)
+## 📊 Sprint 3 : Automatisations (Terminé ✅)
 
-**Durée** : 4.5 jours | **Dates** : 09/12 - 13/12 | **Progression** : 1/2 tâches (50%)
+**Durée** : 4.5 jours | **Dates** : 09/12 - 13/12 | **Progression** : 2/2 tâches (100%)
 
 ```
-🟩⬜⬜⬜ 50%
+🟩🟩🟩🟩🟩 100%
 
-Temps: 0.5j / 4.5j
+Temps: 1j / 4.5j
 ```
 
 ### Détail des tâches
@@ -92,21 +92,21 @@ Temps: 0.5j / 4.5j
 | # | Tâche | Durée | État | Progression |
 |---|-------|-------|------|-------------|
 | 12 | DAT-001 : Due date → Check (affichage visuel) | 0.5j | ✅ Terminé (tâche annexe) | 🟩🟩🟩🟩🟩 100% |
-| 13 | UI-DD : UI Due date VT/EC | 0.5j | ⏸️ À venir | ⬜⬜⬜⬜⬜ 0% |
+| 13 | UI-DD : UI Due date VT/EC | 0.5j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
 
 ### ⚠️ BLOQUANT
 **ART-001** : Validation IBAN à clarifier avec le client avant ce sprint
 
 ---
 
-## 📊 Sprint 4 : UI/UX (À venir ⏸️)
+## 📊 Sprint 4 : UI/UX (En cours 🟡)
 
-**Durée** : 10 jours | **Dates** : 16/12 - 30/12 | **Progression** : 0/8 tâches (0%)
+**Durée** : 10 jours | **Dates** : 16/12 - 30/12 | **Progression** : 2/8 tâches (25%)
 
 ```
-⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0%
+🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜ 25%
 
-Temps: 0j / 10j
+Temps: 1.5j / 10j
 ```
 
 ### Détail des tâches
@@ -119,8 +119,8 @@ Temps: 0j / 10j
 | 17 | NOT-001 : Pop-ups info | 1j | ⏸️ À venir | ⬜⬜⬜⬜⬜ 0% |
 | 18 | ARC-002 : Pastille indisponible | 1j | ⏸️ À venir | ⬜⬜⬜⬜⬜ 0% |
 | 19 | MAP-001 : Mapping Budget=SST | 0.5j | ⏸️ À venir | ⬜⬜⬜⬜⬜ 0% |
-| 20 | UI-AGN : UI Référence agence | 1j | ⏸️ À venir | ⬜⬜⬜⬜⬜ 0% |
-| 21 | UI-DEV : UI Devis envoyé | 0.5j | ⏸️ À venir | ⬜⬜⬜⬜⬜ 0% |
+| 20 | UI-AGN : UI Référence agence | 1j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
+| 21 | UI-DEV : UI Devis envoyé | 0.5j | ✅ Terminé | 🟩🟩🟩🟩🟩 100% |
 
 ---
 
@@ -167,9 +167,9 @@ Novembre 2025          Décembre 2025           Janvier 2026
 
 ### Tâches par statut
 ```
-✅ Terminées     : 7 tâches (32%)  🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+✅ Terminées     : 10 tâches (45%)  🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
 🟡 En cours      : 0 tâche  (0%)   ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
-⏸️ À démarrer    : 15 tâches (68%)  ████████████████
+⏸️ À démarrer    : 12 tâches (55%)  ████████████
 🔴 Bloquées      : 0 tâche  (0%)   ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
 ```
 
@@ -177,23 +177,90 @@ Novembre 2025          Décembre 2025           Janvier 2026
 ```
 Sprint 1 :  6j / 9j     ████████████░░░░░░░░ 67%
 Sprint 2 :  0j / 16.5j  ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0%
-Sprint 3 :  0.5j / 4.5j ██░░░░░░░░ 11% (DAT-001 terminé)
-Sprint 4 :  0j / 10j    ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0%
+Sprint 3 :  1j / 4.5j   ████░░░░░░░░ 22% (DAT-001 + UI-DD terminés)
+Sprint 4 :  1.5j / 10j  ███░░░░░░░░░░░░░░░░░ 15% (UI-AGN + UI-DEV terminés)
 Sprint 5 :  0j / 5j     ⬜⬜⬜⬜⬜ 0%
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total    :  6.5j / 45j   █████░░░░░░░░░░░░░░░ 14.4%
+Total    :  8.5j / 45j   ████████░░░░░░░░░░░░░ 18.9%
 ```
 
 ### Par complexité
 ```
 🔴 Haute    : 0/3 tâches   ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0%
-🟡 Moyenne  : 1/10 tâches  ██░░░░░░░░░░░░░░░░░░ 10%
-🟢 Faible   : 1/8 tâches   ██░░░░░░░░░░░░░░░ 12%
+🟡 Moyenne  : 5/10 tâches  ██████████░░░░░░░░░░ 50%
+🟢 Faible   : 5/9 tâches   ██████████░░░░░░░░░ 56%
 ```
 
 ---
 
 ## ✅ Tâches terminées
+
+### 13. UI-DD : UI Due date VT/EC
+```
+✅ TERMINÉ le 7 novembre 2025, 20h00
+Durée réelle: 0.5j (estimé: 0.5j)
+Complexité: 🟢 Faible
+
+Fichiers modifiés: 2
+Problèmes résolus: 0
+Qualité: ⭐⭐⭐⭐⭐ (5/5)
+```
+
+**Détails** :
+- Validation conditionnelle de `date_prevue` obligatoire pour VT/EC ✅
+- Champ marqué `required` avec astérisque (*) ✅
+- Message d'erreur clair ✅
+- Validation au submit bloquante ✅
+
+**Implémentation** :
+- Variable `requiresDatePrevue` vérifie les statuts "Visite technique" et "Intervention en cours"
+- Validation HTML5 native avec `required` et `title`
+- Déjà présent dans le code, vérifié et confirmé complet
+
+---
+
+### 20. UI-AGN : UI Référence agence
+```
+✅ TERMINÉ le 6 novembre 2025, 16h30
+Durée réelle: 1j (estimé: 1j)
+Complexité: 🟡 Moyenne
+
+Fichiers modifiés: 3
+Problèmes résolus: 0
+Qualité: ⭐⭐⭐⭐⭐ (5/5)
+```
+
+**Détails** :
+- Champ `reference_agence` dans formulaires création et édition ✅
+- Affichage conditionnel pour ImoDirect, AFEDIM, Oqoro ✅
+- Affiché dans TableView (vue étendue) ✅
+- Sauvegarde fonctionnelle ✅
+
+**Note** : Fait partie de AGN-001 (Sprint 1)
+
+---
+
+### 21. UI-DEV : UI Devis envoyé
+```
+✅ TERMINÉ le 7 novembre 2025, 09h45
+Durée réelle: 0.5j (estimé: 0.5j)
+Complexité: 🟢 Faible
+
+Fichiers modifiés: 2
+Problèmes résolus: 0
+Qualité: ⭐⭐⭐⭐⭐ (5/5)
+```
+
+**Détails** :
+- Validation pour "Devis envoyé" avec `requiresDefinitiveId` ✅
+- Bloque les ID provisoires (`auto-XXX`) ✅
+- Pattern regex : `^(?!.*(?:[Aa][Uu][Tt][Oo])).+$` ✅
+- Message d'erreur clair ✅
+- Validation au submit bloquante ✅
+
+**Note** : Fait partie de DEVI-001 (Sprint 1)
+
+---
 
 ### 1. AGN-001 : Référence agence obligatoire
 ```
@@ -394,6 +461,7 @@ Code review: ✅ Approuvé
 
 | Date | Heure | Événement | Tâche |
 |------|-------|-----------|-------|
+| 07/11/2025 | 20h00 | Tâches terminées | UI-DD ✅ UI-AGN ✅ UI-DEV ✅ |
 | 07/11/2025 | 18h00 | Tâche terminée | DAT-001 ✅ (tâche annexe) |
 | 07/11/2025 | 15h00 | Sprint 1 terminé | 6/6 tâches ✅ |
 | 07/11/2025 | 09h45 | Tâche terminée | INT-003 ✅ |

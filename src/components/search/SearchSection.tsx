@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Badge } from "@/components/ui/badge"
+import { Loader2, ChevronDown } from "lucide-react"
 import { SECTION_META, getMatchLabel } from "@/components/search/constants"
 import { ArtisanResultItem } from "@/components/search/ArtisanResultItem"
 import { InterventionResultItem } from "@/components/search/InterventionResultItem"
@@ -12,6 +13,8 @@ type ArtisanSectionProps = {
   hasMore: boolean
   query: string
   onItemClick?: (id: string, type: "artisan") => void
+  onLoadMore?: () => void
+  isLoadingMore?: boolean
   activeItemId?: string | null
 }
 
@@ -22,13 +25,15 @@ type InterventionSectionProps = {
   hasMore: boolean
   query: string
   onItemClick?: (id: string, type: "intervention") => void
+  onLoadMore?: () => void
+  isLoadingMore?: boolean
   activeItemId?: string | null
 }
 
 export type SearchSectionProps = ArtisanSectionProps | InterventionSectionProps
 
 export function SearchSection(props: SearchSectionProps) {
-  const { type, items, total, hasMore, query, onItemClick, activeItemId } = props
+  const { type, items, total, hasMore, query, onItemClick, onLoadMore, isLoadingMore, activeItemId } = props
   const meta = SECTION_META[type]
   const Icon = meta.icon
 
@@ -81,10 +86,30 @@ export function SearchSection(props: SearchSectionProps) {
         )}
       </div>
 
-      {extraCount > 0 ? (
-        <div className="px-4 py-2 text-xs text-muted-foreground">
-          + {extraCount} {type === "artisan" ? "artisan" : "intervention"}
-          {extraCount > 1 ? "s" : ""} supplémentaire{extraCount > 1 ? "s" : ""}
+      {extraCount > 0 && onLoadMore ? (
+        <div className="px-4 py-2 border-t bg-muted/20">
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              console.log(`[SearchSection] loadMore clicked for ${type}, extraCount: ${extraCount}`)
+              onLoadMore()
+            }}
+            disabled={isLoadingMore}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoadingMore ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Chargement...</span>
+              </>
+            ) : (
+              <>
+                <span>Voir {extraCount} {type === "artisan" ? "artisan" : "intervention"}{extraCount > 1 ? "s" : ""} supplémentaire{extraCount > 1 ? "s" : ""}</span>
+                <ChevronDown className="h-3 w-3" />
+              </>
+            )}
+          </button>
         </div>
       ) : null}
     </div>

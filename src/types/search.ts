@@ -115,6 +115,8 @@ export interface InterventionSearchRecord {
       prenom: string | null
       nom: string | null
       numero_associe: string | null
+      telephone: string | null
+      telephone2: string | null
     } | null
   }>
   primaryArtisan?: {
@@ -122,6 +124,8 @@ export interface InterventionSearchRecord {
     prenom: string | null
     nom: string | null
     numero_associe: string | null
+    telephone: string | null
+    telephone2: string | null
   } | null
 }
 
