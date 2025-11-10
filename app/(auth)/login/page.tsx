@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -17,52 +17,11 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const buttonRef = useRef<HTMLButtonElement>(null)
-  const dashboardContainerRef = useRef<HTMLDivElement>(null)
-  
-  const { isAnimating, circleSizeMotion, buttonPosition, startAnimation, maxCircleSize } = useRevealTransition()
 
   // Précharger le dashboard au chargement
   useEffect(() => {
     router.prefetch('/dashboard')
   }, [router])
-
-  // Gérer l'animation du clipPath
-  useEffect(() => {
-    if (!isAnimating || !buttonPosition) return
-
-    const unsubscribe = circleSizeMotion.on('change', (size) => {
-      // ClipPath pour le dashboard (visible à l'intérieur du cercle)
-      const clipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-      const webkitClipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-      
-      if (dashboardContainerRef.current) {
-        dashboardContainerRef.current.style.clipPath = clipPath
-        ;(dashboardContainerRef.current.style as any).webkitClipPath = webkitClipPath
-      }
-      
-      // Pas besoin d'overlay : la page login reste visible à l'extérieur naturellement
-      // car elle est en dessous (z-index 20) et le dashboard n'est visible qu'à l'intérieur (clipPath)
-    })
-
-    return () => unsubscribe()
-  }, [isAnimating, buttonPosition, circleSizeMotion])
-
-  // Navigation après l'animation - remplacer la page actuelle par l'iframe une fois l'animation terminée
-  useEffect(() => {
-    if (!isAnimating || !isAuthenticated) return
-
-    // Attendre la fin de l'animation (3 secondes) puis naviguer vers le dashboard
-    const timer = setTimeout(() => {
-      // Récupérer l'URL de redirection
-      const url = new URL(window.location.href)
-      const redirect = url.searchParams.get('redirect') || '/dashboard'
-      
-      // Naviguer vers le dashboard (remplace l'URL actuelle)
-      router.replace(redirect)
-    }, 3000) // 3000ms = 3 secondes = durée de l'animation
-
-    return () => clearTimeout(timer)
-  }, [isAnimating, isAuthenticated, router])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()

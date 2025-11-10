@@ -219,16 +219,22 @@ export default function DashboardPage() {
         <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Période :</span>
-            <Select value={periodType} onValueChange={(value) => setPeriodType(value as PeriodType)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Semaine</SelectItem>
-                <SelectItem value="month">Mois</SelectItem>
-                <SelectItem value="year">Année</SelectItem>
-              </SelectContent>
-            </Select>
+            {isMounted ? (
+              <Select value={periodType} onValueChange={(value) => setPeriodType(value as PeriodType)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Semaine</SelectItem>
+                  <SelectItem value="month">Mois</SelectItem>
+                  <SelectItem value="year">Année</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="w-[180px] h-10 rounded-md border bg-background flex items-center px-3">
+                <span className="text-sm text-muted-foreground">Chargement...</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>{periodLabel}</span>

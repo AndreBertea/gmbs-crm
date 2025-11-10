@@ -80,7 +80,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
 
   if (loading) {
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <CardTitle>Podium</CardTitle>
         </CardHeader>
@@ -95,7 +95,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
 
   if (error) {
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <CardTitle>Podium</CardTitle>
         </CardHeader>
@@ -108,7 +108,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
 
   if (!ranking || ranking.rankings.length === 0) {
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <CardTitle>Podium</CardTitle>
         </CardHeader>
@@ -146,62 +146,131 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
   }
 
   const renderRankingItem = (item: typeof ranking.rankings[0], isTop: boolean, index: number) => {
-    const marginColor = item.total_margin >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
     const emoji = isTop 
       ? (index < 3 ? top3Emojis[index] : top3ExtraEmojis[(index - 3) % 3])
       : getBottomEmoji(item.rank)
     
-    // Définir les couleurs pour les top 3 : or, argent, bronze
+    // Palettes de couleurs glorieuses pour le top 3
+    let rankNumberStyle = ""
     let avatarBorderColor = ""
+    let avatarBorderStyle = ""
     let bgGradient = ""
+    let shadowStyle = ""
+    let rankBadgeStyle = ""
+    let marginColor = ""
     
     if (isTop && item.rank <= 3) {
       if (item.rank === 1) {
-        // Or pour le premier
-        avatarBorderColor = "#fbbf24" // amber-400
-        bgGradient = "bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20"
+        // 🥇 OR - Palette glorieuse or/orange avec jaune très vif
+        avatarBorderColor = "#facc15" // yellow-400 - jaune très vif
+        avatarBorderStyle = "border-3 shadow-[0_0_20px_rgba(250,204,21,0.7),inset_0_0_20px_rgba(250,204,21,0.2)]"
+        bgGradient = "bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-950/40 dark:via-yellow-950/30 dark:to-orange-950/40"
+        shadowStyle = "shadow-lg shadow-amber-500/30"
+        rankBadgeStyle = "bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 text-white shadow-md shadow-yellow-500/40 ring-1 ring-yellow-300/40"
+        marginColor = "text-yellow-500 dark:text-yellow-400 font-extrabold" // Jaune très vif pour la marge
       } else if (item.rank === 2) {
-        // Argent pour le deuxième
-        avatarBorderColor = "#94a3b8" // slate-400
-        bgGradient = "bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-950/30 dark:to-slate-900/20"
+        // 🥈 ARGENT - Palette argentée élégante
+        avatarBorderColor = "#94a3b8"
+        avatarBorderStyle = "border-3 shadow-[0_0_15px_rgba(148,163,184,0.5),inset_0_0_15px_rgba(148,163,184,0.15)]"
+        bgGradient = "bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950/35 dark:via-gray-950/25 dark:to-slate-950/35"
+        shadowStyle = "shadow-md shadow-slate-400/25"
+        rankBadgeStyle = "bg-gradient-to-br from-gray-300 via-slate-300 to-gray-400 text-white shadow-md shadow-slate-400/40 ring-1 ring-slate-200/40"
+        marginColor = "text-slate-600 dark:text-slate-400" // Argent pour la marge
       } else if (item.rank === 3) {
-        // Bronze pour le troisième
-        avatarBorderColor = "#cd7f32" // bronze
-        bgGradient = "bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20"
+        // 🥉 BRONZE - Palette bronze chaleureuse
+        avatarBorderColor = "#cd7f32"
+        avatarBorderStyle = "border-3 shadow-[0_0_12px_rgba(205,127,50,0.4),inset_0_0_12px_rgba(205,127,50,0.12)]"
+        bgGradient = "bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 dark:from-orange-950/30 dark:via-amber-950/25 dark:to-orange-950/30"
+        shadowStyle = "shadow-md shadow-orange-500/20"
+        rankBadgeStyle = "bg-gradient-to-br from-orange-400 via-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/35 ring-1 ring-orange-300/40"
+        marginColor = "text-orange-700 dark:text-orange-300" // Bronze pour la marge - similaire au nombre d'interventions
       }
     } else {
       // Pour les autres, fond neutre
       bgGradient = "bg-muted/30"
       avatarBorderColor = "hsl(var(--border))"
+      avatarBorderStyle = "border-2"
+      shadowStyle = ""
+      rankBadgeStyle = "bg-muted text-muted-foreground"
+      marginColor = item.total_margin >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
     }
 
     return (
       <div
         key={item.user_id}
-        className={`p-2 rounded-lg ${bgGradient} transition-all duration-200 hover:shadow-sm`}
+        className={`relative p-3 rounded-xl ${bgGradient} ${shadowStyle} transition-all duration-300 hover:scale-[1.02] hover:shadow-xl border border-opacity-20 ${
+          item.rank === 1 ? "border-amber-300 dark:border-amber-700 animate-pulse-subtle" :
+          item.rank === 2 ? "border-slate-300 dark:border-slate-700" :
+          item.rank === 3 ? "border-orange-300 dark:border-orange-700" :
+          "border-border"
+        }`}
       >
+        {/* Badge de rang stylisé en haut à gauche avec effet métallique - Plus petit */}
+        {isTop && item.rank <= 3 && (
+          <div className={`absolute -top-1.5 -left-1.5 w-7 h-7 rounded-full flex items-center justify-center ${rankBadgeStyle} z-10`}>
+            {item.rank === 1 ? (
+              // OR brillant avec effet de lumière
+              <span className="text-white font-bold text-xs relative">
+                <span className="absolute inset-0 text-yellow-200 blur-[1px] opacity-70">#{item.rank}</span>
+                <span className="relative">#{item.rank}</span>
+              </span>
+            ) : item.rank === 2 ? (
+              // ARGENT brillant
+              <span className="text-white font-bold text-xs relative">
+                <span className="absolute inset-0 text-gray-100 blur-[1px] opacity-60">#{item.rank}</span>
+                <span className="relative">#{item.rank}</span>
+              </span>
+            ) : (
+              // BRONZE brillant
+              <span className="text-white font-bold text-xs relative">
+                <span className="absolute inset-0 text-orange-200 blur-[1px] opacity-60">#{item.rank}</span>
+                <span className="relative">#{item.rank}</span>
+              </span>
+            )}
+          </div>
+        )}
+        
         {/* Première ligne : Avatar Code Marge Emoji */}
         <div className="flex items-center gap-2">
-          {/* Avatar avec bordure or/argent/bronze */}
-          <Avatar
-            className="h-10 w-10 border-2 flex-shrink-0"
-            style={{ 
-              backgroundColor: item.user_color || undefined,
-              borderColor: avatarBorderColor,
-              borderWidth: (isTop && item.rank <= 3) ? "3px" : "2px"
-            }}
-          >
-            <AvatarFallback className="text-xs font-semibold text-foreground">
-              {getInitials(item.user_name)}
-            </AvatarFallback>
-          </Avatar>
+          {/* Avatar avec bordure or/argent/bronze stylisée */}
+          <div className="relative">
+            <Avatar
+              className={`h-12 w-12 flex-shrink-0 ${avatarBorderStyle}`}
+              style={{ 
+                backgroundColor: item.user_color || undefined,
+                borderColor: avatarBorderColor,
+              }}
+            >
+              <AvatarFallback className="text-xs font-semibold text-foreground">
+                {getInitials(item.user_name)}
+              </AvatarFallback>
+            </Avatar>
+            {/* Effet de brillance sur l'avatar pour le top 3 */}
+            {isTop && item.rank <= 3 && (
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 to-transparent pointer-events-none" />
+            )}
+          </div>
           
           {/* Code du gestionnaire */}
           <div className="flex-1 min-w-0">
             {item.user_code ? (
-              <p className="text-sm font-medium truncate text-foreground">{item.user_code}</p>
+              <p className={`text-sm font-semibold truncate ${
+                item.rank === 1 ? "text-amber-900 dark:text-amber-200" :
+                item.rank === 2 ? "text-slate-800 dark:text-slate-200" :
+                item.rank === 3 ? "text-orange-900 dark:text-orange-200" :
+                "text-foreground"
+              }`}>
+                {item.user_code}
+              </p>
             ) : (
-              <p className="text-sm font-medium truncate text-foreground">{item.user_name}</p>
+              <p className={`text-sm font-semibold truncate ${
+                item.rank === 1 ? "text-amber-900 dark:text-amber-200" :
+                item.rank === 2 ? "text-slate-800 dark:text-slate-200" :
+                item.rank === 3 ? "text-orange-900 dark:text-orange-200" :
+                "text-foreground"
+              }`}>
+                {item.user_name}
+              </p>
             )}
           </div>
           
@@ -210,20 +279,38 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
             <p className={`text-sm font-bold ${marginColor} whitespace-nowrap`}>
               {formatCurrency(item.total_margin)}
             </p>
-            <span className="text-lg">{emoji}</span>
+            <span className="text-xl">{emoji}</span>
           </div>
         </div>
         
         {/* Deuxième ligne : Nb intervention */}
-        <div className="mt-1 ml-12 text-xs text-muted-foreground">
+        <div className={`mt-2 ml-14 text-xs ${
+          item.rank === 1 ? "text-amber-700 dark:text-amber-300" :
+          item.rank === 2 ? "text-slate-600 dark:text-slate-400" :
+          item.rank === 3 ? "text-orange-700 dark:text-orange-300" :
+          "text-muted-foreground"
+        }`}>
           {item.total_interventions} intervention{item.total_interventions > 1 ? "s" : ""}
         </div>
       </div>
     )
   }
 
+  // Style personnalisé pour l'animation subtile du premier
+  const pulseStyle = `
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.95; }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 3s ease-in-out infinite;
+    }
+  `
+
   return (
-    <Card className="shadow-lg">
+    <>
+      <style>{pulseStyle}</style>
+      <Card className="border-border/30 shadow-sm/50">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl font-bold">Podium</CardTitle>
       </CardHeader>
@@ -263,6 +350,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
         )}
       </CardContent>
     </Card>
+    </>
   )
 }
 

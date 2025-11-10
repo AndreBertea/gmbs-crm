@@ -565,6 +565,9 @@ export interface MarginRankingResult {
 
 export type TargetPeriodType = "week" | "month" | "year"
 
+// Alias pour compatibilité avec le code existant
+export type StatsPeriod = "week" | "month" | "year"
+
 export interface GestionnaireTarget {
   id: string
   user_id: string

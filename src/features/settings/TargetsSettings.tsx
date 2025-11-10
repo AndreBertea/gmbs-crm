@@ -31,9 +31,23 @@ export function TargetsSettings() {
   }>({
     user_id: "",
     period_type: "month",
-    margin_target: 0,
-    performance_target: null,
+    margin_target: 5000, // Valeur par défaut pour le mois
+    performance_target: 40, // Valeur par défaut de 40%
   })
+
+  // Fonction helper pour obtenir la valeur par défaut de margin_target selon la période
+  const getDefaultMarginTarget = (periodType: TargetPeriodType): number => {
+    switch (periodType) {
+      case "week":
+        return 1500
+      case "month":
+        return 5000
+      case "year":
+        return 58000
+      default:
+        return 5000
+    }
+  }
 
   // Charger l'utilisateur actuel et vérifier les permissions
   useEffect(() => {
@@ -146,19 +160,20 @@ export function TargetsSettings() {
         user_id: target.user_id,
         period_type: target.period_type,
         margin_target: target.margin_target,
-        performance_target: target.performance_target,
+        performance_target: target.performance_target ?? 40, // Utiliser 40% si null
       })
     } else {
       setEditingTarget(null)
       setFormData({
         user_id: "",
         period_type: "month",
-        margin_target: 0,
-        performance_target: null,
+        margin_target: getDefaultMarginTarget("month"),
+        performance_target: 40,
       })
     }
     setIsDialogOpen(true)
   }
+
 
   const handleSave = async () => {
     if (!currentUser || !formData.user_id || formData.margin_target <= 0) {
@@ -185,7 +200,7 @@ export function TargetsSettings() {
         user_id: formData.user_id,
         period_type: formData.period_type,
         margin_target: formData.margin_target,
-        performance_target: formData.performance_target || null,
+        performance_target: formData.performance_target ?? 40, // Utiliser 40% par défaut si null
       }
 
       if (editingTarget) {
@@ -426,9 +441,15 @@ export function TargetsSettings() {
               <Label htmlFor="period_type">Période *</Label>
               <Select
                 value={formData.period_type}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, period_type: value as TargetPeriodType })
-                }
+                onValueChange={(value) => {
+                  const periodType = value as TargetPeriodType
+                  setFormData({
+                    ...formData,
+                    period_type: periodType,
+                    // Mettre à jour margin_target avec la valeur par défaut si on crée un nouvel objectif
+                    margin_target: editingTarget ? formData.margin_target : getDefaultMarginTarget(periodType),
+                  })
+                }}
                 disabled={!!editingTarget}
               >
                 <SelectTrigger>
@@ -461,16 +482,16 @@ export function TargetsSettings() {
                 min="0"
                 max="100"
                 step="0.1"
-                value={formData.performance_target || ""}
+                value={formData.performance_target ?? ""}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    performance_target: e.target.value ? parseFloat(e.target.value) : null,
+                    performance_target: e.target.value ? parseFloat(e.target.value) : 40,
                   })
                 }
-                placeholder="20"
+                placeholder="40"
               />
-              <p className="text-xs text-muted-foreground">Optionnel : pourcentage de marge cible</p>
+              <p className="text-xs text-muted-foreground">Pourcentage de marge cible (défaut: 40%)</p>
             </div>
           </div>
           <DialogFooter>

@@ -37,6 +37,7 @@ import { ACCENT_PRESETS, type ColorMode, type AccentOption, type AccentPresetNam
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase-client"
 import { TargetsSettings } from "./TargetsSettings"
+import { usersApi } from "@/lib/api/v2"
 
 type TeamUser = {
   id: string
@@ -96,6 +97,11 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
     loadUserRoles()
   }, [])
 
+  // Vérifier si l'utilisateur est admin
+  const isAdmin = !rolesLoading && currentUserRoles.some(
+    (role) => (role || "").toLowerCase().trim() === "admin"
+  )
+  
   // Vérifier si l'utilisateur a les permissions (admin ou manager)
   // Comparaison insensible à la casse pour gérer "admin", "ADMIN", "manager", "MANAGER", etc.
   const canManageTargets = !rolesLoading && currentUserRoles.some(
@@ -109,7 +115,7 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
     }
   )
   
-  console.log("[SettingsRoot] canManageTargets:", canManageTargets, "roles:", currentUserRoles, "loading:", rolesLoading)
+  console.log("[SettingsRoot] isAdmin:", isAdmin, "canManageTargets:", canManageTargets, "roles:", currentUserRoles, "loading:", rolesLoading)
 
   // Synchroniser les états temporaires avec les valeurs persistées
   useEffect(() => {
@@ -129,6 +135,9 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
     const [lastNameField, setLastNameField] = useState<string>('')
     const [firstNameField, setFirstNameField] = useState<string>('')
     const [surnomField, setSurnomField] = useState<string>('')
+    const [speedometerMarginAverageShowPercentage, setSpeedometerMarginAverageShowPercentage] = useState<boolean>(true)
+    const [speedometerMarginTotalShowPercentage, setSpeedometerMarginTotalShowPercentage] = useState<boolean>(true)
+    const [preferencesLoading, setPreferencesLoading] = useState(true)
 
     useEffect(() => {
       const run = async () => {
@@ -143,8 +152,22 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
           setFirstNameField(u?.firstname || u?.prenom || '')
           setLastNameField(u?.lastname || u?.name || '')
           setSurnomField(u?.code_gestionnaire || u?.surnom || '')
+          
+          // Charger les préférences utilisateur
+          if (u?.id) {
+            try {
+              const preferences = await usersApi.getUserPreferences(u.id)
+              if (preferences) {
+                setSpeedometerMarginAverageShowPercentage(preferences.speedometer_margin_average_show_percentage)
+                setSpeedometerMarginTotalShowPercentage(preferences.speedometer_margin_total_show_percentage)
+              }
+            } catch (err) {
+              console.error("Erreur lors du chargement des préférences:", err)
+            }
+          }
         } finally {
           setLoading(false)
+          setPreferencesLoading(false)
         }
       }
       run()
@@ -185,6 +208,19 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
         toast({ title: 'Profil mis à jour' })
       } catch (e: any) {
         toast({ title: 'Erreur', description: e?.message || 'Impossible de sauvegarder', variant: 'destructive' as any })
+      }
+    }
+
+    async function savePreferences() {
+      if (!me?.id) return
+      try {
+        await usersApi.updateUserPreferences(me.id, {
+          speedometer_margin_average_show_percentage: speedometerMarginAverageShowPercentage,
+          speedometer_margin_total_show_percentage: speedometerMarginTotalShowPercentage,
+        })
+        toast({ title: 'Préférences sauvegardées' })
+      } catch (e: any) {
+        toast({ title: 'Erreur', description: e?.message || 'Impossible de sauvegarder les préférences', variant: 'destructive' as any })
       }
     }
 
@@ -234,6 +270,48 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
             </div>
             <div className="flex justify-end">
               <Button onClick={saveProfile} disabled={loading}>Sauvegarder</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Préférences du tableau de bord</CardTitle>
+            <CardDescription>Personnalisez l'affichage des speedometers sur votre tableau de bord.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="speedometer-margin-average">Speedometer marge moyenne visible</Label>
+                <p className="text-sm text-muted-foreground">
+                  Afficher le pourcentage sous le speedometer de marge moyenne
+                </p>
+              </div>
+              <Switch
+                id="speedometer-margin-average"
+                checked={speedometerMarginAverageShowPercentage}
+                onCheckedChange={setSpeedometerMarginAverageShowPercentage}
+                disabled={preferencesLoading}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="speedometer-margin-total">Speedometer marge totale visible</Label>
+                <p className="text-sm text-muted-foreground">
+                  Afficher le pourcentage sous le speedometer de marge totale
+                </p>
+              </div>
+              <Switch
+                id="speedometer-margin-total"
+                checked={speedometerMarginTotalShowPercentage}
+                onCheckedChange={setSpeedometerMarginTotalShowPercentage}
+                disabled={preferencesLoading}
+              />
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button onClick={savePreferences} disabled={preferencesLoading || !me?.id}>
+                Sauvegarder les préférences
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -421,7 +499,7 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
               <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
               <p className="text-muted-foreground">Manage your account settings and preferences</p>
             </div>
-            <TabsList className={`grid w-full ${canManageTargets ? "grid-cols-5" : "grid-cols-4"}`}>
+            <TabsList className={`grid w-full ${isAdmin && canManageTargets ? "grid-cols-5" : isAdmin || canManageTargets ? "grid-cols-4" : "grid-cols-3"}`}>
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Profile
@@ -430,10 +508,12 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
                 <Palette className="h-4 w-4" />
                 Interface
               </TabsTrigger>
-              <TabsTrigger value="team" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Team
-              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="team" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Team
+                </TabsTrigger>
+              )}
               {canManageTargets && (
                 <TabsTrigger value="targets" className="flex items-center gap-2">
                   <Target className="h-4 w-4" />
@@ -874,7 +954,8 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
             </Card>
           </TabsContent>
 
-          <TabsContent value="team" className="space-y-6">
+          {isAdmin && (
+            <TabsContent value="team" className="space-y-6">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1109,7 +1190,8 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           {canManageTargets && (
             <TabsContent value="targets" className="space-y-6">

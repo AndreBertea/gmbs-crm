@@ -34,6 +34,7 @@ function getPeriodTypeFromDates(startDate?: string, endDate?: string): TargetPer
 export function MarginTotalCard({ period }: MarginTotalCardProps) {
     const [stats, setStats] = useState<MarginStats | null>(null)
     const [marginTarget, setMarginTarget] = useState<number>(DEFAULT_TARGET)
+    const [showPercentage, setShowPercentage] = useState<boolean>(true)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [userId, setUserId] = useState<string | null>(null)
@@ -90,27 +91,33 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
         }
     }, [])
 
-    // Charger l'objectif pour l'utilisateur et la période
+    // Charger l'objectif et les préférences pour l'utilisateur et la période
     useEffect(() => {
         if (!userId) return
 
         let cancelled = false
 
-        const loadTarget = async () => {
+        const loadTargetAndPreferences = async () => {
             try {
-                const targetData = await usersApi.getTargetByUserAndPeriod(userId, periodType)
+                const [targetData, preferences] = await Promise.all([
+                    usersApi.getTargetByUserAndPeriod(userId, periodType),
+                    usersApi.getUserPreferences(userId),
+                ])
+                
                 if (!cancelled) {
                     setMarginTarget(targetData?.margin_target || DEFAULT_TARGET)
+                    setShowPercentage(preferences?.speedometer_margin_total_show_percentage ?? true)
                 }
             } catch (err: any) {
-                // Si erreur, utiliser l'objectif par défaut
+                // Si erreur, utiliser les valeurs par défaut
                 if (!cancelled) {
                     setMarginTarget(DEFAULT_TARGET)
+                    setShowPercentage(true)
                 }
             }
         }
 
-        loadTarget()
+        loadTargetAndPreferences()
 
         return () => {
             cancelled = true
@@ -167,7 +174,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (loading) {
         return (
-            <Card>
+            <Card className="border-border/30 shadow-sm/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -183,7 +190,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (error) {
         return (
-            <Card>
+            <Card className="border-border/30 shadow-sm/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -196,7 +203,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (!userId) {
         return (
-            <Card>
+            <Card className="border-border/30 shadow-sm/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -211,7 +218,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (!stats || stats.total_interventions === 0) {
         return (
-            <Card>
+            <Card className="border-border/30 shadow-sm/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -257,7 +264,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
     const percentageColor = getPercentageColor()
 
     return (
-        <Card>
+        <Card className="border-border/30 shadow-sm/50">
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
             </CardHeader>
@@ -271,6 +278,23 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
                             size={140}
                             strokeWidth={14}
                             label={`${formatCurrency(stats.total_margin)}`}
+                            showPercentage={showPercentage}
+                            onContextMenu={async (e) => {
+                                e.preventDefault()
+                                const newValue = !showPercentage
+                                setShowPercentage(newValue)
+                                if (userId) {
+                                    try {
+                                        await usersApi.updateUserPreferences(userId, {
+                                            speedometer_margin_total_show_percentage: newValue,
+                                        })
+                                    } catch (err) {
+                                        console.error("Erreur lors de la mise à jour des préférences:", err)
+                                        // Revert on error
+                                        setShowPercentage(!newValue)
+                                    }
+                                }
+                            }}
                         />
                     </div>
 

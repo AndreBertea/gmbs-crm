@@ -157,7 +157,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (loading) {
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <CardTitle>Statistiques</CardTitle>
         </CardHeader>
@@ -172,7 +172,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (error) {
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <CardTitle>Statistiques</CardTitle>
         </CardHeader>
@@ -185,7 +185,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (!userId) {
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <CardTitle>Statistiques</CardTitle>
         </CardHeader>
@@ -200,7 +200,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (!stats) {
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Statistiques</CardTitle>
@@ -261,7 +261,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     ]
 
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -288,28 +288,67 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Action</TableHead>
-                  <TableHead className="text-center">Lundi</TableHead>
-                  <TableHead className="text-center">Mardi</TableHead>
-                  <TableHead className="text-center">Mercredi</TableHead>
-                  <TableHead className="text-center">Jeudi</TableHead>
-                  <TableHead className="text-center">Vendredi</TableHead>
-                  <TableHead className="text-center font-bold">Total</TableHead>
+                <TableRow className="bg-muted/60 dark:bg-muted/40 border-b-2 border-border/50">
+                  <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Lundi</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Mardi</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Mercredi</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Jeudi</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Vendredi</TableHead>
+                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.label}>
-                    <TableCell className="font-medium">{row.label}</TableCell>
-                    <TableCell className="text-center">{row.data.lundi}</TableCell>
-                    <TableCell className="text-center">{row.data.mardi}</TableCell>
-                    <TableCell className="text-center">{row.data.mercredi}</TableCell>
-                    <TableCell className="text-center">{row.data.jeudi}</TableCell>
-                    <TableCell className="text-center">{row.data.vendredi}</TableCell>
-                    <TableCell className="text-center font-bold">{row.data.total}</TableCell>
-                  </TableRow>
-                ))}
+                {rows.map((row, index) => {
+                  // Palette de couleurs pour chaque type de ligne
+                  const rowColors = {
+                    "Devis envoyé": {
+                      bg: "bg-blue-50/50 dark:bg-blue-950/20",
+                      hover: "hover:bg-blue-100/70 dark:hover:bg-blue-950/40",
+                      label: "text-blue-700 dark:text-blue-300",
+                      border: "border-blue-200/30 dark:border-blue-800/30"
+                    },
+                    "Inter en cours": {
+                      bg: "bg-amber-50/50 dark:bg-amber-950/20",
+                      hover: "hover:bg-amber-100/70 dark:hover:bg-amber-950/40",
+                      label: "text-amber-700 dark:text-amber-300",
+                      border: "border-amber-200/30 dark:border-amber-800/30"
+                    },
+                    "Inter Facturés": {
+                      bg: "bg-green-50/50 dark:bg-green-950/20",
+                      hover: "hover:bg-green-100/70 dark:hover:bg-green-950/40",
+                      label: "text-green-700 dark:text-green-300",
+                      border: "border-green-200/30 dark:border-green-800/30"
+                    },
+                    "Nouveaux Artisans": {
+                      bg: "bg-purple-50/50 dark:bg-purple-950/20",
+                      hover: "hover:bg-purple-100/70 dark:hover:bg-purple-950/40",
+                      label: "text-purple-700 dark:text-purple-300",
+                      border: "border-purple-200/30 dark:border-purple-800/30"
+                    }
+                  }
+                  const colors = rowColors[row.label as keyof typeof rowColors] || {
+                    bg: index % 2 === 0 ? "bg-muted/30" : "bg-background",
+                    hover: "hover:bg-muted/50",
+                    label: "text-foreground",
+                    border: "border-border/20"
+                  }
+                  
+                  return (
+                    <TableRow 
+                      key={row.label}
+                      className={`${colors.bg} ${colors.hover} ${colors.border} border-l-4 transition-colors duration-200`}
+                    >
+                      <TableCell className={`font-semibold ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center">{row.data.lundi}</TableCell>
+                      <TableCell className="text-center">{row.data.mardi}</TableCell>
+                      <TableCell className="text-center">{row.data.mercredi}</TableCell>
+                      <TableCell className="text-center">{row.data.jeudi}</TableCell>
+                      <TableCell className="text-center">{row.data.vendredi}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60">{row.data.total}</TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
@@ -332,7 +371,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     const monthName = monthNames[monthStats.month - 1]
 
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -359,28 +398,67 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Action</TableHead>
-                  <TableHead className="text-center">Semaine 1</TableHead>
-                  <TableHead className="text-center">Semaine 2</TableHead>
-                  <TableHead className="text-center">Semaine 3</TableHead>
-                  <TableHead className="text-center">Semaine 4</TableHead>
-                  <TableHead className="text-center">Semaine 5</TableHead>
-                  <TableHead className="text-center font-bold">Total</TableHead>
+                <TableRow className="bg-muted/60 dark:bg-muted/40 border-b-2 border-border/50">
+                  <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Semaine 1</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Semaine 2</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Semaine 3</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Semaine 4</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Semaine 5</TableHead>
+                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.label}>
-                    <TableCell className="font-medium">{row.label}</TableCell>
-                    <TableCell className="text-center">{row.data.semaine1}</TableCell>
-                    <TableCell className="text-center">{row.data.semaine2}</TableCell>
-                    <TableCell className="text-center">{row.data.semaine3}</TableCell>
-                    <TableCell className="text-center">{row.data.semaine4}</TableCell>
-                    <TableCell className="text-center">{row.data.semaine5}</TableCell>
-                    <TableCell className="text-center font-bold">{row.data.total}</TableCell>
-                  </TableRow>
-                ))}
+                {rows.map((row, index) => {
+                  // Palette de couleurs pour chaque type de ligne
+                  const rowColors = {
+                    "Devis envoyé": {
+                      bg: "bg-blue-50/50 dark:bg-blue-950/20",
+                      hover: "hover:bg-blue-100/70 dark:hover:bg-blue-950/40",
+                      label: "text-blue-700 dark:text-blue-300",
+                      border: "border-blue-200/30 dark:border-blue-800/30"
+                    },
+                    "Inter en cours": {
+                      bg: "bg-amber-50/50 dark:bg-amber-950/20",
+                      hover: "hover:bg-amber-100/70 dark:hover:bg-amber-950/40",
+                      label: "text-amber-700 dark:text-amber-300",
+                      border: "border-amber-200/30 dark:border-amber-800/30"
+                    },
+                    "Inter Facturés": {
+                      bg: "bg-green-50/50 dark:bg-green-950/20",
+                      hover: "hover:bg-green-100/70 dark:hover:bg-green-950/40",
+                      label: "text-green-700 dark:text-green-300",
+                      border: "border-green-200/30 dark:border-green-800/30"
+                    },
+                    "Nouveaux Artisans": {
+                      bg: "bg-purple-50/50 dark:bg-purple-950/20",
+                      hover: "hover:bg-purple-100/70 dark:hover:bg-purple-950/40",
+                      label: "text-purple-700 dark:text-purple-300",
+                      border: "border-purple-200/30 dark:border-purple-800/30"
+                    }
+                  }
+                  const colors = rowColors[row.label as keyof typeof rowColors] || {
+                    bg: index % 2 === 0 ? "bg-muted/30" : "bg-background",
+                    hover: "hover:bg-muted/50",
+                    label: "text-foreground",
+                    border: "border-border/20"
+                  }
+                  
+                  return (
+                    <TableRow 
+                      key={row.label}
+                      className={`${colors.bg} ${colors.hover} ${colors.border} border-l-4 transition-colors duration-200`}
+                    >
+                      <TableCell className={`font-semibold ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center">{row.data.semaine1}</TableCell>
+                      <TableCell className="text-center">{row.data.semaine2}</TableCell>
+                      <TableCell className="text-center">{row.data.semaine3}</TableCell>
+                      <TableCell className="text-center">{row.data.semaine4}</TableCell>
+                      <TableCell className="text-center">{row.data.semaine5}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60">{row.data.total}</TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
@@ -405,7 +483,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     ]
 
     return (
-      <Card>
+      <Card className="border-border/30 shadow-sm/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -432,35 +510,74 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Action</TableHead>
+                <TableRow className="bg-muted/60 dark:bg-muted/40 border-b-2 border-border/50">
+                  <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
                   {monthLabels.map((month) => (
-                    <TableHead key={month} className="text-center text-xs">
+                    <TableHead key={month} className="text-center text-xs font-bold text-foreground">
                       {month.slice(0, 3)}
                     </TableHead>
                   ))}
-                  <TableHead className="text-center font-bold">Total</TableHead>
+                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.label}>
-                    <TableCell className="font-medium">{row.label}</TableCell>
-                    <TableCell className="text-center">{row.data.janvier}</TableCell>
-                    <TableCell className="text-center">{row.data.fevrier}</TableCell>
-                    <TableCell className="text-center">{row.data.mars}</TableCell>
-                    <TableCell className="text-center">{row.data.avril}</TableCell>
-                    <TableCell className="text-center">{row.data.mai}</TableCell>
-                    <TableCell className="text-center">{row.data.juin}</TableCell>
-                    <TableCell className="text-center">{row.data.juillet}</TableCell>
-                    <TableCell className="text-center">{row.data.aout}</TableCell>
-                    <TableCell className="text-center">{row.data.septembre}</TableCell>
-                    <TableCell className="text-center">{row.data.octobre}</TableCell>
-                    <TableCell className="text-center">{row.data.novembre}</TableCell>
-                    <TableCell className="text-center">{row.data.decembre}</TableCell>
-                    <TableCell className="text-center font-bold">{row.data.total}</TableCell>
-                  </TableRow>
-                ))}
+                {rows.map((row, index) => {
+                  // Palette de couleurs pour chaque type de ligne
+                  const rowColors = {
+                    "Devis envoyé": {
+                      bg: "bg-blue-50/50 dark:bg-blue-950/20",
+                      hover: "hover:bg-blue-100/70 dark:hover:bg-blue-950/40",
+                      label: "text-blue-700 dark:text-blue-300",
+                      border: "border-blue-200/30 dark:border-blue-800/30"
+                    },
+                    "Inter en cours": {
+                      bg: "bg-amber-50/50 dark:bg-amber-950/20",
+                      hover: "hover:bg-amber-100/70 dark:hover:bg-amber-950/40",
+                      label: "text-amber-700 dark:text-amber-300",
+                      border: "border-amber-200/30 dark:border-amber-800/30"
+                    },
+                    "Inter Facturés": {
+                      bg: "bg-green-50/50 dark:bg-green-950/20",
+                      hover: "hover:bg-green-100/70 dark:hover:bg-green-950/40",
+                      label: "text-green-700 dark:text-green-300",
+                      border: "border-green-200/30 dark:border-green-800/30"
+                    },
+                    "Nouveaux Artisans": {
+                      bg: "bg-purple-50/50 dark:bg-purple-950/20",
+                      hover: "hover:bg-purple-100/70 dark:hover:bg-purple-950/40",
+                      label: "text-purple-700 dark:text-purple-300",
+                      border: "border-purple-200/30 dark:border-purple-800/30"
+                    }
+                  }
+                  const colors = rowColors[row.label as keyof typeof rowColors] || {
+                    bg: index % 2 === 0 ? "bg-muted/30" : "bg-background",
+                    hover: "hover:bg-muted/50",
+                    label: "text-foreground",
+                    border: "border-border/20"
+                  }
+                  
+                  return (
+                    <TableRow 
+                      key={row.label}
+                      className={`${colors.bg} ${colors.hover} ${colors.border} border-l-4 transition-colors duration-200`}
+                    >
+                      <TableCell className={`font-semibold ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center">{row.data.janvier}</TableCell>
+                      <TableCell className="text-center">{row.data.fevrier}</TableCell>
+                      <TableCell className="text-center">{row.data.mars}</TableCell>
+                      <TableCell className="text-center">{row.data.avril}</TableCell>
+                      <TableCell className="text-center">{row.data.mai}</TableCell>
+                      <TableCell className="text-center">{row.data.juin}</TableCell>
+                      <TableCell className="text-center">{row.data.juillet}</TableCell>
+                      <TableCell className="text-center">{row.data.aout}</TableCell>
+                      <TableCell className="text-center">{row.data.septembre}</TableCell>
+                      <TableCell className="text-center">{row.data.octobre}</TableCell>
+                      <TableCell className="text-center">{row.data.novembre}</TableCell>
+                      <TableCell className="text-center">{row.data.decembre}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60">{row.data.total}</TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>

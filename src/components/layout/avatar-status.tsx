@@ -22,6 +22,11 @@ type Me = {
 export function AvatarStatus() {
   const [me, setMe] = React.useState<Me | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [isMounted, setIsMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const load = React.useCallback(async () => {
     try {
@@ -86,6 +91,12 @@ export function AvatarStatus() {
     }
     return 'U'
   }, [me])
+
+  if (!isMounted) {
+    return (
+      <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+    )
+  }
 
   return (
     <div className="flex items-center gap-2">

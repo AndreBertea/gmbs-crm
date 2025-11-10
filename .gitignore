@@ -60,6 +60,7 @@ credentials.json
 
 # Python Virtual environment
 .crm_env/
+.gmbs_env/
 
 # Legacy files and folders
 /legacy

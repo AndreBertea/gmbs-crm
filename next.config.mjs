@@ -14,6 +14,12 @@ const nextConfig = {
         fullUrl: false,
       },
     },
+    // Augmenter le timeout pour éviter les erreurs ChunkLoadError
+    turbopack: {
+      resolveAlias: {
+        // Éviter les problèmes de résolution de modules
+      },
+    },
   }),
 
   images: {

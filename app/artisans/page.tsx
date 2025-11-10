@@ -289,7 +289,7 @@ export default function ArtisansPage(): ReactElement {
 
   // Appliquer les filtres depuis sessionStorage (pour les liens du dashboard)
   useEffect(() => {
-    if (!isReady) return
+    if (!isReady || artisanStatuses.length === 0) return
     
     const pendingFilterStr = sessionStorage.getItem('pending-artisan-filter')
     if (pendingFilterStr) {
@@ -303,7 +303,13 @@ export default function ArtisansPage(): ReactElement {
         
         // Activer le filtre de statut spécifié (ex: "Potentiel")
         if (pendingFilter.statusFilter) {
-          setStatusFilter(pendingFilter.statusFilter)
+          // Trouver le statut correspondant dans la liste des statuts d'artisans
+          const statusLabel = pendingFilter.statusFilter
+          // Vérifier si le statut existe dans la liste des statuts disponibles
+          const statusExists = artisanStatuses.some(s => s.label === statusLabel)
+          if (statusExists) {
+            setSelectedStatuses([statusLabel])
+          }
         }
         
         // Nettoyer sessionStorage après avoir appliqué les filtres
@@ -313,7 +319,7 @@ export default function ArtisansPage(): ReactElement {
         sessionStorage.removeItem('pending-artisan-filter')
       }
     }
-  }, [isReady, views, setActiveView])
+  }, [isReady, views, setActiveView, artisanStatuses])
 
   useEffect(() => {
     if (!referenceData) return

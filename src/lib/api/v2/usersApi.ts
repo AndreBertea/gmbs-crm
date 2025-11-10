@@ -601,4 +601,88 @@ export const usersApi = {
 
     return data || [];
   },
+
+  // ===== GESTION DES PRÉFÉRENCES UTILISATEUR =====
+  
+  /**
+   * Récupère les préférences utilisateur
+   * @param userId - ID de l'utilisateur
+   * @returns Les préférences ou null si non définies
+   */
+  async getUserPreferences(userId: string): Promise<{
+    speedometer_margin_average_show_percentage: boolean
+    speedometer_margin_total_show_percentage: boolean
+  } | null> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    const { data, error } = await supabase
+      .from("user_preferences")
+      .select("speedometer_margin_average_show_percentage, speedometer_margin_total_show_percentage")
+      .eq("user_id", userId)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // Aucun résultat trouvé, retourner les valeurs par défaut
+        return {
+          speedometer_margin_average_show_percentage: true,
+          speedometer_margin_total_show_percentage: true,
+        };
+      }
+      throw new Error(`Erreur lors de la récupération des préférences: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  /**
+   * Met à jour les préférences utilisateur
+   * @param userId - ID de l'utilisateur
+   * @param preferences - Les préférences à mettre à jour
+   */
+  async updateUserPreferences(
+    userId: string,
+    preferences: {
+      speedometer_margin_average_show_percentage?: boolean
+      speedometer_margin_total_show_percentage?: boolean
+    }
+  ): Promise<void> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    // Vérifier si les préférences existent déjà
+    const { data: existing } = await supabase
+      .from("user_preferences")
+      .select("id")
+      .eq("user_id", userId)
+      .single();
+
+    if (existing) {
+      // Mise à jour
+      const { error } = await supabase
+        .from("user_preferences")
+        .update(preferences)
+        .eq("user_id", userId);
+
+      if (error) {
+        throw new Error(`Erreur lors de la mise à jour des préférences: ${error.message}`);
+      }
+    } else {
+      // Insertion
+      const { error } = await supabase
+        .from("user_preferences")
+        .insert({
+          user_id: userId,
+          speedometer_margin_average_show_percentage: preferences.speedometer_margin_average_show_percentage ?? true,
+          speedometer_margin_total_show_percentage: preferences.speedometer_margin_total_show_percentage ?? true,
+        });
+
+      if (error) {
+        throw new Error(`Erreur lors de la création des préférences: ${error.message}`);
+      }
+    }
+  },
 };
