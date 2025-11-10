@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import type { ChangeEvent, ReactNode, CSSProperties } from "react"
@@ -1483,7 +1483,7 @@ function TruncatedCell({ content, className }: { content: ReactNode; className?:
   const [isOverflowing, setIsOverflowing] = useState(false)
   const [portalElement, setPortalElement] = useState<HTMLElement | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = cellRef.current
     if (!element) return
     
@@ -1492,13 +1492,15 @@ function TruncatedCell({ content, className }: { content: ReactNode; className?:
       setIsOverflowing(element.scrollWidth > element.clientWidth)
     }
     
+    // Vérifier immédiatement après le rendu
     checkOverflow()
     
+    // Le ResizeObserver détectera les changements de taille ultérieurs
     const resizeObserver = new ResizeObserver(checkOverflow)
     resizeObserver.observe(element)
     
     return () => resizeObserver.disconnect()
-  }, [content])
+  })
 
   const contentStr = typeof content === "string" ? content : 
                      typeof content === "number" ? String(content) : ""

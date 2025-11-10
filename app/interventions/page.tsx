@@ -529,15 +529,16 @@ export default function Page() {
 
   const combinedViewCounts = useMemo(() => localViewCounts, [localViewCounts])
 
-  // Comptage par statut - basé sur le filtrage client
+  // Comptage par statut - basé sur TOUTES les interventions (sans filtres)
+  // Les comptages doivent refléter le total réel de chaque statut, indépendamment des filtres actifs
   const getCountByStatus = useCallback(
     (status: InterventionStatusValue | null) => {
       if (!status) {
-        return filteredInterventions.length
+        return normalizedInterventions.length
       }
-      return filteredInterventions.filter((intervention) => intervention.statusValue === status).length
+      return normalizedInterventions.filter((intervention) => intervention.statusValue === status).length
     },
-    [filteredInterventions],
+    [normalizedInterventions],
   )
 
   const handlePinStatus = useCallback(
