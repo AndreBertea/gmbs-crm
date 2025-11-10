@@ -199,6 +199,12 @@ class GoogleSheetsImportCleanV2 {
    * Importe les artisans depuis Google Sheets
    */
   async importArtisans() {
+    // Protection: ne pas importer les artisans si on est en mode interventions-only
+    if (this.options.interventionsOnly) {
+      console.log('⚠️ Mode --interventions-only activé: import des artisans ignoré');
+      return { success: 0, errors: 0, invalid: [] };
+    }
+    
     try {
       console.log('👷 Import des artisans...');
       
@@ -332,6 +338,8 @@ class GoogleSheetsImportCleanV2 {
           const mappedIntervention = await this.dataMapper.mapInterventionFromCSV(interventionObj, this.options.verbose);
           
           if (mappedIntervention) {
+            // Stocker la ligne CSV originale pour l'extraction des coûts après insertion
+            mappedIntervention._originalCSVRow = interventionObj;
             validInterventions.push(mappedIntervention);
             this.results.interventions.valid++;
           } else {

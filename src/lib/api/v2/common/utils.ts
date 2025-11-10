@@ -9,9 +9,20 @@ const DEFAULT_FUNCTIONS_URL = "http://localhost:54321/functions/v1";
  * Construit l'URL des Edge Functions en prenant en compte les variations possibles
  * de NEXT_PUBLIC_SUPABASE_URL (avec ou sans /rest/v1 et slash final).
  * Normalise également 127.0.0.1 en localhost pour éviter les problèmes CORS.
+ * Supporte aussi SUPABASE_URL pour les scripts Node.js.
  */
 export const getSupabaseFunctionsUrl = (): string => {
-  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // Vérifier d'abord une URL explicite pour les Edge Functions
+  const explicitUrl = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL || 
+                      process.env.SUPABASE_FUNCTIONS_URL;
+  if (explicitUrl) {
+    return explicitUrl.replace(/\/$/, "").replace(/127\.0\.0\.1/g, "localhost");
+  }
+
+  // Sinon, construire depuis l'URL de base Supabase
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 
+                 process.env.SUPABASE_URL;
+  
   if (!rawUrl) {
     return DEFAULT_FUNCTIONS_URL;
   }
@@ -30,13 +41,35 @@ export const SUPABASE_FUNCTIONS_URL = getSupabaseFunctionsUrl();
 
 // Headers communs pour toutes les requêtes
 export const getHeaders = async () => {
-  const { data: session } = await supabase.auth.getSession();
-  const token = session?.session?.access_token;
+  // Dans un script Node.js, il n'y a pas de session browser
+  // Utiliser directement l'anon key ou le service role key
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  
+  // Détecter si on est dans Node.js (pas de window)
+  const isNodeJs = typeof window === 'undefined';
+  
+  let token = serviceRoleKey || anonKey;
+  
+  // Essayer d'obtenir une session seulement si on est dans un contexte browser
+  if (!isNodeJs) {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.access_token) {
+        token = session.session.access_token;
+      }
+    } catch (error) {
+      // En cas d'erreur, utiliser le service role key ou anon key
+      token = serviceRoleKey || anonKey;
+    }
+  }
+  
+  // Utiliser le service role key pour l'apikey si disponible (plus de permissions)
+  const apiKey = serviceRoleKey || anonKey;
   
   return {
-    'apikey': anonKey,
-    'Authorization': `Bearer ${token || anonKey}`,
+    'apikey': apiKey,
+    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
   };
 };

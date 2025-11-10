@@ -36,8 +36,9 @@ const SUPPORTED_DOCUMENT_TYPES = {
     'iban',
     'decharge_partenariat',
     'photo_profil',
+    'portfolio',
     'autre',
-    'a_classe'
+    'a classifier' // Documents non classifiés automatiquement (sans accent pour compatibilité)
   ]
 };
 

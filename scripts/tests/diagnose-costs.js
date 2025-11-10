@@ -103,7 +103,7 @@ class CostDiagnostic {
       this.checkCostValue('sst', costsData.sst, rowNumber, row);
       this.checkCostValue('materiel', costsData.materiel, rowNumber, row);
       this.checkCostValue('intervention', costsData.intervention, rowNumber, row);
-      this.checkCostValue('total', costsData.total, rowNumber, row);
+      this.checkCostValue('marge', costsData.total, rowNumber, row);
       
       // Compter les coûts valides
       if (costsData.sst !== null || costsData.materiel !== null || 

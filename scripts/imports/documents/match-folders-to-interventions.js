@@ -2,7 +2,7 @@
  * Script complet d'import des documents d'interventions depuis Google Drive
  * 
  * Ce script :
- * 1. Extrait les dossiers d'interventions depuis Google Drive (optionnel avec --skip-extraction)
+ * 1. Extrait les dossiers d'interventions depuis Google Drive
  * 2. Fait le matching avec les interventions en base de données
  * 3. Classe les documents (tous avec kind = "a_classe")
  * 4. Insère les documents en base de données
@@ -168,11 +168,12 @@ function parseInterventionId(folderName) {
   const normalized = folderName.toUpperCase().trim();
   
   // Patterns à chercher (dans l'ordre de priorité)
+  // Supporte les variantes courantes : INTER, INTE, INTRER (faute de frappe)
   const patterns = [
-    // Format: "INTER 1831 ID 11778" ou "INTE 1831 ID 11778"
-    /(?:INTER|INTE)\s+\d+\s+ID\s+(\d+)/i,
-    // Format: "INTER 3319 FACTURE 1858" → prendre le premier nombre après INTER
-    /(?:INTER|INTE)\s+(\d+)/i,
+    // Format: "INTER 1831 ID 11778" ou "INTE 1831 ID 11778" ou "INTRER 1831 ID 11778"
+    /(?:INTER|INTE|INTRER)\s+\d+\s+ID\s+(\d+)/i,
+    // Format: "INTER 3319 FACTURE 1858" → prendre le premier nombre après INTER/INTE/INTRER
+    /(?:INTER|INTE|INTRER)\s+(\d+)/i,
   ];
 
   for (const pattern of patterns) {
@@ -297,14 +298,103 @@ async function extractFoldersFromDrive(drive) {
       console.log(`   ✅ ${parsedFolders.length} dossier(s) INTER traité(s) (${parsedFolders.filter(f => f.hasId).length} avec ID)\n`);
     }
 
-    // 5. Statistiques globales
+    // 5. Vérifier quels IDs existent en base de données
+    const foldersWithId = allInterventionFolders.filter(f => f.hasId && f.interventionId);
+    const uniqueInterventionIds = [...new Set(foldersWithId.map(f => f.interventionId))];
+    
+    let existingIdsSet = new Set();
+    let matchingStats = {
+      totalIdsExtracted: uniqueInterventionIds.length,
+      idsFoundInDb: 0,
+      idsNotFoundInDb: 0,
+      matchRate: 0
+    };
+
+    if (uniqueInterventionIds.length > 0) {
+      console.log(`🔍 Vérification rapide des ${uniqueInterventionIds.length} ID(s) unique(s) en base de données...`);
+      existingIdsSet = await checkInterventionIdsExist(uniqueInterventionIds);
+      matchingStats.idsFoundInDb = existingIdsSet.size;
+      matchingStats.idsNotFoundInDb = uniqueInterventionIds.length - existingIdsSet.size;
+      matchingStats.matchRate = uniqueInterventionIds.length > 0 
+        ? ((existingIdsSet.size / uniqueInterventionIds.length) * 100).toFixed(2) 
+        : 0;
+      
+      // Compter les dossiers avec et sans match après avoir ajouté le flag
+      // (on le fera après avoir ajouté les flags)
+      
+      console.log(`   ✅ ${existingIdsSet.size} ID(s) trouvé(s) en BDD (${matchingStats.matchRate}%)`);
+      console.log(`   ⚠️  ${matchingStats.idsNotFoundInDb} ID(s) non trouvé(s) en BDD\n`);
+      
+      // Ajouter le flag hasMatch à chaque dossier
+      allInterventionFolders.forEach(folder => {
+        if (folder.hasId && folder.interventionId) {
+          folder.hasMatch = existingIdsSet.has(String(folder.interventionId));
+        } else {
+          folder.hasMatch = false; // Pas d'ID = pas de match possible
+        }
+      });
+      
+      // Mettre à jour aussi dans monthData
+      monthData.forEach(month => {
+        if (month.folders) {
+          month.folders.forEach(folder => {
+            if (folder.hasId && folder.interventionId) {
+              folder.hasMatch = existingIdsSet.has(String(folder.interventionId));
+            } else {
+              folder.hasMatch = false;
+            }
+          });
+          
+          // Ajouter les statistiques de match par mois
+          const monthFoldersWithMatch = month.folders.filter(f => f.hasMatch === true).length;
+          const monthFoldersWithoutMatch = month.folders.filter(f => f.hasMatch === false).length;
+          month.foldersWithMatch = monthFoldersWithMatch;
+          month.foldersWithoutMatch = monthFoldersWithoutMatch;
+        }
+      });
+      
+      // Ajouter les statistiques de dossiers dans matchingStats
+      matchingStats.foldersWithMatch = allInterventionFolders.filter(f => f.hasMatch === true).length;
+      matchingStats.foldersWithoutMatch = allInterventionFolders.filter(f => f.hasMatch === false).length;
+    } else {
+      // Si aucun ID n'a été extrait, marquer tous les dossiers comme hasMatch = false
+      allInterventionFolders.forEach(folder => {
+        folder.hasMatch = false;
+      });
+      monthData.forEach(month => {
+        if (month.folders) {
+          month.folders.forEach(folder => {
+            folder.hasMatch = false;
+          });
+          
+          // Ajouter les statistiques de match par mois (tous à false)
+          month.foldersWithMatch = 0;
+          month.foldersWithoutMatch = month.folders.length;
+        }
+      });
+      
+      // Ajouter les statistiques de dossiers dans matchingStats
+      matchingStats.foldersWithMatch = 0;
+      matchingStats.foldersWithoutMatch = allInterventionFolders.length;
+    }
+
+    // 6. Statistiques globales
     console.log('📊 Statistiques globales:');
     console.log(`   Total dossiers INTER: ${allInterventionFolders.length}`);
-    console.log(`   Dossiers avec ID extrait: ${allInterventionFolders.filter(f => f.hasId).length}`);
+    console.log(`   Dossiers avec ID extrait: ${foldersWithId.length}`);
     console.log(`   Dossiers sans ID: ${allInterventionFolders.filter(f => !f.hasId).length}`);
-    console.log(`   Total documents: ${allInterventionFolders.reduce((sum, f) => sum + (f.documentCount || 0), 0)}\n`);
+    console.log(`   Total documents: ${allInterventionFolders.reduce((sum, f) => sum + (f.documentCount || 0), 0)}`);
+    if (matchingStats.totalIdsExtracted > 0) {
+      const foldersWithMatch = matchingStats.foldersWithMatch || 0;
+      const foldersWithoutMatch = matchingStats.foldersWithoutMatch || 0;
+      console.log(`   Dossiers avec match en BDD: ${foldersWithMatch} (${((foldersWithMatch / allInterventionFolders.length) * 100).toFixed(2)}%)`);
+      console.log(`   Dossiers sans match en BDD: ${foldersWithoutMatch} (${((foldersWithoutMatch / allInterventionFolders.length) * 100).toFixed(2)}%)`);
+      console.log(`   IDs correspondant en BDD: ${matchingStats.idsFoundInDb} / ${matchingStats.totalIdsExtracted} (${matchingStats.matchRate}%)\n`);
+    } else {
+      console.log('');
+    }
 
-    // 6. Sauvegarder les données
+    // 7. Sauvegarder les données
     const outputDir = path.join(__dirname, '../../../data/docs_imports/');
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
@@ -322,8 +412,9 @@ async function extractFoldersFromDrive(drive) {
       },
       totalMonths: monthData.length,
       totalInterFolders: allInterventionFolders.length,
-      foldersWithId: allInterventionFolders.filter(f => f.hasId).length,
+      foldersWithId: foldersWithId.length,
       foldersWithoutId: allInterventionFolders.filter(f => !f.hasId).length,
+      matchingStats: matchingStats,
       months: monthData
     };
 
@@ -366,6 +457,66 @@ async function getAllInterventions() {
   } catch (error) {
     console.error('❌ Erreur lors de la récupération des interventions:', error.message);
     throw error;
+  }
+}
+
+/**
+ * Vérifie rapidement quels IDs d'interventions existent en base de données
+ * Retourne un Set des IDs qui existent (pour vérification rapide)
+ */
+async function checkInterventionIdsExist(interventionIds) {
+  try {
+    if (!interventionIds || interventionIds.length === 0) {
+      return new Set();
+    }
+
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.warn('⚠️  Impossible de vérifier les IDs en BDD: variables d\'environnement manquantes');
+      return new Set();
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Convertir tous les IDs en strings pour la comparaison
+    const idStrings = interventionIds.map(id => String(id));
+    
+    // Construire la requête OR pour vérifier plusieurs IDs en une fois
+    // Limite: Supabase PostgREST limite à ~2000 caractères pour une requête OR
+    // On va faire des batches de 100 IDs à la fois
+    const batchSize = 100;
+    const existingIds = new Set();
+
+    for (let i = 0; i < idStrings.length; i += batchSize) {
+      const batch = idStrings.slice(i, i + batchSize);
+      const orConditions = batch.map(id => `id_inter.eq.${id}`).join(',');
+      
+      const { data, error } = await supabase
+        .from('interventions')
+        .select('id_inter')
+        .or(orConditions);
+
+      if (error && error.code !== 'PGRST116') {
+        console.warn(`⚠️  Erreur lors de la vérification des IDs (batch ${i / batchSize + 1}):`, error.message);
+        continue;
+      }
+
+      if (data) {
+        data.forEach(intervention => {
+          if (intervention.id_inter) {
+            existingIds.add(String(intervention.id_inter));
+          }
+        });
+      }
+    }
+
+    return existingIds;
+  } catch (error) {
+    console.warn('⚠️  Erreur lors de la vérification des IDs en BDD:', error.message);
+    return new Set();
   }
 }
 
@@ -491,7 +642,7 @@ function prepareDocumentsForInsertion(documents) {
     modifiedTime: doc.modifiedTime,
     webViewLink: doc.webViewLink,
     driveUrl: buildGoogleDriveUrl(doc.id, doc.webViewLink),
-    kind: 'a_classe' // Tous les documents sont classifiés comme "a_classe"
+    kind: 'a_classe' // Tous les documents sont classifiés comme "a_classe" (non classifiés)
   }));
 }
 
@@ -614,7 +765,6 @@ async function main() {
 Usage: npm run drive:import-documents-interventions [options]
 
 Options:
-  --skip-extraction, -e  Utiliser le fichier JSON existant (ne pas réextraire depuis Drive)
   --first-month-only    Traiter uniquement le premier mois (pour développement)
   --dry-run, -d         Mode simulation (aucune insertion en base)
   --skip-insert, -s     Faire le matching sans insérer les documents
@@ -623,14 +773,12 @@ Options:
 Exemples:
   npm run drive:import-documents-interventions                    # Extraction + Matching + Insertion
   npm run drive:import-documents-interventions --dry-run          # Simulation complète
-  npm run drive:import-documents-interventions --skip-extraction  # Utiliser JSON existant (plus rapide)
   npm run drive:import-documents-interventions --skip-insert      # Extraction + Matching sans insertion
   npm run drive:import-documents-interventions --first-month-only # Traitement du premier mois uniquement
 `);
     process.exit(0);
   }
 
-  const skipExtraction = args.includes('--skip-extraction') || args.includes('-e');
   const insertOnly = args.includes('--insert-only') || args.includes('-i');
   const firstMonthOnly = args.includes('--first-month-only');
   const dryRun = args.includes('--dry-run') || args.includes('-d');
@@ -653,7 +801,7 @@ Exemples:
   try {
     // Initialiser Google Drive API (nécessaire pour extraction et insertion de documents)
     let drive = null;
-    if (!skipExtraction || (!skipInsert && !dryRun)) {
+    if (!skipInsert && !dryRun) {
       console.log('🔐 Initialisation de l\'authentification Google Drive...');
       
       const credentials = googleDriveConfig.getCredentials();
@@ -676,32 +824,16 @@ Exemples:
       console.log('✅ Authentification Google Drive initialisée\n');
     }
 
-    // 1. Extraire les dossiers depuis Google Drive OU charger depuis le JSON existant
-    const jsonPath = path.join(__dirname, '../../../data/docs_imports/interventions-folders.json');
+    // 1. Extraire les dossiers depuis Google Drive
     let folderData;
     
-    const forceExtraction = args.includes('--force-extraction');
-    
-    // Détection automatique : utiliser le fichier existant si disponible (sauf si force-extraction)
-    const fileExists = fs.existsSync(jsonPath);
-    const shouldUseExistingFile = (skipExtraction || fileExists) && !forceExtraction;
-    
-    if (shouldUseExistingFile && fileExists) {
-      // Mode: utiliser le fichier existant
-      console.log(`📖 Lecture de ${jsonPath}...`);
-      folderData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-      console.log(`✅ ${folderData.totalInterFolders || 0} dossiers INTER chargés depuis le fichier existant\n`);
-    } else {
-      // Mode: extraction depuis Google Drive
-      if (forceExtraction && fileExists) {
-        console.log('🔄 Mode FORCE EXTRACTION: réextraction depuis Google Drive (fichier existant ignoré)\n');
-      }
-      if (!drive) {
-        console.error('❌ Google Drive API non initialisée. Impossible d\'extraire les dossiers.');
-        process.exit(1);
-      }
-      folderData = await extractFoldersFromDrive(drive);
+    if (!drive) {
+      console.error('❌ Google Drive API non initialisée. Impossible d\'extraire les dossiers.');
+      process.exit(1);
     }
+    
+    console.log('📁 Extraction des dossiers d\'interventions depuis Google Drive...\n');
+    folderData = await extractFoldersFromDrive(drive);
     
     // Limiter au premier mois si demandé
     let monthsToProcess = folderData.months || [];

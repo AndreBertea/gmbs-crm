@@ -200,7 +200,7 @@ export default async function RootLayout({
         {/* React Grab - Development only */}
         {process.env.NODE_ENV === "development" && (
           <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
+            src="https://unpkg.com/react-grab/dist/index.global.js"
             crossOrigin="anonymous"
             strategy="lazyOnload"
             data-enabled="true"

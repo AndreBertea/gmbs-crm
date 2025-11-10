@@ -42,7 +42,7 @@ SELECT
         SELECT SUM(ic.amount) 
         FROM intervention_costs ic 
         WHERE ic.intervention_id = i.id 
-        AND ic.cost_type = 'total'
+        AND ic.cost_type = 'marge'
     ) as cout_total,
     
     (
@@ -136,7 +136,7 @@ WITH intervention_data AS (
 costs_summary AS (
     SELECT 
         intervention_id,
-        SUM(CASE WHEN cost_type = 'total' THEN amount ELSE 0 END) as cout_total,
+        SUM(CASE WHEN cost_type = 'marge' THEN amount ELSE 0 END) as cout_total,
         SUM(CASE WHEN cost_type = 'sst' THEN amount ELSE 0 END) as cout_sst,
         SUM(CASE WHEN cost_type = 'materiel' THEN amount ELSE 0 END) as cout_materiel,
         SUM(CASE WHEN cost_type = 'intervention' THEN amount ELSE 0 END) as cout_intervention

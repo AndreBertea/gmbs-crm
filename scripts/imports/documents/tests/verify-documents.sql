@@ -2,6 +2,21 @@
 -- REQUÊTES SQL POUR VÉRIFIER LES DOCUMENTS INSÉRÉS
 -- ========================================
 
+-- Documents récemment importés avec source de stockage
+SELECT 
+  ia.filename,
+  ia.kind,
+  ia.url,
+  CASE 
+    WHEN ia.url LIKE '%drive.google.com%' THEN 'Google Drive'
+    WHEN ia.url LIKE '%storage/v1/object/public/documents%' THEN 'Supabase Storage'
+    ELSE 'Autre'
+  END as source_stockage
+FROM public.intervention_attachments ia
+WHERE ia.created_at >= NOW() - INTERVAL '24 hours'
+ORDER BY ia.created_at DESC
+LIMIT 50;
+
 -- 1. Vue d'ensemble : Nombre total de documents par kind
 SELECT 
   kind,
