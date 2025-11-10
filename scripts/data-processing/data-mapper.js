@@ -179,6 +179,10 @@ class DataMapper {
 
       // Champs par défaut
       is_active: true,
+
+      // ===== DONNÉES BRUTES pour DatabaseManager =====
+      // Ces champs seront traités par DatabaseManager et supprimés avant l'insertion
+      metiers: await this.mapMetiersFromCSV(csvRow),
     };
 
     return mapped;

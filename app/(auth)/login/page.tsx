@@ -1,18 +1,84 @@
 "use client"
 
-import { useState } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { useState, useRef, useEffect } from 'react'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase-client'
 import Image from 'next/image'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import { useRevealTransition } from '@/hooks/useRevealTransition'
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [shouldPreloadDashboard, setShouldPreloadDashboard] = useState(false)
+  const router = useRouter()
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const dashboardContainerRef = useRef<HTMLDivElement>(null)
+  
+  const { isAnimating, circleSizeMotion, buttonPosition, startAnimation, maxCircleSize } = useRevealTransition()
+
+  // Précharger le dashboard au chargement
+  useEffect(() => {
+    router.prefetch('/dashboard')
+  }, [router])
+
+  // Gérer l'animation du clipPath
+  useEffect(() => {
+    if (!isAnimating || !buttonPosition) return
+
+    const unsubscribe = circleSizeMotion.on('change', (size) => {
+      // ClipPath pour le dashboard (visible à l'intérieur du cercle)
+      const clipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+      const webkitClipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+      
+      if (dashboardContainerRef.current) {
+        dashboardContainerRef.current.style.clipPath = clipPath
+        ;(dashboardContainerRef.current.style as any).webkitClipPath = webkitClipPath
+      }
+      
+      // Pas besoin d'overlay : la page login reste visible à l'extérieur naturellement
+      // car elle est en dessous (z-index 20) et le dashboard n'est visible qu'à l'intérieur (clipPath)
+    })
+
+    return () => unsubscribe()
+  }, [isAnimating, buttonPosition, circleSizeMotion])
+
+  // Navigation après l'animation - remplacer la page actuelle par l'iframe une fois l'animation terminée
+  useEffect(() => {
+    if (!isAnimating || !isAuthenticated) return
+
+    // Attendre la fin de l'animation (3 secondes) puis remplacer le contenu
+    const timer = setTimeout(() => {
+      // Une fois l'animation terminée, on peut permettre les interactions avec l'iframe
+      if (dashboardContainerRef.current) {
+        const iframe = dashboardContainerRef.current.querySelector('iframe')
+        if (iframe) {
+          // Permettre les interactions
+          iframe.style.pointerEvents = 'auto'
+          dashboardContainerRef.current.style.pointerEvents = 'auto'
+          
+          // Rendre l'iframe pleine page en retirant le clipPath
+          dashboardContainerRef.current.style.clipPath = 'none'
+          dashboardContainerRef.current.style.webkitClipPath = 'none'
+          
+          // Masquer la page login
+          const loginPage = document.querySelector('[style*="zIndex: 20"]') as HTMLElement
+          if (loginPage) {
+            loginPage.style.display = 'none'
+          }
+        }
+      }
+    }, 3000) // 3000ms = 3 secondes = durée de l'animation
+
+    return () => clearTimeout(timer)
+  }, [isAnimating, isAuthenticated])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,66 +102,122 @@ export default function LoginPage() {
         await fetch('/api/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ access_token: token, refresh_token: refresh, expires_at }) })
         await fetch('/api/auth/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: 'connected' }) })
       }
+      
+      // Marquer comme authentifié et démarrer l'animation
+      setIsAuthenticated(true)
+      // Précharger l'iframe après l'authentification pour qu'elle ait accès aux cookies
+      setShouldPreloadDashboard(true)
+      
+      // Naviguer immédiatement pour que Next.js commence à charger la page en arrière-plan
       const url = new URL(window.location.href)
       const redirect = url.searchParams.get('redirect') || '/dashboard'
-      window.location.href = redirect
+      router.prefetch(redirect)
+      
+      // Utiliser setTimeout pour s'assurer que le DOM est mis à jour et que l'iframe commence à charger
+      setTimeout(() => {
+        startAnimation(buttonRef as React.RefObject<HTMLButtonElement>)
+      }, 100) // Petit délai pour laisser l'iframe commencer à charger
     } catch (e: any) {
       setError(e?.message || 'Erreur inconnue')
-    } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
-      {/* Left brand / illustration */}
-      <div className="hidden md:flex flex-col justify-between p-10 bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white relative overflow-hidden">
-        <div className="z-10">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-white/10 ring-1 ring-white/20 flex items-center justify-center text-lg font-bold">G</div>
-            <div className="text-xl font-semibold tracking-wide">GMBS CRM</div>
+    <>
+      {/* Page login (z-index: 20) */}
+      <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 relative" style={{ zIndex: 20 }}>
+        {/* Left brand / illustration */}
+        <div className="hidden md:flex flex-col justify-between p-10 bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white relative overflow-hidden">
+          <div className="z-10 flex flex-col items-center justify-center flex-1">
+            <div className="flex flex-col items-center gap-6">
+              <h1 className="text-4xl font-bold leading-tight text-center">Portail de connexion</h1>
+              <div className="text-2xl font-semibold tracking-wide text-center">GMBS Gestion</div>
+            </div>
           </div>
-          <h1 className="mt-16 text-4xl font-bold leading-tight">Gérez votre activité<br/>avec précision</h1>
-          <p className="mt-4 text-white/70 max-w-md">Accédez à vos interventions, équipe et facturation en toute sécurité. Authentification protégée par Supabase.</p>
+          <div className="absolute inset-0 opacity-20 pointer-events-none select-none">
+            <Image src="/gmbs-logo.svg" alt="" fill priority sizes="100vw" style={{ objectFit: 'cover' }} />
+          </div>
         </div>
-        <div className="z-10 text-sm text-white/60">© {new Date().getFullYear()} GMBS — Tous droits réservés</div>
-        <div className="absolute inset-0 opacity-20 pointer-events-none select-none">
-          <Image src="/login-bg.jpg" alt="" fill priority sizes="100vw" style={{ objectFit: 'cover' }} />
+
+        {/* Right login card */}
+        <div className="flex items-center justify-center p-6 md:p-10 bg-background">
+          <Card className="w-full max-w-sm shadow-lg relative">
+            <motion.div 
+              className="absolute -top-20 -right-0"
+              initial={{ opacity: 0, x: 100, scale: 0.6 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{
+                duration: 1.5,
+                ease: "easeOut"
+              }}
+            >
+              <Image src="/gmbs-logo.svg" alt="GMBS Logo" width={180} height={180} className="h-40 w-40" />
+            </motion.div>
+            <CardHeader>
+              <CardTitle>Connexion</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4" onSubmit={onSubmit}>
+                <div className="space-y-1">
+                  <label className="text-sm">Email ou nom d'utilisateur</label>
+                  <Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoFocus required placeholder="ex: alice@gmbs.fr" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm">Mot de passe</label>
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                </div>
+                {error && <div className="text-sm text-red-600">{error}</div>}
+                <Button ref={buttonRef} className="w-full" type="submit" disabled={loading}>
+                  {loading ? 'Connexion…' : 'Se connecter'}
+                </Button>
+              </form>
+              <div className="mt-4 text-xs text-muted-foreground">
+                Besoin d'un accès ? Contactez l'administrateur.
+              </div>
+              <div className="mt-6 text-xs text-muted-foreground">
+                <Link href="#" className="hover:underline">Mot de passe oublié</Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Right login card */}
-      <div className="flex items-center justify-center p-6 md:p-10 bg-background">
-        <Card className="w-full max-w-sm shadow-lg">
-          <CardHeader>
-            <CardTitle>Connexion</CardTitle>
-            <CardDescription>Identifiez-vous pour accéder à GMBS CRM</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={onSubmit}>
-              <div className="space-y-1">
-                <label className="text-sm">Email ou nom d’utilisateur</label>
-                <Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoFocus required placeholder="ex: alice@gmbs.fr" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm">Mot de passe</label>
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              </div>
-              {error && <div className="text-sm text-red-600">{error}</div>}
-              <Button className="w-full" type="submit" disabled={loading}>
-                {loading ? 'Connexion…' : 'Se connecter'}
-              </Button>
-            </form>
-            <div className="mt-4 text-xs text-muted-foreground">
-              Besoin d’un accès ? Contactez l’administrateur.
-            </div>
-            <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">
-              <Link href="#" className="hover:underline">Mot de passe oublié</Link>
-              <Link href="/" className="hover:underline">Retour au site</Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      {/* Dashboard conteneur masqué (z-index: 30) - visible à l'intérieur du cercle */}
+      {/* Précharger l'iframe même avant l'animation pour qu'elle soit prête */}
+      {shouldPreloadDashboard && (
+        <div
+          ref={dashboardContainerRef}
+          className="fixed inset-0 bg-background"
+          style={{
+            zIndex: isAnimating ? 30 : -1,
+            clipPath: isAnimating && buttonPosition 
+              ? `circle(0px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+              : 'none',
+            WebkitClipPath: isAnimating && buttonPosition
+              ? `circle(0px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+              : 'none',
+            pointerEvents: 'none',
+            opacity: isAnimating ? 1 : 0,
+            visibility: isAnimating ? 'visible' : 'hidden',
+          }}
+          aria-hidden="true"
+        >
+          <iframe
+            src="/dashboard"
+            className="w-full h-full border-0"
+            style={{ 
+              pointerEvents: 'none',
+              opacity: 1,
+              visibility: 'visible',
+            }}
+            aria-hidden="true"
+            title="Dashboard"
+            loading="eager"
+          />
+        </div>
+      )}
+
+    </>
   )
 }

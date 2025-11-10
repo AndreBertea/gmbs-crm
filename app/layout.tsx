@@ -1,5 +1,6 @@
 import GlobalModalHost from "@/components/layout/GlobalModalHost"
 import GlobalShortcuts from "@/components/layout/global-shortcuts"
+import { ConditionalPadding } from "@/components/layout/conditional-padding"
 import { SettingsProvider } from "@/components/layout/settings-provider"
 import SidebarGate from "@/components/layout/sidebar-gate"
 import ThemeWrapper from "@/components/layout/theme-wrapper"
@@ -219,7 +220,7 @@ export default async function RootLayout({
                         <SidebarProvider>
                           <div className="flex min-h-screen w-full overflow-hidden flex-col">
                             <TopbarGate />
-                            <div className="flex flex-1 w-full overflow-hidden pt-16">
+                            <ConditionalPadding>
                               <SidebarGate isAuthed={isAuthed} />
                               <main id="main" className="flex flex-1 min-h-[calc(100vh-4rem)] flex-col overflow-hidden">
                                 <GlobalShortcuts />
@@ -228,7 +229,7 @@ export default async function RootLayout({
                                   {children}
                                 </div>
                               </main>
-                            </div>
+                            </ConditionalPadding>
                           </div>
                         </SidebarProvider>
                       </ThemeWrapper>

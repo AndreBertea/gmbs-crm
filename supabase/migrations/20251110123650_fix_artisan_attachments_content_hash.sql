@@ -62,3 +62,4 @@ COMMENT ON COLUMN public.artisan_attachments.content_hash IS 'Hash SHA-256 du co
 COMMENT ON COLUMN public.artisan_attachments.derived_sizes IS 'URLs des dérivés générés : {"40": "url", "80": "url", "160": "url"}';
 COMMENT ON COLUMN public.artisan_attachments.mime_preferred IS 'Format MIME préféré pour l''affichage (image/webp ou image/jpeg)';
 
+

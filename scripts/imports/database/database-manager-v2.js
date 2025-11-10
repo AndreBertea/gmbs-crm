@@ -237,10 +237,63 @@ class DatabaseManager {
           }`,
           "verbose"
         );
+        
+        // Afficher les métiers en mode dry-run
+        if (artisan.metiers && artisan.metiers.length > 0) {
+          this.log(
+            `  → Métiers: ${artisan.metiers.map(m => m.metier_id).join(', ')}`,
+            "verbose"
+          );
+        }
       } else {
         try {
+          // Extraire les métiers avant l'upsert
+          const metiersData = artisan.metiers || [];
+          
+          // Nettoyer les données temporaires avant l'upsert
+          delete artisan.metiers;
+
           // Utiliser l'API V2 avec upsertDirect pour éviter les doublons
           const upsertedArtisan = await artisansApi.upsertDirect(artisan);
+
+          // Assigner les métiers après l'upsert
+          if (metiersData.length > 0 && upsertedArtisan.id) {
+            try {
+              // Créer les relations métiers
+              for (let j = 0; j < metiersData.length; j++) {
+                const metier = metiersData[j];
+                try {
+                  await artisansApi.assignMetier(
+                    upsertedArtisan.id,
+                    metier.metier_id,
+                    metier.is_primary || false
+                  );
+                  this.log(
+                    `  → Métier assigné: ${metier.metier_id}${metier.is_primary ? ' (principal)' : ''}`,
+                    "verbose"
+                  );
+                } catch (error) {
+                  // Ignorer les doublons (contrainte unique)
+                  if (
+                    error.message &&
+                    error.message.includes("duplicate key value violates unique constraint")
+                  ) {
+                    this.log(`  ℹ️ Métier déjà assigné: ${metier.metier_id}`, "verbose");
+                  } else {
+                    this.log(
+                      `  ⚠️ Erreur assignation métier ${metier.metier_id}: ${error.message}`,
+                      "warning"
+                    );
+                  }
+                }
+              }
+            } catch (error) {
+              this.log(
+                `  ⚠️ Erreur lors de l'assignation des métiers: ${error.message}`,
+                "warning"
+              );
+            }
+          }
 
           results.success++;
           results.details.push({
