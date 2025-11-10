@@ -33,8 +33,8 @@ export function useInterventionModal() {
   )
 
   const close = useCallback(() => {
-    // Guard: only close if actually open
-    if (!modal.isOpen || modal.content !== "intervention") return
+    // Guard: only close if actually open and is an intervention-related modal
+    if (!modal.isOpen || (modal.content !== "intervention" && modal.content !== "new-intervention")) return
 
     // Vérifier si le modal d'intervention vient d'un modal d'artisan AVANT de fermer
     // car modal.close() va réinitialiser le state

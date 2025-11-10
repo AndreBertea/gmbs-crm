@@ -102,62 +102,55 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
       const resolvedMentions =
         mentionedUserIds === undefined ? state.mentions.get(interventionId) ?? [] : mentionedUserIds
 
-      const hasContent = Boolean(
-        (resolvedNote && resolvedNote.length > 0) || (resolvedDueDate && resolvedDueDate.length > 0),
-      )
-
+      // Toujours sauvegarder le reminder, même s'il est vide
+      // Le reminder sera créé avec is_active: true
       let remoteReminder: InterventionReminder | null = null
 
       try {
-        if (hasContent) {
-          remoteReminder = await remindersApi.upsertReminder({
-            intervention_id: interventionId,
-            note: resolvedNote,
-            due_date: resolvedDueDate,
-            mentioned_user_ids: resolvedMentions,
-          })
-        } else if (existingRecord) {
-          await remindersApi.deleteReminder(existingRecord.id)
-        }
+        // Toujours appeler upsertReminder, même si le reminder est vide
+        remoteReminder = await remindersApi.upsertReminder({
+          intervention_id: interventionId,
+          note: resolvedNote,
+          due_date: resolvedDueDate,
+          mentioned_user_ids: resolvedMentions,
+        })
       } catch (error) {
         console.error("Failed to save reminder", error)
       }
 
       updateState((prev) => {
         const next = cloneState(prev)
-        if (hasContent && (remoteReminder || resolvedNote || resolvedDueDate)) {
-          next.reminders.add(interventionId)
-          if (remoteReminder?.note ?? resolvedNote) {
-            next.notes.set(interventionId, remoteReminder?.note ?? resolvedNote ?? "")
-          } else {
-            next.notes.delete(interventionId)
-          }
-          next.mentions.set(
-            interventionId,
-            remoteReminder?.mentioned_user_ids ?? resolvedMentions ?? [],
-          )
-          next.dueDates.set(
-            interventionId,
-            remoteReminder?.due_date ?? resolvedDueDate ?? null,
-          )
-          if (remoteReminder) {
-            next.records.set(interventionId, remoteReminder)
-          } else if (existingRecord) {
-            next.records.set(interventionId, {
-              ...existingRecord,
-              note: resolvedNote,
-              due_date: resolvedDueDate,
-              mentioned_user_ids: resolvedMentions,
-              updated_at: new Date().toISOString(),
-            })
-          }
+        // Toujours ajouter le reminder à l'état, même s'il est vide
+        next.reminders.add(interventionId)
+        
+        if (remoteReminder?.note ?? resolvedNote) {
+          next.notes.set(interventionId, remoteReminder?.note ?? resolvedNote ?? "")
         } else {
-          next.reminders.delete(interventionId)
           next.notes.delete(interventionId)
-          next.mentions.delete(interventionId)
-          next.dueDates.delete(interventionId)
-          next.records.delete(interventionId)
         }
+        
+        next.mentions.set(
+          interventionId,
+          remoteReminder?.mentioned_user_ids ?? resolvedMentions ?? [],
+        )
+        
+        next.dueDates.set(
+          interventionId,
+          remoteReminder?.due_date ?? resolvedDueDate ?? null,
+        )
+        
+        if (remoteReminder) {
+          next.records.set(interventionId, remoteReminder)
+        } else if (existingRecord) {
+          next.records.set(interventionId, {
+            ...existingRecord,
+            note: resolvedNote,
+            due_date: resolvedDueDate,
+            mentioned_user_ids: resolvedMentions,
+            updated_at: new Date().toISOString(),
+          })
+        }
+        
         return next
       })
     },

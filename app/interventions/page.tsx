@@ -130,10 +130,10 @@ const VIEW_LAYOUT_ICONS: Record<ViewLayout, ComponentType<{ className?: string }
 
 const NEW_VIEW_MENU_CHOICES: Array<{ layout: ViewLayout; label: string; Icon: ComponentType<{ className?: string }> }> = VISIBLE_VIEW_LAYOUTS.map(
   (layout) => ({
-  layout,
-  label: VIEW_LAYOUT_LABELS[layout],
-  Icon: VIEW_LAYOUT_ICONS[layout],
-}),
+    layout,
+    label: VIEW_LAYOUT_LABELS[layout],
+    Icon: VIEW_LAYOUT_ICONS[layout],
+  }),
 )
 
 const ROW_DENSITY_OPTIONS: Array<{ value: TableRowDensity; label: string }> = [

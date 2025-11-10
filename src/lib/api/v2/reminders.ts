@@ -8,6 +8,13 @@ type ReminderRow = InterventionReminder & {
 const USER_FIELDS = "id, firstname, lastname, email";
 const REMINDER_SELECT = `*, user:users!intervention_reminders_user_id_fkey(${USER_FIELDS})`;
 
+// Normaliser la note : nettoyer les valeurs pour l'affichage
+function normalizeNoteForDisplay(note: string | null | undefined): string | null {
+  if (!note) return null;
+  const trimmed = note.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 async function enrichMentionedUsers(reminders: ReminderRow[]): Promise<InterventionReminder[]> {
   const mentionedIds = new Set<string>();
   reminders.forEach((reminder) => {
@@ -17,6 +24,7 @@ async function enrichMentionedUsers(reminders: ReminderRow[]): Promise<Intervent
   if (mentionedIds.size === 0) {
     return reminders.map((reminder) => ({
       ...reminder,
+      note: normalizeNoteForDisplay(reminder.note),
       mentioned_user_ids: reminder.mentioned_user_ids ?? [],
       mentioned_users: [],
     }));
@@ -35,6 +43,7 @@ async function enrichMentionedUsers(reminders: ReminderRow[]): Promise<Intervent
     const ids = reminder.mentioned_user_ids ?? [];
     return {
       ...reminder,
+      note: normalizeNoteForDisplay(reminder.note),
       mentioned_user_ids: ids,
       mentioned_users: ids
         .map((id) => usersById.get(id))
@@ -43,16 +52,8 @@ async function enrichMentionedUsers(reminders: ReminderRow[]): Promise<Intervent
   });
 }
 
-function ensureReminderParams(params: {
-  note?: string | null;
-  due_date?: string | null;
-}): void {
-  const hasNote = Boolean(params.note && params.note.trim().length > 0);
-  const hasDueDate = Boolean(params.due_date);
-  if (!hasNote && !hasDueDate) {
-    throw new Error("Une note ou une date d'échéance est requise.");
-  }
-}
+// Plus de validation stricte - on permet les reminders vides (sans note ni date)
+// La contrainte CHECK a été supprimée pour permettre cette fonctionnalité
 
 export const remindersApi = {
   async getMyReminders(): Promise<InterventionReminder[]> {
@@ -87,19 +88,35 @@ export const remindersApi = {
       throw new Error("Not authenticated");
     }
 
-    ensureReminderParams(params);
-
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("intervention_reminders")
       .select("id")
       .eq("intervention_id", params.intervention_id)
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
+
+    if (existingError && existingError.code !== "PGRST116") {
+      throw existingError;
+    }
+
+    // Normaliser les valeurs : permettre les reminders vides (sans note ni date)
+    // La contrainte CHECK a été supprimée pour permettre cette fonctionnalité
+    const trimmedNote = params.note?.trim();
+    const trimmedDueDate = params.due_date?.trim();
+    
+    // Si note existe et n'est pas vide, l'utiliser
+    // Sinon, mettre note à null (même si due_date existe ou non)
+    const hasNote = trimmedNote && trimmedNote.length > 0;
+    const hasDueDate = trimmedDueDate && trimmedDueDate.length > 0;
+    
+    const normalizedNote = hasNote ? trimmedNote : null;
+    const normalizedDueDate = hasDueDate ? trimmedDueDate : null;
 
     const payload = {
-      note: params.note ?? null,
-      due_date: params.due_date ?? null,
+      note: normalizedNote,
+      due_date: normalizedDueDate,
       mentioned_user_ids: params.mentioned_user_ids ?? [],
+      is_active: true, // Toujours mettre is_active à true lors de la création/mise à jour
     };
 
     if (existing) {

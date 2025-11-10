@@ -171,7 +171,7 @@ export default async function RootLayout({
     }
   } catch (e) {
     // En cas d'erreur, appliquer un thème par défaut pour éviter un flash de contenu non stylé
-    console.error('Erreur lors de l\'application du thème:', e);
+    console.error("Erreur lors de l'application du thème:", e);
     try {
       const root = document.documentElement;
       root.classList.remove('dark');
@@ -188,7 +188,7 @@ export default async function RootLayout({
       root.style.setProperty('--primary', '228 78% 55%');
       root.style.setProperty('--primary-foreground', '0 0% 100%');
     } catch (fallbackError) {
-      console.error('Erreur lors de l\'application du thème de secours:', fallbackError);
+      console.error("Erreur lors de l'application du thème de secours:", fallbackError);
     }
   }
 })();`,
