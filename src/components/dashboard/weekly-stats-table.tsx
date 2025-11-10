@@ -11,10 +11,38 @@ import { Loader2 } from "lucide-react"
 
 interface WeeklyStatsTableProps {
   weekStartDate?: string
+  period?: {
+    startDate?: string
+    endDate?: string
+  }
 }
 
-export function WeeklyStatsTable({ weekStartDate }: WeeklyStatsTableProps) {
-  const [period, setPeriod] = useState<StatsPeriod>("week")
+// Helper pour déterminer le type de période à partir des dates
+function getPeriodTypeFromDates(startDate?: string, endDate?: string): StatsPeriod {
+  if (!startDate || !endDate) return "week"
+  
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+  
+  if (diffDays <= 7) return "week"
+  if (diffDays <= 35) return "month"
+  return "year"
+}
+
+export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: WeeklyStatsTableProps) {
+  // Si une période externe est fournie, utiliser son type, sinon semaine par défaut
+  const [period, setPeriod] = useState<StatsPeriod>(
+    externalPeriod ? getPeriodTypeFromDates(externalPeriod.startDate, externalPeriod.endDate) : "week"
+  )
+  
+  // Mettre à jour la période si la période externe change
+  useEffect(() => {
+    if (externalPeriod) {
+      const newPeriod = getPeriodTypeFromDates(externalPeriod.startDate, externalPeriod.endDate)
+      setPeriod(newPeriod)
+    }
+  }, [externalPeriod?.startDate, externalPeriod?.endDate])
   const [stats, setStats] = useState<WeeklyStats | MonthlyStats | YearlyStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -81,17 +109,38 @@ export function WeeklyStatsTable({ weekStartDate }: WeeklyStatsTableProps) {
         setLoading(true)
         setError(null)
 
+        console.log(`[WeeklyStatsTable] Chargement stats pour userId: ${userId}, période: ${period}`)
+
+        // Vérifier d'abord si l'utilisateur a des interventions (sans filtre de date)
+        const { data: allInterventions } = await supabase
+          .from("interventions")
+          .select("id, date, assigned_user_id")
+          .eq("assigned_user_id", userId)
+          .eq("is_active", true)
+          .limit(5)
+
+        console.log(`[WeeklyStatsTable] Total interventions pour cet utilisateur (échantillon):`, allInterventions?.length || 0)
+        if (allInterventions && allInterventions.length > 0) {
+          console.log(`[WeeklyStatsTable] Exemples de dates:`, allInterventions.map(i => i.date))
+        }
+
+        // Utiliser la date de début de la période externe si disponible
+        const startDateForQuery = externalPeriod?.startDate || (period === "week" ? weekStartDate : undefined)
+        
         const statsData = await interventionsApi.getPeriodStatsByUser(
           userId,
           period,
-          period === "week" ? weekStartDate : undefined
+          startDateForQuery
         )
+
+        console.log(`[WeeklyStatsTable] Stats chargées:`, statsData)
 
         if (!cancelled) {
           setStats(statsData)
           setLoading(false)
         }
       } catch (err: any) {
+        console.error(`[WeeklyStatsTable] Erreur:`, err)
         if (!cancelled) {
           setError(err.message || "Erreur lors du chargement des statistiques")
           setLoading(false)
@@ -104,7 +153,7 @@ export function WeeklyStatsTable({ weekStartDate }: WeeklyStatsTableProps) {
     return () => {
       cancelled = true
     }
-  }, [userId, period, weekStartDate])
+  }, [userId, period, weekStartDate, externalPeriod?.startDate, externalPeriod?.endDate])
 
   if (loading) {
     return (
@@ -153,12 +202,39 @@ export function WeeklyStatsTable({ weekStartDate }: WeeklyStatsTableProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Actions</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Actions</CardTitle>
+            {!externalPeriod && (
+              <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Semaine</SelectItem>
+                  <SelectItem value="month">Mois</SelectItem>
+                  <SelectItem value="year">Année</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Aucune donnée disponible
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Aucune donnée disponible pour cette période.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Vérifiez la console du navigateur (F12) pour voir les détails de debug.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Possibles causes :
+            </p>
+            <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1 ml-2">
+              <li>L'utilisateur n'a pas d'interventions assignées</li>
+              <li>Les données sont en dehors de la période sélectionnée</li>
+              <li>Les interventions n'ont pas les statuts recherchés (DEVIS_ENVOYE, INTER_EN_COURS, INTER_TERMINEE)</li>
+            </ul>
+          </div>
         </CardContent>
       </Card>
     )
@@ -194,16 +270,18 @@ export function WeeklyStatsTable({ weekStartDate }: WeeklyStatsTableProps) {
                 Semaine du {formatDate(weekStats.week_start)} au {formatDate(weekStats.week_end)}
               </p>
             </div>
-            <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Semaine</SelectItem>
-                <SelectItem value="month">Mois</SelectItem>
-                <SelectItem value="year">Année</SelectItem>
-              </SelectContent>
-            </Select>
+            {!externalPeriod && (
+              <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Semaine</SelectItem>
+                  <SelectItem value="month">Mois</SelectItem>
+                  <SelectItem value="year">Année</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -263,16 +341,18 @@ export function WeeklyStatsTable({ weekStartDate }: WeeklyStatsTableProps) {
                 {monthName.charAt(0).toUpperCase() + monthName.slice(1)} {monthStats.year}
               </p>
             </div>
-            <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Semaine</SelectItem>
-                <SelectItem value="month">Mois</SelectItem>
-                <SelectItem value="year">Année</SelectItem>
-              </SelectContent>
-            </Select>
+            {!externalPeriod && (
+              <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Semaine</SelectItem>
+                  <SelectItem value="month">Mois</SelectItem>
+                  <SelectItem value="year">Année</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -334,16 +414,18 @@ export function WeeklyStatsTable({ weekStartDate }: WeeklyStatsTableProps) {
                 Année {yearStats.year}
               </p>
             </div>
-            <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Semaine</SelectItem>
-                <SelectItem value="month">Mois</SelectItem>
-                <SelectItem value="year">Année</SelectItem>
-              </SelectContent>
-            </Select>
+            {!externalPeriod && (
+              <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Semaine</SelectItem>
+                  <SelectItem value="month">Mois</SelectItem>
+                  <SelectItem value="year">Année</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardHeader>
         <CardContent>

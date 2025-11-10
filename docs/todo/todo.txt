@@ -1,5 +1,7 @@
 - ✅ refacto renommer cout total en marge. 
 
+- id_inter 3615 à regarder
+
 
 - checker les commentaires pour intervention et artisan
 - refacto migrations make one clean schema business operations, one for user

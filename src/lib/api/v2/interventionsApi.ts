@@ -983,21 +983,57 @@ export const interventionsApi = {
 
       // Calculer la marge seulement si on a un coût d'intervention
       if (coutIntervention > 0) {
-        const marge = coutIntervention - coutSST - coutMateriel;
-        const marginPercentage = (marge / coutIntervention) * 100;
+        const totalCostForIntervention = coutSST + coutMateriel;
+        const marge = coutIntervention - totalCostForIntervention;
+        
+        // Calculer le pourcentage de marge par rapport aux coûts (pas au prix de vente)
+        // Exemple : vente 120€, coûts 100€ → marge 20€ → 20/100 = 20%
+        let marginPercentage = 0;
+        if (totalCostForIntervention > 0) {
+          marginPercentage = (marge / totalCostForIntervention) * 100;
+        } else if (marge > 0) {
+          // Si pas de coûts mais un revenu, marge = 100% (ou plus pour indiquer profit pur)
+          marginPercentage = 100;
+        } else if (totalCostForIntervention === 0 && marge < 0) {
+          // Cas bizarre : pas de coûts mais marge négative (revenu négatif ?)
+          console.warn(`[MarginStats] Intervention avec revenu négatif : ${coutIntervention}€`);
+          marginPercentage = -100;
+        }
+
+        // Debug pour interventions avec marge négative
+        if (marge < 0) {
+          console.log(`[MarginStats] Intervention avec perte : vente ${coutIntervention}€, coûts ${totalCostForIntervention}€, marge ${marge.toFixed(2)}€ (${marginPercentage.toFixed(2)}%)`);
+        }
 
         totalRevenue += coutIntervention;
-        totalCosts += coutSST + coutMateriel;
+        totalCosts += totalCostForIntervention;
         totalMargin += marge;
         totalMarginPercentage += marginPercentage;
         interventionsWithCosts++;
       }
     });
 
-    // Calculer la moyenne du pourcentage de marge
-    const averageMarginPercentage = interventionsWithCosts > 0 
-      ? totalMarginPercentage / interventionsWithCosts 
-      : 0;
+    // Calculer la moyenne des pourcentages de marge
+    let averageMarginPercentage = 0;
+    if (interventionsWithCosts > 0) {
+      averageMarginPercentage = totalMarginPercentage / interventionsWithCosts;
+      
+      // Limiter les valeurs extrêmes à une plage raisonnable (-1000% à +1000%)
+      if (averageMarginPercentage > 1000) {
+        averageMarginPercentage = 1000;
+      } else if (averageMarginPercentage < -1000) {
+        averageMarginPercentage = -1000;
+      }
+    }
+
+    // Debug : vérifier la cohérence des calculs
+    console.log(`[MarginStats] Résumé du calcul :`);
+    console.log(`  - Nombre d'interventions : ${interventionsWithCosts}`);
+    console.log(`  - Revenu total : ${totalRevenue.toFixed(2)}€`);
+    console.log(`  - Coûts totaux : ${totalCosts.toFixed(2)}€`);
+    console.log(`  - Marge totale : ${totalMargin.toFixed(2)}€`);
+    console.log(`  - Somme des % : ${totalMarginPercentage.toFixed(2)}%`);
+    console.log(`  - % moyen : ${averageMarginPercentage.toFixed(2)}%`);
 
     return {
       average_margin_percentage: Math.round(averageMarginPercentage * 100) / 100, // Arrondir à 2 décimales
@@ -1114,21 +1150,37 @@ export const interventionsApi = {
 
           // Calculer la marge seulement si on a un coût d'intervention
           if (coutIntervention > 0) {
-            const marge = coutIntervention - coutSST - coutMateriel;
-            const marginPercentage = (marge / coutIntervention) * 100;
+            const totalCostForIntervention = coutSST + coutMateriel;
+            const marge = coutIntervention - totalCostForIntervention;
+            
+            // Calculer le pourcentage de marge par rapport aux coûts
+            let marginPercentage = 0;
+            if (totalCostForIntervention > 0) {
+              marginPercentage = (marge / totalCostForIntervention) * 100;
+            } else if (marge > 0) {
+              marginPercentage = 100;
+            }
 
             totalRevenue += coutIntervention;
-            totalCosts += coutSST + coutMateriel;
+            totalCosts += totalCostForIntervention;
             totalMargin += marge;
             totalMarginPercentage += marginPercentage;
             interventionsWithCosts++;
           }
         });
 
-        // Calculer la moyenne du pourcentage de marge
-        const averageMarginPercentage = interventionsWithCosts > 0
-          ? totalMarginPercentage / interventionsWithCosts
-          : 0;
+        // Calculer la moyenne des pourcentages de marge
+        let averageMarginPercentage = 0;
+        if (interventionsWithCosts > 0) {
+          averageMarginPercentage = totalMarginPercentage / interventionsWithCosts;
+          
+          // Limiter les valeurs extrêmes
+          if (averageMarginPercentage > 1000) {
+            averageMarginPercentage = 1000;
+          } else if (averageMarginPercentage < -1000) {
+            averageMarginPercentage = -1000;
+          }
+        }
 
         // Ajouter au classement seulement si le gestionnaire a des interventions avec coûts
         if (interventionsWithCosts > 0) {
@@ -1190,10 +1242,13 @@ export const interventionsApi = {
     } else {
       // Trouver le lundi de la semaine en cours
       const now = new Date();
-      const day = now.getDay();
+      const day = now.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
       const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Ajuster pour que lundi = 1
       monday = new Date(now.getFullYear(), now.getMonth(), diff);
       monday.setHours(0, 0, 0, 0);
+      
+      console.log(`[WeeklyStats] Date actuelle: ${now.toISOString()}, Jour de la semaine: ${day}, Diff: ${diff}`);
+      console.log(`[WeeklyStats] Lundi calculé: ${monday.toISOString()}`);
     }
 
     const tuesday = new Date(monday);
@@ -1262,13 +1317,44 @@ export const interventionsApi = {
       throw new Error(`Erreur lors de la récupération des interventions: ${interventionsError.message}`);
     }
 
+    // Debug: vérifier si des interventions ont été trouvées
+    console.log(`[WeeklyStats] Période: ${mondayStr} à ${saturdayStr}`);
+    console.log(`[WeeklyStats] UserId: ${userId}`);
+    console.log(`[WeeklyStats] Interventions trouvées: ${interventions?.length || 0}`);
+    
+    // Vérifier toutes les interventions de l'utilisateur (sans filtre de date) pour debug
+    const { data: allUserInterventions, count: totalCount } = await supabase
+      .from("interventions")
+      .select("id, date, assigned_user_id", { count: "exact" })
+      .eq("assigned_user_id", userId)
+      .eq("is_active", true)
+      .limit(10);
+    
+    console.log(`[WeeklyStats] Total interventions pour cet utilisateur (sans filtre date): ${totalCount ?? 0}`);
+    if (allUserInterventions && allUserInterventions.length > 0) {
+      console.log(`[WeeklyStats] Exemples de dates d'interventions:`, 
+        allUserInterventions.map(i => ({ id: i.id, date: i.date }))
+      );
+    }
+    
+    if (interventions && interventions.length > 0) {
+      const firstIntervention = interventions[0] as any;
+      console.log(`[WeeklyStats] Exemple d'intervention dans la période:`, {
+        date: firstIntervention.date,
+        statusCode: firstIntervention.status?.code,
+      });
+    }
+
     // Compter les interventions par jour et par statut
     (interventions || []).forEach((intervention: any) => {
       const interventionDate = new Date(intervention.date);
       const dateStr = formatDate(interventionDate);
       const statusCode = intervention.status?.code;
 
-      if (!statusCode) return;
+      if (!statusCode) {
+        console.log(`[WeeklyStats] Intervention sans statut:`, intervention.id);
+        return;
+      }
 
       let dayKey: keyof WeekDayStats | null = null;
       if (dateStr === mondayStr) dayKey = "lundi";
@@ -1277,7 +1363,10 @@ export const interventionsApi = {
       else if (dateStr === thursdayStr) dayKey = "jeudi";
       else if (dateStr === fridayStr) dayKey = "vendredi";
 
-      if (!dayKey) return;
+      if (!dayKey) {
+        console.log(`[WeeklyStats] Date hors période: ${dateStr} (attendu: ${mondayStr}-${fridayStr})`);
+        return;
+      }
 
       // Compter selon le statut
       if (statusCode === "DEVIS_ENVOYE") {
@@ -1289,6 +1378,8 @@ export const interventionsApi = {
       } else if (statusCode === "INTER_TERMINEE" || statusCode === "TERMINE") {
         interFactures[dayKey]++;
         interFactures.total++;
+      } else {
+        console.log(`[WeeklyStats] Statut non compté: ${statusCode} pour intervention ${intervention.id}`);
       }
     });
 

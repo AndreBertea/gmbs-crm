@@ -175,6 +175,12 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
     )
   }
 
+  // Gérer les cas extrêmes de pourcentage
+  const isExtreme = Math.abs(stats.average_margin_percentage) >= 1000
+  const displayPercentage = isExtreme 
+    ? (stats.average_margin_percentage < 0 ? "< -1000%" : "> 1000%")
+    : `${stats.average_margin_percentage.toFixed(2)}%`
+  
   const marginColor = stats.average_margin_percentage >= 0 ? "text-green-600" : "text-red-600"
   const TrendIcon = stats.average_margin_percentage >= 0 ? TrendingUp : TrendingDown
 
@@ -187,7 +193,7 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
         <div className="flex items-center gap-2">
           <TrendIcon className={`h-5 w-5 ${marginColor}`} />
           <div className="text-2xl font-bold" style={{ color: stats.average_margin_percentage >= 0 ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}>
-            {stats.average_margin_percentage.toFixed(2)}%
+            {displayPercentage}
           </div>
         </div>
         {stats.period?.start_date && stats.period?.end_date && (

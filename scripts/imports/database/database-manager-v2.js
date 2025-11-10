@@ -336,7 +336,7 @@ class DatabaseManager {
           // Extraire les données complémentaires
           const tenantData = intervention.tenant;
           const ownerData = intervention.owner;
-          const costsData = intervention.costs;
+          const originalCSVRow = intervention._originalCSVRow; // Ligne CSV originale pour extraction des coûts
           const artisanSSTId = intervention.artisanSST;
 
           // Résoudre les relations (find or create)
@@ -363,6 +363,7 @@ class DatabaseManager {
           delete intervention.owner;
           delete intervention.costs;
           delete intervention.artisanSST;
+          delete intervention._originalCSVRow;
 
           // Créer l'intervention
           const upsertedIntervention = await interventionsApi.upsertDirect(
@@ -396,10 +397,26 @@ class DatabaseManager {
             }
           }
 
-          // Créer les coûts
-          if (costsData && upsertedIntervention.id) {
+          // Créer les coûts en utilisant mapInterventionCostsFromCSV()
+          if (originalCSVRow && upsertedIntervention.id && this.dataMapper) {
             try {
-              await this.insertCosts(upsertedIntervention.id, costsData);
+              const costs = this.dataMapper.mapInterventionCostsFromCSV(
+                originalCSVRow,
+                upsertedIntervention.id,
+                this.options.verbose
+              );
+              
+              if (costs && costs.length > 0) {
+                // Utiliser insertInterventionCosts de l'API pour insérer tous les coûts en une fois
+                const costsResult = await interventionsApi.insertInterventionCosts(costs);
+                
+                if (costsResult.success > 0) {
+                  this.log(`  ✓ ${costsResult.success} coût(s) inséré(s)`, "verbose");
+                }
+                if (costsResult.errors > 0) {
+                  this.log(`  ⚠️ ${costsResult.errors} erreur(s) lors de l'insertion des coûts`, "warning");
+                }
+              }
             } catch (error) {
               this.log(`  ⚠️ Erreur coûts: ${error.message}`, "warning");
             }
