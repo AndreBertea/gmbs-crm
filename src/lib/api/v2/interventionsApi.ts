@@ -12,6 +12,7 @@ import type {
   InterventionPayment,
   InterventionQueryParams,
   InterventionStatsByStatus,
+  MarginCalculation,
   MarginRankingResult,
   MarginStats,
   MonthlyStats,
@@ -901,6 +902,75 @@ export const interventionsApi = {
     };
   },
 
+  // ========================================
+  // FONCTION COMMUNALISÉE DE CALCUL DE MARGE
+  // ========================================
+  /**
+   * Calcule la marge pour une intervention à partir de ses coûts
+   * Formule utilisée : Taux de marque = (marge / prix de vente) * 100
+   * 
+   * @param costs - Liste des coûts de l'intervention
+   * @param interventionId - ID de l'intervention (optionnel, pour les logs)
+   * @returns Objet avec revenue, costs, margin, marginPercentage ou null si pas de revenu
+   */
+  calculateMarginForIntervention(
+    costs: InterventionCost[],
+    interventionId?: string | number
+  ): MarginCalculation | null {
+    if (!costs || costs.length === 0) {
+      return null;
+    }
+
+    // Extraire les coûts par type
+    let coutIntervention = 0; // Prix de vente
+    let coutSST = 0;
+    let coutMateriel = 0;
+
+    costs.forEach((cost) => {
+      switch (cost.cost_type) {
+        case "intervention":
+          coutIntervention = cost.amount || 0;
+          break;
+        case "sst":
+          coutSST = cost.amount || 0;
+          break;
+        case "materiel":
+          coutMateriel = cost.amount || 0;
+          break;
+      }
+    });
+
+    // Pas de calcul si pas de revenu (prix de vente)
+    if (coutIntervention <= 0) {
+      return null;
+    }
+
+    const totalCostForIntervention = coutSST + coutMateriel;
+    const marge = coutIntervention - totalCostForIntervention;
+
+    // Calcul du pourcentage : Taux de marque = marge / prix de vente
+    // Exemple : vente 100€, coûts 80€ → marge 20€ → 20/100 = 20%
+    const marginPercentage = (marge / coutIntervention) * 100;
+
+    // Debug pour interventions avec marge négative
+    if (marge < 0) {
+      const idStr = interventionId ? ` (ID: ${interventionId})` : '';
+      console.log(
+        `[MarginStats] Intervention avec perte${idStr} : ` +
+        `vente ${coutIntervention.toFixed(2)}€, ` +
+        `coûts ${totalCostForIntervention.toFixed(2)}€, ` +
+        `marge ${marge.toFixed(2)}€ (${marginPercentage.toFixed(2)}%)`
+      );
+    }
+
+    return {
+      revenue: coutIntervention,
+      costs: totalCostForIntervention,
+      margin: marge,
+      marginPercentage: marginPercentage,
+    };
+  },
+
   /**
    * Récupère les statistiques de marge pour un utilisateur
    * @param userId - ID de l'utilisateur
@@ -923,6 +993,7 @@ export const interventionsApi = {
       .select(
         `
         id,
+        id_inter,
         intervention_costs (
           id,
           cost_type,
@@ -945,98 +1016,47 @@ export const interventionsApi = {
     const { data, error } = await query;
 
     if (error) {
-      throw new Error(`Erreur lors de la récupération des statistiques de marge: ${error.message}`);
+      throw new Error(
+        `Erreur lors de la récupération des statistiques de marge: ${error.message}`
+      );
     }
 
     let totalRevenue = 0;
     let totalCosts = 0;
     let totalMargin = 0;
     let interventionsWithCosts = 0;
-    let totalMarginPercentage = 0;
 
     // Parcourir les interventions et calculer les marges
     (data || []).forEach((intervention: any) => {
-      const costs = intervention.intervention_costs || [];
-      
-      if (costs.length === 0) {
-        return; // Ignorer les interventions sans coûts
-      }
+      const marginCalc = this.calculateMarginForIntervention(
+        intervention.intervention_costs || [],
+        intervention.id_inter || intervention.id
+      );
 
-      // Extraire les coûts par type
-      let coutIntervention = 0;
-      let coutSST = 0;
-      let coutMateriel = 0;
-
-      costs.forEach((cost: InterventionCost) => {
-        switch (cost.cost_type) {
-          case "intervention":
-            coutIntervention = cost.amount || 0;
-            break;
-          case "sst":
-            coutSST = cost.amount || 0;
-            break;
-          case "materiel":
-            coutMateriel = cost.amount || 0;
-            break;
-        }
-      });
-
-      // Calculer la marge seulement si on a un coût d'intervention
-      if (coutIntervention > 0) {
-        const totalCostForIntervention = coutSST + coutMateriel;
-        const marge = coutIntervention - totalCostForIntervention;
-        
-        // Calculer le pourcentage de marge par rapport aux coûts (pas au prix de vente)
-        // Exemple : vente 120€, coûts 100€ → marge 20€ → 20/100 = 20%
-        let marginPercentage = 0;
-        if (totalCostForIntervention > 0) {
-          marginPercentage = (marge / totalCostForIntervention) * 100;
-        } else if (marge > 0) {
-          // Si pas de coûts mais un revenu, marge = 100% (ou plus pour indiquer profit pur)
-          marginPercentage = 100;
-        } else if (totalCostForIntervention === 0 && marge < 0) {
-          // Cas bizarre : pas de coûts mais marge négative (revenu négatif ?)
-          console.warn(`[MarginStats] Intervention avec revenu négatif : ${coutIntervention}€`);
-          marginPercentage = -100;
-        }
-
-        // Debug pour interventions avec marge négative
-        if (marge < 0) {
-          console.log(`[MarginStats] Intervention avec perte : vente ${coutIntervention}€, coûts ${totalCostForIntervention}€, marge ${marge.toFixed(2)}€ (${marginPercentage.toFixed(2)}%)`);
-        }
-
-        totalRevenue += coutIntervention;
-        totalCosts += totalCostForIntervention;
-        totalMargin += marge;
-        totalMarginPercentage += marginPercentage;
+      if (marginCalc) {
+        totalRevenue += marginCalc.revenue;
+        totalCosts += marginCalc.costs;
+        totalMargin += marginCalc.margin;
         interventionsWithCosts++;
       }
     });
 
-    // Calculer la moyenne des pourcentages de marge
+    // ✅ CORRECTION : Calculer le pourcentage global (pas la moyenne des pourcentages)
     let averageMarginPercentage = 0;
-    if (interventionsWithCosts > 0) {
-      averageMarginPercentage = totalMarginPercentage / interventionsWithCosts;
-      
-      // Limiter les valeurs extrêmes à une plage raisonnable (-1000% à +1000%)
-      if (averageMarginPercentage > 1000) {
-        averageMarginPercentage = 1000;
-      } else if (averageMarginPercentage < -1000) {
-        averageMarginPercentage = -1000;
-      }
+    if (totalRevenue > 0) {
+      averageMarginPercentage = (totalMargin / totalRevenue) * 100;
     }
 
     // Debug : vérifier la cohérence des calculs
-    console.log(`[MarginStats] Résumé du calcul :`);
+    console.log(`[MarginStats] Résumé du calcul pour user ${userId} :`);
     console.log(`  - Nombre d'interventions : ${interventionsWithCosts}`);
     console.log(`  - Revenu total : ${totalRevenue.toFixed(2)}€`);
     console.log(`  - Coûts totaux : ${totalCosts.toFixed(2)}€`);
     console.log(`  - Marge totale : ${totalMargin.toFixed(2)}€`);
-    console.log(`  - Somme des % : ${totalMarginPercentage.toFixed(2)}%`);
-    console.log(`  - % moyen : ${averageMarginPercentage.toFixed(2)}%`);
+    console.log(`  - % marge global : ${averageMarginPercentage.toFixed(2)}%`);
 
     return {
-      average_margin_percentage: Math.round(averageMarginPercentage * 100) / 100, // Arrondir à 2 décimales
+      average_margin_percentage: Math.round(averageMarginPercentage * 100) / 100,
       total_interventions: interventionsWithCosts,
       total_revenue: Math.round(totalRevenue * 100) / 100,
       total_costs: Math.round(totalCosts * 100) / 100,
@@ -1089,6 +1109,7 @@ export const interventionsApi = {
           .select(
             `
             id,
+            id_inter,
             intervention_costs (
               id,
               cost_type,
@@ -1119,67 +1140,26 @@ export const interventionsApi = {
         let totalCosts = 0;
         let totalMargin = 0;
         let interventionsWithCosts = 0;
-        let totalMarginPercentage = 0;
 
         // Parcourir les interventions et calculer les marges
         (interventions || []).forEach((intervention: any) => {
-          const costs = intervention.intervention_costs || [];
+          const marginCalc = this.calculateMarginForIntervention(
+            intervention.intervention_costs || [],
+            intervention.id_inter || intervention.id
+          );
 
-          if (costs.length === 0) {
-            return; // Ignorer les interventions sans coûts
-          }
-
-          // Extraire les coûts par type
-          let coutIntervention = 0;
-          let coutSST = 0;
-          let coutMateriel = 0;
-
-          costs.forEach((cost: InterventionCost) => {
-            switch (cost.cost_type) {
-              case "intervention":
-                coutIntervention = cost.amount || 0;
-                break;
-              case "sst":
-                coutSST = cost.amount || 0;
-                break;
-              case "materiel":
-                coutMateriel = cost.amount || 0;
-                break;
-            }
-          });
-
-          // Calculer la marge seulement si on a un coût d'intervention
-          if (coutIntervention > 0) {
-            const totalCostForIntervention = coutSST + coutMateriel;
-            const marge = coutIntervention - totalCostForIntervention;
-            
-            // Calculer le pourcentage de marge par rapport aux coûts
-            let marginPercentage = 0;
-            if (totalCostForIntervention > 0) {
-              marginPercentage = (marge / totalCostForIntervention) * 100;
-            } else if (marge > 0) {
-              marginPercentage = 100;
-            }
-
-            totalRevenue += coutIntervention;
-            totalCosts += totalCostForIntervention;
-            totalMargin += marge;
-            totalMarginPercentage += marginPercentage;
+          if (marginCalc) {
+            totalRevenue += marginCalc.revenue;
+            totalCosts += marginCalc.costs;
+            totalMargin += marginCalc.margin;
             interventionsWithCosts++;
           }
         });
 
-        // Calculer la moyenne des pourcentages de marge
+        // ✅ CORRECTION : Calculer le pourcentage global
         let averageMarginPercentage = 0;
-        if (interventionsWithCosts > 0) {
-          averageMarginPercentage = totalMarginPercentage / interventionsWithCosts;
-          
-          // Limiter les valeurs extrêmes
-          if (averageMarginPercentage > 1000) {
-            averageMarginPercentage = 1000;
-          } else if (averageMarginPercentage < -1000) {
-            averageMarginPercentage = -1000;
-          }
+        if (totalRevenue > 0) {
+          averageMarginPercentage = (totalMargin / totalRevenue) * 100;
         }
 
         // Ajouter au classement seulement si le gestionnaire a des interventions avec coûts

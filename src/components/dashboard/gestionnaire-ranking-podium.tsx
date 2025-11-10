@@ -123,7 +123,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
 
   const top3 = ranking.rankings.slice(0, 3)
   const bottom3 = ranking.rankings.length >= 3 
-    ? ranking.rankings.slice(-3).reverse() // Les 3 derniers, inversés pour afficher du pire au moins pire
+    ? ranking.rankings.slice(-3) // Les 3 derniers dans l'ordre croissant (8, 9, 10)
     : []
 
   const renderRankingItem = (item: typeof ranking.rankings[0], isTop: boolean) => {

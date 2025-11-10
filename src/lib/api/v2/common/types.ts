@@ -520,6 +520,13 @@ export interface ArtisanStatsByStatus {
   };
 }
 
+export interface MarginCalculation {
+  revenue: number;
+  costs: number;
+  margin: number;
+  marginPercentage: number;
+}
+
 export interface MarginStats {
   average_margin_percentage: number; // Pourcentage de marge moyen
   total_interventions: number; // Nombre total d'interventions avec coûts
