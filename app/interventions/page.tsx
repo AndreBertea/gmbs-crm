@@ -1403,17 +1403,6 @@ export default function Page() {
               <X className="h-4 w-4" />
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => {
-              if (!activeView || activeView.layout !== "table") return
-              updateLayoutOptions(activeView.id, { showStatusFilter: false })
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
       )}
 
