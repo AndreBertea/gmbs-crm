@@ -12,6 +12,8 @@ interface UniversalSearchResultsProps {
   query: string
   onItemClick?: (id: string, type: "artisan" | "intervention") => void
   onClose?: () => void
+  onLoadMore?: (type: "artisan" | "intervention") => void
+  isLoadingMore?: boolean
 }
 
 const SCROLL_DEBOUNCE_MS = 50
@@ -21,7 +23,7 @@ type FlatItem = {
   type: "artisan" | "intervention"
 }
 
-export function UniversalSearchResults({ results, isSearching, error, query, onItemClick, onClose }: UniversalSearchResultsProps) {
+export function UniversalSearchResults({ results, isSearching, error, query, onItemClick, onClose, onLoadMore, isLoadingMore }: UniversalSearchResultsProps) {
   const scrollRef = React.useRef<HTMLDivElement | null>(null)
   const [canScrollUp, setCanScrollUp] = React.useState(false)
   const [canScrollDown, setCanScrollDown] = React.useState(false)
@@ -176,7 +178,7 @@ export function UniversalSearchResults({ results, isSearching, error, query, onI
 
   return (
     <div
-      className="absolute top-full right-0 z-50 mt-2 w-[calc(100vw-2rem)] max-w-[600px] rounded-lg border bg-popover shadow-2xl animate-in fade-in-0 slide-in-from-top-2 duration-200 md:w-[600px]"
+      className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] max-w-[600px] rounded-lg border bg-popover shadow-2xl animate-in fade-in-0 slide-in-from-top-2 duration-200 md:w-[600px]"
       role="listbox"
       aria-label="Résultats de la recherche"
       aria-activedescendant={activeItemDomId}
@@ -215,6 +217,8 @@ export function UniversalSearchResults({ results, isSearching, error, query, onI
                       hasMore={results.artisans.hasMore}
                       query={query}
                       onItemClick={handleItemClick}
+                      onLoadMore={onLoadMore ? () => onLoadMore("artisan") : undefined}
+                      isLoadingMore={isLoadingMore}
                       activeItemId={activeItemId}
                     />
                   )
@@ -229,6 +233,8 @@ export function UniversalSearchResults({ results, isSearching, error, query, onI
                     hasMore={results.interventions.hasMore}
                     query={query}
                     onItemClick={handleItemClick}
+                    onLoadMore={onLoadMore ? () => onLoadMore("intervention") : undefined}
+                    isLoadingMore={isLoadingMore}
                     activeItemId={activeItemId}
                   />
                 )

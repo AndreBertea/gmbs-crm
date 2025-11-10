@@ -13,16 +13,20 @@ export interface UseUniversalSearchReturn {
   isSearching: boolean
   error: string | null
   clearSearch: () => void
+  loadMore: (type: "artisan" | "intervention") => Promise<void>
+  isLoadingMore: boolean
 }
 
 export function useUniversalSearch(): UseUniversalSearchReturn {
   const [query, setQuery] = React.useState("")
   const [results, setResults] = React.useState<GroupedSearchResults | null>(null)
   const [isSearching, setIsSearching] = React.useState(false)
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
   const latestRequestRef = React.useRef(0)
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const resultsRef = React.useRef<GroupedSearchResults | null>(null)
 
   const handleQueryChange = React.useCallback((nextQuery: string) => {
     setQuery(nextQuery)
@@ -35,6 +39,7 @@ export function useUniversalSearch(): UseUniversalSearchReturn {
       debounceRef.current = null
     }
     setQuery("")
+    resultsRef.current = null
     setResults(null)
     setIsSearching(false)
     setError(null)
@@ -50,6 +55,7 @@ export function useUniversalSearch(): UseUniversalSearchReturn {
 
     if (trimmed.length < 2) {
       latestRequestRef.current += 1
+      resultsRef.current = null
       setResults(null)
       setIsSearching(false)
       setError(null)
@@ -63,14 +69,34 @@ export function useUniversalSearch(): UseUniversalSearchReturn {
       try {
         const response = await universalSearch(trimmed)
         if (latestRequestRef.current === requestId) {
+          resultsRef.current = response
           setResults(response)
           setError(null)
         }
       } catch (err) {
         console.error("[useUniversalSearch] search error", err)
+        // Log more details about the error
+        if (err && typeof err === "object") {
+          console.error("[useUniversalSearch] error details:", {
+            message: (err as any).message,
+            code: (err as any).code,
+            details: (err as any).details,
+            hint: (err as any).hint,
+            stack: (err as any).stack,
+            fullError: err,
+          })
+        }
         if (latestRequestRef.current === requestId) {
+          resultsRef.current = null
           setResults(null)
-          setError(err instanceof Error ? err.message : "Erreur lors de la recherche")
+          const errorMessage = err instanceof Error 
+            ? err.message 
+            : err && typeof err === "object" && "message" in err
+            ? String((err as any).message)
+            : err && typeof err === "object" && "details" in err
+            ? String((err as any).details)
+            : "Erreur lors de la recherche"
+          setError(errorMessage)
         }
       } finally {
         if (latestRequestRef.current === requestId) {
@@ -87,6 +113,56 @@ export function useUniversalSearch(): UseUniversalSearchReturn {
     }
   }, [query])
 
+  const loadMore = React.useCallback(async (type: "artisan" | "intervention") => {
+    if (isLoadingMore) {
+      console.log("[useUniversalSearch] loadMore: déjà en cours de chargement")
+      return
+    }
+
+    const currentResults = resultsRef.current
+    if (!currentResults) {
+      console.log("[useUniversalSearch] loadMore: aucun résultat actuel")
+      return
+    }
+    
+    const currentItems = type === "artisan" 
+      ? currentResults.artisans.items 
+      : currentResults.interventions.items
+    
+    if (currentItems.length === 0) {
+      console.log("[useUniversalSearch] loadMore: aucun élément à charger")
+      return
+    }
+
+    const hasMoreForType = type === "artisan" 
+      ? currentResults.artisans.hasMore 
+      : currentResults.interventions.hasMore
+
+    if (!hasMoreForType) {
+      console.log("[useUniversalSearch] loadMore: plus de résultats disponibles pour", type)
+      return
+    }
+
+    const newLimit = currentItems.length + 10 // Charger 10 de plus
+    const options = type === "artisan" 
+      ? { artisanLimit: newLimit, interventionLimit: currentResults.interventions.items.length }
+      : { artisanLimit: currentResults.artisans.items.length, interventionLimit: newLimit }
+    
+    setIsLoadingMore(true)
+    
+    try {
+      const response = await universalSearch(query.trim(), options)
+      console.log(`[useUniversalSearch] loadMore: ${type} - ${response.artisans.items.length} artisans, ${response.interventions.items.length} interventions`)
+      resultsRef.current = response
+      setResults(response)
+    } catch (err) {
+      console.error("[useUniversalSearch] loadMore error", err)
+      setError(err instanceof Error ? err.message : "Erreur lors du chargement")
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [query, isLoadingMore])
+
   return {
     query,
     setQuery: handleQueryChange,
@@ -94,5 +170,7 @@ export function useUniversalSearch(): UseUniversalSearchReturn {
     isSearching,
     error,
     clearSearch,
+    loadMore,
+    isLoadingMore,
   }
 }

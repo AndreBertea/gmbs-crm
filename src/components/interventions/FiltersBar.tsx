@@ -4,16 +4,7 @@ import * as React from "react"
 import {
   Search,
   MoreHorizontal,
-  Info,
-  FileText,
-  Check,
-  Play,
   Settings,
-  UserSearch,
-  XCircle,
-  Hammer,
-  PauseCircle,
-  CheckCircle2,
   Pin,
   PinOff,
 } from "lucide-react"
@@ -22,7 +13,6 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DateRangePicker, type DateRange } from "@/components/interventions/DateRangePicker"
-import { mapStatusToDb } from "@/lib/interventions/mappers"
 import { persistInterventionStatusColor } from "@/lib/interventions/status-updates"
 import { invalidateReferenceCache } from "@/lib/supabase-api-v2"
 import type { InterventionStatusValue } from "@/types/interventions"
@@ -30,6 +20,7 @@ import type { WorkflowConfig } from "@/types/intervention-workflow"
 import { INTERVENTION_STATUS } from "@/config/interventions"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useWorkflowConfig } from "@/hooks/useWorkflowConfig"
+import { getStatusDisplay } from "@/lib/interventions/status-display"
 
 export type { DateRange }
 
@@ -109,32 +100,6 @@ export function FiltersBar({
 
     return effectivePinnedStatuses
   }, [displayedStatuses, effectivePinnedStatuses, selectedStatus])
-  const iconForStatus = (statusKey: InterventionStatusValue) => {
-    switch (statusKey) {
-      case "DEMANDE":
-        return <Info className="h-3.5 w-3.5 mr-1" />
-      case "DEVIS_ENVOYE":
-        return <FileText className="h-3.5 w-3.5 mr-1" />
-      case "VISITE_TECHNIQUE":
-        return <UserSearch className="h-3.5 w-3.5 mr-1" />
-      case "REFUSE":
-        return <XCircle className="h-3.5 w-3.5 mr-1" />
-      case "ANNULE":
-        return <XCircle className="h-3.5 w-3.5 mr-1" />
-      case "STAND_BY":
-        return <PauseCircle className="h-3.5 w-3.5 mr-1" />
-      case "ACCEPTE":
-        return <Check className="h-3.5 w-3.5 mr-1" />
-      case "EN_COURS":
-        return <Play className="h-3.5 w-3.5 mr-1" />
-      case "TERMINE":
-        return <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-      case "SAV":
-        return <Hammer className="h-3.5 w-3.5 mr-1" />
-      default:
-        return null
-    }
-  }
 
   return (
     <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -155,15 +120,24 @@ export function FiltersBar({
           Toutes ({getCountByStatus(null)})
         </button>
         {statusesToRender.map((status) => {
-          const label = INTERVENTION_STATUS[status]?.label ?? mapStatusToDb(status)
+          const statusDisplay = getStatusDisplay(status, { workflow })
+          const isSelected = selectedStatus === status
           return (
             <button
               key={status}
               onClick={() => onSelectStatus(status)}
-              className={`status-chip status-${label} ${selectedStatus === status ? "ring-2 ring-foreground/20" : "hover:shadow-card"} transition-[opacity,transform,shadow] duration-150 ease-out`}
-              title={label}
+              className={`status-chip status-${statusDisplay.label} ${isSelected ? "ring-2 ring-foreground/20" : "hover:shadow-card"} transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5`}
+              title={statusDisplay.label}
             >
-              <span className="inline-flex items-center">{iconForStatus(status)}{label}</span> ({getCountByStatus(status)})
+              {statusDisplay.icon && (
+                <span className="inline-flex items-center mr-1">
+                  {statusDisplay.icon}
+                </span>
+              )}
+              <span>
+                {statusDisplay.label}
+              </span>
+              <span className="text-muted-foreground">({getCountByStatus(status)})</span>
             </button>
           )
         })}
@@ -185,9 +159,10 @@ export function FiltersBar({
               </div>
               {workflow.statuses.map((status) => {
                 const statusKey = status.key as InterventionStatusValue
+                const statusDisplay = getStatusDisplay(statusKey, { workflow })
                 const config = INTERVENTION_STATUS[statusKey]
                 const Icon = config?.icon ?? Settings
-                const colorValue = status.color ?? config?.hexColor ?? "#6366F1"
+                const colorValue = status.color ?? statusDisplay.color
 
                 const handlePinToggle = () => {
                   if (status.isPinned) {
@@ -218,7 +193,7 @@ export function FiltersBar({
                   >
                     <div className="flex items-center gap-2">
                       <Icon className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{config?.label ?? status.label}</span>
+                      <span className="text-sm font-medium text-foreground">{statusDisplay.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
@@ -268,18 +243,18 @@ export function FiltersBar({
                   <SelectContent>
                     <SelectItem value="__ALL__">Tous les statuts</SelectItem>
                     {displayedStatuses.map((status) => {
-                      const label = mapStatusToDb(status)
+                      const statusDisplay = getStatusDisplay(status, { workflow })
                       return (
                         <SelectItem key={status} value={status}>
-                          {label}
+                          {statusDisplay.label}
                         </SelectItem>
                       )
                     })}
                     {additionalStatuses.map((status) => {
-                      const label = mapStatusToDb(status)
+                      const statusDisplay = getStatusDisplay(status, { workflow })
                       return (
                         <SelectItem key={status} value={status}>
-                          {label}
+                          {statusDisplay.label}
                         </SelectItem>
                       )
                     })}
@@ -328,10 +303,10 @@ export function FiltersBar({
                 {additionalStatuses
                   .filter((status) => !effectivePinnedStatuses.includes(status))
                   .map((status) => {
-                  const label = mapStatusToDb(status)
+                  const statusDisplay = getStatusDisplay(status, { workflow })
                   return (
                     <DropdownMenuItem key={status} onClick={() => onPinStatus(status)}>
-                      + {label}
+                      + {statusDisplay.label}
                     </DropdownMenuItem>
                   )
                 })}
@@ -339,10 +314,10 @@ export function FiltersBar({
                   <>
                     <div className="px-2 pt-2 text-xs text-muted-foreground">Épinglés</div>
                     {effectivePinnedStatuses.map((status) => {
-                      const label = mapStatusToDb(status)
+                      const statusDisplay = getStatusDisplay(status, { workflow })
                       return (
                         <DropdownMenuItem key={status} onClick={() => onUnpinStatus(status)}>
-                          − {label}
+                          − {statusDisplay.label}
                         </DropdownMenuItem>
                       )
                     })}

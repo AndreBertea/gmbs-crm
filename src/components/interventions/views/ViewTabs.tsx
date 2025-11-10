@@ -1,6 +1,6 @@
 "use client"
 
-import { type ComponentType, useCallback, useEffect, useRef, useState } from "react"
+import { type ComponentType, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import {
   CalendarRange,
   ChevronLeft,
@@ -363,12 +363,15 @@ export function ViewTabs({
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
-  const visibleViews = views.filter((view) => VISIBLE_VIEW_LAYOUTS.includes(view.layout))
-  const viewIds = visibleViews.map((view) => view.id)
+  const visibleViews = useMemo(
+    () => views.filter((view) => VISIBLE_VIEW_LAYOUTS.includes(view.layout)),
+    [views]
+  )
+  const viewIds = useMemo(() => visibleViews.map((view) => view.id), [visibleViews])
+  const visibleViewCount = useMemo(() => visibleViews.length, [visibleViews])
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
-  const visibleViewCount = visibleViews.length
 
   const updateScrollState = useCallback(() => {
     const node = scrollContainerRef.current
@@ -392,7 +395,7 @@ export function ViewTabs({
       node.removeEventListener("scroll", handleScroll)
       window.removeEventListener("resize", updateScrollState)
     }
-  }, [updateScrollState, visibleViewCount])
+  }, [updateScrollState])
 
   const scrollToEnd = useCallback((direction: 'left' | 'right') => {
     const node = scrollContainerRef.current
@@ -407,7 +410,7 @@ export function ViewTabs({
     requestAnimationFrame(updateScrollState)
   }, [updateScrollState])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     updateScrollState()
   }, [visibleViewCount, updateScrollState])
 

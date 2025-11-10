@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Home,
-  Users,
+  HardHat,
   Settings,
-  FileText,
+  Wrench,
 } from "lucide-react"
 import { useInterface } from "@/contexts/interface-context"
 import { t } from "@/config/domain"
@@ -19,8 +19,8 @@ type NavItem = { type: "link"; name: string; href: string; icon: React.Component
 const navigation: NavItem[] = [
   { type: "link", name: t("dashboard"), href: "/dashboard", icon: Home },
   { type: "spacer" },
-  { type: "link", name: t("deals"), href: "/interventions", icon: FileText },
-  { type: "link", name: t("contacts"), href: "/artisans", icon: Users },
+  { type: "link", name: t("deals"), href: "/interventions", icon: Wrench },
+  { type: "link", name: t("contacts"), href: "/artisans", icon: HardHat },
   { type: "spacer" },
   { type: "link", name: "Paramètres", href: "/settings", icon: Settings },
 ]
