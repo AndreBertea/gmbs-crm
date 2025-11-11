@@ -1,8 +1,7 @@
 "use client"
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase-client"
-import { useEffect } from "react"
 
 interface CurrentUser {
   id: string
@@ -18,30 +17,8 @@ interface CurrentUser {
 }
 
 export function useCurrentUser() {
-  const queryClient = useQueryClient()
-  
-  // Listener pour invalider le cache lors des changements d'auth
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Invalider le cache lors des événements critiques
-      if (event === 'SIGNED_OUT') {
-        // Déconnexion : supprimer complètement le cache
-        queryClient.removeQueries({ queryKey: ["currentUser"] })
-        // Nettoyer aussi sessionStorage pour l'animation
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('revealTransition')
-        }
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // Connexion ou refresh token : invalider pour forcer un refetch
-        queryClient.invalidateQueries({ queryKey: ["currentUser"] })
-      }
-    })
-    
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [queryClient])
-  
+  // Le listener onAuthStateChange est maintenant géré par AuthStateListenerProvider
+  // pour éviter les listeners multiples quand plusieurs composants utilisent ce hook
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: async (): Promise<CurrentUser | null> => {

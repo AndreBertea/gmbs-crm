@@ -67,10 +67,12 @@ export default function LoginPage() {
         }))
       }
       
-      // Naviguer immédiatement vers dashboard
+      // Naviguer avec un rechargement complet pour garantir que les cookies sont disponibles
       const url = new URL(window.location.href)
       const redirect = url.searchParams.get('redirect') || '/dashboard'
-      router.replace(redirect)
+      // Utiliser window.location.href au lieu de router.replace pour forcer un rechargement complet
+      // Cela garantit que les cookies créés par /api/auth/session sont disponibles pour le middleware
+      window.location.href = redirect
     } catch (e: any) {
       setError(e?.message || 'Erreur inconnue')
       setLoading(false)
