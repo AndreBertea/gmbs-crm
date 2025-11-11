@@ -769,7 +769,10 @@ serve(async (req: Request) => {
   // Handle CORS preflight requests FIRST, before any other code
   // This MUST be the very first statement to ensure OPTIONS always returns 200
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
+    return new Response('ok', { 
+      status: 200, 
+      headers: corsHeaders 
+    });
   }
 
   const startTime = Date.now();
