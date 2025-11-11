@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import Link from "next/link"
 import { LogOut, Settings as SettingsIcon, User as UserIcon } from "lucide-react"
 import { supabase } from '@/lib/supabase-client'
+import { useQueryClient } from "@tanstack/react-query"
 
 type Me = {
   id: string
@@ -20,6 +21,7 @@ type Me = {
 }
 
 export function AvatarStatus() {
+  const queryClient = useQueryClient()
   const [me, setMe] = React.useState<Me | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [isMounted, setIsMounted] = React.useState(false)
@@ -61,8 +63,23 @@ export function AvatarStatus() {
     } catch (error) {
       console.warn('[avatar-status] Failed to set offline status before logout', error)
     }
+    
+    // Invalider et supprimer le cache React Query AVANT la déconnexion
+    queryClient.removeQueries({ queryKey: ["currentUser"] })
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] })
+    
+    // Nettoyer sessionStorage pour l'animation
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('revealTransition')
+    }
+    
+    // Déconnexion Supabase
     await supabase.auth.signOut()
+    
+    // Supprimer les cookies de session
     await fetch('/api/auth/session', { method: 'DELETE' })
+    
+    // Redirection
     window.location.href = '/login'
   }
 

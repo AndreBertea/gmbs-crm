@@ -9,8 +9,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from "@tanstack/react-query"
 
 export default function LoginPage() {
+  const queryClient = useQueryClient()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -45,6 +47,9 @@ export default function LoginPage() {
         await fetch('/api/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ access_token: token, refresh_token: refresh, expires_at }) })
         await fetch('/api/auth/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: 'connected' }) })
       }
+      
+      // Invalider le cache pour forcer un refetch avec le nouvel utilisateur
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] })
       
       // Calculer la position du bouton AVANT navigation
       if (buttonRef.current) {
