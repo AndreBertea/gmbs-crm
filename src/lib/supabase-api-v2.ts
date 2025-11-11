@@ -15,6 +15,7 @@ import { env } from "./env";
 import { referenceApi, type ReferenceData } from "./reference-api";
 import { supabase } from "./supabase-client";
 import type { InterventionView } from "@/types/intervention-view";
+import { getHeaders } from "@/lib/api/v2/common/utils";
 
 const resolveFunctionsUrl = () => {
   const explicitUrl =
@@ -34,12 +35,6 @@ const resolveFunctionsUrl = () => {
 };
 
 const SUPABASE_FUNCTIONS_URL = resolveFunctionsUrl();
-
-// Headers communs pour toutes les requêtes
-const getHeaders = () => ({
-  Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-  "Content-Type": "application/json",
-});
 
 // Gestionnaire d'erreurs centralisé
 const handleResponse = async (response: Response) => {
