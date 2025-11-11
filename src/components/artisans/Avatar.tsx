@@ -109,23 +109,6 @@ export function Avatar({
     ? "0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 2px rgba(0, 0, 0, 0.6)" // Double ombre pour photo
     : "0 1px 2px rgba(255, 255, 255, 0.8), 0 0 1px rgba(0, 0, 0, 0.3)" // Ombre subtile pour gradient
   
-  // Construire le srcSet pour les différentes tailles
-  const srcSet = useMemo(() => {
-    if (!photoProfilMetadata?.sizes || Object.keys(photoProfilMetadata.sizes).length === 0) {
-      return undefined
-    }
-    
-    const sets: string[] = []
-    if (photoProfilMetadata.sizes["40"]) {
-      sets.push(`${photoProfilMetadata.sizes["40"]} 1x`)
-    }
-    if (photoProfilMetadata.sizes["80"]) {
-      sets.push(`${photoProfilMetadata.sizes["80"]} 2x`)
-    }
-    
-    return sets.length > 0 ? sets.join(", ") : undefined
-  }, [photoProfilMetadata])
-  
   return (
     <div
       className={`relative rounded-full overflow-hidden border-2 border-background select-none ${className}`}
@@ -152,12 +135,11 @@ export function Avatar({
             loading={priority ? "eager" : "lazy"}
             decoding="async"
             fetchPriority={priority ? "high" : "auto"}
-            srcSet={srcSet}
             sizes={`${size}px`}
             onError={() => {
               setImageError(true)
             }}
-            // Next.js Image optimisera automatiquement les URLs Supabase grâce à la config dans next.config.mjs
+            // Next.js Image optimisera automatiquement les URLs Supabase et générera le srcSet automatiquement
           />
           {/* Overlay avec initiales pour visibilité */}
           <div
