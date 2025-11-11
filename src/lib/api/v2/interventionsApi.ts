@@ -32,6 +32,7 @@ import {
   mapInterventionRecord,
 } from "./common/utils";
 import type { InterventionWithStatus, InterventionStatus } from "@/types/intervention";
+import { isCheckStatus } from "@/lib/interventions/checkStatus";
 
 // Cache pour les données de référence
 type ReferenceCache = {
@@ -562,17 +563,16 @@ export const interventionsApi = {
       metadata?: any;
     }
   ): Promise<InterventionCost> {
-    // "total" n'est pas un type valide pour la base de données, on l'ignore
-    if (data.cost_type === "total") {
-      throw new Error("Le type 'total' n'est pas un type de coût valide. Utilisez 'sst', 'materiel', 'intervention' ou 'marge'.");
-    }
+    // "total" n'est pas un type valide pour la base de données, on le mappe vers "marge"
+    const costType: "sst" | "materiel" | "intervention" | "marge" = 
+      data.cost_type === "total" ? "marge" : data.cost_type;
 
     // Vérifier si le coût existe déjà
     const { data: existingCost, error: findError } = await supabase
       .from('intervention_costs')
       .select('id')
       .eq('intervention_id', interventionId)
-      .eq('cost_type', data.cost_type)
+      .eq('cost_type', costType)
       .maybeSingle();
 
     if (findError && findError.code !== 'PGRST116') {
@@ -600,12 +600,11 @@ export const interventionsApi = {
 
       return result;
     } else {
-      // Créer un nouveau coût
-      // Mapper "total" vers "marge" car addCost ne supporte pas "total"
-      const costData = data.cost_type === "total" 
-        ? { ...data, cost_type: "marge" as const }
-        : data;
-      return this.addCost(interventionId, costData as { cost_type: "sst" | "materiel" | "intervention" | "marge"; label?: string; amount: number; currency?: string; metadata?: any; });
+      // Créer un nouveau coût avec le type mappé
+      return this.addCost(interventionId, {
+        ...data,
+        cost_type: costType
+      });
     }
   },
 

@@ -6,16 +6,12 @@
 
     CHECK = due date dépassé + STATUT C {ENCOURS, VISITE TECHNIQUE}
 
-
-- gérer les sécurités paramètres pour gestionnaire classique (pas de team)
-    team seulement pour admin
-
-- le menu prend encore un peu trop de place
+- récupérer 
 
 npx tsx scripts/geocode-artisans.ts à ajouter dans le package.json
 
-- checker les commentaires pour intervention et artisan
 - refacto migrations make one clean schema business operations, one for user
+
 - refacto seed_mockup bien avoir des fichiers clairs
 
 - OCR pour documents

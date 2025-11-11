@@ -176,7 +176,7 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    // Charger les données au montage du composant
+    // Charger les données au montage du composant avec période
     useEffect(() => {
       if (!userId || !statusLabel) return
 
@@ -186,7 +186,12 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
         try {
           setLoading(true)
           setError(null)
-          const data = await artisansApi.getArtisansByStatusWithRecentInterventions(userId, statusLabel)
+          const data = await artisansApi.getArtisansByStatusWithRecentInterventions(
+            userId, 
+            statusLabel,
+            period?.startDate,  // Passer la période
+            period?.endDate     // Passer la période
+          )
           if (!cancelled) {
             setArtisansData(data)
             setLoading(false)
@@ -204,7 +209,7 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
       return () => {
         cancelled = true
       }
-    }, [userId, statusLabel])
+    }, [userId, statusLabel, period?.startDate, period?.endDate])
 
     if (loading) {
       return (
@@ -271,6 +276,93 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
     )
   }
 
+  // Composant pour afficher les artisans avec dossiers à compléter dans le HoverCard
+  const DossiersACompleterContent = () => {
+    const [artisansData, setArtisansData] = useState<Array<{
+      artisan_id: string;
+      artisan_nom: string;
+      artisan_prenom: string;
+    }> | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    // Charger les données au montage du composant
+    useEffect(() => {
+      if (!userId) return
+
+      let cancelled = false
+
+      const loadData = async () => {
+        try {
+          setLoading(true)
+          setError(null)
+          const data = await artisansApi.getArtisansWithDossiersACompleter(userId)
+          if (!cancelled) {
+            setArtisansData(data)
+            setLoading(false)
+          }
+        } catch (err: any) {
+          if (!cancelled) {
+            setError(err.message || "Erreur lors du chargement")
+            setLoading(false)
+          }
+        }
+      }
+
+      loadData()
+
+      return () => {
+        cancelled = true
+      }
+    }, [userId])
+
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center p-4">
+          <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+        </div>
+      )
+    }
+
+    if (error) {
+      return (
+        <div className="text-sm text-destructive p-2">
+          Erreur de chargement
+        </div>
+      )
+    }
+
+    if (!artisansData || artisansData.length === 0) {
+      return (
+        <div className="text-sm text-muted-foreground p-2">
+          Aucun artisan avec dossier à compléter
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-2">
+        <h4 className="font-semibold text-sm mb-2">Dossiers à compléter</h4>
+        <div className="space-y-1 max-h-[400px] overflow-y-auto">
+          {artisansData.map((artisan) => (
+            <div
+              key={artisan.artisan_id}
+              className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
+              onClick={() => router.push(`/artisans/${artisan.artisan_id}`)}
+            >
+              <div className="h-2 w-2 rounded-full bg-amber-500 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold truncate">
+                  {artisan.artisan_prenom} {artisan.artisan_nom}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -314,25 +406,37 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
 
               {/* Ligne pour les dossiers à compléter */}
               {stats && (stats.dossiers_a_completer ?? 0) > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    // Stocker l'intention de filtre dans sessionStorage
-                    sessionStorage.setItem('pending-artisan-filter', JSON.stringify({
-                      viewId: "ma-liste-artisans", // Activer la vue "Ma liste artisans"
-                      statusFilter: "Candidat" // Activer le filtre de statut "Candidat"
-                    }))
-                    // Naviguer vers la page artisans
-                    router.push("/artisans")
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-lg border bg-amber-50 border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-amber-600" />
-                    <span className="text-sm font-medium text-amber-900">Dossiers à compléter</span>
-                  </div>
-                  <span className="text-sm font-semibold text-amber-700">{stats.dossiers_a_completer}</span>
-                </button>
+                <HoverCard openDelay={200} closeDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Stocker l'intention de filtre dans sessionStorage
+                        sessionStorage.setItem('pending-artisan-filter', JSON.stringify({
+                          viewId: "ma-liste-artisans", // Activer la vue "Ma liste artisans"
+                          statusFilter: "Candidat" // Activer le filtre de statut "Candidat"
+                        }))
+                        // Naviguer vers la page artisans
+                        router.push("/artisans")
+                      }}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border bg-amber-50 border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-amber-600" />
+                        <span className="text-sm font-medium text-amber-900">Dossiers à compléter</span>
+                      </div>
+                      <span className="text-sm font-semibold text-amber-700">{stats.dossiers_a_completer}</span>
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent 
+                    className="w-96 z-50 max-h-[500px] overflow-y-auto" 
+                    side="right"
+                    align="start"
+                    sideOffset={8}
+                  >
+                    <DossiersACompleterContent />
+                  </HoverCardContent>
+                </HoverCard>
               )}
             </div>
           </CardContent>

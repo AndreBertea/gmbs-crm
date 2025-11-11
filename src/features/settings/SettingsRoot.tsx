@@ -277,7 +277,7 @@ export default function SettingsPage({ activeTab = "profile", embedHeader = true
         <Card>
           <CardHeader>
             <CardTitle>Préférences du tableau de bord</CardTitle>
-            <CardDescription>Personnalisez l'affichage des speedometers sur votre tableau de bord.</CardDescription>
+            <CardDescription>Personnalisez l&apos;affichage des speedometers sur votre tableau de bord.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">

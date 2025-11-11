@@ -13,6 +13,7 @@ import Link from "next/link"
 import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getInterventionStatusColor } from "@/config/status-colors"
+import { INTERVENTION_STATUS } from "@/config/interventions"
 
 interface InterventionStatsBarChartProps {
   period?: {
@@ -240,7 +241,15 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   // Composant pour afficher les interventions dans le HoverCard avec style Status Indicators
   const StatusIndicatorContent = ({ statusLabel }: { statusLabel: string }) => {
     const interventions = interventionsByStatus.get(statusLabel) || []
-    const statusColor = getInterventionStatusColor(statusLabel) || "hsl(var(--primary))"
+    
+    // Trouver la couleur depuis INTERVENTION_STATUS (priorité à la palette de la page interventions)
+    // Mapping spécial pour "Inter en cours" -> "En cours"
+    const normalizedLabel = statusLabel === "Inter en cours" ? "En cours" : statusLabel
+    const statusConfig = Object.values(INTERVENTION_STATUS).find(
+      s => s.label === normalizedLabel || s.label.toLowerCase() === normalizedLabel.toLowerCase()
+    )
+    // Fallback sur getInterventionStatusColor si pas trouvé dans INTERVENTION_STATUS
+    const statusColor = statusConfig?.hexColor || getInterventionStatusColor(statusLabel) || "hsl(var(--primary))"
 
     if (interventions.length === 0) {
       return (
@@ -254,7 +263,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
       <div className="space-y-2">
         <h4 className="font-semibold text-sm mb-2">{statusLabel}</h4>
         <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-          {interventions.slice(0, 10).map((intervention) => {
+          {interventions.slice(0, 5).map((intervention) => {
             const totalCost = 
               (intervention.costs.sst || 0) +
               (intervention.costs.materiel || 0) +
@@ -276,6 +285,20 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                     {intervention.id_inter || "N/A"}
                   </div>
                   <div className="text-xs text-muted-foreground space-y-0.5">
+                    {intervention.adresse && (
+                      <div className="truncate">
+                        {intervention.adresse}
+                        {intervention.ville && `, ${intervention.ville}`}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {intervention.due_date && (
+                        <span>Due: {formatDate(intervention.due_date)}</span>
+                      )}
+                      {intervention.date_prevue && (
+                        <span>Prévue: {formatDate(intervention.date_prevue)}</span>
+                      )}
+                    </div>
                     {totalCost > 0 && (
                       <div>
                         Total: {formatCurrency(totalCost)}
@@ -359,7 +382,13 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                     }}
                   >
                     {chartData.map((entry, index) => {
-                      const statusColor = getInterventionStatusColor(entry.name) || "hsl(var(--primary))"
+                      // Utiliser INTERVENTION_STATUS pour la couleur (priorité à la palette de la page interventions)
+                      // Mapping spécial pour "Inter en cours" -> "En cours"
+                      const normalizedLabel = entry.name === "Inter en cours" ? "En cours" : entry.name
+                      const statusConfig = Object.values(INTERVENTION_STATUS).find(
+                        s => s.label === normalizedLabel || s.label.toLowerCase() === normalizedLabel.toLowerCase()
+                      )
+                      const statusColor = statusConfig?.hexColor || getInterventionStatusColor(entry.name) || "hsl(var(--primary))"
                       const isHovered = hoveredStatus === entry.name
                       return (
                         <HoverCard key={`hover-${index}`} open={isHovered} openDelay={200} closeDelay={100}>

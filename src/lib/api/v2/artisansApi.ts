@@ -569,6 +569,8 @@ export const artisansApi = {
     }
 
     // Construire la requête avec join sur artisan_statuses
+    // NOTE: On ne filtre PAS par période pour le total des artisans
+    // La période sera utilisée uniquement pour filtrer les interventions dans le hover
     let query = supabase
       .from("artisans")
       .select(
@@ -583,16 +585,7 @@ export const artisansApi = {
       .eq("gestionnaire_id", gestionnaireId)
       .eq("is_active", true); // Seulement les artisans actifs
 
-    // Appliquer les filtres de date si fournis
-    // date_ajout est de type date, donc on convertit les ISO strings en format date
-    if (startDate) {
-      const startDateOnly = new Date(startDate).toISOString().split('T')[0];
-      query = query.gte("date_ajout", startDateOnly);
-    }
-    if (endDate) {
-      const endDateOnly = new Date(endDate).toISOString().split('T')[0];
-      query = query.lte("date_ajout", endDateOnly);
-    }
+    // Les filtres de date sont supprimés pour que le total soit toujours le total complet
 
     const { data, error, count } = await query;
 
@@ -763,11 +756,15 @@ export const artisansApi = {
    * Récupère les 5 dernières interventions d'un artisan avec leurs marges
    * @param artisanId - ID de l'artisan
    * @param limit - Nombre d'interventions à récupérer (défaut: 5)
+   * @param startDate - Date de début (optionnelle) pour filtrer les interventions
+   * @param endDate - Date de fin (optionnelle) pour filtrer les interventions
    * @returns Liste des interventions avec id_inter, date et marge
    */
   async getRecentInterventionsByArtisanWithMargins(
     artisanId: string,
-    limit: number = 5
+    limit: number = 5,
+    startDate?: string,
+    endDate?: string
   ): Promise<Array<{
     id: string;
     id_inter: string | null;
@@ -807,10 +804,18 @@ export const artisansApi = {
     }
 
     // Traiter les interventions et calculer les marges
-    const interventionsWithMargins = interventionArtisans
+    let interventionsWithMargins = interventionArtisans
       .map((ia: any) => {
         const intervention = ia.interventions;
         if (!intervention || !intervention.is_active) {
+          return null;
+        }
+
+        // Filtrer par période si fournie (filtrage côté client car Supabase ne permet pas de filtrer sur les relations imbriquées)
+        if (startDate && intervention.date < startDate) {
+          return null;
+        }
+        if (endDate && intervention.date > endDate) {
           return null;
         }
 
@@ -831,8 +836,8 @@ export const artisansApi = {
           marge,
         };
       })
-      .filter((item: any) => item !== null)
-      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .filter((item): item is { id: string; id_inter: string | null; date: string; marge: number; } => item !== null)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, limit);
 
     return interventionsWithMargins;
@@ -842,11 +847,15 @@ export const artisansApi = {
    * Récupère les artisans d'un statut avec leurs 5 dernières interventions et marges
    * @param gestionnaireId - ID du gestionnaire
    * @param statusLabel - Label du statut (ex: "Expert", "Confirmé", etc.)
+   * @param startDate - Date de début (optionnelle) pour filtrer les interventions
+   * @param endDate - Date de fin (optionnelle) pour filtrer les interventions
    * @returns Liste des artisans avec leurs interventions récentes
    */
   async getArtisansByStatusWithRecentInterventions(
     gestionnaireId: string,
-    statusLabel: string
+    statusLabel: string,
+    startDate?: string,
+    endDate?: string
   ): Promise<Array<{
     artisan_id: string;
     artisan_nom: string;
@@ -897,12 +906,14 @@ export const artisansApi = {
       return [];
     }
 
-    // Pour chaque artisan, récupérer ses 5 dernières interventions avec marges
+    // Pour chaque artisan, récupérer ses 5 dernières interventions avec marges (filtrées par période si fournie)
     const artisansWithInterventions = await Promise.all(
       artisansByStatus.map(async (artisan: any) => {
         const recentInterventions = await this.getRecentInterventionsByArtisanWithMargins(
           artisan.id,
-          5
+          5,
+          startDate,
+          endDate
         );
 
         return {
@@ -918,5 +929,39 @@ export const artisansApi = {
     return artisansWithInterventions.filter(
       (artisan) => artisan.recent_interventions.length > 0
     );
+  },
+
+  /**
+   * Récupère les artisans avec dossiers à compléter pour un gestionnaire
+   * @param gestionnaireId - ID du gestionnaire
+   * @returns Liste des artisans avec leur nom et prénom
+   */
+  async getArtisansWithDossiersACompleter(
+    gestionnaireId: string
+  ): Promise<Array<{
+    artisan_id: string;
+    artisan_nom: string;
+    artisan_prenom: string;
+  }>> {
+    if (!gestionnaireId) {
+      throw new Error("gestionnaireId is required");
+    }
+
+    const { data, error } = await supabase
+      .from("artisans")
+      .select("id, nom, prenom")
+      .eq("gestionnaire_id", gestionnaireId)
+      .eq("is_active", true)
+      .eq("statut_dossier", "À compléter");
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des artisans: ${error.message}`);
+    }
+
+    return (data || []).map((a: any) => ({
+      artisan_id: a.id,
+      artisan_nom: a.nom || "",
+      artisan_prenom: a.prenom || "",
+    }));
   },
 };
