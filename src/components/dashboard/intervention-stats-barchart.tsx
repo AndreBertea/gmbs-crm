@@ -6,7 +6,8 @@ import { interventionsApi } from "@/lib/api/v2"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
 import { Loader2, AlertCircle } from "lucide-react"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts"
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Cell } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import Link from "next/link"
@@ -14,6 +15,7 @@ import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getInterventionStatusColor } from "@/config/status-colors"
 import { INTERVENTION_STATUS } from "@/config/interventions"
+import { useInterventionStatuses } from "@/hooks/useInterventionStatuses"
 
 interface InterventionStatsBarChartProps {
   period?: {
@@ -48,6 +50,18 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
   const userId = currentUser?.id ?? null
+
+  // Charger les statuts depuis la DB pour avoir les couleurs exactes
+  const { statuses: dbStatuses, statusesByCode, statusesByLabel } = useInterventionStatuses()
+
+  // Log les statuts chargés depuis la DB pour déboguer
+  useEffect(() => {
+    if (dbStatuses.length > 0) {
+      console.log(`[Dashboard Colors] Statuts chargés depuis la DB (${dbStatuses.length}):`, 
+        dbStatuses.map(s => ({ code: s.code, label: s.label, color: s.color }))
+      )
+    }
+  }, [dbStatuses])
 
   // Charger les statistiques une fois l'utilisateur chargé
   useEffect(() => {
@@ -130,18 +144,198 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   }, [userId, isLoadingUser, period?.startDate, period?.endDate])
 
 
+  // Fonction helper pour obtenir la couleur d'un statut
+  // Priorité : 1) DB (source de vérité), 2) INTERVENTION_STATUS, 3) Fallback
+  const getStatusColor = (statusLabel: string): string => {
+    // Cas spécial pour "Check" qui n'est pas dans INTERVENTION_STATUS
+    if (statusLabel === "Check") {
+      console.log(`[Dashboard Colors] "Check" → #EF4444 (statut spécial)`)
+      return "#EF4444" // Rouge pour Check
+    }
+
+    // 1. PRIORITÉ : Chercher dans la DB par label (insensible à la casse)
+    // Le hook useInterventionStatuses stocke les labels en minuscule dans statusesByLabel
+    const dbStatusByLabel = statusesByLabel.get(statusLabel.toLowerCase())
+    if (dbStatusByLabel?.color) {
+      console.log(`[Dashboard Colors] "${statusLabel}" → DB (${dbStatusByLabel.code}) → ${dbStatusByLabel.color}`)
+      return dbStatusByLabel.color
+    }
+
+    // 2. Chercher dans la DB par code (via mapping label → code)
+    // Mapping basé sur les labels exacts de la DB
+    const labelToCodeMap: Record<string, string> = {
+      "Inter en cours": "INTER_EN_COURS",
+      "Inter terminée": "INTER_TERMINEE",
+      "Inter Terminée": "INTER_TERMINEE",
+      "En cours": "INTER_EN_COURS", // Variante
+      "Terminé": "TERMINE", // Variante pour TERMINE (pas INTER_TERMINEE)
+      "Visite technique": "VISITE_TECHNIQUE", // Variante minuscule
+      "Visite Technique": "VISITE_TECHNIQUE", // Label exact de la DB
+      "Devis envoyé": "DEVIS_ENVOYE", // Variante minuscule
+      "Devis Envoyé": "DEVIS_ENVOYE", // Label exact de la DB
+    }
+
+    const mappedCode = labelToCodeMap[statusLabel]
+    if (mappedCode) {
+      const dbStatusByCode = statusesByCode.get(mappedCode)
+      if (dbStatusByCode?.color) {
+        console.log(`[Dashboard Colors] "${statusLabel}" → DB (${mappedCode}) → ${dbStatusByCode.color}`)
+        return dbStatusByCode.color
+      }
+    }
+
+    // 3. Chercher dans INTERVENTION_STATUS (fallback)
+    const normalizedLabel = statusLabel === "Inter en cours" ? "En cours" : statusLabel
+    const statusConfig = Object.values(INTERVENTION_STATUS).find(
+      s => s.label === normalizedLabel || s.label.toLowerCase() === normalizedLabel.toLowerCase()
+    )
+    
+    if (statusConfig?.hexColor) {
+      console.warn(`[Dashboard Colors] "${statusLabel}" → INTERVENTION_STATUS (${statusConfig.value}) → ${statusConfig.hexColor} (fallback, pas en DB)`)
+      return statusConfig.hexColor
+    }
+
+    // 4. Dernier fallback
+    const fallbackColor = getInterventionStatusColor(statusLabel) || "#6366F1"
+    console.warn(`[Dashboard Colors] "${statusLabel}" → FALLBACK → ${fallbackColor}`)
+    return fallbackColor
+  }
+
+  // Composant personnalisé pour le label de valeur (nombre)
+  // S'adapte dynamiquement selon la largeur de la barre
+  const CustomValueLabel = (props: any) => {
+    const { x, y, width, value } = props
+    
+    // Si la barre est assez large (>80px), mettre le nombre à l'intérieur à droite
+    // Sinon, le mettre à l'extérieur pour éviter qu'il dépasse
+    if (width > 80) {
+      return (
+        <text
+          x={x + width - 8}
+          y={y + 12}
+          fill="hsl(var(--foreground))"
+          textAnchor="end"
+          fontSize={12}
+          fontWeight={600}
+        >
+          {value}
+        </text>
+      )
+    } else {
+      // Barre trop petite, mettre le nombre à l'extérieur
+      return (
+        <text
+          x={x + width + 8}
+          y={y + 12}
+          fill="hsl(var(--foreground))"
+          textAnchor="start"
+          fontSize={12}
+          fontWeight={600}
+        >
+          {value}
+        </text>
+      )
+    }
+  }
+
+  // Composant personnalisé pour le label du nom (statut)
+  // Positionnement intelligent selon la largeur de la barre
+  const CustomNameLabel = (props: any) => {
+    const { x, y, width, value } = props
+    
+    // Calculer la largeur approximative du texte (environ 7px par caractère)
+    const textWidth = value.length * 7
+    
+    // Si la barre est très petite (<50px), mettre le nom à l'extérieur à gauche
+    if (width < 50) {
+      return (
+        <text
+          x={x - 8}
+          y={y + 12}
+          fill="hsl(var(--foreground))"
+          textAnchor="end"
+          fontSize={11}
+          fontWeight={500}
+        >
+          {value}
+        </text>
+      )
+    }
+    
+    // Si le texte dépasse mais la barre est moyenne, tronquer avec "..."
+    if (textWidth > width - 16 && width < 80) {
+      const maxChars = Math.floor((width - 24) / 7) // -24 pour l'espace et "..."
+      const truncated = value.substring(0, Math.max(1, maxChars)) + "..."
+      return (
+        <text
+          x={x + 8}
+          y={y + 12}
+          fill="#FFFFFF"
+          textAnchor="start"
+          fontSize={12}
+          fontWeight={600}
+        >
+          {truncated}
+        </text>
+      )
+    }
+    
+    // Sinon, afficher normalement à l'intérieur
+    return (
+      <text
+        x={x + 8}
+        y={y + 12}
+        fill="#FFFFFF"
+        textAnchor="start"
+        fontSize={12}
+        fontWeight={600}
+      >
+        {value}
+      </text>
+    )
+  }
+
   // Statuts fondamentaux à afficher
   const fundamentalStatuses = ["Demandé", "Inter en cours", "Visite technique", "Accepté", "Check"]
+
+  // Créer le chartConfig avec les couleurs pour chaque statut possible
+  const chartConfig: ChartConfig = {
+    value: {
+      label: "Valeur",
+      color: "hsl(var(--chart-1))",
+    },
+  }
+
+  // Ajouter une entrée pour chaque statut possible dans le config (pour les tooltips)
+  fundamentalStatuses.forEach((status) => {
+    chartConfig[status] = {
+      label: status,
+      color: getStatusColor(status),
+    }
+  })
+  chartConfig["Check"] = {
+    label: "Check",
+    color: getStatusColor("Check"),
+  }
 
   // Préparer les données pour le graphique (uniquement les statuts fondamentaux)
   const chartData = stats?.by_status_label
     ? Object.entries(stats.by_status_label)
-        .map(([label, count]) => ({
-          name: label,
-          value: count,
-          isCheck: false, // Pour identifier les barres normales
-        }))
+        .map(([label, count]) => {
+          const color = getStatusColor(label)
+          return {
+            name: label,
+            value: count,
+            isCheck: false,
+            color: color, // Ajouter la couleur directement dans les données
+          }
+        })
         .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
+        .map((item) => {
+          // Log pour déboguer les couleurs
+          console.log(`[Dashboard Chart] Statut: "${item.name}", Count: ${item.value}, Color: ${item.color}`)
+          return item
+        })
         .sort((a, b) => {
           // Trier selon l'ordre des statuts fondamentaux
           const indexA = fundamentalStatuses.indexOf(a.name)
@@ -157,7 +351,8 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                 {
                   name: "Check",
                   value: stats.interventions_a_checker,
-                  isCheck: true, // Pour identifier la barre Check
+                  isCheck: true,
+                  color: "#EF4444", // Rouge pour Check
                 },
               ]
             : []
@@ -243,13 +438,8 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     const interventions = interventionsByStatus.get(statusLabel) || []
     
     // Trouver la couleur depuis INTERVENTION_STATUS (priorité à la palette de la page interventions)
-    // Mapping spécial pour "Inter en cours" -> "En cours"
-    const normalizedLabel = statusLabel === "Inter en cours" ? "En cours" : statusLabel
-    const statusConfig = Object.values(INTERVENTION_STATUS).find(
-      s => s.label === normalizedLabel || s.label.toLowerCase() === normalizedLabel.toLowerCase()
-    )
-    // Fallback sur getInterventionStatusColor si pas trouvé dans INTERVENTION_STATUS
-    const statusColor = statusConfig?.hexColor || getInterventionStatusColor(statusLabel) || "hsl(var(--primary))"
+    // Utiliser la même logique que getStatusColor
+    const statusColor = getStatusColor(statusLabel)
 
     if (interventions.length === 0) {
       return (
@@ -336,30 +526,26 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
           </CardHeader>
           <CardContent className="px-2 pt-2">
             <div className="w-full overflow-x-auto">
-              <ResponsiveContainer width="100%" height={350}>
+              <ChartContainer config={chartConfig} className="h-[350px] w-full">
                 <BarChart
                   data={chartData}
                   layout="vertical"
-                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                  margin={{ top: 5, right: 60, left: 10, bottom: 5 }}
                 >
-                  <XAxis type="number" stroke="#888888" fontSize={12} domain={[0, 'dataMax']} />
+                  <CartesianGrid horizontal={false} />
+                  <XAxis type="number" hide />
                   <YAxis
                     type="category"
                     dataKey="name"
-                    stroke="#888888"
-                    fontSize={11}
-                    width={90}
-                    tickLine={false}
-                    axisLine={false}
+                    hide
                   />
-                  <Tooltip
-                    content={() => null}
+                  <ChartTooltip
                     cursor={false}
+                    content={<ChartTooltipContent />}
                   />
                   <Bar
                     dataKey="value"
                     radius={[0, 4, 4, 0]}
-                    label={{ position: "right", fill: "#888888", fontSize: 12 }}
                     onMouseEnter={(data: any, index: number) => {
                       const statusLabel = chartData[index]?.name
                       if (statusLabel && (interventionsByStatus.get(statusLabel) || []).length > 0) {
@@ -381,38 +567,42 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                       }
                     }}
                   >
+                    <LabelList
+                      dataKey="name"
+                      content={<CustomNameLabel />}
+                    />
+                    <LabelList
+                      dataKey="value"
+                      content={<CustomValueLabel />}
+                    />
                     {chartData.map((entry, index) => {
-                      // Utiliser INTERVENTION_STATUS pour la couleur (priorité à la palette de la page interventions)
-                      // Mapping spécial pour "Inter en cours" -> "En cours"
-                      const normalizedLabel = entry.name === "Inter en cours" ? "En cours" : entry.name
-                      const statusConfig = Object.values(INTERVENTION_STATUS).find(
-                        s => s.label === normalizedLabel || s.label.toLowerCase() === normalizedLabel.toLowerCase()
-                      )
-                      const statusColor = statusConfig?.hexColor || getInterventionStatusColor(entry.name) || "hsl(var(--primary))"
-                      const isHovered = hoveredStatus === entry.name
+                      const statusColor = entry.color || getStatusColor(entry.name)
                       return (
-                        <HoverCard key={`hover-${index}`} open={isHovered} openDelay={200} closeDelay={100}>
-                          <HoverCardTrigger asChild>
-                            <Cell 
-                              fill={statusColor}
-                              style={{ cursor: "pointer", opacity: isHovered ? 0.9 : 1 }}
-                            />
-                          </HoverCardTrigger>
-                          <HoverCardContent 
-                            className="w-96 z-50 max-h-[500px] overflow-y-auto" 
-                            side="right"
-                            align="start"
-                            sideOffset={8}
-                          >
-                            <StatusIndicatorContent statusLabel={entry.name} />
-                          </HoverCardContent>
-                        </HoverCard>
+                        <Cell 
+                          key={`cell-${index}`}
+                          fill={statusColor}
+                          style={{ cursor: "pointer" }}
+                        />
                       )
                     })}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </div>
+
+            {/* HoverCard séparé pour afficher les détails au survol */}
+            {hoveredStatus && (interventionsByStatus.get(hoveredStatus) || []).length > 0 && (
+              <HoverCard open={true} openDelay={200} closeDelay={100}>
+                <HoverCardContent 
+                  className="w-96 z-50 max-h-[500px] overflow-y-auto" 
+                  side="right"
+                  align="start"
+                  sideOffset={8}
+                >
+                  <StatusIndicatorContent statusLabel={hoveredStatus} />
+                </HoverCardContent>
+              </HoverCard>
+            )}
 
             {/* Ligne pour les interventions à checker */}
             {stats && (stats.interventions_a_checker ?? 0) > 0 && (

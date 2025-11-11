@@ -145,6 +145,16 @@
     --info-hsl: 222 84% 56%;
     --info-bg-hsl: 222 92% 94%;
 
+    /* Leaderboard colors */
+    --gold: 45 100% 51%;
+    --gold-glow: 45 100% 65%;
+    --silver: 0 0% 75%;
+    --silver-glow: 0 0% 85%;
+    --bronze: 25 75% 47%;
+    --bronze-glow: 25 75% 60%;
+    --cold: 200 70% 50%;
+    --cold-glow: 200 70% 65%;
+
     /* Shadows */
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.10);
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.10), 0 6px 12px rgba(0, 0, 0, 0.06);
@@ -254,6 +264,16 @@
     --info-bg: oklch(0.26 0.06 240);
     --info-hsl: 220 78% 70%;
     --info-bg-hsl: 220 60% 28%;
+
+    /* Leaderboard colors in dark mode */
+    --gold: 45 100% 55%;
+    --gold-glow: 45 100% 70%;
+    --silver: 0 0% 80%;
+    --silver-glow: 0 0% 92%;
+    --bronze: 25 75% 52%;
+    --bronze-glow: 25 75% 65%;
+    --cold: 200 70% 55%;
+    --cold-glow: 200 70% 70%;
 
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.18);
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.22), 0 8px 14px rgba(0, 0, 0, 0.16);
@@ -2713,6 +2733,12 @@ input:focus-visible {
 @keyframes shimmer {
   0%, 100% { opacity: 0.3; transform: translateX(-100%); }
   50% { opacity: 0.6; transform: translateX(100%); }
+}
+
+@keyframes shimmer-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 @keyframes breathing {

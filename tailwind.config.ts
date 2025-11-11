@@ -72,6 +72,23 @@ const config: Config = {
           refused: 'hsl(var(--status-refused))',
           standby: 'hsl(var(--status-standby))',
           sav: 'hsl(var(--status-sav))'
+        },
+        // Leaderboard colors
+        gold: {
+          DEFAULT: 'hsl(var(--gold))',
+          glow: 'hsl(var(--gold-glow))'
+        },
+        silver: {
+          DEFAULT: 'hsl(var(--silver))',
+          glow: 'hsl(var(--silver-glow))'
+        },
+        bronze: {
+          DEFAULT: 'hsl(var(--bronze))',
+          glow: 'hsl(var(--bronze-glow))'
+        },
+        cold: {
+          DEFAULT: 'hsl(var(--cold))',
+          glow: 'hsl(var(--cold-glow))'
         }
       },
       borderRadius: {

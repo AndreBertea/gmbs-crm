@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS public.gestionnaire_targets (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   period_type target_period_type NOT NULL,
-  margin_target numeric(12, 2) NOT NULL DEFAULT 0, -- Objectif de marge totale en euros
-  performance_target numeric(5, 2), -- Objectif de performance en pourcentage (optionnel)
+  margin_target numeric(12, 2) DEFAULT 5000.00, -- Objectif de marge totale en euros
+  performance_target numeric(5, 2) DEFAULT 40.00, -- Objectif de performance en pourcentage (optionnel)
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
   created_by uuid REFERENCES public.users(id) ON DELETE SET NULL, -- Qui a créé/modifié l'objectif

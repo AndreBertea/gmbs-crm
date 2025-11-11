@@ -882,11 +882,13 @@ export const artisansApi = {
         id,
         nom,
         prenom,
+        created_at,
         status:artisan_statuses(id, code, label)
         `
       )
       .eq("gestionnaire_id", gestionnaireId)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .order("created_at", { ascending: false }); // Trier par date d'insertion décroissante
 
     if (artisansError) {
       throw new Error(`Erreur lors de la récupération des artisans: ${artisansError.message}`);
@@ -906,9 +908,12 @@ export const artisansApi = {
       return [];
     }
 
+    // Limiter aux 5 derniers artisans insérés par statut
+    const top5ArtisansByStatus = artisansByStatus.slice(0, 5);
+
     // Pour chaque artisan, récupérer ses 5 dernières interventions avec marges (filtrées par période si fournie)
     const artisansWithInterventions = await Promise.all(
-      artisansByStatus.map(async (artisan: any) => {
+      top5ArtisansByStatus.map(async (artisan: any) => {
         const recentInterventions = await this.getRecentInterventionsByArtisanWithMargins(
           artisan.id,
           5,

@@ -13,14 +13,14 @@ import { useRouter } from "next/navigation"
 import { getArtisanStatusStyles } from "@/config/status-colors"
 import { Loader2 as Loader2Icon } from "lucide-react"
 
-interface ArtisanStatsBarChartProps {
+interface ArtisanStatsListProps {
   period?: {
     startDate?: string
     endDate?: string
   }
 }
 
-export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
+export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
   const [stats, setStats] = useState<ArtisanStatsByStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -79,7 +79,14 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
           label,
           count,
         }))
-        .filter((item) => item.count > 0)
+        .filter((item) => {
+          // Exclure les statuts archivés
+          const normalizedLabel = item.label.toLowerCase()
+          return item.count > 0 && 
+                 normalizedLabel !== "archivé" && 
+                 normalizedLabel !== "archiver" && 
+                 normalizedLabel !== "archive"
+        })
         .sort((a, b) => b.count - a.count) // Trier par nombre décroissant
     : []
 
@@ -453,3 +460,4 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
     </ContextMenu>
   )
 }
+

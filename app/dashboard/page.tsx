@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import { InterventionStatsBarChart } from "@/components/dashboard/intervention-stats-barchart"
-import { ArtisanStatsBarChart } from "@/components/dashboard/artisan-stats-barchart"
+import { ArtisanStatsList } from "@/components/dashboard/artisan-stats-list"
 import { MarginStatsCard } from "@/components/dashboard/margin-stats-card"
 import { MarginTotalCard } from "@/components/dashboard/margin-total-card"
 import { GestionnaireRankingPodium } from "@/components/dashboard/gestionnaire-ranking-podium"
@@ -319,7 +319,7 @@ export default function DashboardPage() {
             <InterventionStatsBarChart period={period} />
           </div>
           <div className="lg:col-span-3">
-            <ArtisanStatsBarChart period={period} />
+            <ArtisanStatsList period={period} />
           </div>
           <div className="lg:col-span-3 space-y-4">
             <MarginStatsCard period={period} />
