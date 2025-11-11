@@ -92,6 +92,7 @@ export default function InterventionsTableView({ interventions, loading, error }
 
   const orderedIds = useMemo(() => tableRows.map((row) => row.id), [tableRows])
 
+  // Early returns après tous les hooks
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
