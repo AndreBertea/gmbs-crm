@@ -71,7 +71,6 @@ export const METIER_COLORS_BY_LABEL: Record<string, string> = {
   "Rénovation": "#C084FC",
   "Renovation": "#C084FC",
   "Volet/Store": "#818CF8",
-  "Volet/Store": "#818CF8",
 }
 
 /**
