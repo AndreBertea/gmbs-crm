@@ -1,8 +1,8 @@
 // ===== API INTERVENTIONS V2 =====
 // Gestion complète des interventions
 
-import { referenceApi } from "../../reference-api";
-import { supabase } from "../../supabase-client";
+import { referenceApi } from "@/lib/reference-api";
+import { supabase } from "@/lib/supabase-client";
 import type {
   BulkOperationResult,
   CreateInterventionData,

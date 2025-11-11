@@ -1,9 +1,9 @@
 // ===== API UTILITAIRES V2 =====
 // Fonctions utilitaires pour toutes les APIs
 
-import type { ReferenceData } from "../../reference-api";
-import { referenceApi } from "../../reference-api";
-import { supabase } from "../../supabase-client";
+import type { ReferenceData } from "@/lib/reference-api";
+import { referenceApi } from "@/lib/reference-api";
+import { supabase } from "@/lib/supabase-client";
 
 // Cache pour les données de référence
 type ReferenceCache = {

@@ -1,7 +1,7 @@
 // ===== API USERS V2 =====
 // Gestion complète des utilisateurs avec authentification Supabase
 
-import { supabase } from "../../supabase-client";
+import { supabase } from "@/lib/supabase-client";
 import type {
     BulkOperationResult,
     CreateUserData,
