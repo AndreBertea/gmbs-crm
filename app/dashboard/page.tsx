@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect, useRef } from "react"
-import { InterventionStatsPieChart } from "@/components/dashboard/intervention-stats-piechart"
+import { InterventionStatsBarChart } from "@/components/dashboard/intervention-stats-barchart"
 import { ArtisanStatsList } from "@/components/dashboard/artisan-stats-list"
 import { MarginStatsCard } from "@/components/dashboard/margin-stats-card"
 import { MarginTotalCard } from "@/components/dashboard/margin-total-card"
@@ -317,7 +317,7 @@ export default function DashboardPage() {
         {/* Première ligne : Interventions (40%), Artisans (30%), Performance (30%) */}
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-10">
           <div className="lg:col-span-4">
-            <InterventionStatsPieChart period={period} />
+            <InterventionStatsBarChart period={period} />
           </div>
           <div className="lg:col-span-3">
             <ArtisanStatsList period={period} />

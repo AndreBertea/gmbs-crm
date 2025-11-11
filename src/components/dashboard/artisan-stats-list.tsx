@@ -193,6 +193,8 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
         marge: number;
         status_label: string | null;
         status_color: string | null;
+        due_date: string | null;
+        metier_label: string | null;
       }>;
     }> | null>(null)
     const [loading, setLoading] = useState(false)
@@ -257,6 +259,20 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
       )
     }
 
+    // Fonction pour formater la date
+    const formatDate = (dateString: string | null) => {
+      if (!dateString) return "N/A";
+      try {
+        return new Date(dateString).toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        });
+      } catch {
+        return "N/A";
+      }
+    };
+
     return (
       <div className="space-y-3">
         <h4 className="font-semibold text-sm mb-2">{statusLabel}</h4>
@@ -289,7 +305,9 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
                           {intervention.id_inter || "N/A"}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Statut : <span style={{ color: intervention.status_color || "#6366F1" }}>{intervention.status_label || "N/A"}</span> | Marge: {formatCurrency(intervention.marge)}
+                          Métier : <span className="font-medium">{intervention.metier_label || "N/A"}</span> | 
+                          Marge : <span className="font-medium">{formatCurrency(intervention.marge)}</span> | 
+                          Date : <span className="font-medium">{formatDate(intervention.due_date)}</span>
                         </div>
                       </div>
                     </div>

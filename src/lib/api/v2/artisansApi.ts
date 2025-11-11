@@ -772,6 +772,8 @@ export const artisansApi = {
     marge: number; // Somme des coûts de type 'marge'
     status_label: string | null;
     status_color: string | null;
+    due_date: string | null;
+    metier_label: string | null;
   }>> {
     if (!artisanId) {
       throw new Error("artisanId is required");
@@ -787,9 +789,11 @@ export const artisansApi = {
           id,
           id_inter,
           date,
+          due_date,
           is_active,
           statut_id,
           status:intervention_statuses(id, code, label, color),
+          metier:metiers(id, label, code),
           intervention_costs (
             cost_type,
             amount
@@ -838,6 +842,10 @@ export const artisansApi = {
         const status_label = status?.label || null;
         const status_color = status?.color || null;
 
+        // Extraire le métier depuis la relation
+        const metier = intervention.metier;
+        const metier_label = metier?.label || null;
+
         return {
           id: intervention.id,
           id_inter: intervention.id_inter,
@@ -845,9 +853,11 @@ export const artisansApi = {
           marge,
           status_label,
           status_color,
+          due_date: intervention.due_date || null,
+          metier_label,
         };
       })
-      .filter((item): item is { id: string; id_inter: string | null; date: string; marge: number; status_label: string | null; status_color: string | null; } => item !== null)
+      .filter((item): item is { id: string; id_inter: string | null; date: string; marge: number; status_label: string | null; status_color: string | null; due_date: string | null; metier_label: string | null; } => item !== null)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, limit);
 
@@ -878,6 +888,8 @@ export const artisansApi = {
       marge: number;
       status_label: string | null;
       status_color: string | null;
+      due_date: string | null;
+      metier_label: string | null;
     }>;
   }>> {
     if (!gestionnaireId) {
