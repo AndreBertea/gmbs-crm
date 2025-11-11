@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { artisansApi } from "@/lib/api/v2"
-import { supabase } from "@/lib/supabase-client"
 import type { ArtisanStatsByStatus } from "@/lib/api/v2"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 import { Loader2, FileText, Plus } from "lucide-react"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
@@ -24,60 +24,16 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
   const [stats, setStats] = useState<ArtisanStatsByStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
   const router = useRouter()
 
-  // Charger l'utilisateur actuel
-  useEffect(() => {
-    let cancelled = false
-
-    const loadUser = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession()
-        const token = session?.session?.access_token
-
-        if (!token) {
-          if (!cancelled) {
-            setUserId(null)
-            setLoading(false)
-          }
-          return
-        }
-
-        const response = await fetch("/api/auth/me", {
-          cache: "no-store",
-          headers: { Authorization: `Bearer ${token}` },
-        })
-
-        if (!response.ok) {
-          throw new Error("Impossible de récupérer l'utilisateur")
-        }
-
-        const payload = await response.json()
-        const user = payload?.user ?? null
-
-        if (!cancelled) {
-          setUserId(user?.id ?? null)
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setError(err.message || "Erreur lors du chargement de l'utilisateur")
-          setLoading(false)
-        }
-      }
-    }
-
-    loadUser()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
+  const userId = currentUser?.id ?? null
 
   // Charger les statistiques une fois l'utilisateur chargé
   useEffect(() => {
-    if (!userId) {
-      setLoading(false)
+    if (!userId || isLoadingUser) {
+      setLoading(isLoadingUser)
       return
     }
 
@@ -113,7 +69,7 @@ export function ArtisanStatsBarChart({ period }: ArtisanStatsBarChartProps) {
     return () => {
       cancelled = true
     }
-  }, [userId, period?.startDate, period?.endDate])
+  }, [userId, isLoadingUser, period?.startDate, period?.endDate])
 
 
   // Préparer les données pour la liste (statuts avec nombre > 0)

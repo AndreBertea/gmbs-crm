@@ -3,10 +3,10 @@
 import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi, usersApi } from "@/lib/api/v2"
-import { supabase } from "@/lib/supabase-client"
 import type { MarginStats, TargetPeriodType } from "@/lib/api/v2"
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react"
 import { Speedometer } from "./speedometer"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 interface MarginStatsCardProps {
   period?: {
@@ -37,63 +37,19 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
   const [showPercentage, setShowPercentage] = useState<boolean>(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
 
   // Déterminer le type de période
   const periodType = useMemo(() => {
     return getPeriodTypeFromDates(period?.startDate, period?.endDate)
   }, [period?.startDate, period?.endDate])
 
-  // Charger l'utilisateur actuel
-  useEffect(() => {
-    let cancelled = false
-
-    const loadUser = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession()
-        const token = session?.session?.access_token
-
-        if (!token) {
-          if (!cancelled) {
-            setUserId(null)
-            setLoading(false)
-          }
-          return
-        }
-
-        const response = await fetch("/api/auth/me", {
-          cache: "no-store",
-          headers: { Authorization: `Bearer ${token}` },
-        })
-
-        if (!response.ok) {
-          throw new Error("Impossible de récupérer l'utilisateur")
-        }
-
-        const payload = await response.json()
-        const user = payload?.user ?? null
-
-        if (!cancelled) {
-          setUserId(user?.id ?? null)
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setError(err.message || "Erreur lors du chargement de l'utilisateur")
-          setLoading(false)
-        }
-      }
-    }
-
-    loadUser()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
+  const userId = currentUser?.id ?? null
 
   // Charger l'objectif de performance et les préférences pour l'utilisateur et la période
   useEffect(() => {
-    if (!userId) return
+    if (!userId || isLoadingUser) return
 
     let cancelled = false
 
@@ -122,12 +78,12 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
     return () => {
       cancelled = true
     }
-  }, [userId, periodType])
+  }, [userId, isLoadingUser, periodType])
 
   // Charger les statistiques de marge une fois l'utilisateur chargé
   useEffect(() => {
-    if (!userId) {
-      setLoading(false)
+    if (!userId || isLoadingUser) {
+      setLoading(isLoadingUser)
       return
     }
 
@@ -170,7 +126,7 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
     return () => {
       cancelled = true
     }
-  }, [userId, period?.startDate, period?.endDate])
+  }, [userId, isLoadingUser, period?.startDate, period?.endDate])
 
   if (loading) {
     return (

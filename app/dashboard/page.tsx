@@ -14,8 +14,8 @@ import { t } from "@/config/domain"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { Plus } from "lucide-react"
 import { interventionsApi } from "@/lib/api/v2"
-import { supabase } from "@/lib/supabase-client"
 import { useRevealTransition } from "@/hooks/useRevealTransition"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 type PeriodType = "week" | "month" | "year"
 
@@ -26,8 +26,11 @@ export default function DashboardPage() {
   const [periodType, setPeriodType] = useState<PeriodType>("month")
   const [isMounted, setIsMounted] = useState(false)
   const [totalInterventions, setTotalInterventions] = useState<number | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
   const [showTransition, setShowTransition] = useState(false)
+  
+  // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
+  const userId = currentUser?.id ?? null
   
   // Références pour l'animation
   const dashboardContentRef = useRef<HTMLDivElement>(null)
@@ -132,51 +135,6 @@ export default function DashboardPage() {
     }
   }, [periodType, isMounted])
 
-  // Charger l'utilisateur actuel
-  useEffect(() => {
-    let cancelled = false
-
-    const loadUser = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession()
-        const token = session?.session?.access_token
-
-        if (!token) {
-          if (!cancelled) {
-            setUserId(null)
-          }
-          return
-        }
-
-        const response = await fetch("/api/auth/me", {
-          cache: "no-store",
-          headers: { Authorization: `Bearer ${token}` },
-        })
-
-        if (!response.ok) {
-          throw new Error("Impossible de récupérer l'utilisateur")
-        }
-
-        const payload = await response.json()
-        const user = payload?.user ?? null
-
-        if (!cancelled) {
-          setUserId(user?.id ?? null)
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          console.error("Erreur lors du chargement de l'utilisateur:", err)
-        }
-      }
-    }
-
-    loadUser()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   // Calculer les dates selon la période sélectionnée
   const period = useMemo(() => {
     const now = new Date()
@@ -232,7 +190,7 @@ export default function DashboardPage() {
 
   // Charger le nombre total d'interventions pour la période
   useEffect(() => {
-    if (!userId || !period.startDate || !period.endDate) {
+    if (!userId || isLoadingUser || !period.startDate || !period.endDate) {
       setTotalInterventions(null)
       return
     }
@@ -258,7 +216,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [userId, period.startDate, period.endDate])
+  }, [userId, isLoadingUser, period.startDate, period.endDate])
 
   return (
     <>

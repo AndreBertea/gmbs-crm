@@ -8,6 +8,7 @@ import { interventionsApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
 import type { WeeklyStats, MonthlyStats, YearlyStats, StatsPeriod } from "@/lib/api/v2"
 import { Loader2 } from "lucide-react"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 interface WeeklyStatsTableProps {
   weekStartDate?: string
@@ -46,59 +47,15 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
   const [stats, setStats] = useState<WeeklyStats | MonthlyStats | YearlyStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
 
-  // Charger l'utilisateur actuel
-  useEffect(() => {
-    let cancelled = false
-
-    const loadUser = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession()
-        const token = session?.session?.access_token
-
-        if (!token) {
-          if (!cancelled) {
-            setUserId(null)
-            setLoading(false)
-          }
-          return
-        }
-
-        const response = await fetch("/api/auth/me", {
-          cache: "no-store",
-          headers: { Authorization: `Bearer ${token}` },
-        })
-
-        if (!response.ok) {
-          throw new Error("Impossible de récupérer l'utilisateur")
-        }
-
-        const payload = await response.json()
-        const user = payload?.user ?? null
-
-        if (!cancelled) {
-          setUserId(user?.id ?? null)
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setError(err.message || "Erreur lors du chargement de l'utilisateur")
-          setLoading(false)
-        }
-      }
-    }
-
-    loadUser()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
+  const userId = currentUser?.id ?? null
 
   // Charger les statistiques selon la période choisie
   useEffect(() => {
-    if (!userId) {
-      setLoading(false)
+    if (!userId || isLoadingUser) {
+      setLoading(isLoadingUser)
       return
     }
 
@@ -153,7 +110,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     return () => {
       cancelled = true
     }
-  }, [userId, period, weekStartDate, externalPeriod?.startDate, externalPeriod?.endDate])
+  }, [userId, isLoadingUser, period, weekStartDate, externalPeriod?.startDate, externalPeriod?.endDate])
 
   if (loading) {
     return (
