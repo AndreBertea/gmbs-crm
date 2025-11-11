@@ -41,31 +41,37 @@ export const SUPABASE_FUNCTIONS_URL = getSupabaseFunctionsUrl();
 
 // Headers communs pour toutes les requêtes
 export const getHeaders = async () => {
-  // Dans un script Node.js, il n'y a pas de session browser
-  // Utiliser directement l'anon key ou le service role key
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   
   // Détecter si on est dans Node.js (pas de window)
   const isNodeJs = typeof window === 'undefined';
   
-  let token = serviceRoleKey || anonKey;
+  // Pour l'apikey, toujours utiliser l'anon key (disponible côté client et serveur)
+  const apiKey = anonKey;
   
-  // Essayer d'obtenir une session seulement si on est dans un contexte browser
-  if (!isNodeJs) {
+  // Pour le token Authorization
+  let token = anonKey; // Par défaut, utiliser l'anon key (valide pour les Edge Functions)
+  
+  if (isNodeJs) {
+    // Côté serveur (Node.js), on peut utiliser serviceRoleKey si disponible
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    if (serviceRoleKey) {
+      token = serviceRoleKey;
+    }
+  } else {
+    // Côté client (browser), essayer d'obtenir la session utilisateur
     try {
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.access_token) {
+        // Utiliser le token de session si disponible
         token = session.session.access_token;
       }
+      // Sinon, token reste l'anon key (valide pour les Edge Functions)
     } catch (error) {
-      // En cas d'erreur, utiliser le service role key ou anon key
-      token = serviceRoleKey || anonKey;
+      // En cas d'erreur, continuer avec l'anon key (qui est valide pour les Edge Functions)
+      console.warn('[getHeaders] Failed to get session, using anon key:', error);
     }
   }
-  
-  // Utiliser le service role key pour l'apikey si disponible (plus de permissions)
-  const apiKey = serviceRoleKey || anonKey;
   
   return {
     'apikey': apiKey,
