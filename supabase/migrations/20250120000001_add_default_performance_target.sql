@@ -1,16 +1,8 @@
 -- Migration: Ajouter la valeur par défaut pour performance_target
 -- Objectif: Définir 40% comme valeur par défaut pour l'objectif de performance
 -- Date: 2025-01-20
+-- NOTE: Cette migration a été déplacée vers 20251110140003_add_default_performance_target_legacy.sql
+--       car elle s'exécutait avant la création de la table gestionnaire_targets
+--       Cette migration est maintenant vide pour préserver l'historique
 
--- Modifier la colonne performance_target pour ajouter une valeur par défaut de 40%
-ALTER TABLE public.gestionnaire_targets 
-  ALTER COLUMN performance_target SET DEFAULT 40.00;
-
--- Mettre à jour les enregistrements existants qui ont performance_target NULL pour leur donner 40%
-UPDATE public.gestionnaire_targets 
-SET performance_target = 40.00 
-WHERE performance_target IS NULL;
-
--- Mettre à jour le commentaire
-COMMENT ON COLUMN public.gestionnaire_targets.performance_target IS 'Objectif de performance en pourcentage (défaut: 40%)';
-
+-- Migration vide - le contenu a été déplacé vers 20251110140003
