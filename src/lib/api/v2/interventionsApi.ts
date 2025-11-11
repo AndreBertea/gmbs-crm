@@ -1876,4 +1876,147 @@ export const interventionsApi = {
       };
     });
   },
+
+  /**
+   * Récupère les 5 dernières interventions par statut pour un utilisateur, triées par due_date
+   * @param userId - ID de l'utilisateur
+   * @param statusLabel - Label du statut (ex: "Demandé", "Inter en cours", "Accepté", "Check")
+   * @param limit - Nombre d'interventions à récupérer (défaut: 5)
+   * @param startDate - Date de début (optionnelle) pour filtrer les interventions
+   * @param endDate - Date de fin (optionnelle) pour filtrer les interventions
+   * @returns Liste des interventions avec leurs informations de base, statut, agence et marge
+   */
+  async getRecentInterventionsByStatusAndUser(
+    userId: string,
+    statusLabel: string,
+    limit: number = 5,
+    startDate?: string,
+    endDate?: string
+  ): Promise<Array<{
+    id: string;
+    id_inter: string | null;
+    due_date: string | null;
+    status_label: string | null;
+    status_color: string | null;
+    agence_label: string | null;
+    marge: number;
+  }>> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+    if (!statusLabel) {
+      throw new Error("statusLabel is required");
+    }
+
+    // Gérer le cas spécial "Check" qui n'est pas un statut réel dans la DB
+    const isCheckStatus = statusLabel === "Check";
+
+    let query = supabase
+      .from("interventions")
+      .select(
+        `
+        id,
+        id_inter,
+        due_date,
+        date_prevue,
+        date,
+        agence_id,
+        status:intervention_statuses(id, code, label, color),
+        agence:agencies(id, label, code),
+        intervention_costs (
+          cost_type,
+          amount
+        )
+        `
+      )
+      .eq("assigned_user_id", userId)
+      .eq("is_active", true);
+
+    // Pour "Check", on filtre par date_prevue (interventions avec date_prevue passée)
+    if (isCheckStatus) {
+      const now = new Date().toISOString();
+      query = query.not("date_prevue", "is", null).lt("date_prevue", now);
+    } else {
+      // Pour les autres statuts, filtrer par le label du statut
+      // On doit d'abord trouver le statut_id correspondant au label
+      // Pour cela, on va filtrer via la relation status
+      // Note: Supabase ne permet pas de filtrer directement sur status.label dans une relation
+      // On va donc récupérer toutes les interventions et filtrer côté client
+    }
+
+    // Appliquer les filtres de date si fournis
+    if (startDate) {
+      query = query.gte("date", startDate);
+    }
+    if (endDate) {
+      query = query.lte("date", endDate);
+    }
+
+    // Trier par due_date (nulls en dernier)
+    query = query
+      .order("due_date", { ascending: false, nullsFirst: false })
+      .order("date", { ascending: false })
+      .limit(100); // Récupérer plus pour filtrer côté client si nécessaire
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des interventions: ${error.message}`);
+    }
+
+    // Filtrer et mapper les interventions
+    const filtered = (data || [])
+      .filter((item: any) => {
+        if (isCheckStatus) {
+          // Pour Check, on a déjà filtré par date_prevue, mais on doit aussi vérifier le statut
+          // Check s'applique à certaines interventions selon leur statut et date_prevue
+          // Pour simplifier, on accepte toutes les interventions avec date_prevue passée
+          return true;
+        } else {
+          // Filtrer par label du statut
+          const status = item.status;
+          return status && status.label === statusLabel;
+        }
+      })
+      .map((item: any) => {
+        // Calculer la marge (somme des coûts de type 'marge')
+        let marge = 0;
+        if (item.intervention_costs && Array.isArray(item.intervention_costs)) {
+          item.intervention_costs.forEach((cost: any) => {
+            if (cost.cost_type === "marge" && cost.amount !== null && cost.amount !== undefined) {
+              marge += Number(cost.amount);
+            }
+          });
+        }
+
+        // Extraire le statut
+        const status = item.status;
+        const status_label = isCheckStatus ? "Check" : (status?.label || null);
+        const status_color = isCheckStatus ? "#EF4444" : (status?.color || null);
+
+        // Extraire l'agence
+        const agence = item.agence;
+        const agence_label = agence?.label || null;
+
+        return {
+          id: item.id,
+          id_inter: item.id_inter,
+          due_date: item.due_date,
+          status_label,
+          status_color,
+          agence_label,
+          marge,
+        };
+      })
+      .sort((a, b) => {
+        // Trier par due_date (nulls en dernier)
+        if (!a.due_date && !b.due_date) return 0;
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(b.due_date).getTime() - new Date(a.due_date).getTime();
+      })
+      .slice(0, limit);
+
+    return filtered;
+  },
 };

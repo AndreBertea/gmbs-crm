@@ -1,18 +1,19 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi } from "@/lib/api/v2"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Loader2, AlertCircle, Loader2 as Loader2Icon } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Cell } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import useModal from "@/hooks/useModal"
+import { useInterventionModal } from "@/hooks/useInterventionModal"
 import { getInterventionStatusColor } from "@/config/status-colors"
 import { INTERVENTION_STATUS } from "@/config/interventions"
 import { useInterventionStatuses } from "@/hooks/useInterventionStatuses"
@@ -29,23 +30,13 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { open: openModal } = useModal()
-  const [interventionsByStatus, setInterventionsByStatus] = useState<Map<string, Array<{
-    id: string;
-    id_inter: string | null;
-    due_date: string | null;
-    date_prevue: string | null;
-    date: string;
-    status: { label: string; code: string } | null;
-    adresse: string | null;
-    ville: string | null;
-    costs: {
-      sst?: number;
-      materiel?: number;
-      intervention?: number;
-      marge?: number;
-    };
-  }>>>(new Map())
+  const { open: openInterventionModal } = useInterventionModal()
   const [hoveredStatus, setHoveredStatus] = useState<string | null>(null)
+  const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null)
+  const [hoverCardOpen, setHoverCardOpen] = useState(false)
+  const triggerPositionRef = useRef<{ x: number; y: number } | null>(null)
+  const fixedTriggerPositionRef = useRef<{ x: number; y: number } | null>(null)
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
@@ -63,6 +54,31 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
       )
     }
   }, [dbStatuses])
+
+  // Suivre la position de la souris pour positionner le trigger du HoverCard
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      // Mettre à jour seulement si le HoverCard n'est pas ouvert
+      // pour éviter les re-renders fréquents qui causent des rafraîchissements
+      if (!hoverCardOpen) {
+        triggerPositionRef.current = { x: event.clientX, y: event.clientY }
+      }
+    }
+
+    window.addEventListener("mousemove", handleMouseMove)
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+    }
+  }, [hoverCardOpen])
+
+  // Nettoyer le timeout au démontage
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Charger les statistiques une fois l'utilisateur chargé
   useEffect(() => {
@@ -91,42 +107,11 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
           endDate = endDate || endOfMonth.toISOString()
         }
 
-        // Charger les stats et toutes les interventions récentes avec coûts
-        const [statsData, allInterventionsData] = await Promise.all([
-          interventionsApi.getStatsByUser(userId, startDate, endDate),
-          interventionsApi.getRecentInterventionsByUser(userId, 100, startDate, endDate).catch(() => [])
-        ])
+        // Charger les stats
+        const statsData = await interventionsApi.getStatsByUser(userId, startDate, endDate)
 
         if (!cancelled) {
           setStats(statsData)
-          
-          // Grouper les interventions par statut
-          type InterventionWithCosts = {
-            id: string;
-            id_inter: string | null;
-            due_date: string | null;
-            date_prevue: string | null;
-            date: string;
-            status: { label: string; code: string } | null;
-            adresse: string | null;
-            ville: string | null;
-            costs: {
-              sst?: number;
-              materiel?: number;
-              intervention?: number;
-              marge?: number;
-            };
-          }
-          const groupedByStatus = new Map<string, InterventionWithCosts[]>()
-          allInterventionsData.forEach((intervention: InterventionWithCosts) => {
-            const statusLabel = intervention.status?.label || "Sans statut"
-            if (!groupedByStatus.has(statusLabel)) {
-              groupedByStatus.set(statusLabel, [])
-            }
-            groupedByStatus.get(statusLabel)!.push(intervention)
-          })
-          
-          setInterventionsByStatus(groupedByStatus)
           setLoading(false)
         }
       } catch (err: any) {
@@ -429,87 +414,131 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     })
   }
 
-  const formatCurrency = (amount: number | undefined) => {
-    if (amount === undefined || amount === null) return null
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null) return "0,00 €"
     return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount)
   }
 
-  // Composant pour afficher les interventions dans le HoverCard avec style Status Indicators
-  const StatusIndicatorContent = ({ statusLabel }: { statusLabel: string }) => {
-    const interventions = interventionsByStatus.get(statusLabel) || []
-    
-    // Trouver la couleur depuis INTERVENTION_STATUS (priorité à la palette de la page interventions)
-    // Utiliser la même logique que getStatusColor
-    const statusColor = getStatusColor(statusLabel)
+  // Composant pour afficher les interventions dans le tooltip avec format conditionnel selon le statut
+  const InterventionStatusContent = ({ 
+    statusLabel,
+    onOpenIntervention,
+    period
+  }: { 
+    statusLabel: string
+    onOpenIntervention: (id: string) => void
+    period?: { startDate?: string; endDate?: string }
+  }) => {
+    const [interventionsData, setInterventionsData] = useState<Array<{
+      id: string;
+      id_inter: string | null;
+      due_date: string | null;
+      status_label: string | null;
+      status_color: string | null;
+      agence_label: string | null;
+      marge: number;
+    }> | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    if (interventions.length === 0) {
+    // Charger les données au montage du composant avec période
+    useEffect(() => {
+      if (!userId || !statusLabel) return
+
+      let cancelled = false
+
+      const loadData = async () => {
+        try {
+          setLoading(true)
+          setError(null)
+          const data = await interventionsApi.getRecentInterventionsByStatusAndUser(
+            userId, 
+            statusLabel,
+            5,
+            period?.startDate,
+            period?.endDate
+          )
+          if (!cancelled) {
+            setInterventionsData(data)
+            setLoading(false)
+          }
+        } catch (err: any) {
+          if (!cancelled) {
+            setError(err.message || "Erreur lors du chargement")
+            setLoading(false)
+          }
+        }
+      }
+
+      loadData()
+
+      return () => {
+        cancelled = true
+      }
+    }, [userId, statusLabel, period?.startDate, period?.endDate])
+
+    if (loading) {
       return (
-        <div className="text-sm text-muted-foreground">
+        <div className="flex items-center justify-center p-4">
+          <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+        </div>
+      )
+    }
+
+    if (error) {
+      return (
+        <div className="text-sm text-destructive p-2">
+          Erreur de chargement
+        </div>
+      )
+    }
+
+    if (!interventionsData || interventionsData.length === 0) {
+      return (
+        <div className="text-sm text-muted-foreground p-2">
           Aucune intervention pour ce statut
         </div>
       )
     }
 
-    return (
-      <div className="space-y-2">
-        <h4 className="font-semibold text-sm mb-2">{statusLabel}</h4>
-        <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-          {interventions.slice(0, 5).map((intervention) => {
-            const totalCost = 
-              (intervention.costs.sst || 0) +
-              (intervention.costs.materiel || 0) +
-              (intervention.costs.intervention || 0) +
-              (intervention.costs.marge || 0)
+    // Déterminer le format d'affichage selon le statut
+    const isDemandeStatus = statusLabel === "Demandé"
 
-            return (
-              <div
-                key={intervention.id}
-                className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
-                onClick={() => router.push(`/interventions/${intervention.id}`)}
-              >
-                <div
-                  className="h-2 w-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: statusColor }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">
-                    {intervention.id_inter || "N/A"}
-                  </div>
-                  <div className="text-xs text-muted-foreground space-y-0.5">
-                    {intervention.adresse && (
-                      <div className="truncate">
-                        {intervention.adresse}
-                        {intervention.ville && `, ${intervention.ville}`}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-2">
-                      {intervention.due_date && (
-                        <span>Due: {formatDate(intervention.due_date)}</span>
-                      )}
-                      {intervention.date_prevue && (
-                        <span>Prévue: {formatDate(intervention.date_prevue)}</span>
-                      )}
-                    </div>
-                    {totalCost > 0 && (
-                      <div>
-                        Total: {formatCurrency(totalCost)}
-                        {(intervention.costs.sst || intervention.costs.materiel || intervention.costs.intervention || intervention.costs.marge) && (
-                          <span className="ml-2">
-                            (
-                            {intervention.costs.sst && `SST: ${formatCurrency(intervention.costs.sst)}`}
-                            {intervention.costs.materiel && `${intervention.costs.sst ? ", " : ""}Mat: ${formatCurrency(intervention.costs.materiel)}`}
-                            {intervention.costs.intervention && `${intervention.costs.sst || intervention.costs.materiel ? ", " : ""}Inter: ${formatCurrency(intervention.costs.intervention)}`}
-                            {intervention.costs.marge && `${intervention.costs.sst || intervention.costs.materiel || intervention.costs.intervention ? ", " : ""}Marge: ${formatCurrency(intervention.costs.marge)}`}
-                            )
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
+    return (
+      <div className="space-y-3">
+        <h4 className="font-semibold text-sm mb-2">{statusLabel}</h4>
+        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+          {interventionsData.map((intervention) => (
+            <div
+              key={intervention.id}
+              className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpenIntervention(intervention.id)
+              }}
+            >
+              <div 
+                className="h-2 w-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: intervention.status_color || "#6366F1" }}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold truncate">
+                  {intervention.id_inter || "N/A"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {isDemandeStatus ? (
+                    <>
+                      Statut : <span style={{ color: intervention.status_color || "#6366F1" }}>{intervention.status_label || "N/A"}</span> | Agence : {intervention.agence_label || "N/A"} | Due date : {intervention.due_date ? formatDate(intervention.due_date) : "N/A"}
+                    </>
+                  ) : (
+                    <>
+                      Statut : <span style={{ color: intervention.status_color || "#6366F1" }}>{intervention.status_label || "N/A"}</span> | Marge : {formatCurrency(intervention.marge)} | Due date : {intervention.due_date ? formatDate(intervention.due_date) : "N/A"}
+                    </>
+                  )}
                 </div>
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -542,19 +571,45 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                   />
                   <ChartTooltip
                     cursor={false}
-                    content={<ChartTooltipContent />}
+                    content={() => null}
                   />
                   <Bar
                     dataKey="value"
                     radius={[0, 4, 4, 0]}
                     onMouseEnter={(data: any, index: number) => {
+                      // Annuler tout timeout de fermeture en cours
+                      if (closeTimeoutRef.current) {
+                        clearTimeout(closeTimeoutRef.current)
+                        closeTimeoutRef.current = null
+                      }
+                      
+                      setHoveredBarIndex(index)
+                      
                       const statusLabel = chartData[index]?.name
-                      if (statusLabel && (interventionsByStatus.get(statusLabel) || []).length > 0) {
+                      if (statusLabel) {
+                        // Fixer la position du trigger au moment de l'ouverture
+                        // pour éviter les re-renders fréquents qui causent des rafraîchissements
+                        fixedTriggerPositionRef.current = triggerPositionRef.current || { 
+                          x: window.innerWidth / 2, 
+                          y: window.innerHeight / 2 
+                        }
                         setHoveredStatus(statusLabel)
+                        setHoverCardOpen(true)
                       }
                     }}
                     onMouseLeave={() => {
-                      setHoveredStatus(null)
+                      setHoveredBarIndex(null)
+                      // Ne pas fermer immédiatement - laisser un délai plus long pour permettre
+                      // de déplacer la souris vers le HoverCard de manière fluide
+                      closeTimeoutRef.current = setTimeout(() => {
+                        setHoverCardOpen(false)
+                        // Nettoyer les positions après la fermeture
+                        setTimeout(() => {
+                          setHoveredStatus(null)
+                          fixedTriggerPositionRef.current = null
+                        }, 150)
+                        closeTimeoutRef.current = null
+                      }, 500) // Délai plus long pour une transition très fluide
                     }}
                     onClick={(data: any, index: number) => {
                       const clickedBar = chartData[index]
@@ -578,11 +633,32 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                     />
                     {chartData.map((entry, index) => {
                       const statusColor = entry.color || getStatusColor(entry.name)
+                      const isHovered = hoveredBarIndex === index
+                      
+                      // Fonction pour assombrir une couleur hex
+                      const adjustColor = (color: string, amount: number) => {
+                        // Convertir hex en RGB
+                        const hex = color.replace('#', '')
+                        const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount))
+                        const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount))
+                        const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount))
+                        return `#${[r, g, b].map(x => {
+                          const hex = x.toString(16)
+                          return hex.length === 1 ? '0' + hex : hex
+                        }).join('')}`
+                      }
+                      
+                      // Assombrir la couleur au survol (soustraire 20 pour assombrir)
+                      const hoverColor = isHovered ? adjustColor(statusColor, -20) : statusColor
+                      
                       return (
                         <Cell 
                           key={`cell-${index}`}
-                          fill={statusColor}
-                          style={{ cursor: "pointer" }}
+                          fill={hoverColor}
+                          style={{ 
+                            cursor: "pointer",
+                            transition: "fill 0.2s ease-in-out",
+                          }}
                         />
                       )
                     })}
@@ -591,16 +667,69 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
               </ChartContainer>
             </div>
 
-            {/* HoverCard séparé pour afficher les détails au survol */}
-            {hoveredStatus && (interventionsByStatus.get(hoveredStatus) || []).length > 0 && (
-              <HoverCard open={true} openDelay={200} closeDelay={100}>
-                <HoverCardContent 
-                  className="w-96 z-50 max-h-[500px] overflow-y-auto" 
+            {/* HoverCard pour afficher les détails au survol */}
+            {hoveredStatus && fixedTriggerPositionRef.current && (
+              <HoverCard 
+                open={hoverCardOpen} 
+                onOpenChange={(open) => {
+                  setHoverCardOpen(open)
+                  // Annuler le timeout si on rouvre le HoverCard
+                  if (open && closeTimeoutRef.current) {
+                    clearTimeout(closeTimeoutRef.current)
+                    closeTimeoutRef.current = null
+                  }
+                  if (!open) {
+                    // Nettoyer le statut et la position fixe après un court délai
+                    setTimeout(() => {
+                      setHoveredStatus(null)
+                      fixedTriggerPositionRef.current = null
+                    }, 100)
+                  }
+                }} 
+                openDelay={150} 
+                closeDelay={400}
+              >
+                <HoverCardTrigger asChild>
+                  <div
+                    className="fixed pointer-events-none z-0"
+                    style={{
+                      left: `${fixedTriggerPositionRef.current.x}px`,
+                      top: `${fixedTriggerPositionRef.current.y}px`,
+                      width: 16,
+                      height: 16,
+                    }}
+                    aria-hidden="true"
+                  />
+                </HoverCardTrigger>
+                <HoverCardContent
+                  className="w-96 max-h-[500px] overflow-y-auto z-50"
                   side="right"
                   align="start"
-                  sideOffset={8}
+                  sideOffset={12}
+                  onMouseEnter={() => {
+                    // Annuler le timeout quand on entre dans le HoverCard
+                    if (closeTimeoutRef.current) {
+                      clearTimeout(closeTimeoutRef.current)
+                      closeTimeoutRef.current = null
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    // Fermer le HoverCard quand on quitte son contenu avec un délai
+                    // pour permettre de revenir rapidement si nécessaire
+                    if (closeTimeoutRef.current) {
+                      clearTimeout(closeTimeoutRef.current)
+                    }
+                    closeTimeoutRef.current = setTimeout(() => {
+                      setHoverCardOpen(false)
+                      closeTimeoutRef.current = null
+                    }, 300)
+                  }}
                 >
-                  <StatusIndicatorContent statusLabel={hoveredStatus} />
+                  <InterventionStatusContent 
+                    statusLabel={hoveredStatus}
+                    onOpenIntervention={(id: string) => openInterventionModal(id)}
+                    period={period}
+                  />
                 </HoverCardContent>
               </HoverCard>
             )}

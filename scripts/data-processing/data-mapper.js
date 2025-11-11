@@ -81,6 +81,10 @@ class DataMapper {
       documentsCreated: 0,
       newDocuments: [],
     };
+    
+    // Rate limiting simple pour les recherches SST
+    this.lastSSTSearchTime = 0;
+    this.sstSearchDelay = 50; // 50ms entre chaque recherche SST
   }
 
   // ===== MAPPING ARTISANS =====
@@ -113,7 +117,7 @@ class DataMapper {
       // Informations personnelles (selon le schéma artisans)
       prenom: prenom,
       nom: nom,
-      plain_nom: nomPrenom ? nomPrenom.trim() : '', // Sauvegarder la colonne originale "Nom Prénom"
+      plain_nom: nomPrenom ? nomPrenom.trim() : null, // Sauvegarder la colonne originale "Nom Prénom"
 
       // Contact
       email: this.cleanEmail(this.getCSVValue(csvRow, "Adresse Mail")),
@@ -367,6 +371,68 @@ class DataMapper {
     }
     return cleaned;
   }
+
+  /**
+   * Trouve la valeur de la colonne Statut en essayant plusieurs variantes
+   * Gère les espaces avant/après et les variations de casse
+   * @param {Object} csvRow - Ligne CSV nettoyée
+   * @returns {string|null} - Valeur du statut ou null
+   */
+  getStatutValue(csvRow) {
+    // DEBUG: Afficher toutes les clés disponibles pour debug
+    if (process.env.VERBOSE || process.argv.includes('--verbose')) {
+      const allKeys = Object.keys(csvRow);
+      const statutRelatedKeys = allKeys.filter(k => 
+        k.toLowerCase().includes('statut')
+      );
+      console.log(`🔍 [STATUT DEBUG] Toutes les clés: ${allKeys.slice(0, 10).join(", ")}...`);
+      console.log(`🔍 [STATUT DEBUG] Clés contenant "statut": ${statutRelatedKeys.join(", ")}`);
+      if (statutRelatedKeys.length > 0) {
+        statutRelatedKeys.forEach(key => {
+          console.log(`   "${key}": "${csvRow[key]}"`);
+        });
+      }
+    }
+    
+    // Essayer plusieurs variantes possibles (avec et sans espaces)
+    const possibleKeys = [
+      "Statut",
+      " Statut",
+      "Statut ",
+      " STATUT",
+      "STATUT",
+      "STATUT "
+    ];
+    
+    for (const key of possibleKeys) {
+      if (csvRow[key] && String(csvRow[key]).trim() !== "") {
+        if (process.env.VERBOSE || process.argv.includes('--verbose')) {
+          console.log(`✅ [STATUT] Trouvé avec clé "${key}": "${csvRow[key]}"`);
+        }
+        return String(csvRow[key]).trim();
+      }
+    }
+    
+    // Si aucune variante ne fonctionne, chercher toutes les clés qui contiennent "statut"
+    const statutKeys = Object.keys(csvRow).filter(k => 
+      k.toLowerCase().trim() === 'statut' || 
+      k.toLowerCase().trim().includes('statut')
+    );
+    
+    for (const key of statutKeys) {
+      if (csvRow[key] && String(csvRow[key]).trim() !== "") {
+        if (process.env.VERBOSE || process.argv.includes('--verbose')) {
+          console.log(`✅ [STATUT] Trouvé avec clé "${key}": "${csvRow[key]}"`);
+        }
+        return String(csvRow[key]).trim();
+      }
+    }
+    
+    if (process.env.VERBOSE || process.argv.includes('--verbose')) {
+      console.log(`❌ [STATUT] Aucune colonne statut trouvée dans csvRow`);
+    }
+    return null;
+  }
   
   /**
    * Filtre les valeurs aberrantes (dates dans mauvaises colonnes)
@@ -442,7 +508,7 @@ class DataMapper {
       agence_id: await this.getAgencyId(csvRow["Agence"]),
       assigned_user_id: await this.getUserIdNormalized(csvRow["Gest."]),
       statut_id: await this.getInterventionStatusIdNormalized(
-        csvRow["Statut"]
+        this.getStatutValue(csvRow)
       ),
       metier_id: metierId,
 
@@ -2460,6 +2526,14 @@ class DataMapper {
 
     sstName = sstName.trim();
 
+    // Rate limiting simple : attendre un peu si la dernière recherche était trop récente
+    const now = Date.now();
+    const timeSinceLastSearch = now - this.lastSSTSearchTime;
+    if (timeSinceLastSearch < this.sstSearchDelay) {
+      await new Promise(resolve => setTimeout(resolve, this.sstSearchDelay - timeSinceLastSearch));
+    }
+    this.lastSSTSearchTime = Date.now();
+
     // Nettoyage complet du nom (espaces, retours à la ligne, tabulations)
     const cleanSstName = sstName.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
 
@@ -2487,6 +2561,9 @@ class DataMapper {
         return null;
       }
 
+      // Petit délai avant la deuxième tentative
+      await new Promise(resolve => setTimeout(resolve, this.sstSearchDelay));
+
       // Deuxième tentative avec le nom nettoyé
       results = await artisansApi.searchByPlainNom(cleanName, { limit: 1 });
 
@@ -2507,6 +2584,9 @@ class DataMapper {
           // Nettoyer la première partie (enlever départements)
           const cleanFirstPart = firstPart.replace(/\s+\d{2,3}(?:\s+\d{2,3})?$/, "").trim();
           
+          // Petit délai avant la troisième tentative
+          await new Promise(resolve => setTimeout(resolve, this.sstSearchDelay));
+          
           results = await artisansApi.searchByPlainNom(cleanFirstPart, { limit: 1 });
           
           if (results.data && results.data.length > 0) {
@@ -2523,9 +2603,34 @@ class DataMapper {
       console.log(`❌ [ARTISAN-SST] Aucun artisan trouvé pour "${sstName}"`);
       return null;
     } catch (error) {
-      console.error(
-        `💥 [ARTISAN-SST] Erreur recherche "${sstName}": ${error.message}`
-      );
+      // Gérer spécifiquement les erreurs réseau avec retry simple
+      if (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('timeout'))) {
+        console.warn(
+          `⚠️ [ARTISAN-SST] Erreur réseau pour "${sstName}", retry dans 1s...`
+        );
+        
+        // Retry une seule fois après 1 seconde
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const retryResults = await artisansApi.searchByPlainNom(cleanSstName, { limit: 1 });
+          
+          if (retryResults.data && retryResults.data.length > 0) {
+            const found = retryResults.data[0];
+            console.log(
+              `✅ [ARTISAN-SST] Trouvé après retry: ${found.prenom} ${found.nom} (ID: ${found.id})`
+            );
+            return found.id;
+          }
+        } catch (retryError) {
+          console.error(
+            `💥 [ARTISAN-SST] Erreur réseau persistante pour "${sstName}": ${retryError.message}`
+          );
+        }
+      } else {
+        console.error(
+          `💥 [ARTISAN-SST] Erreur recherche "${sstName}": ${error.message}`
+        );
+      }
       return null;
     }
   }

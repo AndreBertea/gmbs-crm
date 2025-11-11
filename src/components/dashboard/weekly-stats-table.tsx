@@ -242,17 +242,17 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent">
+                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent h-14">
                   <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Lundi</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Mardi</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Mercredi</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Jeudi</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Vendredi</TableHead>
-                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary">Total</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[80px]">Lundi</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[80px]">Mardi</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[80px]">Mercredi</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[80px]">Jeudi</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[80px]">Vendredi</TableHead>
+                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary min-w-[80px]">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -294,15 +294,15 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   return (
                     <TableRow 
                       key={row.label}
-                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200`}
+                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200 h-14`}
                     >
-                      <TableCell className={`font-semibold py-3 ${colors.label}`}>{row.label}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.lundi}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.mardi}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.mercredi}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.jeudi}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.vendredi}</TableCell>
-                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-3">{row.data.total}</TableCell>
+                      <TableCell className={`font-semibold py-4 text-base ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center py-4 text-lg font-medium">{row.data.lundi}</TableCell>
+                      <TableCell className="text-center py-4 text-lg font-medium">{row.data.mardi}</TableCell>
+                      <TableCell className="text-center py-4 text-lg font-medium">{row.data.mercredi}</TableCell>
+                      <TableCell className="text-center py-4 text-lg font-medium">{row.data.jeudi}</TableCell>
+                      <TableCell className="text-center py-4 text-lg font-medium">{row.data.vendredi}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-4 text-lg">{row.data.total}</TableCell>
                     </TableRow>
                   )
                 })}
@@ -352,17 +352,17 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent">
+                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent h-14">
                   <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Semaine 1</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Semaine 2</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Semaine 3</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Semaine 4</TableHead>
-                  <TableHead className="text-center font-bold text-foreground">Semaine 5</TableHead>
-                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary">Total</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[70px]">Semaine 1</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[70px]">Semaine 2</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[70px]">Semaine 3</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[70px]">Semaine 4</TableHead>
+                  <TableHead className="text-center font-bold text-foreground min-w-[70px]">Semaine 5</TableHead>
+                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary min-w-[80px]">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -404,15 +404,15 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   return (
                     <TableRow 
                       key={row.label}
-                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200`}
+                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200 h-14`}
                     >
-                      <TableCell className={`font-semibold py-3 ${colors.label}`}>{row.label}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.semaine1}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.semaine2}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.semaine3}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.semaine4}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.semaine5}</TableCell>
-                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-3">{row.data.total}</TableCell>
+                      <TableCell className={`font-semibold py-4 text-base ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.semaine1}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.semaine2}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.semaine3}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.semaine4}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.semaine5}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-4 text-base">{row.data.total}</TableCell>
                     </TableRow>
                   )
                 })}
@@ -464,17 +464,17 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent">
-                  <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
+                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent h-14">
+                  <TableHead className="w-[180px] font-bold text-foreground">Action</TableHead>
                   {monthLabels.map((month) => (
-                    <TableHead key={month} className="text-center text-xs font-bold text-foreground">
+                    <TableHead key={month} className="text-center text-xs font-bold text-foreground min-w-[45px]">
                       {month.slice(0, 3)}
                     </TableHead>
                   ))}
-                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary">Total</TableHead>
+                  <TableHead className="text-center font-bold bg-primary/10 dark:bg-primary/20 text-primary min-w-[60px]">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -516,22 +516,22 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   return (
                     <TableRow 
                       key={row.label}
-                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200`}
+                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200 h-14`}
                     >
-                      <TableCell className={`font-semibold py-3 ${colors.label}`}>{row.label}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.janvier}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.fevrier}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.mars}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.avril}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.mai}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.juin}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.juillet}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.aout}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.septembre}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.octobre}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.novembre}</TableCell>
-                      <TableCell className="text-center py-3">{row.data.decembre}</TableCell>
-                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-3">{row.data.total}</TableCell>
+                      <TableCell className={`font-semibold py-4 text-sm ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.janvier}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.fevrier}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.mars}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.avril}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.mai}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.juin}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.juillet}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.aout}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.septembre}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.octobre}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.novembre}</TableCell>
+                      <TableCell className="text-center py-4 text-base font-medium">{row.data.decembre}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-4 text-base">{row.data.total}</TableCell>
                     </TableRow>
                   )
                 })}
