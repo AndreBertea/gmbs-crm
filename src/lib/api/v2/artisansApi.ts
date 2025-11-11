@@ -758,4 +758,165 @@ export const artisansApi = {
       };
     });
   },
+
+  /**
+   * Récupère les 5 dernières interventions d'un artisan avec leurs marges
+   * @param artisanId - ID de l'artisan
+   * @param limit - Nombre d'interventions à récupérer (défaut: 5)
+   * @returns Liste des interventions avec id_inter, date et marge
+   */
+  async getRecentInterventionsByArtisanWithMargins(
+    artisanId: string,
+    limit: number = 5
+  ): Promise<Array<{
+    id: string;
+    id_inter: string | null;
+    date: string;
+    marge: number; // Somme des coûts de type 'marge'
+  }>> {
+    if (!artisanId) {
+      throw new Error("artisanId is required");
+    }
+
+    // Récupérer les interventions de l'artisan via intervention_artisans
+    const { data: interventionArtisans, error: joinError } = await supabase
+      .from("intervention_artisans")
+      .select(
+        `
+        intervention_id,
+        interventions!inner (
+          id,
+          id_inter,
+          date,
+          is_active,
+          intervention_costs (
+            cost_type,
+            amount
+          )
+        )
+        `
+      )
+      .eq("artisan_id", artisanId);
+
+    if (joinError) {
+      throw new Error(`Erreur lors de la récupération des interventions: ${joinError.message}`);
+    }
+
+    if (!interventionArtisans || interventionArtisans.length === 0) {
+      return [];
+    }
+
+    // Traiter les interventions et calculer les marges
+    const interventionsWithMargins = interventionArtisans
+      .map((ia: any) => {
+        const intervention = ia.interventions;
+        if (!intervention || !intervention.is_active) {
+          return null;
+        }
+
+        // Calculer la marge (somme des coûts de type 'marge')
+        let marge = 0;
+        if (intervention.intervention_costs && Array.isArray(intervention.intervention_costs)) {
+          intervention.intervention_costs.forEach((cost: any) => {
+            if (cost.cost_type === "marge" && cost.amount !== null && cost.amount !== undefined) {
+              marge += Number(cost.amount);
+            }
+          });
+        }
+
+        return {
+          id: intervention.id,
+          id_inter: intervention.id_inter,
+          date: intervention.date,
+          marge,
+        };
+      })
+      .filter((item: any) => item !== null)
+      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, limit);
+
+    return interventionsWithMargins;
+  },
+
+  /**
+   * Récupère les artisans d'un statut avec leurs 5 dernières interventions et marges
+   * @param gestionnaireId - ID du gestionnaire
+   * @param statusLabel - Label du statut (ex: "Expert", "Confirmé", etc.)
+   * @returns Liste des artisans avec leurs interventions récentes
+   */
+  async getArtisansByStatusWithRecentInterventions(
+    gestionnaireId: string,
+    statusLabel: string
+  ): Promise<Array<{
+    artisan_id: string;
+    artisan_nom: string;
+    artisan_prenom: string;
+    recent_interventions: Array<{
+      id: string;
+      id_inter: string | null;
+      date: string;
+      marge: number;
+    }>;
+  }>> {
+    if (!gestionnaireId) {
+      throw new Error("gestionnaireId is required");
+    }
+    if (!statusLabel) {
+      throw new Error("statusLabel is required");
+    }
+
+    // Récupérer les artisans du gestionnaire avec le statut correspondant
+    const { data: artisans, error: artisansError } = await supabase
+      .from("artisans")
+      .select(
+        `
+        id,
+        nom,
+        prenom,
+        status:artisan_statuses(id, code, label)
+        `
+      )
+      .eq("gestionnaire_id", gestionnaireId)
+      .eq("is_active", true);
+
+    if (artisansError) {
+      throw new Error(`Erreur lors de la récupération des artisans: ${artisansError.message}`);
+    }
+
+    if (!artisans || artisans.length === 0) {
+      return [];
+    }
+
+    // Filtrer les artisans par statut label
+    const artisansByStatus = artisans.filter((artisan: any) => {
+      const status = artisan.status;
+      return status && status.label === statusLabel;
+    });
+
+    if (artisansByStatus.length === 0) {
+      return [];
+    }
+
+    // Pour chaque artisan, récupérer ses 5 dernières interventions avec marges
+    const artisansWithInterventions = await Promise.all(
+      artisansByStatus.map(async (artisan: any) => {
+        const recentInterventions = await this.getRecentInterventionsByArtisanWithMargins(
+          artisan.id,
+          5
+        );
+
+        return {
+          artisan_id: artisan.id,
+          artisan_nom: artisan.nom || "",
+          artisan_prenom: artisan.prenom || "",
+          recent_interventions: recentInterventions,
+        };
+      })
+    );
+
+    // Filtrer les artisans qui ont au moins une intervention
+    return artisansWithInterventions.filter(
+      (artisan) => artisan.recent_interventions.length > 0
+    );
+  },
 };

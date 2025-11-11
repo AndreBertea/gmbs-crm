@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { InterventionStatsBarChart } from "@/components/dashboard/intervention-stats-barchart"
 import { ArtisanStatsBarChart } from "@/components/dashboard/artisan-stats-barchart"
 import { MarginStatsCard } from "@/components/dashboard/margin-stats-card"
@@ -15,6 +15,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { Plus } from "lucide-react"
 import { interventionsApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
+import { useRevealTransition } from "@/hooks/useRevealTransition"
 
 type PeriodType = "week" | "month" | "year"
 
@@ -26,6 +27,19 @@ export default function DashboardPage() {
   const [isMounted, setIsMounted] = useState(false)
   const [totalInterventions, setTotalInterventions] = useState<number | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [showTransition, setShowTransition] = useState(false)
+  
+  // Références pour l'animation
+  const dashboardContentRef = useRef<HTMLDivElement>(null)
+  const loginIframeRef = useRef<HTMLIFrameElement>(null)
+  
+  // Hook pour l'animation de transition
+  const {
+    isAnimating,
+    circleSizeMotion,
+    buttonPosition,
+    startAnimationFromPosition,
+  } = useRevealTransition()
 
   // Charger depuis localStorage après le montage côté client
   useEffect(() => {
@@ -35,6 +49,81 @@ export default function DashboardPage() {
       setPeriodType(saved as PeriodType)
     }
   }, [])
+
+  // Détecter la transition depuis login et démarrer l'animation
+  useEffect(() => {
+    if (!isMounted) return
+
+    const transitionData = sessionStorage.getItem('revealTransition')
+    if (transitionData) {
+      try {
+        const data = JSON.parse(transitionData)
+        if (data.from === 'login' && Date.now() - data.timestamp < 5000) {
+          setShowTransition(true)
+          sessionStorage.removeItem('revealTransition')
+          setTimeout(() => {
+            startAnimationFromPosition(data.buttonPosition)
+          }, 100)
+        }
+      } catch (e) {
+        console.error('Erreur lors de la lecture des données de transition:', e)
+        sessionStorage.removeItem('revealTransition')
+      }
+    }
+  }, [isMounted, startAnimationFromPosition])
+
+  // Appliquer le clipPath au contenu dashboard pendant l'animation
+  useEffect(() => {
+    if (!isAnimating || !buttonPosition || !dashboardContentRef.current) return
+
+    const unsubscribe = circleSizeMotion.on('change', (size: number) => {
+      if (dashboardContentRef.current) {
+        const clipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+        const element = dashboardContentRef.current
+        element.style.clipPath = clipPath
+        ;(element.style as any).webkitClipPath = clipPath
+      }
+    })
+
+    return () => unsubscribe()
+  }, [isAnimating, buttonPosition, circleSizeMotion])
+
+  // Appliquer le mask inversé à l'iframe login pendant l'animation
+  useEffect(() => {
+    if (!isAnimating || !buttonPosition || !loginIframeRef.current) return
+
+    const unsubscribe = circleSizeMotion.on('change', (size: number) => {
+      if (loginIframeRef.current) {
+        const mask = size === 0
+          ? 'black' // Tout visible au début
+          : `radial-gradient(circle ${size}px at ${buttonPosition.x}px ${buttonPosition.y}px, transparent ${size}px, black ${size + 0.1}px)`
+        const element = loginIframeRef.current
+        element.style.mask = mask
+        ;(element.style as any).webkitMask = mask
+      }
+    })
+
+    return () => unsubscribe()
+  }, [isAnimating, buttonPosition, circleSizeMotion])
+
+  // Nettoyer après la fin de l'animation (3 secondes)
+  useEffect(() => {
+    if (!isAnimating) return
+
+    const timer = setTimeout(() => {
+      if (dashboardContentRef.current) {
+        const element = dashboardContentRef.current
+        element.style.clipPath = 'none'
+        ;(element.style as any).webkitClipPath = 'none'
+      }
+      if (loginIframeRef.current) {
+        loginIframeRef.current.style.display = 'none'
+      }
+      setShowTransition(false)
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [isAnimating])
 
   // Sauvegarder dans localStorage quand la période change
   useEffect(() => {
@@ -172,10 +261,28 @@ export default function DashboardPage() {
   }, [userId, period.startDate, period.endDate])
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div className="flex flex-col min-h-screen">
-          <div className="flex-1 p-6 space-y-6">
+    <>
+      {/* Iframe login pour l'animation de transition */}
+      {showTransition && (
+        <iframe
+          ref={loginIframeRef}
+          src="/login"
+          className="fixed inset-0 w-full h-full border-none pointer-events-none z-[90]"
+          style={{
+            mask: 'black',
+          } as React.CSSProperties & { WebkitMask?: string }}
+          aria-hidden="true"
+          title="Login transition"
+        />
+      )}
+
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div 
+            ref={dashboardContentRef}
+            className="flex flex-col min-h-screen relative z-10"
+          >
+            <div className="flex-1 p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
@@ -290,5 +397,6 @@ export default function DashboardPage() {
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
+    </>
   )
 }

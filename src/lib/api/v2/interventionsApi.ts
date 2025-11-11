@@ -1784,7 +1784,7 @@ export const interventionsApi = {
    * @param limit - Nombre d'interventions à récupérer (défaut: 10)
    * @param startDate - Date de début (optionnelle)
    * @param endDate - Date de fin (optionnelle)
-   * @returns Liste des interventions avec leurs informations de base
+   * @returns Liste des interventions avec leurs informations de base et coûts
    */
   async getRecentInterventionsByUser(
     userId: string,
@@ -1800,6 +1800,12 @@ export const interventionsApi = {
     status: { label: string; code: string } | null;
     adresse: string | null;
     ville: string | null;
+    costs: {
+      sst?: number;
+      materiel?: number;
+      intervention?: number;
+      marge?: number;
+    };
   }>> {
     if (!userId) {
       throw new Error("userId is required");
@@ -1816,7 +1822,11 @@ export const interventionsApi = {
         date,
         adresse,
         ville,
-        status:intervention_statuses(id, code, label)
+        status:intervention_statuses(id, code, label),
+        intervention_costs (
+          cost_type,
+          amount
+        )
         `
       )
       .eq("assigned_user_id", userId)
@@ -1842,15 +1852,32 @@ export const interventionsApi = {
       throw new Error(`Erreur lors de la récupération des interventions récentes: ${error.message}`);
     }
 
-    return (data || []).map((item: any) => ({
-      id: item.id,
-      id_inter: item.id_inter,
-      due_date: item.due_date,
-      date_prevue: item.date_prevue,
-      date: item.date,
-      status: item.status ? { label: item.status.label, code: item.status.code } : null,
-      adresse: item.adresse,
-      ville: item.ville,
-    }));
+    return (data || []).map((item: any) => {
+      // Grouper les coûts par type
+      const costs: { sst?: number; materiel?: number; intervention?: number; marge?: number } = {};
+      if (item.intervention_costs && Array.isArray(item.intervention_costs)) {
+        item.intervention_costs.forEach((cost: any) => {
+          const costType = cost.cost_type as "sst" | "materiel" | "intervention" | "marge";
+          if (costType && cost.amount !== null && cost.amount !== undefined) {
+            if (costs[costType] === undefined) {
+              costs[costType] = 0;
+            }
+            costs[costType] = (costs[costType] || 0) + Number(cost.amount);
+          }
+        });
+      }
+
+      return {
+        id: item.id,
+        id_inter: item.id_inter,
+        due_date: item.due_date,
+        date_prevue: item.date_prevue,
+        date: item.date,
+        status: item.status ? { label: item.status.label, code: item.status.code } : null,
+        adresse: item.adresse,
+        ville: item.ville,
+        costs,
+      };
+    });
   },
 };

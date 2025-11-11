@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
-import { Loader2, Calendar, MapPin } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import Link from "next/link"
-import { Plus, AlertCircle } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { INTERVENTION_STATUS_COLORS, getInterventionStatusColor } from "@/config/status-colors"
+import { getInterventionStatusColor } from "@/config/status-colors"
 
 interface InterventionStatsBarChartProps {
   period?: {
@@ -26,7 +26,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
-  const [recentInterventions, setRecentInterventions] = useState<Array<{
+  const [interventionsByStatus, setInterventionsByStatus] = useState<Map<string, Array<{
     id: string;
     id_inter: string | null;
     due_date: string | null;
@@ -35,10 +35,15 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     status: { label: string; code: string } | null;
     adresse: string | null;
     ville: string | null;
-  }>>([])
+    costs: {
+      sst?: number;
+      materiel?: number;
+      intervention?: number;
+      marge?: number;
+    };
+  }>>>(new Map())
+  const [hoveredStatus, setHoveredStatus] = useState<string | null>(null)
   const router = useRouter()
-  const [popoverOpen, setPopoverOpen] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
 
   // Charger l'utilisateur actuel
   useEffect(() => {
@@ -114,15 +119,42 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
           endDate = endDate || endOfMonth.toISOString()
         }
 
-        // Charger les stats et les interventions récentes en parallèle
-        const [statsData, recentInterventionsData] = await Promise.all([
+        // Charger les stats et toutes les interventions récentes avec coûts
+        const [statsData, allInterventionsData] = await Promise.all([
           interventionsApi.getStatsByUser(userId, startDate, endDate),
-          interventionsApi.getRecentInterventionsByUser(userId, 10, startDate, endDate).catch(() => [])
+          interventionsApi.getRecentInterventionsByUser(userId, 100, startDate, endDate).catch(() => [])
         ])
 
         if (!cancelled) {
           setStats(statsData)
-          setRecentInterventions(recentInterventionsData)
+          
+          // Grouper les interventions par statut
+          type InterventionWithCosts = {
+            id: string;
+            id_inter: string | null;
+            due_date: string | null;
+            date_prevue: string | null;
+            date: string;
+            status: { label: string; code: string } | null;
+            adresse: string | null;
+            ville: string | null;
+            costs: {
+              sst?: number;
+              materiel?: number;
+              intervention?: number;
+              marge?: number;
+            };
+          }
+          const groupedByStatus = new Map<string, InterventionWithCosts[]>()
+          allInterventionsData.forEach((intervention: InterventionWithCosts) => {
+            const statusLabel = intervention.status?.label || "Sans statut"
+            if (!groupedByStatus.has(statusLabel)) {
+              groupedByStatus.set(statusLabel, [])
+            }
+            groupedByStatus.get(statusLabel)!.push(intervention)
+          })
+          
+          setInterventionsByStatus(groupedByStatus)
           setLoading(false)
         }
       } catch (err: any) {
@@ -140,9 +172,6 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     }
   }, [userId, period?.startDate, period?.endDate])
 
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   // Statuts fondamentaux à afficher
   const fundamentalStatuses = ["Demandé", "Inter en cours", "Visite technique", "Accepté", "Check"]
@@ -247,21 +276,85 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     })
   }
 
+  const formatCurrency = (amount: number | undefined) => {
+    if (amount === undefined || amount === null) return null
+    return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount)
+  }
+
+  // Composant pour afficher les interventions dans le HoverCard avec style Status Indicators
+  const StatusIndicatorContent = ({ statusLabel }: { statusLabel: string }) => {
+    const interventions = interventionsByStatus.get(statusLabel) || []
+    const statusColor = getInterventionStatusColor(statusLabel) || "hsl(var(--primary))"
+
+    if (interventions.length === 0) {
+      return (
+        <div className="text-sm text-muted-foreground">
+          Aucune intervention pour ce statut
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-2">
+        <h4 className="font-semibold text-sm mb-2">{statusLabel}</h4>
+        <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+          {interventions.slice(0, 10).map((intervention) => {
+            const totalCost = 
+              (intervention.costs.sst || 0) +
+              (intervention.costs.materiel || 0) +
+              (intervention.costs.intervention || 0) +
+              (intervention.costs.marge || 0)
+
+            return (
+              <div
+                key={intervention.id}
+                className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
+                onClick={() => router.push(`/interventions/${intervention.id}`)}
+              >
+                <div
+                  className="h-2 w-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: statusColor }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">
+                    {intervention.id_inter || "N/A"}
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    {totalCost > 0 && (
+                      <div>
+                        Total: {formatCurrency(totalCost)}
+                        {(intervention.costs.sst || intervention.costs.materiel || intervention.costs.intervention || intervention.costs.marge) && (
+                          <span className="ml-2">
+                            (
+                            {intervention.costs.sst && `SST: ${formatCurrency(intervention.costs.sst)}`}
+                            {intervention.costs.materiel && `${intervention.costs.sst ? ", " : ""}Mat: ${formatCurrency(intervention.costs.materiel)}`}
+                            {intervention.costs.intervention && `${intervention.costs.sst || intervention.costs.materiel ? ", " : ""}Inter: ${formatCurrency(intervention.costs.intervention)}`}
+                            {intervention.costs.marge && `${intervention.costs.sst || intervention.costs.materiel || intervention.costs.intervention ? ", " : ""}Marge: ${formatCurrency(intervention.costs.marge)}`}
+                            )
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <Popover modal={false} open={isMounted ? popoverOpen : false} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger 
-            asChild
-            onMouseEnter={() => setTimeout(() => setPopoverOpen(true), 150)}
-            onMouseLeave={() => setTimeout(() => setPopoverOpen(false), 200)}
-          >
-            <Card 
-              className="border-border/30 shadow-sm/50 cursor-pointer transition-shadow hover:shadow-md"
-            >
-              <CardHeader>
-                <CardTitle>Mes interventions</CardTitle>
-              </CardHeader>
+        <Card 
+          className="border-border/30 shadow-sm/50"
+        >
+          <CardHeader>
+            <CardTitle>Mes interventions</CardTitle>
+          </CardHeader>
           <CardContent className="px-2 pt-2">
             <div className="w-full overflow-x-auto">
               <ResponsiveContainer width="100%" height={350}>
@@ -280,36 +373,60 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                     tickLine={false}
                     axisLine={false}
                   />
-                <Tooltip
-                  content={() => null}
-                  cursor={false}
-                />
-               <Bar
-                  dataKey="value"
-                  radius={[0, 4, 4, 0]}
-                  label={{ position: "right", fill: "#888888", fontSize: 12 }}
-                  onClick={(data: any, index: number) => {
-                    const clickedBar = chartData[index]
-                    if (clickedBar?.isCheck) {
-                      sessionStorage.setItem('pending-intervention-filter', JSON.stringify({
-                        property: "isCheck",
-                        operator: "eq",
-                        value: true
-                      }))
-                      router.push("/interventions")
-                    }
-                  }}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={getInterventionStatusColor(entry.name) || "hsl(var(--primary))"}
-                      style={{ cursor: entry.isCheck ? "pointer" : "default" }}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                  <Tooltip
+                    content={() => null}
+                    cursor={false}
+                  />
+                  <Bar
+                    dataKey="value"
+                    radius={[0, 4, 4, 0]}
+                    label={{ position: "right", fill: "#888888", fontSize: 12 }}
+                    onMouseEnter={(data: any, index: number) => {
+                      const statusLabel = chartData[index]?.name
+                      if (statusLabel && (interventionsByStatus.get(statusLabel) || []).length > 0) {
+                        setHoveredStatus(statusLabel)
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredStatus(null)
+                    }}
+                    onClick={(data: any, index: number) => {
+                      const clickedBar = chartData[index]
+                      if (clickedBar?.isCheck) {
+                        sessionStorage.setItem('pending-intervention-filter', JSON.stringify({
+                          property: "isCheck",
+                          operator: "eq",
+                          value: true
+                        }))
+                        router.push("/interventions")
+                      }
+                    }}
+                  >
+                    {chartData.map((entry, index) => {
+                      const statusColor = getInterventionStatusColor(entry.name) || "hsl(var(--primary))"
+                      const isHovered = hoveredStatus === entry.name
+                      return (
+                        <HoverCard key={`hover-${index}`} open={isHovered} openDelay={200} closeDelay={100}>
+                          <HoverCardTrigger asChild>
+                            <Cell 
+                              fill={statusColor}
+                              style={{ cursor: "pointer", opacity: isHovered ? 0.9 : 1 }}
+                            />
+                          </HoverCardTrigger>
+                          <HoverCardContent 
+                            className="w-96 z-50 max-h-[500px] overflow-y-auto" 
+                            side="right"
+                            align="start"
+                            sideOffset={8}
+                          >
+                            <StatusIndicatorContent statusLabel={entry.name} />
+                          </HoverCardContent>
+                        </HoverCard>
+                      )
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
 
             {/* Ligne pour les interventions à checker */}
@@ -339,71 +456,6 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
             )}
           </CardContent>
         </Card>
-          </PopoverTrigger>
-          <PopoverContent 
-            className="w-96 max-h-[500px] overflow-y-auto" 
-            align="start"
-            sideOffset={8}
-          >
-            <div 
-              className="space-y-3"
-              onMouseEnter={() => setPopoverOpen(true)}
-              onMouseLeave={() => setPopoverOpen(false)}
-            >
-              <h4 className="font-semibold text-sm mb-2">Interventions récentes (par due_date)</h4>
-              {recentInterventions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune intervention récente</p>
-              ) : (
-                <div className="space-y-2">
-                  {recentInterventions.map((intervention) => (
-                    <div
-                      key={intervention.id}
-                      className="p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/interventions/${intervention.id}`)}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-semibold text-muted-foreground">
-                              {intervention.id_inter || "N/A"}
-                            </span>
-                            {intervention.status && (
-                              <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                                {intervention.status.label}
-                              </span>
-                            )}
-                          </div>
-                          {intervention.adresse && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                              <MapPin className="h-3 w-3" />
-                              <span className="truncate">
-                                {intervention.adresse}
-                                {intervention.ville && `, ${intervention.ville}`}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            {intervention.due_date && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                <span>Due: {formatDate(intervention.due_date)}</span>
-                              </div>
-                            )}
-                            {intervention.date_prevue && (
-                              <div className="flex items-center gap-1">
-                                <span>Prévue: {formatDate(intervention.date_prevue)}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem asChild>
