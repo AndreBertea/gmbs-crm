@@ -876,7 +876,9 @@ export const artisansApi = {
     gestionnaireId: string,
     statusLabel: string,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
+    maxArtisans: number = 3,
+    maxInterventions: number = 3
   ): Promise<Array<{
     artisan_id: string;
     artisan_nom: string;
@@ -933,15 +935,15 @@ export const artisansApi = {
       return [];
     }
 
-    // Limiter aux 5 derniers artisans insérés par statut
-    const top5ArtisansByStatus = artisansByStatus.slice(0, 5);
+    // Limiter aux maxArtisans derniers artisans insérés par statut
+    const topArtisansByStatus = artisansByStatus.slice(0, maxArtisans);
 
-    // Pour chaque artisan, récupérer ses 5 dernières interventions avec marges (filtrées par période si fournie)
+    // Pour chaque artisan, récupérer ses maxInterventions dernières interventions avec marges (filtrées par période si fournie)
     const artisansWithInterventions = await Promise.all(
-      top5ArtisansByStatus.map(async (artisan: any) => {
+      topArtisansByStatus.map(async (artisan: any) => {
         const recentInterventions = await this.getRecentInterventionsByArtisanWithMargins(
           artisan.id,
-          5,
+          maxInterventions,
           startDate,
           endDate
         );

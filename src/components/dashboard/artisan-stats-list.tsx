@@ -22,10 +22,35 @@ interface ArtisanStatsListProps {
   }
 }
 
+type ArtisanHoverData = Array<{
+  artisan_id: string;
+  artisan_nom: string;
+  artisan_prenom: string;
+  recent_interventions: Array<{
+    id: string;
+    id_inter: string | null;
+    date: string;
+    marge: number;
+    status_label: string | null;
+    status_color: string | null;
+    due_date: string | null;
+    metier_label: string | null;
+  }>;
+}>
+
+type DossiersACompleterData = Array<{
+  artisan_id: string;
+  artisan_nom: string;
+  artisan_prenom: string;
+}>
+
 export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
   const [stats, setStats] = useState<ArtisanStatsByStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hoverCardData, setHoverCardData] = useState<Map<string, ArtisanHoverData>>(new Map())
+  const [dossiersData, setDossiersData] = useState<DossiersACompleterData | null>(null)
+  const [loadingHoverData, setLoadingHoverData] = useState(false)
   const router = useRouter()
   const artisanModal = useArtisanModal()
   const { open: openArtisanModal } = artisanModal
@@ -75,6 +100,76 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
       cancelled = true
     }
   }, [userId, isLoadingUser, period?.startDate, period?.endDate])
+
+  // Précharger toutes les données HoverCard une seule fois après le chargement des stats
+  useEffect(() => {
+    if (!userId || !stats?.by_status_label || loading) return
+
+    let cancelled = false
+
+    const loadAllHoverData = async () => {
+      try {
+        setLoadingHoverData(true)
+
+        // Charger toutes les données en parallèle
+        const statusLabels = Object.keys(stats.by_status_label)
+        const dataMap = new Map<string, ArtisanHoverData>()
+
+        // Charger les données pour chaque statut en parallèle
+        await Promise.all(
+          statusLabels.map(async (label) => {
+            try {
+              const data = await artisansApi.getArtisansByStatusWithRecentInterventions(
+                userId,
+                label,
+                period?.startDate,
+                period?.endDate
+              )
+              if (!cancelled) {
+                dataMap.set(label, data)
+              }
+            } catch (err) {
+              if (process.env.NODE_ENV === 'development') {
+                console.error(`Erreur lors du chargement des données pour ${label}:`, err)
+              }
+            }
+          })
+        )
+
+        // Charger les dossiers à compléter si nécessaire
+        if (stats.dossiers_a_completer && stats.dossiers_a_completer > 0) {
+          try {
+            const dossiers = await artisansApi.getArtisansWithDossiersACompleter(userId)
+            if (!cancelled) {
+              setDossiersData(dossiers)
+            }
+          } catch (err) {
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Erreur lors du chargement des dossiers à compléter:', err)
+            }
+          }
+        }
+
+        if (!cancelled) {
+          setHoverCardData(dataMap)
+          setLoadingHoverData(false)
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Erreur lors du chargement des données HoverCard:', err)
+          }
+          setLoadingHoverData(false)
+        }
+      }
+    }
+
+    loadAllHoverData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId, stats, period?.startDate, period?.endDate, loading])
 
 
   // Préparer les données pour la liste (statuts avec nombre > 0)
@@ -175,78 +270,19 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
   // Composant pour afficher les artisans dans le HoverCard avec style Status Indicators
   const ArtisanStatusContent = ({ 
     statusLabel,
+    artisansData,
     onOpenArtisan,
     onOpenIntervention 
   }: { 
     statusLabel: string
+    artisansData: ArtisanHoverData | null
     onOpenArtisan: (id: string) => void
     onOpenIntervention: (id: string) => void
   }) => {
-    const [artisansData, setArtisansData] = useState<Array<{
-      artisan_id: string;
-      artisan_nom: string;
-      artisan_prenom: string;
-      recent_interventions: Array<{
-        id: string;
-        id_inter: string | null;
-        date: string;
-        marge: number;
-        status_label: string | null;
-        status_color: string | null;
-        due_date: string | null;
-        metier_label: string | null;
-      }>;
-    }> | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    // Charger les données au montage du composant avec période
-    useEffect(() => {
-      if (!userId || !statusLabel) return
-
-      let cancelled = false
-
-      const loadData = async () => {
-        try {
-          setLoading(true)
-          setError(null)
-          const data = await artisansApi.getArtisansByStatusWithRecentInterventions(
-            userId, 
-            statusLabel,
-            period?.startDate,  // Passer la période
-            period?.endDate     // Passer la période
-          )
-          if (!cancelled) {
-            setArtisansData(data)
-            setLoading(false)
-          }
-        } catch (err: any) {
-          if (!cancelled) {
-            setError(err.message || "Erreur lors du chargement")
-            setLoading(false)
-          }
-        }
-      }
-
-      loadData()
-
-      return () => {
-        cancelled = true
-      }
-    }, [userId, statusLabel, period?.startDate, period?.endDate])
-
-    if (loading) {
+    if (loadingHoverData) {
       return (
         <div className="flex items-center justify-center p-4">
           <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
-        </div>
-      )
-    }
-
-    if (error) {
-      return (
-        <div className="text-sm text-destructive p-2">
-          Erreur de chargement
         </div>
       )
     }
@@ -327,60 +363,16 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
 
   // Composant pour afficher les artisans avec dossiers à compléter dans le HoverCard
   const DossiersACompleterContent = ({ 
+    artisansData,
     onOpenArtisan 
   }: { 
+    artisansData: DossiersACompleterData | null
     onOpenArtisan: (id: string) => void 
   }) => {
-    const [artisansData, setArtisansData] = useState<Array<{
-      artisan_id: string;
-      artisan_nom: string;
-      artisan_prenom: string;
-    }> | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    // Charger les données au montage du composant
-    useEffect(() => {
-      if (!userId) return
-
-      let cancelled = false
-
-      const loadData = async () => {
-        try {
-          setLoading(true)
-          setError(null)
-          const data = await artisansApi.getArtisansWithDossiersACompleter(userId)
-          if (!cancelled) {
-            setArtisansData(data)
-            setLoading(false)
-          }
-        } catch (err: any) {
-          if (!cancelled) {
-            setError(err.message || "Erreur lors du chargement")
-            setLoading(false)
-          }
-        }
-      }
-
-      loadData()
-
-      return () => {
-        cancelled = true
-      }
-    }, [userId])
-
-    if (loading) {
+    if (loadingHoverData) {
       return (
         <div className="flex items-center justify-center p-4">
           <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
-        </div>
-      )
-    }
-
-    if (error) {
-      return (
-        <div className="text-sm text-destructive p-2">
-          Erreur de chargement
         </div>
       )
     }
@@ -456,6 +448,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
                     >
                       <ArtisanStatusContent 
                         statusLabel={item.label}
+                        artisansData={hoverCardData.get(item.label) || null}
                         onOpenArtisan={openArtisanModal}
                         onOpenIntervention={openInterventionModal}
                       />
@@ -494,7 +487,10 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
                     align="start"
                     sideOffset={8}
                   >
-                    <DossiersACompleterContent onOpenArtisan={openArtisanModal} />
+                    <DossiersACompleterContent 
+                      artisansData={dossiersData}
+                      onOpenArtisan={openArtisanModal} 
+                    />
                   </HoverCardContent>
                 </HoverCard>
               )}

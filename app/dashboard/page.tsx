@@ -83,34 +83,58 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isAnimating || !buttonPosition || !dashboardContentRef.current) return
 
+    // Optimiser avec requestAnimationFrame pour throttler les mises à jour
+    let rafId: number | null = null
     const unsubscribe = circleSizeMotion.on('change', (size: number) => {
-      if (dashboardContentRef.current) {
-        const clipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
-        const element = dashboardContentRef.current
-        element.style.clipPath = clipPath
-        ;(element.style as any).webkitClipPath = clipPath
-      }
+      if (rafId !== null) return // Ignorer si une frame est déjà planifiée
+      
+      rafId = requestAnimationFrame(() => {
+        if (dashboardContentRef.current) {
+          const clipPath = `circle(${size}px at ${buttonPosition.x}px ${buttonPosition.y}px)`
+          const element = dashboardContentRef.current
+          element.style.clipPath = clipPath
+          ;(element.style as any).webkitClipPath = clipPath
+        }
+        rafId = null
+      })
     })
 
-    return () => unsubscribe()
+    return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+      }
+      unsubscribe()
+    }
   }, [isAnimating, buttonPosition, circleSizeMotion])
 
   // Appliquer le mask inversé à l'iframe login pendant l'animation
   useEffect(() => {
     if (!isAnimating || !buttonPosition || !loginIframeRef.current) return
 
+    // Optimiser avec requestAnimationFrame pour throttler les mises à jour
+    let rafId: number | null = null
     const unsubscribe = circleSizeMotion.on('change', (size: number) => {
-      if (loginIframeRef.current) {
-        const mask = size === 0
-          ? 'black' // Tout visible au début
-          : `radial-gradient(circle ${size}px at ${buttonPosition.x}px ${buttonPosition.y}px, transparent ${size}px, black ${size + 0.1}px)`
-        const element = loginIframeRef.current
-        element.style.mask = mask
-        ;(element.style as any).webkitMask = mask
-      }
+      if (rafId !== null) return // Ignorer si une frame est déjà planifiée
+      
+      rafId = requestAnimationFrame(() => {
+        if (loginIframeRef.current) {
+          const mask = size === 0
+            ? 'black' // Tout visible au début
+            : `radial-gradient(circle ${size}px at ${buttonPosition.x}px ${buttonPosition.y}px, transparent ${size}px, black ${size + 0.1}px)`
+          const element = loginIframeRef.current
+          element.style.mask = mask
+          ;(element.style as any).webkitMask = mask
+        }
+        rafId = null
+      })
     })
 
-    return () => unsubscribe()
+    return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
+      }
+      unsubscribe()
+    }
   }, [isAnimating, buttonPosition, circleSizeMotion])
 
   // Nettoyer après la fin de l'animation (3 secondes)
@@ -242,6 +266,7 @@ export default function DashboardPage() {
           <div 
             ref={dashboardContentRef}
             className="flex flex-col min-h-screen relative z-10"
+            style={{ willChange: isAnimating ? 'clip-path' : 'auto' } as React.CSSProperties}
           >
             <div className="flex-1 p-6 space-y-6">
         <div className="flex items-center justify-between">

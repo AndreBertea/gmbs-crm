@@ -42,7 +42,17 @@ export default function LoginPage() {
       const refresh = session?.session?.refresh_token
       const expires_at = session?.session?.expires_at
       if (token && refresh) {
-        await fetch('/api/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ access_token: token, refresh_token: refresh, expires_at }) })
+        const sessionResponse = await fetch('/api/auth/session', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ access_token: token, refresh_token: refresh, expires_at }) 
+        })
+        
+        // Attendre la réponse complète
+        if (!sessionResponse.ok) {
+          throw new Error('Erreur lors de la définition de la session')
+        }
+        
         await fetch('/api/auth/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: 'connected' }) })
       }
       
@@ -62,10 +72,13 @@ export default function LoginPage() {
         }))
       }
       
-      // Naviguer immédiatement vers dashboard
+      // Attendre un court délai pour que le cookie soit propagé
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Utiliser window.location.href au lieu de router.replace pour forcer un rechargement complet
       const url = new URL(window.location.href)
       const redirect = url.searchParams.get('redirect') || '/dashboard'
-      router.replace(redirect)
+      window.location.href = redirect
     } catch (e: any) {
       setError(e?.message || 'Erreur inconnue')
       setLoading(false)
@@ -126,7 +139,7 @@ export default function LoginPage() {
             <CardContent>
               <form className="space-y-4" onSubmit={onSubmit}>
                 <div className="space-y-1">
-                  <label className="text-sm">Email ou nom d&apos;utilisateur</label>
+                  <label className="text-sm">Email ou nom d'utilisateur</label>
                   <Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoFocus required placeholder="ex: alice@gmbs.fr" />
                 </div>
                 <div className="space-y-1">
@@ -139,7 +152,7 @@ export default function LoginPage() {
                 </Button>
               </form>
               <div className="mt-4 text-xs text-muted-foreground">
-                Besoin d&apos;un accès ? Contactez l&apos;administrateur.
+                Besoin d'un accès ? Contactez l'administrateur.
               </div>
               <div className="mt-6 text-xs text-muted-foreground">
                 <Link href="#" className="hover:underline">Mot de passe oublié</Link>

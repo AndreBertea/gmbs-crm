@@ -66,7 +66,9 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
         setLoading(true)
         setError(null)
 
-        console.log(`[WeeklyStatsTable] Chargement stats pour userId: ${userId}, période: ${period}`)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[WeeklyStatsTable] Chargement stats pour userId: ${userId}, période: ${period}`)
+        }
 
         // Vérifier d'abord si l'utilisateur a des interventions (sans filtre de date)
         const { data: allInterventions } = await supabase
@@ -76,9 +78,11 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           .eq("is_active", true)
           .limit(5)
 
-        console.log(`[WeeklyStatsTable] Total interventions pour cet utilisateur (échantillon):`, allInterventions?.length || 0)
-        if (allInterventions && allInterventions.length > 0) {
-          console.log(`[WeeklyStatsTable] Exemples de dates:`, allInterventions.map(i => i.date))
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[WeeklyStatsTable] Total interventions pour cet utilisateur (échantillon):`, allInterventions?.length || 0)
+          if (allInterventions && allInterventions.length > 0) {
+            console.log(`[WeeklyStatsTable] Exemples de dates:`, allInterventions.map(i => i.date))
+          }
         }
 
         // Utiliser la date de début de la période externe si disponible
@@ -90,7 +94,9 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           startDateForQuery
         )
 
-        console.log(`[WeeklyStatsTable] Stats chargées:`, statsData)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[WeeklyStatsTable] Stats chargées:`, statsData)
+        }
 
         if (!cancelled) {
           setStats(statsData)

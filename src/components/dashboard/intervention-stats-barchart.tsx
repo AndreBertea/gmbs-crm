@@ -68,7 +68,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
 
   // Log les statuts chargés depuis la DB pour déboguer
   useEffect(() => {
-    if (dbStatuses.length > 0) {
+    if (dbStatuses.length > 0 && process.env.NODE_ENV === 'development') {
       console.log(`[Dashboard Colors] Statuts chargés depuis la DB (${dbStatuses.length}):`, 
         dbStatuses.map(s => ({ code: s.code, label: s.label, color: s.color }))
       )
@@ -155,7 +155,9 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   const getStatusColor = (statusLabel: string): string => {
     // Cas spécial pour "Check" qui n'est pas dans INTERVENTION_STATUS
     if (statusLabel === "Check") {
-      console.log(`[Dashboard Colors] "Check" → #EF4444 (statut spécial)`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Dashboard Colors] "Check" → #EF4444 (statut spécial)`)
+      }
       return "#EF4444" // Rouge pour Check
     }
 
@@ -163,7 +165,9 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     // Le hook useInterventionStatuses stocke les labels en minuscule dans statusesByLabel
     const dbStatusByLabel = statusesByLabel.get(statusLabel.toLowerCase())
     if (dbStatusByLabel?.color) {
-      console.log(`[Dashboard Colors] "${statusLabel}" → DB (${dbStatusByLabel.code}) → ${dbStatusByLabel.color}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Dashboard Colors] "${statusLabel}" → DB (${dbStatusByLabel.code}) → ${dbStatusByLabel.color}`)
+      }
       return dbStatusByLabel.color
     }
 
@@ -185,7 +189,9 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     if (mappedCode) {
       const dbStatusByCode = statusesByCode.get(mappedCode)
       if (dbStatusByCode?.color) {
-        console.log(`[Dashboard Colors] "${statusLabel}" → DB (${mappedCode}) → ${dbStatusByCode.color}`)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[Dashboard Colors] "${statusLabel}" → DB (${mappedCode}) → ${dbStatusByCode.color}`)
+        }
         return dbStatusByCode.color
       }
     }
@@ -339,7 +345,9 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
         .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
         .map((item) => {
           // Log pour déboguer les couleurs
-          console.log(`[Dashboard Chart] Statut: "${item.name}", Count: ${item.value}, Color: ${item.color}`)
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[Dashboard Chart] Statut: "${item.name}", Count: ${item.value}, Color: ${item.color}`)
+          }
           return item
         })
         .sort((a, b) => {
