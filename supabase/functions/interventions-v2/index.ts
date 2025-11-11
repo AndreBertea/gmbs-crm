@@ -766,24 +766,26 @@ async function handleInterventionCompletionSideEffects(
 }
 
 serve(async (req: Request) => {
-  const startTime = Date.now();
-  const requestId = crypto.randomUUID();
-
-  console.log(JSON.stringify({
-    level: 'info',
-    requestId,
-    method: req.method,
-    url: req.url,
-    timestamp: new Date().toISOString(),
-    message: 'Interventions API request started'
-  }));
-
-  // Handle CORS preflight requests
+  // Handle CORS preflight requests FIRST, before any other code
+  // This MUST be the very first statement to ensure OPTIONS always returns 200
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  let requestId: string | undefined;
+  
   try {
+    requestId = crypto.randomUUID();
+
+    console.log(JSON.stringify({
+      level: 'info',
+      requestId,
+      method: req.method,
+      url: req.url,
+      timestamp: new Date().toISOString(),
+      message: 'Interventions API request started'
+    }));
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -794,7 +796,7 @@ serve(async (req: Request) => {
     
     // Parsing plus robuste pour gérer les sous-ressources
     let resource = pathSegments[pathSegments.length - 1];
-    let resourceId = null;
+    let resourceId: string | null = null;
     
     // Pour /interventions-v2/interventions/{id}/artisans
     if (pathSegments.length >= 4 && pathSegments[pathSegments.length - 3] === 'interventions') {
@@ -1606,15 +1608,15 @@ serve(async (req: Request) => {
     
     console.log(JSON.stringify({
       level: 'error',
-      requestId,
+      requestId: requestId || 'unknown',
       responseTime,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString(),
       message: 'Interventions API request failed'
     }));
 
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
