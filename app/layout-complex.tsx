@@ -12,6 +12,7 @@ import ThemeWrapper from "@/components/layout/theme-wrapper"
 import TopbarGate from "@/components/layout/topbar-gate"
 import { SettingsProvider } from "@/components/layout/settings-provider"
 import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider"
+import { AuthStateListenerProvider } from "@/providers/AuthStateListenerProvider"
 import GlobalShortcuts from "@/components/layout/global-shortcuts"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -151,7 +152,8 @@ export default async function RootLayout({
         </a>
         <SettingsProvider>
           <ReactQueryProvider>
-            <UserStatusProvider>
+            <AuthStateListenerProvider>
+              <UserStatusProvider>
               <InterfaceProvider>
                 <ThemeWrapper>
                   <SidebarProvider>
@@ -175,6 +177,7 @@ export default async function RootLayout({
                 </ThemeWrapper>
               </InterfaceProvider>
             </UserStatusProvider>
+            </AuthStateListenerProvider>
           </ReactQueryProvider>
         </SettingsProvider>
         <Toaster />

@@ -65,15 +65,20 @@ export default function DashboardPage() {
     if (transitionData) {
       try {
         const data = JSON.parse(transitionData)
-        if (data.from === 'login' && Date.now() - data.timestamp < 5000) {
+        const isRecent = Date.now() - data.timestamp < 5000
+        
+        if (data.from === 'login' && isRecent) {
           setShowTransition(true)
-          sessionStorage.removeItem('revealTransition')
           setTimeout(() => {
             startAnimationFromPosition(data.buttonPosition)
           }, 100)
         }
+        // Toujours nettoyer sessionStorage, même si timestamp expiré
+        // Cela évite que des données obsolètes persistent entre sessions
+        sessionStorage.removeItem('revealTransition')
       } catch (e) {
         console.error('Erreur lors de la lecture des données de transition:', e)
+        // Nettoyer en cas d'erreur aussi
         sessionStorage.removeItem('revealTransition')
       }
     }

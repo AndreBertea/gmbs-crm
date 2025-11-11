@@ -6,6 +6,7 @@ import SidebarGate from "@/components/layout/sidebar-gate"
 import ThemeWrapper from "@/components/layout/theme-wrapper"
 import TopbarGate from "@/components/layout/topbar-gate"
 import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider"
+import { AuthStateListenerProvider } from "@/providers/AuthStateListenerProvider"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/toaster"
 import { ModalDisplayProvider } from "@/contexts/ModalDisplayContext"
@@ -212,7 +213,8 @@ export default async function RootLayout({
         <SimpleOptimizedProvider>
           <SettingsProvider>
             <ReactQueryProvider>
-              <ModalDisplayProvider>
+              <AuthStateListenerProvider>
+                <ModalDisplayProvider>
                 <UserStatusProvider>
                   <InterfaceProvider>
                     <RemindersProvider>
@@ -237,6 +239,7 @@ export default async function RootLayout({
                   </InterfaceProvider>
                 </UserStatusProvider>
               </ModalDisplayProvider>
+              </AuthStateListenerProvider>
             </ReactQueryProvider>
           </SettingsProvider>
         </SimpleOptimizedProvider>

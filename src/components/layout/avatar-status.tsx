@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import Link from "next/link"
 import { LogOut, Settings as SettingsIcon, User as UserIcon } from "lucide-react"
 import { supabase } from '@/lib/supabase-client'
+import { useQueryClient } from "@tanstack/react-query"
 
 type Me = {
   id: string
@@ -20,6 +21,7 @@ type Me = {
 }
 
 export function AvatarStatus() {
+  const queryClient = useQueryClient()
   const [me, setMe] = React.useState<Me | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [isMounted, setIsMounted] = React.useState(false)
@@ -30,9 +32,12 @@ export function AvatarStatus() {
 
   const load = React.useCallback(async () => {
     try {
-      const { data: session } = await supabase.auth.getSession()
-      const token = session?.session?.access_token
-      const res = await fetch('/api/auth/me', { cache: 'no-store', headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      // Utiliser directement /api/auth/me qui lit depuis les cookies HTTP-only
+      // Cela garantit que chaque navigateur/fenêtre a sa propre session isolée
+      const res = await fetch('/api/auth/me', { 
+        cache: 'no-store', 
+        credentials: 'include' // Inclure les cookies dans la requête
+      })
       const j = await res.json()
       setMe(j?.user || null)
     } catch {
@@ -49,9 +54,14 @@ export function AvatarStatus() {
   const statusColorClass = status === 'connected' ? 'bg-green-500' : status === 'busy' ? 'bg-orange-500' : status === 'dnd' ? 'bg-red-500' : 'bg-gray-400'
 
   async function setStatus(next: 'connected' | 'busy' | 'dnd' | 'offline') {
-    const { data: session } = await supabase.auth.getSession()
-    const token = session?.session?.access_token
-    await fetch('/api/auth/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ status: next }) })
+    // Les cookies HTTP-only seront automatiquement inclus dans la requête
+    // Pas besoin de récupérer le token depuis localStorage
+    await fetch('/api/auth/status', { 
+      method: 'PATCH', 
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Inclure les cookies dans la requête
+      body: JSON.stringify({ status: next }) 
+    })
     setMe((m) => (m ? { ...m, status: next } : m))
   }
 
@@ -61,8 +71,23 @@ export function AvatarStatus() {
     } catch (error) {
       console.warn('[avatar-status] Failed to set offline status before logout', error)
     }
+    
+    // Invalider et supprimer le cache React Query AVANT la déconnexion
+    queryClient.removeQueries({ queryKey: ["currentUser"] })
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] })
+    
+    // Nettoyer sessionStorage pour l'animation
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('revealTransition')
+    }
+    
+    // Déconnexion Supabase
     await supabase.auth.signOut()
+    
+    // Supprimer les cookies de session
     await fetch('/api/auth/session', { method: 'DELETE' })
+    
+    // Redirection
     window.location.href = '/login'
   }
 

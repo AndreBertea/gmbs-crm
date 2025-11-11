@@ -9,8 +9,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from "@tanstack/react-query"
 
 export default function LoginPage() {
+  const queryClient = useQueryClient()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -56,6 +58,9 @@ export default function LoginPage() {
         await fetch('/api/auth/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: 'connected' }) })
       }
       
+      // Invalider le cache pour forcer un refetch avec le nouvel utilisateur
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] })
+      
       // Calculer la position du bouton AVANT navigation
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect()
@@ -72,12 +77,11 @@ export default function LoginPage() {
         }))
       }
       
-      // Attendre un court délai pour que le cookie soit propagé
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      // Utiliser window.location.href au lieu de router.replace pour forcer un rechargement complet
+      // Naviguer avec un rechargement complet pour garantir que les cookies sont disponibles
       const url = new URL(window.location.href)
       const redirect = url.searchParams.get('redirect') || '/dashboard'
+      // Utiliser window.location.href au lieu de router.replace pour forcer un rechargement complet
+      // Cela garantit que les cookies créés par /api/auth/session sont disponibles pour le middleware
       window.location.href = redirect
     } catch (e: any) {
       setError(e?.message || 'Erreur inconnue')

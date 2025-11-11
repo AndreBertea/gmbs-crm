@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabase, bearerFrom } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: Request) {
   try {
-    // Read token from Authorization header when called from browser
-    const token = bearerFrom(req)
+    // Lire le token depuis le header Authorization OU depuis les cookies HTTP-only
+    // Les cookies sont la source de vérité car ils sont isolés par navigateur/fenêtre
+    // et ne peuvent pas être partagés entre différentes sessions comme localStorage
+    let token = bearerFrom(req)
+    
+    // Si pas de token dans le header, lire depuis les cookies HTTP-only
+    if (!token) {
+      const cookieStore = await cookies()
+      token = cookieStore.get('sb-access-token')?.value || null
+    }
+    
     if (!token) return NextResponse.json({ user: null })
     const supabase = createServerSupabase(token)
 
