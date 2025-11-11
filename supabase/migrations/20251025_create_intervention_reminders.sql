@@ -3,7 +3,7 @@
 -- ========================================
 
 CREATE TABLE IF NOT EXISTS public.intervention_reminders (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   intervention_id uuid NOT NULL REFERENCES public.interventions(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   note text,
