@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 import { remindersApi } from "@/lib/api/v2/reminders"
 import type { InterventionReminder } from "@/lib/api/v2"
-import { supabase } from "@/lib/supabase-client"
 
 const normalizeIdentifier = (input: string): string => {
   return input
@@ -193,25 +192,64 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
   }, [refreshReminders])
 
   // Subscription realtime pour mettre à jour automatiquement tous les composants
+  // IMPORTANT: Ne s'exécute que côté client pour éviter les problèmes SSR/cookies
   useEffect(() => {
-    const channel = supabase
-      .channel("intervention_reminders_realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "*", // INSERT, UPDATE, DELETE
-          schema: "public",
-          table: "intervention_reminders",
-        },
-        () => {
-          // Rafraîchir les reminders quand il y a un changement
-          refreshReminders()
-        },
-      )
-      .subscribe()
+    // Ne s'exécuter que côté client
+    if (typeof window === 'undefined') return
+
+    let mounted = true
+    let channel: { unsubscribe: () => void } | null = null
+
+    const setupRealtime = async () => {
+      try {
+        // Import dynamique pour éviter les problèmes SSR/cookies
+        const { supabase } = await import('@/lib/supabase-client')
+        
+        // Vérifier que l'utilisateur est authentifié avant de souscrire
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session || !mounted) {
+          console.log("[RemindersContext] No session, skipping realtime subscription")
+          return
+        }
+
+        const realtimeChannel = supabase
+          .channel("intervention_reminders_realtime")
+          .on(
+            "postgres_changes",
+            {
+              event: "*", // INSERT, UPDATE, DELETE
+              schema: "public",
+              table: "intervention_reminders",
+            },
+            (payload) => {
+              if (mounted) {
+                console.log("[RemindersContext] Realtime event received:", payload.eventType)
+                // Rafraîchir les reminders quand il y a un changement
+                refreshReminders()
+              }
+            },
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log("[RemindersContext] Realtime subscription active")
+            } else if (status === 'CHANNEL_ERROR') {
+              console.warn("[RemindersContext] Realtime subscription error:", status)
+            }
+          })
+        
+        channel = realtimeChannel
+      } catch (error) {
+        console.warn("[RemindersContext] Failed to setup realtime subscription", error)
+      }
+    }
+
+    setupRealtime()
 
     return () => {
-      channel.unsubscribe()
+      mounted = false
+      if (channel) {
+        channel.unsubscribe()
+      }
     }
   }, [refreshReminders])
 
