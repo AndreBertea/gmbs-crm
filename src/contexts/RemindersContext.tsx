@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 import { remindersApi } from "@/lib/api/v2/reminders"
 import type { InterventionReminder } from "@/lib/api/v2"
+import { supabase } from "@/lib/supabase-client"
 
 const normalizeIdentifier = (input: string): string => {
   return input
@@ -189,6 +190,29 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshReminders()
+  }, [refreshReminders])
+
+  // Subscription realtime pour mettre à jour automatiquement tous les composants
+  useEffect(() => {
+    const channel = supabase
+      .channel("intervention_reminders_realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*", // INSERT, UPDATE, DELETE
+          schema: "public",
+          table: "intervention_reminders",
+        },
+        () => {
+          // Rafraîchir les reminders quand il y a un changement
+          refreshReminders()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
   }, [refreshReminders])
 
   const toggleReminder = useCallback(
