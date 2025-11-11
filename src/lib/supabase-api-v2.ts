@@ -978,7 +978,7 @@ export const interventionsApiV2 = {
 
     const fetchStart = Date.now();
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const raw = await handleResponse(response);
     const fetchDuration = Date.now() - fetchStart;
@@ -1029,7 +1029,7 @@ export const interventionsApiV2 = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const raw = await handleResponse(response);
     const refs = await getReferenceCache();
@@ -1061,7 +1061,7 @@ export const interventionsApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1098,7 +1098,7 @@ export const interventionsApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/${id}`,
       {
         method: "PUT",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1114,7 +1114,7 @@ export const interventionsApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/${id}`,
       {
         method: "DELETE",
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -1130,7 +1130,7 @@ export const interventionsApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/${interventionId}/artisans`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify({
           artisan_id: artisanId,
           role,
@@ -1156,7 +1156,7 @@ export const interventionsApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/${interventionId}/costs`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1179,7 +1179,7 @@ export const interventionsApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/${interventionId}/payments`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1211,7 +1211,7 @@ export const interventionsApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/upsert`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1367,7 +1367,7 @@ export const artisansApiV2 = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const raw = await handleResponse(response);
     console.log("[artisansApiV2.getById] Raw response:", raw);
@@ -1432,7 +1432,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1471,7 +1471,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/upsert`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1491,7 +1491,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${data.artisan_id}/documents`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1508,7 +1508,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${data.artisan_id}/metiers`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1524,7 +1524,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${data.artisan_id}/zones`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1564,7 +1564,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${id}`,
       {
         method: "PUT",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1580,7 +1580,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${id}`,
       {
         method: "DELETE",
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -1596,7 +1596,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${artisanId}/metiers`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify({
           metier_id: metierId,
           is_primary: isPrimary,
@@ -1612,7 +1612,7 @@ export const artisansApiV2 = {
       `${SUPABASE_FUNCTIONS_URL}/artisans-v2/artisans/${artisanId}/zones`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify({
           zone_id: zoneId,
         }),
@@ -1686,7 +1686,7 @@ export const clientsApi = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -1696,7 +1696,7 @@ export const clientsApi = {
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/clients/clients/${id}`,
       {
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -1714,7 +1714,7 @@ export const clientsApi = {
   }): Promise<any> {
     const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/clients/clients`, {
       method: "POST",
-      headers: getHeaders(),
+      headers: await getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -1765,7 +1765,7 @@ export const clientsApi = {
       `${SUPABASE_FUNCTIONS_URL}/clients/clients/${id}`,
       {
         method: "PUT",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1778,7 +1778,7 @@ export const clientsApi = {
       `${SUPABASE_FUNCTIONS_URL}/clients/clients/${id}`,
       {
         method: "DELETE",
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -1810,7 +1810,7 @@ export const documentsApi = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -1823,7 +1823,7 @@ export const documentsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/${id}?entity_type=${entityType}`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -1846,7 +1846,7 @@ export const documentsApi = {
       `${SUPABASE_FUNCTIONS_URL}/documents/documents`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1871,7 +1871,7 @@ export const documentsApi = {
       `${SUPABASE_FUNCTIONS_URL}/documents/documents/upload`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -1897,7 +1897,7 @@ export const documentsApi = {
 
     const response = await fetch(url, {
       method: "PUT",
-      headers: getHeaders(),
+      headers: await getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -1912,7 +1912,7 @@ export const documentsApi = {
 
     const response = await fetch(url, {
       method: "DELETE",
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -1926,7 +1926,7 @@ export const documentsApi = {
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/documents/documents/types`,
       {
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -1964,7 +1964,7 @@ export const commentsApi = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -1974,7 +1974,7 @@ export const commentsApi = {
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/comments/comments/${id}`,
       {
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -1993,7 +1993,7 @@ export const commentsApi = {
       `${SUPABASE_FUNCTIONS_URL}/comments/comments`,
       {
         method: "POST",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -2013,7 +2013,7 @@ export const commentsApi = {
       `${SUPABASE_FUNCTIONS_URL}/comments/comments/${id}`,
       {
         method: "PUT",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -2026,7 +2026,7 @@ export const commentsApi = {
       `${SUPABASE_FUNCTIONS_URL}/comments/comments/${id}`,
       {
         method: "DELETE",
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -2042,7 +2042,7 @@ export const commentsApi = {
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/comments/comments/types`,
       {
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -2069,7 +2069,7 @@ export const commentsApi = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
