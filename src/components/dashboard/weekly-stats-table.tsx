@@ -218,7 +218,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     ]
 
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="border border-border/40 shadow-sm/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -245,7 +245,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/60 dark:bg-muted/40 border-b-2 border-border/50">
+                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent">
                   <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
                   <TableHead className="text-center font-bold text-foreground">Lundi</TableHead>
                   <TableHead className="text-center font-bold text-foreground">Mardi</TableHead>
@@ -260,28 +260,28 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   // Palette de couleurs pour chaque type de ligne
                   const rowColors = {
                     "Devis envoyé": {
-                      bg: "bg-blue-50/50 dark:bg-blue-950/20",
-                      hover: "hover:bg-blue-100/70 dark:hover:bg-blue-950/40",
+                      bg: "bg-blue-50/60 dark:bg-blue-950/30",
+                      hover: "hover:bg-blue-100/80 dark:hover:bg-blue-900/50",
                       label: "text-blue-700 dark:text-blue-300",
-                      border: "border-blue-200/30 dark:border-blue-800/30"
+                      border: "border-blue-400 dark:border-blue-600"
                     },
                     "Inter en cours": {
-                      bg: "bg-amber-50/50 dark:bg-amber-950/20",
-                      hover: "hover:bg-amber-100/70 dark:hover:bg-amber-950/40",
+                      bg: "bg-amber-50/60 dark:bg-amber-950/30",
+                      hover: "hover:bg-amber-100/80 dark:hover:bg-amber-900/50",
                       label: "text-amber-700 dark:text-amber-300",
-                      border: "border-amber-200/30 dark:border-amber-800/30"
+                      border: "border-amber-400 dark:border-amber-600"
                     },
                     "Inter Facturés": {
-                      bg: "bg-green-50/50 dark:bg-green-950/20",
-                      hover: "hover:bg-green-100/70 dark:hover:bg-green-950/40",
+                      bg: "bg-green-50/60 dark:bg-green-950/30",
+                      hover: "hover:bg-green-100/80 dark:hover:bg-green-900/50",
                       label: "text-green-700 dark:text-green-300",
-                      border: "border-green-200/30 dark:border-green-800/30"
+                      border: "border-green-400 dark:border-green-600"
                     },
                     "Nouveaux Artisans": {
-                      bg: "bg-purple-50/50 dark:bg-purple-950/20",
-                      hover: "hover:bg-purple-100/70 dark:hover:bg-purple-950/40",
+                      bg: "bg-purple-50/60 dark:bg-purple-950/30",
+                      hover: "hover:bg-purple-100/80 dark:hover:bg-purple-900/50",
                       label: "text-purple-700 dark:text-purple-300",
-                      border: "border-purple-200/30 dark:border-purple-800/30"
+                      border: "border-purple-400 dark:border-purple-600"
                     }
                   }
                   const colors = rowColors[row.label as keyof typeof rowColors] || {
@@ -294,15 +294,15 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   return (
                     <TableRow 
                       key={row.label}
-                      className={`${colors.bg} ${colors.hover} ${colors.border} border-l-4 transition-colors duration-200`}
+                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200`}
                     >
-                      <TableCell className={`font-semibold ${colors.label}`}>{row.label}</TableCell>
-                      <TableCell className="text-center">{row.data.lundi}</TableCell>
-                      <TableCell className="text-center">{row.data.mardi}</TableCell>
-                      <TableCell className="text-center">{row.data.mercredi}</TableCell>
-                      <TableCell className="text-center">{row.data.jeudi}</TableCell>
-                      <TableCell className="text-center">{row.data.vendredi}</TableCell>
-                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60">{row.data.total}</TableCell>
+                      <TableCell className={`font-semibold py-3 ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.lundi}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.mardi}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.mercredi}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.jeudi}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.vendredi}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-3">{row.data.total}</TableCell>
                     </TableRow>
                   )
                 })}
@@ -328,7 +328,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     const monthName = monthNames[monthStats.month - 1]
 
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="border border-border/40 shadow-sm/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -355,7 +355,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/60 dark:bg-muted/40 border-b-2 border-border/50">
+                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent">
                   <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
                   <TableHead className="text-center font-bold text-foreground">Semaine 1</TableHead>
                   <TableHead className="text-center font-bold text-foreground">Semaine 2</TableHead>
@@ -370,28 +370,28 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   // Palette de couleurs pour chaque type de ligne
                   const rowColors = {
                     "Devis envoyé": {
-                      bg: "bg-blue-50/50 dark:bg-blue-950/20",
-                      hover: "hover:bg-blue-100/70 dark:hover:bg-blue-950/40",
+                      bg: "bg-blue-50/60 dark:bg-blue-950/30",
+                      hover: "hover:bg-blue-100/80 dark:hover:bg-blue-900/50",
                       label: "text-blue-700 dark:text-blue-300",
-                      border: "border-blue-200/30 dark:border-blue-800/30"
+                      border: "border-blue-400 dark:border-blue-600"
                     },
                     "Inter en cours": {
-                      bg: "bg-amber-50/50 dark:bg-amber-950/20",
-                      hover: "hover:bg-amber-100/70 dark:hover:bg-amber-950/40",
+                      bg: "bg-amber-50/60 dark:bg-amber-950/30",
+                      hover: "hover:bg-amber-100/80 dark:hover:bg-amber-900/50",
                       label: "text-amber-700 dark:text-amber-300",
-                      border: "border-amber-200/30 dark:border-amber-800/30"
+                      border: "border-amber-400 dark:border-amber-600"
                     },
                     "Inter Facturés": {
-                      bg: "bg-green-50/50 dark:bg-green-950/20",
-                      hover: "hover:bg-green-100/70 dark:hover:bg-green-950/40",
+                      bg: "bg-green-50/60 dark:bg-green-950/30",
+                      hover: "hover:bg-green-100/80 dark:hover:bg-green-900/50",
                       label: "text-green-700 dark:text-green-300",
-                      border: "border-green-200/30 dark:border-green-800/30"
+                      border: "border-green-400 dark:border-green-600"
                     },
                     "Nouveaux Artisans": {
-                      bg: "bg-purple-50/50 dark:bg-purple-950/20",
-                      hover: "hover:bg-purple-100/70 dark:hover:bg-purple-950/40",
+                      bg: "bg-purple-50/60 dark:bg-purple-950/30",
+                      hover: "hover:bg-purple-100/80 dark:hover:bg-purple-900/50",
                       label: "text-purple-700 dark:text-purple-300",
-                      border: "border-purple-200/30 dark:border-purple-800/30"
+                      border: "border-purple-400 dark:border-purple-600"
                     }
                   }
                   const colors = rowColors[row.label as keyof typeof rowColors] || {
@@ -404,15 +404,15 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   return (
                     <TableRow 
                       key={row.label}
-                      className={`${colors.bg} ${colors.hover} ${colors.border} border-l-4 transition-colors duration-200`}
+                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200`}
                     >
-                      <TableCell className={`font-semibold ${colors.label}`}>{row.label}</TableCell>
-                      <TableCell className="text-center">{row.data.semaine1}</TableCell>
-                      <TableCell className="text-center">{row.data.semaine2}</TableCell>
-                      <TableCell className="text-center">{row.data.semaine3}</TableCell>
-                      <TableCell className="text-center">{row.data.semaine4}</TableCell>
-                      <TableCell className="text-center">{row.data.semaine5}</TableCell>
-                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60">{row.data.total}</TableCell>
+                      <TableCell className={`font-semibold py-3 ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.semaine1}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.semaine2}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.semaine3}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.semaine4}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.semaine5}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-3">{row.data.total}</TableCell>
                     </TableRow>
                   )
                 })}
@@ -440,11 +440,11 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     ]
 
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="border border-border/40 shadow-sm/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Actions de l&apos;année</CardTitle>
+              <CardTitle>Statistiques</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Année {yearStats.year}
               </p>
@@ -467,7 +467,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/60 dark:bg-muted/40 border-b-2 border-border/50">
+                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent">
                   <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
                   {monthLabels.map((month) => (
                     <TableHead key={month} className="text-center text-xs font-bold text-foreground">
@@ -482,28 +482,28 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   // Palette de couleurs pour chaque type de ligne
                   const rowColors = {
                     "Devis envoyé": {
-                      bg: "bg-blue-50/50 dark:bg-blue-950/20",
-                      hover: "hover:bg-blue-100/70 dark:hover:bg-blue-950/40",
+                      bg: "bg-blue-50/60 dark:bg-blue-950/30",
+                      hover: "hover:bg-blue-100/80 dark:hover:bg-blue-900/50",
                       label: "text-blue-700 dark:text-blue-300",
-                      border: "border-blue-200/30 dark:border-blue-800/30"
+                      border: "border-blue-400 dark:border-blue-600"
                     },
                     "Inter en cours": {
-                      bg: "bg-amber-50/50 dark:bg-amber-950/20",
-                      hover: "hover:bg-amber-100/70 dark:hover:bg-amber-950/40",
+                      bg: "bg-amber-50/60 dark:bg-amber-950/30",
+                      hover: "hover:bg-amber-100/80 dark:hover:bg-amber-900/50",
                       label: "text-amber-700 dark:text-amber-300",
-                      border: "border-amber-200/30 dark:border-amber-800/30"
+                      border: "border-amber-400 dark:border-amber-600"
                     },
                     "Inter Facturés": {
-                      bg: "bg-green-50/50 dark:bg-green-950/20",
-                      hover: "hover:bg-green-100/70 dark:hover:bg-green-950/40",
+                      bg: "bg-green-50/60 dark:bg-green-950/30",
+                      hover: "hover:bg-green-100/80 dark:hover:bg-green-900/50",
                       label: "text-green-700 dark:text-green-300",
-                      border: "border-green-200/30 dark:border-green-800/30"
+                      border: "border-green-400 dark:border-green-600"
                     },
                     "Nouveaux Artisans": {
-                      bg: "bg-purple-50/50 dark:bg-purple-950/20",
-                      hover: "hover:bg-purple-100/70 dark:hover:bg-purple-950/40",
+                      bg: "bg-purple-50/60 dark:bg-purple-950/30",
+                      hover: "hover:bg-purple-100/80 dark:hover:bg-purple-900/50",
                       label: "text-purple-700 dark:text-purple-300",
-                      border: "border-purple-200/30 dark:border-purple-800/30"
+                      border: "border-purple-400 dark:border-purple-600"
                     }
                   }
                   const colors = rowColors[row.label as keyof typeof rowColors] || {
@@ -516,22 +516,22 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                   return (
                     <TableRow 
                       key={row.label}
-                      className={`${colors.bg} ${colors.hover} ${colors.border} border-l-4 transition-colors duration-200`}
+                      className={`border-b-0 ${colors.bg} ${colors.hover} border-l-4 ${colors.border} transition-colors duration-200`}
                     >
-                      <TableCell className={`font-semibold ${colors.label}`}>{row.label}</TableCell>
-                      <TableCell className="text-center">{row.data.janvier}</TableCell>
-                      <TableCell className="text-center">{row.data.fevrier}</TableCell>
-                      <TableCell className="text-center">{row.data.mars}</TableCell>
-                      <TableCell className="text-center">{row.data.avril}</TableCell>
-                      <TableCell className="text-center">{row.data.mai}</TableCell>
-                      <TableCell className="text-center">{row.data.juin}</TableCell>
-                      <TableCell className="text-center">{row.data.juillet}</TableCell>
-                      <TableCell className="text-center">{row.data.aout}</TableCell>
-                      <TableCell className="text-center">{row.data.septembre}</TableCell>
-                      <TableCell className="text-center">{row.data.octobre}</TableCell>
-                      <TableCell className="text-center">{row.data.novembre}</TableCell>
-                      <TableCell className="text-center">{row.data.decembre}</TableCell>
-                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60">{row.data.total}</TableCell>
+                      <TableCell className={`font-semibold py-3 ${colors.label}`}>{row.label}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.janvier}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.fevrier}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.mars}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.avril}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.mai}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.juin}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.juillet}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.aout}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.septembre}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.octobre}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.novembre}</TableCell>
+                      <TableCell className="text-center py-3">{row.data.decembre}</TableCell>
+                      <TableCell className="text-center font-bold bg-muted/40 dark:bg-muted/60 py-3">{row.data.total}</TableCell>
                     </TableRow>
                   )
                 })}

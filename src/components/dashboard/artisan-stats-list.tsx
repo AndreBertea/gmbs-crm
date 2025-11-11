@@ -10,6 +10,8 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useArtisanModal } from "@/hooks/useArtisanModal"
+import { useInterventionModal } from "@/hooks/useInterventionModal"
 import { getArtisanStatusStyles } from "@/config/status-colors"
 import { Loader2 as Loader2Icon } from "lucide-react"
 
@@ -25,6 +27,9 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const artisanModal = useArtisanModal()
+  const { open: openArtisanModal } = artisanModal
+  const { open: openInterventionModal } = useInterventionModal()
 
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
@@ -168,7 +173,15 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
   }
 
   // Composant pour afficher les artisans dans le HoverCard avec style Status Indicators
-  const ArtisanStatusContent = ({ statusLabel }: { statusLabel: string }) => {
+  const ArtisanStatusContent = ({ 
+    statusLabel,
+    onOpenArtisan,
+    onOpenIntervention 
+  }: { 
+    statusLabel: string
+    onOpenArtisan: (id: string) => void
+    onOpenIntervention: (id: string) => void
+  }) => {
     const [artisansData, setArtisansData] = useState<Array<{
       artisan_id: string;
       artisan_nom: string;
@@ -178,6 +191,8 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
         id_inter: string | null;
         date: string;
         marge: number;
+        status_label: string | null;
+        status_color: string | null;
       }>;
     }> | null>(null)
     const [loading, setLoading] = useState(false)
@@ -248,7 +263,13 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
         <div className="space-y-3 max-h-[400px] overflow-y-auto">
           {artisansData.map((artisan) => (
             <div key={artisan.artisan_id} className="space-y-1.5">
-              <div className="font-medium text-sm">
+              <div 
+                className="font-medium text-sm cursor-pointer hover:text-primary hover:underline transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenArtisan(artisan.artisan_id)
+                }}
+              >
                 {artisan.artisan_prenom} {artisan.artisan_nom}
               </div>
               {artisan.recent_interventions.length > 0 ? (
@@ -257,7 +278,10 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
                     <div
                       key={intervention.id}
                       className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
-                      onClick={() => router.push(`/interventions/${intervention.id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenIntervention(intervention.id)
+                      }}
                     >
                       <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -265,7 +289,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
                           {intervention.id_inter || "N/A"}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Marge: {formatCurrency(intervention.marge)}
+                          Statut : <span style={{ color: intervention.status_color || "#6366F1" }}>{intervention.status_label || "N/A"}</span> | Marge: {formatCurrency(intervention.marge)}
                         </div>
                       </div>
                     </div>
@@ -284,7 +308,11 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
   }
 
   // Composant pour afficher les artisans avec dossiers à compléter dans le HoverCard
-  const DossiersACompleterContent = () => {
+  const DossiersACompleterContent = ({ 
+    onOpenArtisan 
+  }: { 
+    onOpenArtisan: (id: string) => void 
+  }) => {
     const [artisansData, setArtisansData] = useState<Array<{
       artisan_id: string;
       artisan_nom: string;
@@ -355,7 +383,10 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
             <div
               key={artisan.artisan_id}
               className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
-              onClick={() => router.push(`/artisans/${artisan.artisan_id}`)}
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpenArtisan(artisan.artisan_id)
+              }}
             >
               <div className="h-2 w-2 rounded-full bg-amber-500 flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -405,7 +436,11 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
                       align="start"
                       sideOffset={8}
                     >
-                      <ArtisanStatusContent statusLabel={item.label} />
+                      <ArtisanStatusContent 
+                        statusLabel={item.label}
+                        onOpenArtisan={openArtisanModal}
+                        onOpenIntervention={openInterventionModal}
+                      />
                     </HoverCardContent>
                   </HoverCard>
                 )
@@ -441,7 +476,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
                     align="start"
                     sideOffset={8}
                   >
-                    <DossiersACompleterContent />
+                    <DossiersACompleterContent onOpenArtisan={openArtisanModal} />
                   </HoverCardContent>
                 </HoverCard>
               )}
@@ -450,11 +485,9 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
         </Card>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <ContextMenuItem asChild>
-          <Link href="/artisans/new" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Nouveau Artisan
-          </Link>
+        <ContextMenuItem onClick={() => artisanModal.openNew()} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Nouveau Artisan
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

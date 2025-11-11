@@ -10,9 +10,9 @@ import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Cell } from "rec
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import Link from "next/link"
 import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
+import useModal from "@/hooks/useModal"
 import { getInterventionStatusColor } from "@/config/status-colors"
 import { INTERVENTION_STATUS } from "@/config/interventions"
 import { useInterventionStatuses } from "@/hooks/useInterventionStatuses"
@@ -28,6 +28,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   const [stats, setStats] = useState<InterventionStatsByStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { open: openModal } = useModal()
   const [interventionsByStatus, setInterventionsByStatus] = useState<Map<string, Array<{
     id: string;
     id_inter: string | null;
@@ -633,11 +634,9 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
         </Card>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <ContextMenuItem asChild>
-          <Link href="/interventions/new" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Nouvelle intervention
-          </Link>
+        <ContextMenuItem onClick={() => openModal("new", { content: "new-intervention" })} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Nouvelle intervention
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

@@ -16,6 +16,8 @@ import { Plus } from "lucide-react"
 import { interventionsApi } from "@/lib/api/v2"
 import { useRevealTransition } from "@/hooks/useRevealTransition"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
+import useModal from "@/hooks/useModal"
+import { useArtisanModal } from "@/hooks/useArtisanModal"
 
 type PeriodType = "week" | "month" | "year"
 
@@ -27,6 +29,8 @@ export default function DashboardPage() {
   const [isMounted, setIsMounted] = useState(false)
   const [totalInterventions, setTotalInterventions] = useState<number | null>(null)
   const [showTransition, setShowTransition] = useState(false)
+  const { open: openModal } = useModal()
+  const artisanModal = useArtisanModal()
   
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
@@ -253,11 +257,9 @@ export default function DashboardPage() {
                 </Button>
               </ContextMenuTrigger>
               <ContextMenuContent>
-                <ContextMenuItem asChild>
-                  <Link href="/interventions/new" className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Nouvelle intervention
-                  </Link>
+                <ContextMenuItem onClick={() => openModal("new", { content: "new-intervention" })} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Nouvelle intervention
                 </ContextMenuItem>
               </ContextMenuContent>
             </ContextMenu>
@@ -268,11 +270,9 @@ export default function DashboardPage() {
                 </Button>
               </ContextMenuTrigger>
               <ContextMenuContent>
-                <ContextMenuItem asChild>
-                  <Link href="/artisans/new" className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Nouvel artisan
-                  </Link>
+                <ContextMenuItem onClick={() => artisanModal.openNew()} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Nouvel artisan
                 </ContextMenuItem>
               </ContextMenuContent>
             </ContextMenu>
@@ -340,17 +340,13 @@ export default function DashboardPage() {
     </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <ContextMenuItem asChild>
-          <Link href="/interventions/new" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Nouvelle intervention
-          </Link>
+        <ContextMenuItem onClick={() => openModal("new", { content: "new-intervention" })} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Nouvelle intervention
         </ContextMenuItem>
-        <ContextMenuItem asChild>
-          <Link href="/artisans/new" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Nouvel artisan
-          </Link>
+        <ContextMenuItem onClick={() => artisanModal.openNew()} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Nouvel artisan
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
