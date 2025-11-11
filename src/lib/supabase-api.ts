@@ -324,7 +324,7 @@ export const usersApi = {
   // Récupérer tous les utilisateurs actifs
   async getAll(): Promise<User[]> {
     const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/users/users`, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const result = await handleResponse(response);
     const users = result.data || result;
@@ -343,7 +343,7 @@ export const usersApi = {
   // Récupérer un utilisateur par ID
   async getById(id: string): Promise<User | null> {
     const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/users/users/${id}`, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const result = await handleResponse(response);
     const user = result.data || result;
@@ -364,7 +364,7 @@ export const usersApi = {
   // Récupérer un utilisateur par username
   async getByUsername(username: string): Promise<User | null> {
     const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/users/users/username?username=${encodeURIComponent(username)}`, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const result = await handleResponse(response);
     const user = result.data || result;
@@ -417,7 +417,7 @@ export const artisansApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/artisans/artisans${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const result = await handleResponse(response);
     
@@ -428,7 +428,7 @@ export const artisansApi = {
   // Récupérer un artisan par ID
   async getById(id: string): Promise<Artisan | null> {
     const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/artisans/artisans/${id}`, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const result = await handleResponse(response);
     return result.data || result;
@@ -488,7 +488,7 @@ export const interventionsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/interventions/interventions${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const result = await handleResponse(response);
     
@@ -499,7 +499,7 @@ export const interventionsApi = {
   // Récupérer une intervention par ID
   async getById(id: string): Promise<Intervention | null> {
     const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/interventions/interventions/${id}`, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     const result = await handleResponse(response);
     return result.data || result;

@@ -22,13 +22,42 @@
  *   --help                 Afficher cette aide
  */
 
+// ===== CHARGER LES VARIABLES D'ENVIRONNEMENT EN PREMIER =====
+// IMPORTANT: Doit être chargé AVANT tous les imports qui utilisent Supabase
+// car env.ts lit les variables au moment du chargement du module
 const fs = require('fs');
 const path = require('path');
+
+const envFile = process.env.NODE_ENV === 'production' 
+  ? '.env.production' 
+  : '.env.local';
+
+// Utiliser un chemin absolu depuis la racine du projet
+const envFilePath = path.resolve(process.cwd(), envFile);
+
+// Vérifier si les variables essentielles sont déjà définies (exportées par le shell)
+const essentialVarsDefined = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Charger le fichier seulement s'il existe et si les variables essentielles ne sont pas déjà définies
+if (fs.existsSync(envFilePath) && !essentialVarsDefined) {
+  require('dotenv').config({ path: envFilePath });
+  if (process.env.VERBOSE || process.argv.includes('--verbose')) {
+    console.log(`📝 Variables chargées depuis: ${envFilePath}`);
+  }
+} else if (essentialVarsDefined) {
+  if (process.env.VERBOSE || process.argv.includes('--verbose')) {
+    console.log(`📝 Variables déjà définies dans l'environnement (depuis le shell)`);
+    console.log(`   NEXT_PUBLIC_SUPABASE_URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌'}`);
+    console.log(`   SUPABASE_SERVICE_ROLE_KEY: ${process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ (' + process.env.SUPABASE_SERVICE_ROLE_KEY.length + ' caractères)' : '❌'}`);
+  }
+} else if (!fs.existsSync(envFilePath)) {
+  console.warn(`⚠️  Fichier ${envFilePath} non trouvé et variables essentielles non définies`);
+  console.warn(`   Assurez-vous que NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont définies`);
+}
+
+// Maintenant on peut importer les modules qui dépendent de Supabase
 const { google } = require('googleapis');
 const { DatabaseManager } = require('./database/database-manager-v2');
-
-// Charger les variables d'environnement depuis .env.local
-require('dotenv').config({ path: '.env.local' });
 
 // Imports des modules de traitement existants
 const { DataMapper } = require('../data-processing/data-mapper');
@@ -211,20 +240,102 @@ class GoogleSheetsImportCleanV2 {
       const spreadsheetId = googleSheetsConfig.getSpreadsheetId();
       const range = process.env.GOOGLE_SHEETS_ARTISANS_RANGE || 'Artisans!A:Z';
       
-      const response = await this.sheets.spreadsheets.values.get({
+      // Extraire le nom de la feuille
+      const sheetName = range.split('!')[0];
+      
+      // Étape 1: Toujours lire A1 pour avoir les vrais headers
+      const headerRange = `${sheetName}!A1:Z1`;
+      const headerResponse = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: spreadsheetId,
+        range: headerRange
+      });
+      const headersFromA1 = headerResponse.data.values?.[0] || [];
+      
+      // Étape 2: Lire les données selon le range spécifié
+      const dataResponse = await this.sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
         range: range
       });
+      const rows = dataResponse.data.values || [];
       
-      const rows = response.data.values;
-      if (!rows || rows.length <= 1) {
+      if (!rows || rows.length === 0) {
         console.log('⚠️ Aucune donnée d\'artisan trouvée');
         return { success: 0, errors: 0 };
       }
       
-      // Traitement des données
-      const headers = rows[0];
-      let dataRows = rows.slice(1);
+      // Étape 3: Double vérification - déterminer où sont vraiment les headers
+      let headers;
+      let dataRows;
+      
+      // Vérifier si le range commence à A2
+      const rangeStartsAtA2 = range.includes('!A2:') || range.includes('!A2:Z');
+      
+      if (rangeStartsAtA2) {
+        // Range commence à A2, utiliser les headers depuis A1
+        console.log('📋 Range commence à A2, utilisation des headers depuis A1');
+        headers = headersFromA1;
+        dataRows = rows; // Les données commencent déjà à A2
+        
+        // Vérifier si la première ligne ressemble aux headers (doublon)
+        if (dataRows.length > 0 && headers.length > 0) {
+          const firstRow = dataRows[0];
+          const similarity = this.compareRowToHeaders(firstRow, headers);
+          if (similarity > 0.8) { // 80% de similarité = probablement un doublon
+            console.log(`⚠️ Première ligne détectée comme doublon des headers (${Math.round(similarity * 100)}% similaire), elle sera ignorée`);
+            dataRows = dataRows.slice(1);
+          }
+        }
+      } else {
+        // Range commence à A1, vérifier si la première ligne est vraiment les headers
+        const firstRow = rows[0];
+        const similarityToA1Headers = this.compareRowToHeaders(firstRow, headersFromA1);
+        
+        // Si la première ligne ressemble beaucoup aux headers A1, alors A1 contient les vrais headers
+        if (similarityToA1Headers > 0.8) {
+          console.log('📋 Headers détectés à A1 (première ligne du range)');
+          headers = firstRow;
+          dataRows = rows.slice(1);
+        } else {
+          // La première ligne ne ressemble pas aux headers A1, vérifier si elle ressemble à des données
+          // Si A1 a des headers valides et la première ligne ressemble à des données, utiliser A1
+          if (headersFromA1.length > 0 && this.looksLikeDataRow(firstRow)) {
+            console.log('📋 Headers détectés à A1 (première ligne du range ressemble à des données)');
+            headers = headersFromA1;
+            dataRows = rows; // Utiliser toutes les lignes car les headers sont à A1
+          } else {
+            // Par défaut, utiliser la première ligne comme headers
+            console.log('📋 Utilisation de la première ligne du range comme headers (par défaut)');
+            headers = firstRow;
+            dataRows = rows.slice(1);
+          }
+        }
+      }
+      
+      // Validation finale des headers
+      if (!headers || headers.length === 0) {
+        console.error('❌ Impossible de déterminer les headers');
+        return { success: 0, errors: 1 };
+      }
+      
+      // Afficher les headers et les premières lignes en mode verbose
+      if (this.options.verbose) {
+        console.log('\n📋 Headers détectés:');
+        console.log(`   ${headers.slice(0, 10).join(' | ')}${headers.length > 10 ? ' ...' : ''}`);
+        console.log(`   Total: ${headers.length} colonnes`);
+        
+        if (dataRows.length > 0) {
+          console.log('\n📋 Première ligne de données brute:');
+          const firstRow = dataRows[0];
+          console.log(`   ${firstRow.slice(0, 10).map((val, idx) => `[${headers[idx]}]=${val || '(vide)'}`).join(' | ')}${firstRow.length > 10 ? ' ...' : ''}`);
+          
+          // Afficher aussi la deuxième ligne si disponible
+          if (dataRows.length > 1) {
+            console.log('\n📋 Deuxième ligne de données brute:');
+            const secondRow = dataRows[1];
+            console.log(`   ${secondRow.slice(0, 10).map((val, idx) => `[${headers[idx]}]=${val || '(vide)'}`).join(' | ')}${secondRow.length > 10 ? ' ...' : ''}`);
+          }
+        }
+      }
       
       // Appliquer la limite si spécifiée (pour debug)
       if (this.options.limit && this.options.limit > 0) {
@@ -248,26 +359,64 @@ class GoogleSheetsImportCleanV2 {
         });
         
         try {
+          // Afficher les données brutes pour les premières lignes en mode verbose
+          if (this.options.verbose && i < 3) {
+            console.log(`\n🔍 Ligne ${i + 2} - Données brutes (premiers champs):`);
+            const sampleKeys = Object.keys(artisanObj).slice(0, 5);
+            sampleKeys.forEach(key => {
+              const value = artisanObj[key];
+              console.log(`   ${key}: ${value !== undefined && value !== null ? `"${value}"` : '(undefined/null)'}`);
+            });
+          }
+          
           // Mapper les données avec le DataMapper
           const mappedArtisan = await this.dataMapper.mapArtisanFromCSV(artisanObj);
           
           if (mappedArtisan) {
+            // Afficher le résultat du mapping pour les premières lignes
+            if (this.options.verbose && validArtisans.length < 3) {
+              console.log(`\n✅ Ligne ${i + 2} - Artisan mappé avec succès:`);
+              console.log(`   Nom: ${mappedArtisan.nom || '(vide)'}`);
+              console.log(`   Prénom: ${mappedArtisan.prenom || '(vide)'}`);
+              console.log(`   Email: ${mappedArtisan.email || '(vide)'}`);
+              console.log(`   Téléphone: ${mappedArtisan.telephone || '(vide)'}`);
+            }
             validArtisans.push(mappedArtisan);
             this.results.artisans.valid++;
           } else {
+            // Afficher pourquoi la ligne est considérée comme invalide
+            if (this.options.verbose && invalidArtisans.length < 3) {
+              console.log(`\n⚠️  Ligne ${i + 2} - Rejetée (ligne vide ou invalide)`);
+              const nomPrenom = artisanObj["Nom"] || artisanObj["Nom Prénom"];
+              console.log(`   Nom/Prénom trouvé: ${nomPrenom || '(aucun)'}`);
+            }
             invalidArtisans.push({ row: i + 2, reason: 'Ligne vide ou invalide' });
             this.results.artisans.invalid++;
           }
         } catch (error) {
           invalidArtisans.push({ row: i + 2, error: error.message });
           this.results.artisans.invalid++;
+          // Afficher seulement les 10 premières erreurs pour éviter le spam
+          if (this.options.verbose && invalidArtisans.length <= 10) {
+            console.log(`❌ Erreur mapping ligne ${i + 2}: ${error.message}`);
+          }
         }
         
         this.results.artisans.processed++;
+        
+        // Afficher la progression tous les 100 artisans
+        if ((i + 1) % 100 === 0) {
+          console.log(`  📊 Progression: ${i + 1}/${dataRows.length} lignes traitées (${validArtisans.length} valides, ${invalidArtisans.length} invalides)`);
+        }
       }
+      
+      console.log(`\n📊 Résumé du mapping:`);
+      console.log(`   ✅ Artisans valides mappés: ${validArtisans.length}`);
+      console.log(`   ❌ Artisans invalides: ${invalidArtisans.length}`);
       
       // Insertion en base de données
       if (validArtisans.length > 0) {
+        console.log(`\n💾 Insertion de ${validArtisans.length} artisans en base de données...`);
         const insertResults = await this.databaseManager.insertArtisans(validArtisans);
         this.results.artisans.inserted += insertResults.success;
         this.results.artisans.errors += insertResults.errors;
@@ -278,9 +427,33 @@ class GoogleSheetsImportCleanV2 {
           // mais doivent aussi être retirés des valid car ils n'ont pas été insérés
           this.results.artisans.valid -= insertResults.withoutName.length;
         }
+        
+        // Afficher les détails des erreurs si présentes
+        if (insertResults.errors > 0 && insertResults.details) {
+          const errorDetails = insertResults.details.filter(d => d.error);
+          if (errorDetails.length > 0) {
+            console.log(`\n⚠️  Détails des erreurs d'insertion (premières 10):`);
+            errorDetails.slice(0, 10).forEach((detail, idx) => {
+              const artisan = detail.artisan;
+              const artisanName = artisan ? `${artisan.prenom || ''} ${artisan.nom || ''}`.trim() : 'Inconnu';
+              console.log(`   ${idx + 1}. Ligne ${detail.index + 1} (${artisanName}): ${detail.error}`);
+            });
+            if (errorDetails.length > 10) {
+              console.log(`   ... et ${errorDetails.length - 10} autres erreurs`);
+            }
+          }
+        }
+      } else {
+        console.log(`\n⚠️  Aucun artisan valide à insérer !`);
+        if (invalidArtisans.length > 0 && invalidArtisans.length <= 20) {
+          console.log(`\n   Exemples d'artisans invalides:`);
+          invalidArtisans.slice(0, 10).forEach(inv => {
+            console.log(`   - Ligne ${inv.row}: ${inv.reason || inv.error}`);
+          });
+        }
       }
       
-      console.log(`✅ Artisans importés: ${this.results.artisans.inserted} succès, ${this.results.artisans.errors} erreurs`);
+      console.log(`\n✅ Artisans importés: ${this.results.artisans.inserted} succès, ${this.results.artisans.errors} erreurs`);
       
       return {
         success: this.results.artisans.inserted,
@@ -304,20 +477,98 @@ class GoogleSheetsImportCleanV2 {
       const spreadsheetId = googleSheetsConfig.getSpreadsheetId();
       const range = process.env.GOOGLE_SHEETS_INTERVENTIONS_RANGE || 'Interventions!A:Z';
       
-      const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: spreadsheetId,
-        range: range
-      });
+      // Détecter si le range commence à A2 (sans headers) ou A1 (avec headers)
+      const rangeStartsAtA2 = range.includes('!A2:') || range.includes('!A2:Z');
       
-      const rows = response.data.values;
-      if (!rows || rows.length <= 1) {
+      let headers;
+      let dataRows;
+      
+      if (rangeStartsAtA2) {
+        // Le range commence à A2, il faut lire les headers séparément depuis A1
+        console.log('📋 Range commence à A2, lecture des headers depuis A1...');
+        const sheetName = range.split('!')[0];
+        const headerRange = `${sheetName}!A1:Z1`;
+        
+        const headerResponse = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: spreadsheetId,
+          range: headerRange
+        });
+        
+        headers = headerResponse.data.values?.[0] || [];
+        
+        // Maintenant lire les données depuis A2
+        const dataResponse = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: spreadsheetId,
+          range: range
+        });
+        
+        dataRows = dataResponse.data.values || [];
+      } else {
+        // Le range commence à A1, les headers sont dans la première ligne
+        const response = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: spreadsheetId,
+          range: range
+        });
+        
+        const rows = response.data.values;
+        if (!rows || rows.length <= 1) {
+          console.log('⚠️ Aucune donnée d\'intervention trouvée');
+          return { success: 0, errors: 0 };
+        }
+        
+        headers = rows[0];
+        dataRows = rows.slice(1);
+      }
+      
+      if (!headers || headers.length === 0) {
+        console.log('⚠️ Aucun header trouvé');
+        return { success: 0, errors: 0 };
+      }
+      
+      if (!dataRows || dataRows.length === 0) {
         console.log('⚠️ Aucune donnée d\'intervention trouvée');
         return { success: 0, errors: 0 };
       }
       
-      // Traitement des données
-      const headers = rows[0];
-      let dataRows = rows.slice(1);
+      // Vérifier si la première ligne de données correspond aux headers (doublon)
+      // Cela peut arriver si les headers sont dupliqués dans Google Sheets
+      if (dataRows.length > 0) {
+        const firstRow = dataRows[0];
+        const isHeaderRow = headers.every((header, index) => {
+          const firstRowValue = String(firstRow[index] || '').trim();
+          const headerValue = String(header || '').trim();
+          return firstRowValue === headerValue || firstRowValue === '';
+        });
+        
+        if (isHeaderRow && firstRow.some(cell => cell && String(cell).trim() !== '')) {
+          console.log('⚠️ Première ligne détectée comme doublon des headers, elle sera ignorée');
+          dataRows = dataRows.slice(1);
+        }
+      }
+      
+      // DEBUG: Afficher les headers pour voir le nom exact de la colonne Statut
+      if (this.options.verbose) {
+        console.log(`\n📋 Headers bruts depuis Google Sheets (${headers.length} colonnes):`);
+        headers.forEach((header, index) => {
+          const hasStatut = header && header.toLowerCase().includes('statut');
+          const marker = hasStatut ? ' 👈 STATUT' : '';
+          console.log(`   [${index}] "${header}"${marker}`);
+        });
+        
+        // Chercher spécifiquement la colonne Statut
+        const statutHeaderIndex = headers.findIndex(h => h && h.toLowerCase().includes('statut'));
+        if (statutHeaderIndex >= 0) {
+          console.log(`\n✅ Colonne Statut trouvée à l'index ${statutHeaderIndex}: "${headers[statutHeaderIndex]}"`);
+          // Afficher quelques valeurs de cette colonne
+          console.log(`   Valeurs de la colonne Statut (5 premières lignes):`);
+          dataRows.slice(0, 5).forEach((row, i) => {
+            const value = row[statutHeaderIndex] || '(vide)';
+            console.log(`     Ligne ${i + 2}: "${value}"`);
+          });
+        } else {
+          console.log(`\n❌ Aucune colonne contenant "statut" trouvée dans les headers !`);
+        }
+      }
       
       // Appliquer la limite si spécifiée (pour debug)
       if (this.options.limit && this.options.limit > 0) {
@@ -517,6 +768,68 @@ class GoogleSheetsImportCleanV2 {
       console.log(`❌ Erreur de connexion: ${error.message}`);
       return false;
     }
+  }
+
+  // ===== MÉTHODES UTILITAIRES POUR DÉTECTION DES HEADERS =====
+
+  /**
+   * Compare une ligne aux headers pour déterminer la similarité
+   * Retourne un score entre 0 et 1 (1 = identique)
+   */
+  compareRowToHeaders(row, headers) {
+    if (!row || !headers || row.length === 0 || headers.length === 0) {
+      return 0;
+    }
+    
+    let matches = 0;
+    const minLength = Math.min(row.length, headers.length);
+    
+    for (let i = 0; i < minLength; i++) {
+      const rowVal = String(row[i] || '').trim().toLowerCase();
+      const headerVal = String(headers[i] || '').trim().toLowerCase();
+      
+      if (rowVal === headerVal) {
+        matches++;
+      } else if (rowVal && headerVal && (rowVal.includes(headerVal) || headerVal.includes(rowVal))) {
+        matches += 0.5; // Correspondance partielle
+      }
+    }
+    
+    return matches / minLength;
+  }
+  
+  /**
+   * Détermine si une ligne ressemble à des données plutôt qu'à des headers
+   * Les headers ont généralement des noms de colonnes courts et descriptifs
+   * Les données ont souvent des valeurs plus longues, des emails, des numéros, etc.
+   */
+  looksLikeDataRow(row) {
+    if (!row || row.length === 0) return false;
+    
+    // Compter les indices de "données"
+    let dataIndicators = 0;
+    
+    row.forEach(cell => {
+      const value = String(cell || '').trim();
+      
+      // Email = données
+      if (value.includes('@')) dataIndicators++;
+      
+      // Numéro de téléphone = données
+      if (/[\d\s\+\-\(\)]{8,}/.test(value)) dataIndicators++;
+      
+      // SIRET = données
+      if (/^\d{14}$/.test(value)) dataIndicators++;
+      
+      // Code postal = données
+      if (/^\d{5}$/.test(value)) dataIndicators++;
+      
+      // Valeur très longue (> 30 caractères) = probablement des données
+      if (value.length > 30) dataIndicators++;
+    });
+    
+    // Si plus de 30% des cellules ressemblent à des données, c'est probablement une ligne de données
+    return dataIndicators / row.length > 0.3;
   }
 
   async validateConfiguration() {

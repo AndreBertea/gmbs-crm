@@ -23,9 +23,18 @@ import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { writeFileSync, appendFileSync, existsSync } from "fs";
 
-// Load .env.local first, then fallback to .env
-config({ path: ".env.local" });
-config();
+// Load environment variables based on NODE_ENV
+// In production, load .env.production, otherwise .env.local
+const envFile = process.env.NODE_ENV === 'production' 
+  ? '.env.production' 
+  : '.env.local';
+
+if (process.env.NODE_ENV === 'production') {
+  config({ path: envFile });
+} else {
+  config({ path: ".env.local" });
+}
+config(); // Fallback to .env
 
 type ArtisanRow = {
   id: string;

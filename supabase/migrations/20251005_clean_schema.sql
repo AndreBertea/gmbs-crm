@@ -6,7 +6,6 @@
 -- Version: 2.0
 
 -- Extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
 
 -- ========================================
@@ -27,7 +26,7 @@ END $$;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS public.users (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   username text UNIQUE NOT NULL,
   email text UNIQUE,
   firstname text,
@@ -43,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 
 -- Auth providers
 CREATE TABLE IF NOT EXISTS public.auth_providers (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
   provider text NOT NULL,
   provider_user_id text NOT NULL,
@@ -53,21 +52,21 @@ CREATE TABLE IF NOT EXISTS public.auth_providers (
 
 -- Roles and permissions
 CREATE TABLE IF NOT EXISTS public.roles (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text UNIQUE NOT NULL,
   description text,
   created_at timestamptz DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS public.permissions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   key text UNIQUE NOT NULL,
   description text,
   created_at timestamptz DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS public.user_roles (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
   role_id uuid REFERENCES public.roles(id) ON DELETE CASCADE,
   created_at timestamptz DEFAULT now(),
@@ -75,7 +74,7 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
 );
 
 CREATE TABLE IF NOT EXISTS public.role_permissions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   role_id uuid REFERENCES public.roles(id) ON DELETE CASCADE,
   permission_id uuid REFERENCES public.permissions(id) ON DELETE CASCADE,
   created_at timestamptz DEFAULT now(),
@@ -88,7 +87,7 @@ CREATE TABLE IF NOT EXISTS public.role_permissions (
 
 -- Métiers (professions)
 CREATE TABLE IF NOT EXISTS public.metiers (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE,
   label text NOT NULL,
   description text,
@@ -99,7 +98,7 @@ CREATE TABLE IF NOT EXISTS public.metiers (
 
 -- Zones d'intervention
 CREATE TABLE IF NOT EXISTS public.zones (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE,
   label text NOT NULL,
   region text,
@@ -109,7 +108,7 @@ CREATE TABLE IF NOT EXISTS public.zones (
 
 -- Agences
 CREATE TABLE IF NOT EXISTS public.agencies (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE,
   label text NOT NULL,
   region text,
@@ -120,7 +119,7 @@ CREATE TABLE IF NOT EXISTS public.agencies (
 
 -- Artisan statuses
 CREATE TABLE IF NOT EXISTS public.artisan_statuses (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE NOT NULL,
   label text NOT NULL,
   color text,
@@ -130,7 +129,7 @@ CREATE TABLE IF NOT EXISTS public.artisan_statuses (
 
 -- Intervention statuses
 CREATE TABLE IF NOT EXISTS public.intervention_statuses (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE NOT NULL,
   label text NOT NULL,
   color text,
@@ -140,7 +139,7 @@ CREATE TABLE IF NOT EXISTS public.intervention_statuses (
 
 -- Task statuses
 CREATE TABLE IF NOT EXISTS public.task_statuses (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE NOT NULL,
   label text NOT NULL,
   color text,
@@ -154,7 +153,7 @@ CREATE TABLE IF NOT EXISTS public.task_statuses (
 
 -- Artisans table
 CREATE TABLE IF NOT EXISTS public.artisans (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   prenom text,
   nom text,
   email text UNIQUE,
@@ -185,7 +184,7 @@ CREATE TABLE IF NOT EXISTS public.artisans (
 
 -- Artisan-Métier relationships
 CREATE TABLE IF NOT EXISTS public.artisan_metiers (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   artisan_id uuid REFERENCES public.artisans(id) ON DELETE CASCADE,
   metier_id uuid REFERENCES public.metiers(id) ON DELETE CASCADE,
   is_primary boolean DEFAULT false,
@@ -195,7 +194,7 @@ CREATE TABLE IF NOT EXISTS public.artisan_metiers (
 
 -- Artisan-Zone relationships
 CREATE TABLE IF NOT EXISTS public.artisan_zones (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   artisan_id uuid REFERENCES public.artisans(id) ON DELETE CASCADE,
   zone_id uuid REFERENCES public.zones(id) ON DELETE CASCADE,
   created_at timestamptz DEFAULT now(),
@@ -204,7 +203,7 @@ CREATE TABLE IF NOT EXISTS public.artisan_zones (
 
 -- Artisan attachments
 CREATE TABLE IF NOT EXISTS public.artisan_attachments (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   artisan_id uuid REFERENCES public.artisans(id) ON DELETE CASCADE,
   kind text NOT NULL CHECK (kind IN ('kbis','assurance','cni_recto_verso','iban','decharge_partenariat','photo_profil','autre','a_classe')),
   url text NOT NULL,
@@ -220,7 +219,7 @@ CREATE TABLE IF NOT EXISTS public.artisan_attachments (
 
 -- Artisan absences
 CREATE TABLE IF NOT EXISTS public.artisan_absences (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   artisan_id uuid REFERENCES public.artisans(id) ON DELETE CASCADE,
   start_date timestamptz NOT NULL,
   end_date timestamptz NOT NULL,
@@ -232,7 +231,7 @@ CREATE TABLE IF NOT EXISTS public.artisan_absences (
 
 -- Tenant table
 CREATE TABLE IF NOT EXISTS public.tenants (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   external_ref text UNIQUE,
   firstname text,
   lastname text,
@@ -247,7 +246,7 @@ CREATE TABLE IF NOT EXISTS public.tenants (
 );
 -- Owner table
 CREATE TABLE IF NOT EXISTS public.owner (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   external_ref text UNIQUE,
   owner_firstname text,
   owner_lastname text,  
@@ -267,7 +266,7 @@ CREATE TABLE IF NOT EXISTS public.owner (
 
 -- Interventions table
 CREATE TABLE IF NOT EXISTS public.interventions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   id_inter text UNIQUE,
   agence_id uuid REFERENCES public.agencies(id),
   tenant_id uuid REFERENCES public.tenants(id),
@@ -299,7 +298,7 @@ CREATE TABLE IF NOT EXISTS public.interventions (
 
 -- Intervention-Artisan relationships
 CREATE TABLE IF NOT EXISTS public.intervention_artisans (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   intervention_id uuid REFERENCES public.interventions(id) ON DELETE CASCADE,
   artisan_id uuid REFERENCES public.artisans(id) ON DELETE CASCADE,
   role text CHECK (role IN ('primary','secondary')),
@@ -311,7 +310,7 @@ CREATE TABLE IF NOT EXISTS public.intervention_artisans (
 
 -- Intervention costs
 CREATE TABLE IF NOT EXISTS public.intervention_costs (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   intervention_id uuid REFERENCES public.interventions(id) ON DELETE CASCADE,
   cost_type text NOT NULL CHECK (cost_type IN ('sst','materiel','intervention','marge')),
   label text,
@@ -324,7 +323,7 @@ CREATE TABLE IF NOT EXISTS public.intervention_costs (
 
 -- Intervention payments
 CREATE TABLE IF NOT EXISTS public.intervention_payments (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   intervention_id uuid REFERENCES public.interventions(id) ON DELETE CASCADE,
   payment_type text NOT NULL CHECK (payment_type IN ('acompte_sst','acompte_client','final')),
   amount numeric(12,2) NOT NULL,
@@ -338,7 +337,7 @@ CREATE TABLE IF NOT EXISTS public.intervention_payments (
 
 -- Intervention attachments
 CREATE TABLE IF NOT EXISTS public.intervention_attachments (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   intervention_id uuid REFERENCES public.interventions(id) ON DELETE CASCADE,
   kind text NOT NULL CHECK (kind IN ('devis','photos','facturesGMBS','facturesArtisans','facturesMateriel','autre','a_classe')),
   url text NOT NULL,
@@ -358,7 +357,7 @@ CREATE TABLE IF NOT EXISTS public.intervention_attachments (
 
 -- Comments table (unified for all entities)
 CREATE TABLE IF NOT EXISTS public.comments (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_type text NOT NULL CHECK (entity_type IN ('artisan','intervention','task','client')),
   entity_id uuid NOT NULL,
   author_id uuid REFERENCES public.users(id),
@@ -375,7 +374,7 @@ CREATE TABLE IF NOT EXISTS public.comments (
 
 -- Tasks table
 CREATE TABLE IF NOT EXISTS public.tasks (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
   description text,
   priority int CHECK (priority BETWEEN 1 AND 5) DEFAULT 3,
@@ -398,7 +397,7 @@ CREATE TABLE IF NOT EXISTS public.tasks (
 
 -- Conversations
 CREATE TABLE IF NOT EXISTS public.conversations (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   is_private boolean DEFAULT true,
   title text NOT NULL,
   context_type text CHECK (context_type IN ('intervention','task','artisan','general')),
@@ -411,7 +410,7 @@ CREATE TABLE IF NOT EXISTS public.conversations (
 
 -- Conversation participants
 CREATE TABLE IF NOT EXISTS public.conversation_participants (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id uuid REFERENCES public.conversations(id) ON DELETE CASCADE,
   user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
   role text DEFAULT 'owner',
@@ -421,7 +420,7 @@ CREATE TABLE IF NOT EXISTS public.conversation_participants (
 
 -- Messages
 CREATE TABLE IF NOT EXISTS public.messages (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id uuid REFERENCES public.conversations(id) ON DELETE CASCADE,
   author_id uuid REFERENCES public.users(id),
   type text CHECK (type IN ('user','system','assistant')) DEFAULT 'user',
@@ -432,7 +431,7 @@ CREATE TABLE IF NOT EXISTS public.messages (
 
 -- Message attachments
 CREATE TABLE IF NOT EXISTS public.message_attachments (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   message_id uuid REFERENCES public.messages(id) ON DELETE CASCADE,
   url text NOT NULL,
   mime_type text,
@@ -443,7 +442,7 @@ CREATE TABLE IF NOT EXISTS public.message_attachments (
 
 -- Chat sessions
 CREATE TABLE IF NOT EXISTS public.chat_sessions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
   title text NOT NULL,
   model_tier text DEFAULT 'consumption',
@@ -453,7 +452,7 @@ CREATE TABLE IF NOT EXISTS public.chat_sessions (
 
 -- Chat messages
 CREATE TABLE IF NOT EXISTS public.chat_messages (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id uuid REFERENCES public.chat_sessions(id) ON DELETE CASCADE,
   author_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
   role text NOT NULL,
@@ -465,7 +464,7 @@ CREATE TABLE IF NOT EXISTS public.chat_messages (
 
 -- AI Assistants
 CREATE TABLE IF NOT EXISTS public.ai_assistants (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id text UNIQUE NOT NULL,
   context text,
   conversation jsonb NOT NULL,
@@ -499,7 +498,7 @@ create index if not exists ai_views_context_idx on ai_views(context);
 
 -- Billing state
 CREATE TABLE IF NOT EXISTS public.billing_state (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES public.users(id),
   current_plan_id text,
   cadence text,
@@ -512,7 +511,7 @@ CREATE TABLE IF NOT EXISTS public.billing_state (
 
 -- Payment methods
 CREATE TABLE IF NOT EXISTS public.payment_methods (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
   brand text,
   last4 text,
@@ -525,7 +524,7 @@ CREATE TABLE IF NOT EXISTS public.payment_methods (
 
 -- Subscriptions
 CREATE TABLE IF NOT EXISTS public.subscriptions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
   stripe_subscription_id text UNIQUE NOT NULL,
   plan_id text,
@@ -537,7 +536,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
 );
 
 CREATE TABLE IF NOT EXISTS public.orders (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
     type text CHECK (type IN ('subscription','recharge')) NOT NULL,
     amount_cents int NOT NULL,
@@ -553,7 +552,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
 
 -- Usage events
 CREATE TABLE IF NOT EXISTS public.usage_events (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES public.users(id) ON DELETE SET NULL,
   delta int NOT NULL,
   reason text,
@@ -567,7 +566,7 @@ CREATE TABLE IF NOT EXISTS public.usage_events (
 
 -- Sync logs
 CREATE TABLE IF NOT EXISTS public.sync_logs (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operation text CHECK (operation IN ('push','pull','conflict')),
   entity_type text NOT NULL,
   entity_id uuid NOT NULL,

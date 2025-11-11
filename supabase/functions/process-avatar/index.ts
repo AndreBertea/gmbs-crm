@@ -108,6 +108,15 @@ function getPreferredMimeType(originalMime: string): 'image/webp' | 'image/jpeg'
 }
 
 serve(async (req: Request) => {
+  // Handle CORS preflight requests FIRST, before any other code
+  // This MUST be the very first statement to ensure OPTIONS always returns 200
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { 
+      status: 200, 
+      headers: corsHeaders 
+    });
+  }
+
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
 
@@ -119,11 +128,6 @@ serve(async (req: Request) => {
     timestamp: new Date().toISOString(),
     message: 'Process Avatar request started'
   }));
-
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
 
   if (req.method !== 'POST') {
     return new Response(
