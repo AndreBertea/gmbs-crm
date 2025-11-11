@@ -398,6 +398,7 @@ export interface Artisan {
   id: string;
   prenom: string | null;
   nom: string | null;
+  plain_nom: string | null;
   telephone: string | null;
   telephone2: string | null;
   email: string | null;
@@ -430,6 +431,16 @@ export interface Artisan {
   } | null;
   metiers?: string[];
   zones?: string[];
+  // Propriétés calculées et relations
+  attribueA?: string | undefined;
+  gestionnaireUsername?: string | undefined;
+  gestionnaireName?: string | undefined;
+  statutArtisan?: string | null;
+  statutInactif?: boolean;
+  commentaire?: string | null;
+  statutDossier?: string | null;
+  zoneIntervention?: number | string | null;
+  date?: string | null;
 }
 
 export interface Intervention {

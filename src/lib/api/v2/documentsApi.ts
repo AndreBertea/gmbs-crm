@@ -12,7 +12,7 @@ import type {
   UpdateDocumentData,
 } from "./common/types";
 import { getSupabaseFunctionsUrl, getHeaders, handleResponse } from "./common/utils";
-import { supabase } from "../../supabase-client";
+import { supabase } from "@/lib/supabase-client";
 
 // Détecter si on est dans Node.js (pas de window)
 const isNodeJs = typeof window === 'undefined';

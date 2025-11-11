@@ -1,7 +1,7 @@
 // ===== API OWNERS V2 =====
 // Gestion des propriétaires (owners)
 
-import { supabase } from "../../supabase-client";
+import { supabase } from "@/lib/supabase-client";
 import type { CreateOwnerData, Owner, OwnerQueryParams, PaginatedResponse, UpdateOwnerData } from "./common/types";
 
 // ===== FONCTIONS DE LECTURE =====

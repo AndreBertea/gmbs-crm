@@ -964,7 +964,7 @@ export default function Page() {
                       <span>Nouvelle vue</span>
                     </div>
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent align="end" className="w-64">
+                  <DropdownMenuSubContent className="w-64">
                     {NEW_VIEW_MENU_CHOICES.map(({ layout, label, Icon }) => (
                       <DropdownMenuItem
                         key={layout}
@@ -1007,7 +1007,7 @@ export default function Page() {
                       <span>Afficher les filtres</span>
                     </div>
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent align="end" className="w-64">
+                  <DropdownMenuSubContent className="w-64">
                     <DropdownMenuCheckboxItem
                       checked={showStatusFilter}
                       disabled={activeView?.layout !== "table"}
@@ -1049,7 +1049,7 @@ export default function Page() {
                           <span>Style</span>
                         </div>
                       </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent align="end" className="w-72">
+                      <DropdownMenuSubContent className="w-72">
                         <DropdownMenuLabel className="text-xs text-muted-foreground">
                           Bordure & Ombrage
                         </DropdownMenuLabel>
@@ -1275,7 +1275,7 @@ export default function Page() {
                       <span>Mode d&apos;affichage</span>
                     </div>
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent align="end" className="w-64">
+                  <DropdownMenuSubContent className="w-64">
                     {MODE_OPTIONS.map((option) => {
                       const OptionIcon = ModeIcons[option.mode]
                       const isActiveMode = preferredMode === option.mode

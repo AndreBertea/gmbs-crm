@@ -2,13 +2,14 @@ import { NextResponse } from "next/server"
 import { listInterventionDocuments, uploadInterventionDocument } from "@/lib/api/documents"
 
 type Params = {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(_request: Request, { params }: Params) {
-  const documents = await listInterventionDocuments(params.id)
+  const { id } = await params
+  const documents = await listInterventionDocuments(id)
   return NextResponse.json({ documents })
 }
 
@@ -18,6 +19,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ message: "FormData requis" }, { status: 400 })
   }
 
+  const { id } = await params
   const formData = await request.formData()
   const file = formData.get("file")
   if (!(file instanceof File)) {
@@ -26,7 +28,7 @@ export async function POST(request: Request, { params }: Params) {
 
   const buffer = await file.arrayBuffer()
   const document = await uploadInterventionDocument({
-    interventionId: params.id,
+    interventionId: id,
     fileName: file.name,
     mimeType: file.type,
     buffer,

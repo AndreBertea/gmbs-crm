@@ -1,8 +1,8 @@
 // ===== API ARTISANS V2 =====
 // Gestion complète des artisans
 
-import { referenceApi } from "../../reference-api";
-import { supabase } from "../../supabase-client";
+import { referenceApi } from "@/lib/reference-api";
+import { supabase } from "@/lib/supabase-client";
 import type {
   Artisan,
   ArtisanQueryParams,

@@ -70,7 +70,7 @@ interface LegacyInterventionFormProps {
   onSuccess?: (data: any) => void
   onCancel?: () => void
   mode?: "halfpage" | "centerpage" | "fullpage"
-  formRef?: React.RefObject<HTMLFormElement>
+  formRef?: React.RefObject<HTMLFormElement | null>
   onSubmittingChange?: (isSubmitting: boolean) => void
 }
 
@@ -1202,7 +1202,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                     />
                   ) : (
                     <p className="text-xs italic text-muted-foreground">
-                      Les commentaires seront disponibles après la création de l'intervention.
+                      Les commentaires seront disponibles après la création de l&apos;intervention.
                     </p>
                   )}
                   <div className="space-y-2">

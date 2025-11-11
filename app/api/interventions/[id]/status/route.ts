@@ -3,20 +3,21 @@ import { transitionStatus } from "@/lib/api/interventions"
 import type { InterventionStatusValue } from "@/types/interventions"
 
 type Params = {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function POST(request: Request, { params }: Params) {
   try {
+    const { id } = await params
     const body = await request.json()
     const status = body.status as InterventionStatusValue | undefined
     if (!status) {
       return NextResponse.json({ message: "Statut requis" }, { status: 400 })
     }
 
-    const intervention = await transitionStatus(params.id, {
+    const intervention = await transitionStatus(id, {
       status,
       dueAt: body.dueAt,
       artisanId: body.artisanId,

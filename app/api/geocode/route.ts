@@ -240,7 +240,7 @@ async function geocodeWithNominatim(query: string, limit: number, signal: AbortS
           lat: Number.parseFloat(result.lat),
           lng: Number.parseFloat(result.lon),
           precision: result.importance ? result.importance.toFixed(2) : undefined,
-          label: result.display_name,
+          label: result.display_name || "",
           provider: "nominatim",
         }) satisfies InternalGeocodeResult,
     )

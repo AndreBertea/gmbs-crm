@@ -51,7 +51,7 @@ export function useArtisanModal() {
     modal.open("new-artisan", {
       content: "new-artisan",
       layoutId: null,
-      modeOverride: null,
+      modeOverride: undefined,
       orderedIds: [],
       index: -1,
     })

@@ -24,7 +24,7 @@ type InterventionsTableProps<Row extends BaseRow> = {
   columns: InterventionsTableColumn<Row>[]
   data: Row[]
   columnWidths: ColumnWidths
-  onColumnWidthsChange: (widths: ColumnWidths) => void
+  onColumnWidthsChange: (widths: Record<string, number>) => void
   onRowClick?: (id: Row["id"]) => void
   onToggleReminder?: (id: Row["id"]) => void
   emptyState?: ReactNode

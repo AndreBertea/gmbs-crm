@@ -162,7 +162,7 @@ export function useNearbyArtisans(
         }) ?? []
 
       const filtered = enriched
-        .filter((item): item is NearbyArtisan => Boolean(item) && item.distanceKm >= 0)
+        .filter((item): item is NearbyArtisan => item !== null && item !== undefined && item.distanceKm >= 0)
         .sort((a, b) => a.distanceKm - b.distanceKm)
         .filter((artisan) => artisan.distanceKm <= maxDistanceKm)
         .slice(0, limit)

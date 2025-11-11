@@ -1509,7 +1509,7 @@ export function InterventionEditForm({
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Note: La gestion des acomptes est en lecture seule. Utilisez l'API dédiée pour modifier ces données.
+                    Note: La gestion des acomptes est en lecture seule. Utilisez l&apos;API dédiée pour modifier ces données.
                   </p>
                 </CardContent>
               </CollapsibleContent>

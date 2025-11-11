@@ -126,7 +126,7 @@ export default function LoginPage() {
             <CardContent>
               <form className="space-y-4" onSubmit={onSubmit}>
                 <div className="space-y-1">
-                  <label className="text-sm">Email ou nom d'utilisateur</label>
+                  <label className="text-sm">Email ou nom d&apos;utilisateur</label>
                   <Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoFocus required placeholder="ex: alice@gmbs.fr" />
                 </div>
                 <div className="space-y-1">
@@ -139,7 +139,7 @@ export default function LoginPage() {
                 </Button>
               </form>
               <div className="mt-4 text-xs text-muted-foreground">
-                Besoin d'un accès ? Contactez l'administrateur.
+                Besoin d&apos;un accès ? Contactez l&apos;administrateur.
               </div>
               <div className="mt-6 text-xs text-muted-foreground">
                 <Link href="#" className="hover:underline">Mot de passe oublié</Link>

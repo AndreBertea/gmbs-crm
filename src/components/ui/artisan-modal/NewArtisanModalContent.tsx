@@ -544,7 +544,7 @@ export function NewArtisanModalContent({ mode, onClose, onCycleMode }: Props) {
                                       Service de vérification indisponible
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                      Vérifiez que la variable d'environnement INSEE_API_KEY (clé API simple) OU INSEE_CLIENT_ID et INSEE_CLIENT_SECRET (OAuth2) sont configurées dans .env.local et redémarrez le serveur.
+                                      Vérifiez que la variable d&apos;environnement INSEE_API_KEY (clé API simple) OU INSEE_CLIENT_ID et INSEE_CLIENT_SECRET (OAuth2) sont configurées dans .env.local et redémarrez le serveur.
                                     </p>
                                   </div>
                                 )}

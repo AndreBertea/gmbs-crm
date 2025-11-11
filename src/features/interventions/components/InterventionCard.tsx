@@ -16,6 +16,7 @@ import AnimatedCard from "@/features/interventions/components/AnimatedCard"
 import { EditableCell } from "@/features/interventions/components/EditableCell"
 import type { InterventionView } from "@/types/intervention-view"
 import { isCheckStatus } from "@/lib/interventions/checkStatus"
+import { cn } from "@/lib/utils"
 import {
   AlertCircle,
   Calendar,
@@ -198,8 +199,8 @@ export default function InterventionCard({
   const isAnyHovered = isHovered || keyboardHovered
   const isDocActive = selectedActionIndex === 2 && keyboardHovered
 
-  const dateCreated = safeDate(intervention.date || intervention.dateIntervention)
-  const dateIntervention = safeDate(intervention.dateIntervention)
+  const dateCreated = safeDate((intervention.date || intervention.dateIntervention) ?? undefined)
+  const dateIntervention = safeDate(intervention.dateIntervention ?? undefined)
 
   const getMarge = React.useCallback(() => {
     if (typeof intervention.marge === "number") return intervention.marge

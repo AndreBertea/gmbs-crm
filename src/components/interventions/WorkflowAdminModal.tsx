@@ -247,7 +247,7 @@ function PropertiesPanel({
       <div className="space-y-6">
         <div>
           <h3 className="text-sm font-semibold">Configuration du statut</h3>
-          <p className="text-xs text-muted-foreground">Personnalisez le comportement et l'apparence du statut.</p>
+          <p className="text-xs text-muted-foreground">Personnalisez le comportement et l&apos;apparence du statut.</p>
         </div>
         <div className="space-y-4">
           <div className="space-y-2">

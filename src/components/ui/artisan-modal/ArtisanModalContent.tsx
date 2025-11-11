@@ -243,32 +243,32 @@ const buildUpdatePayload = (values: ArtisanFormValues) => {
   // Normaliser le SIRET : soit vide, soit exactement 14 chiffres
   const normalizedSiret = (() => {
     const siret = values.siret?.trim() || ""
-    if (siret.length === 0) return null
+    if (siret.length === 0) return undefined
     if (siret.length === 14 && /^\d+$/.test(siret)) return siret
-    // Si partiellement rempli, retourner null (ne pas enregistrer)
-    return null
+    // Si partiellement rempli, retourner undefined (ne pas enregistrer)
+    return undefined
   })()
 
   return {
-    raison_sociale: values.raison_sociale || null,
-    prenom: values.prenom || null,
-    nom: values.nom || null,
-    telephone: values.telephone || null,
-    telephone2: values.telephone2 || null,
-    email: values.email || null,
-    adresse_intervention: values.adresse_intervention || null,
-    code_postal_intervention: values.code_postal_intervention || null,
-    ville_intervention: values.ville_intervention || null,
-    adresse_siege_social: values.adresse_siege_social || null,
-    code_postal_siege_social: values.code_postal_siege_social || null,
-    ville_siege_social: values.ville_siege_social || null,
-    statut_juridique: values.statut_juridique || null,
+    raison_sociale: values.raison_sociale || undefined,
+    prenom: values.prenom || undefined,
+    nom: values.nom || undefined,
+    telephone: values.telephone || undefined,
+    telephone2: values.telephone2 || undefined,
+    email: values.email || undefined,
+    adresse_intervention: values.adresse_intervention || undefined,
+    code_postal_intervention: values.code_postal_intervention || undefined,
+    ville_intervention: values.ville_intervention || undefined,
+    adresse_siege_social: values.adresse_siege_social || undefined,
+    code_postal_siege_social: values.code_postal_siege_social || undefined,
+    ville_siege_social: values.ville_siege_social || undefined,
+    statut_juridique: values.statut_juridique || undefined,
     siret: normalizedSiret,
     zones: values.zone_intervention ? [values.zone_intervention] : [],
     metiers: values.metiers ?? [],
-    gestionnaire_id: values.gestionnaire_id || null,
-    statut_id: values.statut_id || null,
-    numero_associe: values.numero_associe || null,
+    gestionnaire_id: values.gestionnaire_id || undefined,
+    statut_id: values.statut_id || undefined,
+    numero_associe: values.numero_associe || undefined,
   }
 }
 

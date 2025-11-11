@@ -258,7 +258,7 @@ export async function transitionStatus(id: string, payload: StatusPayload) {
   const datePrevueUpdate =
     legacyPayload.date_prevue === undefined ? undefined : legacyPayload.date_prevue ?? null
   const artisanIdUpdate =
-    payload.artisanId === undefined ? undefined : payload.artisanId ?? null
+    payload.artisanId === undefined ? undefined : payload.artisanId ?? undefined
 
   const updated = await interventionsApi.update(id, {
     statut_id: statusId,
@@ -268,14 +268,14 @@ export async function transitionStatus(id: string, payload: StatusPayload) {
 
   const mapped = mapRowToInterventionWithDocuments({
     ...updated,
-    statut: updated.status?.code ?? updated.statut ?? payload.status,
+    statut: updated.status?.code ?? payload.status,
     statut_id: updated.status?.id ?? statusId ?? updated.statut_id ?? null,
   })
 
   return {
     ...mapped,
     status: updated.status ?? resolvedStatus,
-    statusColor: updated.status?.color ?? mapped.statusColor ?? null,
+    statusColor: updated.status?.color ?? null,
   }
 }
 

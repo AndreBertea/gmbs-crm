@@ -1,3 +1,5 @@
+import type { ColumnWidths } from "@/hooks/useColumnResize"
+
 export type ViewLayout = "table" | "cards" | "gallery" | "kanban" | "calendar" | "timeline"
 
 export type ViewSortDirection = "asc" | "desc"
@@ -66,7 +68,7 @@ export const TABLE_SHADOW_INTENSITIES: Record<TableShadowIntensity, { strong: nu
 
 export interface TableLayoutOptions extends BaseLayoutOptions {
   layout: "table"
-  columnWidths?: Record<string, number>
+  columnWidths?: ColumnWidths
   hiddenColumns?: string[]
   dense?: boolean
   columnStyles?: Record<string, TableColumnStyle>

@@ -187,9 +187,9 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
               Possibles causes :
             </p>
             <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1 ml-2">
-              <li>L'utilisateur n'a pas d'interventions assignées</li>
+              <li>L&apos;utilisateur n&apos;a pas d&apos;interventions assignées</li>
               <li>Les données sont en dehors de la période sélectionnée</li>
-              <li>Les interventions n'ont pas les statuts recherchés (DEVIS_ENVOYE, INTER_EN_COURS, INTER_TERMINEE)</li>
+              <li>Les interventions n&apos;ont pas les statuts recherchés (DEVIS_ENVOYE, INTER_EN_COURS, INTER_TERMINEE)</li>
             </ul>
           </div>
         </CardContent>
@@ -444,7 +444,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Statistiques de l'année</CardTitle>
+              <CardTitle>Actions de l&apos;année</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Année {yearStats.year}
               </p>

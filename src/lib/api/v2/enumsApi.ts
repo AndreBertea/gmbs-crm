@@ -2,7 +2,7 @@
 // Gestion des énumérations (agences, métiers, zones, statuts)
 // avec création automatique si nécessaire
 
-import { supabase } from "../../supabase-client";
+import { supabase } from "@/lib/supabase-client";
 
 // Type de retour pour indiquer si l'élément a été créé ou trouvé
 export interface FindOrCreateResult {

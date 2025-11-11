@@ -141,7 +141,15 @@ export function ArtisanSearchModal({ open, onClose, onSelect, position }: Artisa
         throw searchError
       }
 
-      setResults(data || [])
+      // Transformer les données pour convertir status de tableau à objet unique
+      const transformedData = (data || []).map((artisan: any) => ({
+        ...artisan,
+        status: Array.isArray(artisan.status) 
+          ? (artisan.status.length > 0 ? artisan.status[0] : null)
+          : artisan.status
+      }))
+
+      setResults(transformedData)
     } catch (err) {
       console.error("Erreur lors de la recherche d'artisans:", err)
       setError("Erreur lors de la recherche")

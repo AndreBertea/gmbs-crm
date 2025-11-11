@@ -1,9 +1,8 @@
 // ===== API INTERVENTIONS V2 =====
 // Gestion complète des interventions
 
-import { referenceApi } from "../../reference-api";
-import { supabase } from "../../supabase-client";
-import { isCheckStatus } from "../../interventions/checkStatus";
+import { referenceApi } from "@/lib/reference-api";
+import { supabase } from "@/lib/supabase-client";
 import type {
   BulkOperationResult,
   CreateInterventionData,
@@ -601,14 +600,12 @@ export const interventionsApi = {
 
       return result;
     } else {
-      // Créer un nouveau coût (on sait que cost_type n'est pas "total" grâce à la vérification au début)
-      return this.addCost(interventionId, data as {
-        cost_type: "sst" | "materiel" | "intervention" | "marge";
-        label?: string;
-        amount: number;
-        currency?: string;
-        metadata?: any;
-      });
+      // Créer un nouveau coût
+      // Mapper "total" vers "marge" car addCost ne supporte pas "total"
+      const costData = data.cost_type === "total" 
+        ? { ...data, cost_type: "marge" as const }
+        : data;
+      return this.addCost(interventionId, costData as { cost_type: "sst" | "materiel" | "intervention" | "marge"; label?: string; amount: number; currency?: string; metadata?: any; });
     }
   },
 

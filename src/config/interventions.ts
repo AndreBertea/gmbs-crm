@@ -3,6 +3,7 @@ import {
   ArchiveIcon,
   BadgeCheck,
   ClipboardList,
+  Clock,
   FileSignature,
   Hammer,
   Loader2,
@@ -26,6 +27,7 @@ export type InterventionStatusKey =
   | "EN_COURS"
   | "TERMINE"
   | "SAV"
+  | "ATT_ACOMPTE"
 
 export type InterventionStatusConfig = {
   value: InterventionStatusKey
@@ -45,6 +47,7 @@ export const INTERVENTION_STATUS_ORDER: InterventionStatusKey[] = [
   "TERMINE",
   "SAV",
   "STAND_BY",
+  "ATT_ACOMPTE",
   "REFUSE",
   "ANNULE",
 ]
@@ -130,6 +133,14 @@ export const INTERVENTION_STATUS: Record<InterventionStatusKey, InterventionStat
     hexColor: "#F97316",
     icon: Hammer,
   },
+  ATT_ACOMPTE: {
+    value: "ATT_ACOMPTE",
+    label: "Att Acompte",
+    description: "En attente d'acompte",
+    color: "bg-orange-600",
+    hexColor: "#EA580C",
+    icon: Clock,
+  },
 }
 
 export const isTerminalStatus = (status: InterventionStatusKey) => status === "REFUSE" || status === "ANNULE"
@@ -143,6 +154,7 @@ const STATUS_KEYS: InterventionStatusKey[] = [
   "TERMINE",
   "SAV",
   "STAND_BY",
+  "ATT_ACOMPTE",
   "REFUSE",
   "ANNULE",
 ]
@@ -156,6 +168,7 @@ const STATUS_POSITIONS: Record<InterventionStatusKey, { x: number; y: number }> 
   TERMINE: { x: 6, y: 1 },
   SAV: { x: 7, y: 1 },
   STAND_BY: { x: 4, y: 2 },
+  ATT_ACOMPTE: { x: 5, y: 2 },
   REFUSE: { x: 2, y: 3 },
   ANNULE: { x: 3, y: 3 },
 }

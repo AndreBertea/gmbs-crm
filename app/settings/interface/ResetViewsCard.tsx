@@ -48,7 +48,7 @@ export function ResetViewsCard() {
             Réinitialiser les vues des interventions
           </CardTitle>
           <CardDescription>
-            Restaurer toutes les vues du tableau d'interventions aux paramètres par défaut de l'application.
+            Restaurer toutes les vues du tableau d&apos;interventions aux paramètres par défaut de l&apos;application.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -60,14 +60,14 @@ export function ResetViewsCard() {
               </p>
               <p className="text-sm text-amber-700 dark:text-amber-300">
                 Cette action supprimera toutes vos personnalisations de vues (colonnes visibles, largeurs, filtres, tris, etc.) 
-                et les remplacera par les paramètres par défaut de l'application. Les vues personnalisées que vous avez créées seront également supprimées.
+                et les remplacera par les paramètres par défaut de l&apos;application. Les vues personnalisées que vous avez créées seront également supprimées.
               </p>
             </div>
           </div>
           
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Utilisez cette option si vos vues affichent d'anciennes configurations ou si vous souhaitez repartir de zéro.
+              Utilisez cette option si vos vues affichent d&apos;anciennes configurations ou si vous souhaitez repartir de zéro.
             </p>
             <Button
               variant="destructive"
@@ -86,7 +86,7 @@ export function ResetViewsCard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action va supprimer toutes vos personnalisations de vues et restaurer les paramètres par défaut de l'application.
+              Cette action va supprimer toutes vos personnalisations de vues et restaurer les paramètres par défaut de l&apos;application.
               <br />
               <br />
               Cette opération ne peut pas être annulée.

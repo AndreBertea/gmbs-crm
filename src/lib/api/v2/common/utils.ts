@@ -1,7 +1,7 @@
 // ===== UTILITAIRES COMMUNS POUR L'API V2 =====
 // Fonctions partagées entre toutes les APIs
 
-import { supabase } from "../../../supabase-client";
+import { supabase } from "@/lib/supabase-client";
 
 const DEFAULT_FUNCTIONS_URL = "http://localhost:54321/functions/v1";
 

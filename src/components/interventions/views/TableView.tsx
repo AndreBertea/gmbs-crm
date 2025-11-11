@@ -101,20 +101,6 @@ const NoteDialogContent = React.forwardRef<HTMLDivElement, NoteDialogContentProp
       <AlertDialogPrimitive.Content 
         ref={ref} 
         className={className} 
-        onPointerDownOutside={(e) => {
-          const target = e.target as HTMLElement
-          // Vérifier si le clic est dans un conteneur de dropdown/select/popover
-          const dropdownContainer = target.closest('[data-radix-popper-content-wrapper], [data-radix-select-content], [data-radix-popover-content]')
-          
-          // Si le clic est sur un élément interactif dans le dropdown (menu item, select item, etc.)
-          // permettre la fermeture normale du dropdown
-          const isInteractiveElement = target.closest('[role="menuitem"], [data-radix-dropdown-menu-item], [data-radix-select-item], [role="option"], button, a')
-          
-          // Empêcher la fermeture seulement si on clique dans le conteneur mais pas sur un élément interactif
-          if (dropdownContainer && !isInteractiveElement) {
-            e.preventDefault()
-          }
-        }}
         {...props} 
       />
     </AlertDialogPortal>
@@ -816,7 +802,6 @@ export function TableView({
   const handleNoteDialogOpenChange = useCallback((open: boolean) => {
     if (!open) {
       // Fermer le modal immédiatement
-      // La gestion des dropdowns est faite dans onPointerDownOutside
       setShowNoteDialog(false)
       setNoteDialogInterventionId(null)
       setNoteValue("")
@@ -1181,7 +1166,7 @@ export function TableView({
                           colSpan={Math.max(view.visibleProperties.length + 1, 1)}
                           className="px-4 py-12 text-center text-sm text-muted-foreground"
                         >
-                          Aucune intervention ne correspond à ces filtres. Ajustez votre sélection pour reprendre l'affichage.
+                          Aucune intervention ne correspond à ces filtres. Ajustez votre sélection pour reprendre l&apos;affichage.
                         </td>
                       </tr>
                     ) : (
@@ -1426,7 +1411,7 @@ export function TableView({
                 : "Créer un rappel"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Ajoutez une note et/ou définissez une date d'échéance. Utilisez @ pour notifier un gestionnaire.
+              Ajoutez une note et/ou définissez une date d&apos;échéance. Utilisez @ pour notifier un gestionnaire.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
@@ -1442,7 +1427,7 @@ export function TableView({
               />
             </div>
             <div className="space-y-2">
-              <span className="text-sm font-medium">Date d'échéance (optionnel)</span>
+              <span className="text-sm font-medium">Date d&apos;échéance (optionnel)</span>
               <DatePicker
                 date={dueDateValue}
                 onDateChange={setDueDateValue}

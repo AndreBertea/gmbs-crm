@@ -1,27 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Retirer outputFileTracingRoot en développement (causait des problèmes sur Windows)
-  // outputFileTracingRoot est principalement utile pour le build de production
-  ...(process.env.NODE_ENV === 'production' && {
-    outputFileTracingRoot: process.cwd(),
-  }),
-  
-  // Optimisations pour le développement
-  ...(process.env.NODE_ENV === 'development' && {
-    // Réduire la verbosité des logs en développement
-    logging: {
-      fetches: {
-        fullUrl: false,
-      },
-    },
-    // Augmenter le timeout pour éviter les erreurs ChunkLoadError
-    turbopack: {
-      resolveAlias: {
-        // Éviter les problèmes de résolution de modules
-      },
-    },
-  }),
-
+  outputFileTracingRoot: process.cwd(),
+  allowedDevOrigins: ['192.168.1.164'],
   images: {
     remotePatterns: [
       {

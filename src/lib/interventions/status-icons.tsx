@@ -11,6 +11,7 @@ import {
   Hammer,
   PauseCircle,
   CheckCircle2,
+  Clock,
 } from "lucide-react"
 import type { InterventionStatusValue } from "@/types/interventions"
 
@@ -45,6 +46,8 @@ export const iconForStatus = (statusKey: InterventionStatusValue | string): Reac
       return <CheckCircle2 className="h-3.5 w-3.5" />
     case "SAV":
       return <Hammer className="h-3.5 w-3.5" />
+    case "ATT_ACOMPTE":
+      return <Clock className="h-3.5 w-3.5" />
     default:
       return null
   }

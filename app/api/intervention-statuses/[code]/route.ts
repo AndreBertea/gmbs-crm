@@ -2,12 +2,12 @@ import { NextResponse } from "next/server"
 
 import { supabaseAdmin } from "@/lib/supabase-admin"
 
-export async function PATCH(request: Request, { params }: { params: { code: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ code: string }> }) {
   if (!supabaseAdmin) {
     return NextResponse.json({ error: "Supabase non configuré" }, { status: 500 })
   }
 
-  const { code } = params
+  const { code } = await params
   if (!code) {
     return NextResponse.json({ error: "Code de statut manquant" }, { status: 400 })
   }
