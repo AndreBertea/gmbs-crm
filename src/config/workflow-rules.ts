@@ -62,6 +62,10 @@ export const WORKFLOW_RULES: Record<InterventionStatusValue, WorkflowRule> = {
     requirements: { commentaire: true },
     autoActions: [],
   },
+  ATT_ACOMPTE: {
+    requirements: { devisId: true },
+    autoActions: [],
+  },
 }
 
 export type AuthorizedTransition = {

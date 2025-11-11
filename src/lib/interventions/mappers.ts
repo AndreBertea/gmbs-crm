@@ -33,8 +33,8 @@ const STATUS_FROM_DB_NORMALIZED: Record<string, InterventionStatusValue> = {
   CLOTURE: "TERMINE",
   CLOTUREE: "TERMINE",
   SAV: "SAV",
-  ATT_ACOMPTE: "STAND_BY",
-  ATTENTE_ACOMPTE: "STAND_BY",
+  ATT_ACOMPTE: "ATT_ACOMPTE",
+  ATTENTE_ACOMPTE: "ATT_ACOMPTE",
 }
 
 export const STATUS_TO_DB: Record<InterventionStatusValue, string> = {
@@ -48,6 +48,7 @@ export const STATUS_TO_DB: Record<InterventionStatusValue, string> = {
   EN_COURS: "INTER_EN_COURS",
   TERMINE: "INTER_TERMINEE",
   SAV: "SAV",
+  ATT_ACOMPTE: "ATT_ACOMPTE",
 }
 
 export const DEFAULT_STATUS: InterventionStatusValue = "DEMANDE"
