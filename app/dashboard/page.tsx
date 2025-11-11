@@ -249,6 +249,41 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
             <p className="text-muted-foreground">Vue d&apos;ensemble de l&apos;activité</p>
           </div>
+          
+          {/* Sélecteur de période au milieu */}
+          <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Période :</span>
+              {isMounted ? (
+                <Select value={periodType} onValueChange={(value) => setPeriodType(value as PeriodType)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="week">Semaine</SelectItem>
+                    <SelectItem value="month">Mois</SelectItem>
+                    <SelectItem value="year">Année</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="w-[180px] h-10 rounded-md border bg-background flex items-center px-3">
+                  <span className="text-sm text-muted-foreground">Chargement...</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>{periodLabel}</span>
+              <span className="text-foreground font-medium">
+                {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+              {totalInterventions !== null && (
+                <span className="text-foreground font-medium">
+                  {totalInterventions} intervention{totalInterventions > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <ContextMenu>
               <ContextMenuTrigger asChild>
@@ -279,41 +314,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Sélecteur de période */}
-        <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Période :</span>
-            {isMounted ? (
-              <Select value={periodType} onValueChange={(value) => setPeriodType(value as PeriodType)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Semaine</SelectItem>
-                  <SelectItem value="month">Mois</SelectItem>
-                  <SelectItem value="year">Année</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="w-[180px] h-10 rounded-md border bg-background flex items-center px-3">
-                <span className="text-sm text-muted-foreground">Chargement...</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>{periodLabel}</span>
-            <span className="text-foreground font-medium">
-              {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-            </span>
-            {totalInterventions !== null && (
-              <span className="text-foreground font-medium">
-                {totalInterventions} intervention{totalInterventions > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Première ligne : Mes Interventions (40%), Mes Artisans (30%), Ma Performance (30%) */}
+        {/* Première ligne : Interventions (40%), Artisans (30%), Performance (30%) */}
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-10">
           <div className="lg:col-span-4">
             <InterventionStatsBarChart period={period} />
@@ -322,13 +323,20 @@ export default function DashboardPage() {
             <ArtisanStatsList period={period} />
           </div>
           <div className="lg:col-span-3 space-y-4">
-            <MarginStatsCard period={period} />
-            <MarginTotalCard period={period} />
+            {/* Performance Moyenne et Totale côte à côte */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <MarginStatsCard period={period} />
+              </div>
+              <div>
+                <MarginTotalCard period={period} />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Deuxième ligne : Statistiques (70%) et Classement (30%) */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-10">
+        {/* Deuxième ligne : Statistiques (70%) et Podium (30%) alignés */}
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-10 items-end">
           <div className="lg:col-span-7">
             <WeeklyStatsTable period={period} />
           </div>

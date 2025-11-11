@@ -548,6 +548,7 @@ export interface MarginStats {
 export interface GestionnaireMarginRanking {
   user_id: string;
   user_name: string;
+  user_firstname: string | null;
   user_code: string | null;
   user_color: string | null;
   total_margin: number;

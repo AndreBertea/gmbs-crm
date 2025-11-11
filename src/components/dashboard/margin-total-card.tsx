@@ -130,7 +130,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (loading) {
         return (
-            <Card className="border-border/30 shadow-sm/50">
+            <Card className="bg-background border-border/5 shadow-sm/30">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -146,7 +146,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (error) {
         return (
-            <Card className="border-border/30 shadow-sm/50">
+            <Card className="bg-background border-border/5 shadow-sm/30">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -159,7 +159,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (!userId) {
         return (
-            <Card className="border-border/30 shadow-sm/50">
+            <Card className="bg-background border-border/5 shadow-sm/30">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -174,7 +174,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (!stats || stats.total_interventions === 0) {
         return (
-            <Card className="border-border/30 shadow-sm/50">
+            <Card className="bg-background border-border/5 shadow-sm/30">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -220,7 +220,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
     const percentageColor = getPercentageColor()
 
     return (
-        <Card className="border-border/30 shadow-sm/50">
+        <Card className="bg-background border-border/5 shadow-sm/30">
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
             </CardHeader>
@@ -256,15 +256,12 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
                     {/* Informations */}
                     <div className="space-y-1 mt-2">
-                        <div className="flex items-center justify-between">
-                            <div className="flex-1"></div>
+                        <div className="flex flex-col items-center gap-1">
                             <div className={`text-sm font-semibold ${percentageColor}`}>
                                 {formatCurrency(stats.total_margin)}
                             </div>
-                            <div className="flex-1 flex justify-end">
-                                <div className="text-[10px] text-muted-foreground font-light tracking-wide">
-                                    Objectif: {formatCurrency(marginTarget)}
-                                </div>
+                            <div className="text-[10px] text-muted-foreground font-light tracking-wide">
+                                Objectif: {formatCurrency(marginTarget)}
                             </div>
                         </div>
                     </div>

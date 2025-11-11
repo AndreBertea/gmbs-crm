@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi } from "@/lib/api/v2"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
@@ -17,6 +17,7 @@ import { useInterventionModal } from "@/hooks/useInterventionModal"
 import { getInterventionStatusColor } from "@/config/status-colors"
 import { INTERVENTION_STATUS } from "@/config/interventions"
 import { useInterventionStatuses } from "@/hooks/useInterventionStatuses"
+import { getMetierColor } from "@/config/metier-colors"
 
 interface InterventionStatsBarChartProps {
   period?: {
@@ -37,6 +38,25 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   const triggerPositionRef = useRef<{ x: number; y: number } | null>(null)
   const fixedTriggerPositionRef = useRef<{ x: number; y: number } | null>(null)
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Cache optimisé avec timestamp pour expiration
+  const interventionsCacheRef = useRef<Map<string, {
+    data: Array<{
+      id: string;
+      id_inter: string | null;
+      due_date: string | null;
+      status_label: string | null;
+      status_color: string | null;
+      agence_label: string | null;
+      metier_label: string | null;
+      metier_code: string | null;
+      marge: number;
+    }>;
+    timestamp: number;
+  }>>(new Map())
+  
+  const CACHE_DURATION = 2 * 60 * 1000 // 2 minutes de cache
+  
   const router = useRouter()
 
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
@@ -347,7 +367,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
 
   if (loading) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300">
         <CardHeader>
           <CardTitle>Mes interventions</CardTitle>
         </CardHeader>
@@ -362,7 +382,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
 
   if (error) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300">
         <CardHeader>
           <CardTitle>Mes interventions</CardTitle>
         </CardHeader>
@@ -375,7 +395,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
 
   if (!userId) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300">
         <CardHeader>
           <CardTitle>Mes interventions</CardTitle>
         </CardHeader>
@@ -390,7 +410,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
 
   if (chartData.length === 0) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300">
         <CardHeader>
           <CardTitle>Mes interventions</CardTitle>
         </CardHeader>
@@ -429,6 +449,20 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     onOpenIntervention: (id: string) => void
     period?: { startDate?: string; endDate?: string }
   }) => {
+    // Créer la clé de cache avec useMemo pour éviter les recalculs
+    const cacheKey = useMemo(() => 
+      `${statusLabel}-${period?.startDate || ''}-${period?.endDate || ''}`,
+      [statusLabel, period?.startDate, period?.endDate]
+    )
+
+    // Vérifier le cache immédiatement pour initialiser le state
+    const getCachedData = () => {
+      const cachedEntry = interventionsCacheRef.current.get(cacheKey)
+      const isValid = cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_DURATION)
+      return isValid ? cachedEntry.data : null
+    }
+    
+    // Initialiser directement avec les données du cache si disponibles
     const [interventionsData, setInterventionsData] = useState<Array<{
       id: string;
       id_inter: string | null;
@@ -436,14 +470,29 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
       status_label: string | null;
       status_color: string | null;
       agence_label: string | null;
+      metier_label: string | null;
+      metier_code: string | null;
       marge: number;
-    }> | null>(null)
-    const [loading, setLoading] = useState(false)
+    }> | null>(getCachedData())
+    
+    // Ne pas afficher le loading si on a déjà des données en cache
+    const [loading, setLoading] = useState(() => getCachedData() === null)
     const [error, setError] = useState<string | null>(null)
 
-    // Charger les données au montage du composant avec période
+    // Charger les données seulement si nécessaire
     useEffect(() => {
       if (!userId || !statusLabel) return
+
+      // Vérifier le cache à nouveau dans le useEffect
+      const cachedEntry = interventionsCacheRef.current.get(cacheKey)
+      const isCacheValid = cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_DURATION)
+      
+      // Si le cache est valide, mettre à jour les données et ne rien faire d'autre
+      if (isCacheValid) {
+        setInterventionsData(cachedEntry.data)
+        setLoading(false)
+        return
+      }
 
       let cancelled = false
 
@@ -459,6 +508,11 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
             period?.endDate
           )
           if (!cancelled) {
+            // Mettre en cache avec timestamp
+            interventionsCacheRef.current.set(cacheKey, {
+              data,
+              timestamp: Date.now()
+            })
             setInterventionsData(data)
             setLoading(false)
           }
@@ -475,7 +529,21 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
       return () => {
         cancelled = true
       }
-    }, [userId, statusLabel, period?.startDate, period?.endDate])
+    }, [userId, statusLabel, cacheKey, period?.startDate, period?.endDate])
+
+    // Nettoyer le cache périodiquement (optionnel, pour éviter la croissance mémoire)
+    useEffect(() => {
+      const cleanup = setInterval(() => {
+        const now = Date.now()
+        for (const [key, entry] of Array.from(interventionsCacheRef.current.entries())) {
+          if (now - entry.timestamp > CACHE_DURATION) {
+            interventionsCacheRef.current.delete(key)
+          }
+        }
+      }, CACHE_DURATION)
+
+      return () => clearInterval(cleanup)
+    }, [])
 
     if (loading) {
       return (
@@ -528,11 +596,11 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                 <div className="text-xs text-muted-foreground">
                   {isDemandeStatus ? (
                     <>
-                      Statut : <span style={{ color: intervention.status_color || "#6366F1" }}>{intervention.status_label || "N/A"}</span> | Agence : {intervention.agence_label || "N/A"} | Due date : {intervention.due_date ? formatDate(intervention.due_date) : "N/A"}
+                      Métier : <span style={{ color: getMetierColor(intervention.metier_code, intervention.metier_label) }}>{intervention.metier_label || "N/A"}</span> | Agence : {intervention.agence_label || "N/A"} | Due date : {intervention.due_date ? formatDate(intervention.due_date) : "N/A"}
                     </>
                   ) : (
                     <>
-                      Statut : <span style={{ color: intervention.status_color || "#6366F1" }}>{intervention.status_label || "N/A"}</span> | Marge : {formatCurrency(intervention.marge)} | Due date : {intervention.due_date ? formatDate(intervention.due_date) : "N/A"}
+                      Métier : <span style={{ color: getMetierColor(intervention.metier_code, intervention.metier_label) }}>{intervention.metier_label || "N/A"}</span> | Marge : {formatCurrency(intervention.marge)} | Due date : {intervention.due_date ? formatDate(intervention.due_date) : "N/A"}
                     </>
                   )}
                 </div>
@@ -549,7 +617,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <Card 
-          className="border-border/30 shadow-sm/50"
+          className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300"
         >
           <CardHeader>
             <CardTitle>Mes interventions</CardTitle>

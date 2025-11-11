@@ -6,6 +6,7 @@ import { TrendingDown } from "lucide-react"
 interface GestionnaireRankingItem {
   user_id: string
   user_name: string
+  user_firstname: string | null
   user_code: string | null
   user_color: string | null
   total_margin: number
@@ -27,6 +28,11 @@ const getInitials = (name: string) => {
   return name.substring(0, 2).toUpperCase()
 }
 
+const getFirstName = (fullName: string) => {
+  const parts = fullName.split(" ").filter(Boolean)
+  return parts.length > 0 ? parts[0] : fullName
+}
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
@@ -38,7 +44,11 @@ const formatCurrency = (amount: number) => {
 
 export const BottomCard = ({ entry, position, totalRankings }: BottomCardProps) => {
   const isLast = position === totalRankings
-  const displayName = entry.user_code || entry.user_name
+  // Utiliser firstname depuis la DB, sinon extraire depuis user_name (si différent du code), sinon user_code, sinon user_name complet
+  const firstNameFromName = entry.user_name && entry.user_name !== entry.user_code 
+    ? getFirstName(entry.user_name) 
+    : null
+  const displayName = entry.user_firstname || firstNameFromName || entry.user_code || entry.user_name
 
   return (
     <Card

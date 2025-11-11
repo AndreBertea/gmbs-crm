@@ -97,7 +97,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
 
   if (loading) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300">
         <CardHeader>
           <CardTitle>Mes Artisans</CardTitle>
         </CardHeader>
@@ -112,7 +112,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
 
   if (error) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300">
         <CardHeader>
           <CardTitle>Mes Artisans</CardTitle>
         </CardHeader>
@@ -125,7 +125,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
 
   if (!userId) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300">
         <CardHeader>
           <CardTitle>Mes Artisans</CardTitle>
         </CardHeader>
@@ -142,7 +142,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
 
   if (!hasData) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300">
         <CardHeader>
           <CardTitle>Mes Artisans</CardTitle>
         </CardHeader>
@@ -405,7 +405,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <Card 
-          className="border-border/30 shadow-sm/50"
+          className="bg-background border-border/5 shadow-sm/30 hover:shadow-lg hover:border-border/50 transition-all duration-300"
         >
           <CardHeader>
             <CardTitle>Mes Artisans</CardTitle>

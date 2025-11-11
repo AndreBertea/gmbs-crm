@@ -130,7 +130,7 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
 
   if (loading) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
         </CardHeader>
@@ -146,7 +146,7 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
 
   if (error) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
         </CardHeader>
@@ -159,7 +159,7 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
 
   if (!userId) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
         </CardHeader>
@@ -174,7 +174,7 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
 
   if (!stats || stats.total_interventions === 0) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
         </CardHeader>
@@ -217,7 +217,7 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
   const percentageColor = getPercentageColor()
 
   return (
-    <Card className="border-border/30 shadow-sm/50">
+    <Card className="bg-background border-border/5 shadow-sm/30">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
       </CardHeader>
@@ -253,18 +253,15 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
 
           {/* Informations */}
           <div className="space-y-1 mt-2">
-            <div className="flex items-center justify-between">
-              <div className="flex-1"></div>
+            <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <TrendIcon className={`h-4 w-4 ${percentageColor}`} />
                 <div className={`text-lg font-bold ${percentageColor}`}>
                   {displayPercentage}
                 </div>
               </div>
-              <div className="flex-1 flex justify-end">
-                <div className="text-[10px] text-muted-foreground font-light tracking-wide">
-                  Objectif: {performanceTarget}%
-                </div>
+              <div className="text-[10px] text-muted-foreground font-light tracking-wide">
+                Objectif: {performanceTarget}%
               </div>
             </div>
           </div>

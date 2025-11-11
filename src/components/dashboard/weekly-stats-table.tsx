@@ -114,7 +114,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (loading) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader>
           <CardTitle>Statistiques</CardTitle>
         </CardHeader>
@@ -129,7 +129,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (error) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader>
           <CardTitle>Statistiques</CardTitle>
         </CardHeader>
@@ -142,7 +142,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (!userId) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader>
           <CardTitle>Statistiques</CardTitle>
         </CardHeader>
@@ -157,7 +157,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (!stats) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Statistiques</CardTitle>

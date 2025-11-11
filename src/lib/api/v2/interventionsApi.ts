@@ -1237,6 +1237,7 @@ export const interventionsApi = {
           rankings.push({
             user_id: user.id,
             user_name: fullName,
+            user_firstname: user.lastname, // Utiliser lastname car c'est le prénom dans votre système
             user_code: user.code_gestionnaire,
             user_color: user.color,
             total_margin: Math.round(totalMargin * 100) / 100,
@@ -1899,6 +1900,8 @@ export const interventionsApi = {
     status_label: string | null;
     status_color: string | null;
     agence_label: string | null;
+    metier_label: string | null;
+    metier_code: string | null;
     marge: number;
   }>> {
     if (!userId) {
@@ -1921,8 +1924,10 @@ export const interventionsApi = {
         date_prevue,
         date,
         agence_id,
+        metier_id,
         status:intervention_statuses(id, code, label, color),
         agence:agencies(id, label, code),
+        metier:metiers(id, label, code),
         intervention_costs (
           cost_type,
           amount
@@ -1998,6 +2003,11 @@ export const interventionsApi = {
         const agence = item.agence;
         const agence_label = agence?.label || null;
 
+        // Extraire le métier
+        const metier = item.metier;
+        const metier_label = metier?.label || null;
+        const metier_code = metier?.code || null;
+
         return {
           id: item.id,
           id_inter: item.id_inter,
@@ -2005,6 +2015,8 @@ export const interventionsApi = {
           status_label,
           status_color,
           agence_label,
+          metier_label,
+          metier_code,
           marge,
         };
       })

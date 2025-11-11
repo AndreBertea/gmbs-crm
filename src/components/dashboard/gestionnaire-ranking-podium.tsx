@@ -76,7 +76,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
 
   if (loading) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader>
           <CardTitle>Podium</CardTitle>
         </CardHeader>
@@ -91,7 +91,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
 
   if (error) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader>
           <CardTitle>Podium</CardTitle>
         </CardHeader>
@@ -104,7 +104,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
 
   if (!ranking || ranking.rankings.length === 0) {
     return (
-      <Card className="border-border/30 shadow-sm/50">
+      <Card className="bg-background border-border/5 shadow-sm/30">
         <CardHeader>
           <CardTitle>Podium</CardTitle>
         </CardHeader>
@@ -118,7 +118,7 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
   }
 
   return (
-    <Card className="border-border/30 shadow-sm/50">
+    <Card className="bg-background border-border/5 shadow-sm/30">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-center gap-3">
           <Trophy className="w-6 h-6 text-gold" />
