@@ -22,14 +22,19 @@ const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 
 // Charger les variables d'environnement
+// Priorité: .env.production si NODE_ENV=production, sinon .env.local, puis .env
 const envPath = path.resolve(process.cwd(), '.env');
 const envLocalPath = path.resolve(process.cwd(), '.env.local');
+const envProductionPath = path.resolve(process.cwd(), '.env.production');
 
-if (require('fs').existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-}
-if (require('fs').existsSync(envLocalPath)) {
+// Charger selon l'environnement
+if (process.env.NODE_ENV === 'production' && require('fs').existsSync(envProductionPath)) {
+  dotenv.config({ path: envProductionPath });
+  console.log('📝 Variables chargées depuis: .env.production');
+} else if (require('fs').existsSync(envLocalPath)) {
   dotenv.config({ path: envLocalPath });
+} else if (require('fs').existsSync(envPath)) {
+  dotenv.config({ path: envPath });
 }
 
 const requiredEnv = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
