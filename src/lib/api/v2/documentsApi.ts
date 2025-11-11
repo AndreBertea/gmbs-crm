@@ -18,6 +18,55 @@ import { supabase } from "@/lib/supabase-client";
 const isNodeJs = typeof window === 'undefined';
 
 /**
+ * Normalise le kind d'un document pour les interventions
+ * Transforme les variantes (facture_gmbs, factureGMBS, etc.) vers les valeurs canoniques (facturesGMBS)
+ */
+function normalizeInterventionKind(kind: string): string {
+  if (!kind) return kind;
+  
+  const trimmed = kind.trim();
+  if (!trimmed) return kind;
+  
+  const lower = trimmed.toLowerCase();
+  const compact = lower.replace(/[_\s-]/g, '');
+  
+  // Mapping vers les valeurs canoniques avec 's' (comme dans l'Edge Function)
+  const canonicalMap: Record<string, string> = {
+    facturegmbs: 'facturesGMBS',
+    facturesgmbs: 'facturesGMBS',
+    factureartisan: 'facturesArtisans',
+    facturesartisan: 'facturesArtisans',
+    facturemateriel: 'facturesMateriel',
+    facturesmateriel: 'facturesMateriel'
+  };
+  
+  if (canonicalMap[compact]) {
+    return canonicalMap[compact];
+  }
+  
+  // Gérer les cas spéciaux comme 'a_classe'
+  const needsClassification = [
+    'aclasser',
+    'aclassifier',
+    'àclasser',
+    'àclassifier',
+    'aclasse',
+    'àclasse'
+  ];
+  if (
+    needsClassification.includes(compact) ||
+    lower === 'a classer' ||
+    lower === 'a classifier' ||
+    lower === 'à classer' ||
+    lower === 'à classifier'
+  ) {
+    return 'a_classe';
+  }
+  
+  return trimmed;
+}
+
+/**
  * Crée un client Supabase pour Node.js avec les bonnes credentials
  */
 function getSupabaseClientForNode() {
@@ -82,11 +131,16 @@ export const documentsApi = {
       const tableName = data.entity_type === 'artisan' ? 'artisan_attachments' : 'intervention_attachments';
       const entityIdField = data.entity_type === 'artisan' ? 'artisan_id' : 'intervention_id';
       
+      // Normaliser le kind pour les interventions (comme dans l'Edge Function)
+      const canonicalKind = data.entity_type === 'intervention'
+        ? normalizeInterventionKind(data.kind)
+        : data.kind;
+      
       const { data: result, error } = await client
         .from(tableName)
         .insert([{
           [entityIdField]: data.entity_id,
-          kind: data.kind,
+          kind: canonicalKind,
           url: data.url,
           filename: data.filename || null,
           mime_type: data.mime_type || null,
@@ -144,47 +198,9 @@ export const documentsApi = {
       const extension = data.filename.split('.').pop() || 'bin';
       
       // Normaliser le kind pour les interventions (comme dans l'Edge Function)
-      let canonicalKind = data.kind;
-      if (data.entity_type === 'intervention') {
-        const trimmed = data.kind.trim();
-        const lower = trimmed.toLowerCase();
-        const compact = lower.replace(/[_\s-]/g, '');
-        
-        // Mapping vers les valeurs canoniques avec 's' (comme dans l'Edge Function)
-        const canonicalMap: Record<string, string> = {
-          facturegmbs: 'facturesGMBS',
-          facturesgmbs: 'facturesGMBS',
-          factureartisan: 'facturesArtisans',
-          facturesartisan: 'facturesArtisans',
-          facturemateriel: 'facturesMateriel',
-          facturesmateriel: 'facturesMateriel'
-        };
-        
-        if (canonicalMap[compact]) {
-          canonicalKind = canonicalMap[compact];
-        } else {
-          // Gérer les cas spéciaux comme 'a_classe'
-          const needsClassification = [
-            'aclasser',
-            'aclassifier',
-            'àclasser',
-            'àclassifier',
-            'aclasse',
-            'àclasse'
-          ];
-          if (
-            needsClassification.includes(compact) ||
-            lower === 'a classer' ||
-            lower === 'a classifier' ||
-            lower === 'à classer' ||
-            lower === 'à classifier'
-          ) {
-            canonicalKind = 'a_classe';
-          } else {
-            canonicalKind = trimmed;
-          }
-        }
-      }
+      const canonicalKind = data.entity_type === 'intervention'
+        ? normalizeInterventionKind(data.kind)
+        : data.kind;
       
       const uniqueFilename = `${data.entity_type}_${data.entity_id}_${canonicalKind}_${timestamp}.${extension}`;
 
