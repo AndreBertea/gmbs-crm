@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  outputFileTracingRoot: '/Users/andrebertea/Projects/GMBS/gmbs-crm',
+  outputFileTracingRoot: process.cwd(),
+  allowedDevOrigins: ['192.168.1.164'],
   images: {
     remotePatterns: [
       {

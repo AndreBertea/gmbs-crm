@@ -317,6 +317,7 @@ export interface CreateInterventionData {
 }
 
 export interface UpdateInterventionData {
+  id_inter?: string | null;
   agence_id?: string;
   reference_agence?: string | null;
   tenant_id?: string | null;

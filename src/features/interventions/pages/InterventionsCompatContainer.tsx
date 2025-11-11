@@ -139,22 +139,26 @@ export default function InterventionsCompatContainer() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {interventions.map((intervention) => (
-          <Card key={intervention.id}>
-            <CardHeader>
-              <CardTitle className="text-lg">{intervention.contexteIntervention}</CardTitle>
-              <CardDescription>{intervention.prenomClient} {intervention.nomClient}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <Badge variant="outline">{intervention.statut}</Badge>
-                <span className="text-sm text-muted-foreground">
-                  {intervention.coutIntervention}€
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {interventions.map((intervention: any) => {
+          const client = intervention.clients || {}
+          const status = intervention.intervention_statuses || {}
+          return (
+            <Card key={intervention.id}>
+              <CardHeader>
+                <CardTitle className="text-lg">{intervention.contexte_intervention || intervention.contexteIntervention || 'Intervention'}</CardTitle>
+                <CardDescription>{client.firstname || ''} {client.lastname || ''}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline">{status.label || intervention.statut || 'N/A'}</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {intervention.cout_intervention || intervention.coutIntervention || 0}€
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       {/* Bouton "Charger plus" pour le lazy loading */}

@@ -2,17 +2,17 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Intervention } from "@/lib/supabase-api-v2"
+import type { InterventionView } from "@/types/intervention-view"
 import { Calendar, Euro, Mail, MapPin, Phone, User, X } from "lucide-react"
 
 export type InterventionDetailCardProps = {
-  intervention: Intervention
+  intervention: InterventionView
   onClose?: () => void
-  onEdit?: (intervention: Intervention) => void
-  onSendEmail?: (intervention: Intervention) => void
-  onCall?: (intervention: Intervention) => void
-  onAddDocument?: (intervention: Intervention) => void
-  onStatusChange?: (intervention: Intervention, newStatus: string) => void // TODO missing backend mutation
+  onEdit?: (intervention: InterventionView) => void
+  onSendEmail?: (intervention: InterventionView) => void
+  onCall?: (intervention: InterventionView) => void
+  onAddDocument?: (intervention: InterventionView) => void
+  onStatusChange?: (intervention: InterventionView, newStatus: string) => void // TODO missing backend mutation
   className?: string
 }
 

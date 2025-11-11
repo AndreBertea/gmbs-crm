@@ -70,7 +70,7 @@ interface LegacyInterventionFormProps {
   onSuccess?: (data: any) => void
   onCancel?: () => void
   mode?: "halfpage" | "centerpage" | "fullpage"
-  formRef?: React.RefObject<HTMLFormElement>
+  formRef?: React.RefObject<HTMLFormElement | null>
   onSubmittingChange?: (isSubmitting: boolean) => void
 }
 

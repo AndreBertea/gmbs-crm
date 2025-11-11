@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react"
 
+export type ColumnWidths = Record<string, number | undefined>
+
 export function useColumnResize(
-  columnWidths: Record<string, number | undefined>,
+  columnWidths: ColumnWidths,
   onUpdate: (widths: Record<string, number>) => void,
 ) {
   const [activeColumn, setActiveColumn] = useState<string | null>(null)

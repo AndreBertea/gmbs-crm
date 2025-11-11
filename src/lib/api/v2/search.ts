@@ -498,12 +498,21 @@ const searchArtisans = async (
     throw error
   }
 
-  const scored = (data ?? []).map((record) => {
-    const score = scoreArtisan(record as ArtisanSearchRecord, query)
+  const scored = (data ?? []).map((record: any) => {
+    // Normaliser la structure des métiers et du status si nécessaire
+    const normalizedRecord: ArtisanSearchRecord = {
+      ...record,
+      metiers: Array.isArray(record.metiers) 
+        ? record.metiers.map((m: any) => ({
+            is_primary: m.is_primary,
+            metier: Array.isArray(m.metier) ? m.metier[0] : m.metier,
+          }))
+        : [],
+      status: Array.isArray(record.status) ? record.status[0] : record.status,
+    } as unknown as ArtisanSearchRecord
+    const score = scoreArtisan(normalizedRecord, query)
     return {
-      record: {
-        ...(record as ArtisanSearchRecord),
-      },
+      record: normalizedRecord,
       score,
     }
   })
@@ -646,7 +655,7 @@ const searchInterventions = async (
       { count: "exact" },
     )
     .or(orFilterString)
-    .order("date", { ascending: false, nullsLast: true })
+    .order("date", { ascending: false, nullsFirst: false })
     .limit(baseLimit)
 
   if (error) {

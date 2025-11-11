@@ -22,7 +22,7 @@ export const clientsApi = {
     }`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -32,7 +32,7 @@ export const clientsApi = {
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/clients/clients/${id}`,
       {
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -42,7 +42,7 @@ export const clientsApi = {
   async create(data: CreateClientData): Promise<Client> {
     const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/clients/clients`, {
       method: "POST",
-      headers: getHeaders(),
+      headers: await getHeaders(),
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -54,7 +54,7 @@ export const clientsApi = {
       `${SUPABASE_FUNCTIONS_URL}/clients/clients/${id}`,
       {
         method: "PUT",
-        headers: getHeaders(),
+        headers: await getHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -67,7 +67,7 @@ export const clientsApi = {
       `${SUPABASE_FUNCTIONS_URL}/clients/clients/${id}`,
       {
         method: "DELETE",
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);
@@ -101,7 +101,7 @@ export const clientsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/clients/clients/search?${searchParams.toString()}`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -116,7 +116,7 @@ export const clientsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/clients/clients/search?${searchParams.toString()}`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -131,7 +131,7 @@ export const clientsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/clients/clients/search?${searchParams.toString()}`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -146,7 +146,7 @@ export const clientsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/clients/clients/search?${searchParams.toString()}`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -161,7 +161,7 @@ export const clientsApi = {
     const url = `${SUPABASE_FUNCTIONS_URL}/clients/clients/search?${searchParams.toString()}`;
 
     const response = await fetch(url, {
-      headers: getHeaders(),
+      headers: await getHeaders(),
     });
     return handleResponse(response);
   },
@@ -176,7 +176,7 @@ export const clientsApi = {
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/clients/clients/stats`,
       {
-        headers: getHeaders(),
+        headers: await getHeaders(),
       }
     );
     return handleResponse(response);

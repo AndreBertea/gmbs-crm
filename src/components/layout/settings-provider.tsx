@@ -32,7 +32,7 @@ function applyCompleteTheme(themeFromStore?: string, classEffectFromStore?: bool
     let storedMode = themeFromStore
     if (!storedMode) {
       try {
-        storedMode = localStorage.getItem('color-mode')
+        storedMode = localStorage.getItem('color-mode') || undefined
       } catch (e) {
         console.warn('localStorage inaccessible pour color-mode:', e)
       }

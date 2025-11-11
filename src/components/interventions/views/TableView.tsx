@@ -101,20 +101,6 @@ const NoteDialogContent = React.forwardRef<HTMLDivElement, NoteDialogContentProp
       <AlertDialogPrimitive.Content 
         ref={ref} 
         className={className} 
-        onPointerDownOutside={(e) => {
-          const target = e.target as HTMLElement
-          // Vérifier si le clic est dans un conteneur de dropdown/select/popover
-          const dropdownContainer = target.closest('[data-radix-popper-content-wrapper], [data-radix-select-content], [data-radix-popover-content]')
-          
-          // Si le clic est sur un élément interactif dans le dropdown (menu item, select item, etc.)
-          // permettre la fermeture normale du dropdown
-          const isInteractiveElement = target.closest('[role="menuitem"], [data-radix-dropdown-menu-item], [data-radix-select-item], [role="option"], button, a')
-          
-          // Empêcher la fermeture seulement si on clique dans le conteneur mais pas sur un élément interactif
-          if (dropdownContainer && !isInteractiveElement) {
-            e.preventDefault()
-          }
-        }}
         {...props} 
       />
     </AlertDialogPortal>
@@ -816,7 +802,6 @@ export function TableView({
   const handleNoteDialogOpenChange = useCallback((open: boolean) => {
     if (!open) {
       // Fermer le modal immédiatement
-      // La gestion des dropdowns est faite dans onPointerDownOutside
       setShowNoteDialog(false)
       setNoteDialogInterventionId(null)
       setNoteValue("")

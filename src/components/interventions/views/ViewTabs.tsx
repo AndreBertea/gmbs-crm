@@ -269,16 +269,16 @@ function SortableTab({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem onSelect={() => onSelect(view.id)}>Activer</DropdownMenuItem>
-            {onRenameView && <DropdownMenuItem onSelect={() => onRenameView(view.id)}>Renommer…</DropdownMenuItem>}
-            {onDuplicateView && <DropdownMenuItem onSelect={() => onDuplicateView(view.id)}>Dupliquer…</DropdownMenuItem>}
+            {onRenameView && <DropdownMenuItem onSelect={() => onRenameView?.(view.id)}>Renommer…</DropdownMenuItem>}
+            {onDuplicateView && <DropdownMenuItem onSelect={() => onDuplicateView?.(view.id)}>Dupliquer…</DropdownMenuItem>}
             {view.layout === "table" && onConfigureColumns && (
-              <DropdownMenuItem onSelect={() => onConfigureColumns(view.id)}>
+              <DropdownMenuItem onSelect={() => onConfigureColumns?.(view.id)}>
                 <Settings className="mr-2 h-4 w-4" />
                 Configurer les colonnes…
               </DropdownMenuItem>
             )}
             {view.isDefault && onResetDefault && (
-              <DropdownMenuItem onSelect={() => onResetDefault(view.id)}>Réinitialiser la vue</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onResetDefault?.(view.id)}>Réinitialiser la vue</DropdownMenuItem>
             )}
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
@@ -317,7 +317,7 @@ function SortableTab({
               </DropdownMenuSubContent>
             </DropdownMenuSub>
             {!view.isDefault && onDeleteView && (
-              <DropdownMenuItem className="text-destructive" onSelect={() => onDeleteView(view.id)}>
+              <DropdownMenuItem className="text-destructive" onSelect={() => onDeleteView?.(view.id)}>
                 Supprimer
               </DropdownMenuItem>
             )}

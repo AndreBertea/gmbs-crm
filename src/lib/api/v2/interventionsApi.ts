@@ -596,7 +596,11 @@ export const interventionsApi = {
       return result;
     } else {
       // Créer un nouveau coût
-      return this.addCost(interventionId, data);
+      // Mapper "total" vers "marge" car addCost ne supporte pas "total"
+      const costData = data.cost_type === "total" 
+        ? { ...data, cost_type: "marge" as const }
+        : data;
+      return this.addCost(interventionId, costData as { cost_type: "sst" | "materiel" | "intervention" | "marge"; label?: string; amount: number; currency?: string; metadata?: any; });
     }
   },
 

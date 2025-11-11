@@ -83,6 +83,13 @@ export type InterventionView = Intervention & {
   emailLocataire?: string | null
   commentaire?: string | null
   idFacture?: number | null
+  sousStatutText?: string | null
+  sousStatutTextColor?: string | null
+  
+  // Demandes
+  demandeIntervention?: string | null
+  demandeDevis?: string | null
+  demandeTrustPilot?: string | null
   
   // Pièces jointes
   pieceJointeIntervention?: any[]
@@ -95,6 +102,5 @@ export type InterventionView = Intervention & {
   
   // Autres
   devisId?: string | null
-  artisan?: string | null
   deuxiemeArtisan?: string | null
 }

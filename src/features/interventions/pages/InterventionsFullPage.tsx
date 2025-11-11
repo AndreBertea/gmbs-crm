@@ -44,7 +44,7 @@ export default function InterventionsFullPage() {
     refresh,
     updateInterventionOptimistic,
   } = useInterventions()
-  const [selectedIntervention, setSelectedIntervention] = useState<Intervention | null>(null)
+  const [selectedIntervention, setSelectedIntervention] = useState<InterventionView | null>(null)
 
   const [search, setSearch] = useState("")
   const [selectedUser, setSelectedUser] = useState<string>("")
@@ -148,8 +148,8 @@ export default function InterventionsFullPage() {
   )
 
   const applyInterventionUpdate = useCallback(
-    (id: string, updates: Partial<Intervention>) => {
-      updateInterventionOptimistic(id, updates as Partial<InterventionView>)
+    (id: string, updates: Partial<InterventionView>) => {
+      updateInterventionOptimistic(id, updates)
       setSelectedIntervention((prev) => (prev && prev.id === id ? { ...prev, ...updates } : prev))
     },
     [updateInterventionOptimistic],
@@ -462,29 +462,29 @@ export default function InterventionsFullPage() {
   }, [searched, keyboardSelectedIndex])
 
   const handleStatusChange = useCallback(
-    (item: Intervention, status: string) => {
+    (item: InterventionView, status: string) => {
       applyInterventionUpdate(item.id, { statut: status })
     },
     [applyInterventionUpdate],
   )
 
   const handleCoutSSTChange = useCallback(
-    (item: Intervention, value: number) => applyInterventionUpdate(item.id, { coutSST: value }),
+    (item: InterventionView, value: number) => applyInterventionUpdate(item.id, { coutSST: value }),
     [applyInterventionUpdate],
   )
 
   const handleCoutMateriauxChange = useCallback(
-    (item: Intervention, value: number) => applyInterventionUpdate(item.id, { coutMateriel: value }),
+    (item: InterventionView, value: number) => applyInterventionUpdate(item.id, { coutMateriel: value }),
     [applyInterventionUpdate],
   )
 
   const handleCoutInterventionsChange = useCallback(
-    (item: Intervention, value: number) => applyInterventionUpdate(item.id, { coutIntervention: value }),
+    (item: InterventionView, value: number) => applyInterventionUpdate(item.id, { coutIntervention: value }),
     [applyInterventionUpdate],
   )
 
   const handleUserChange = useCallback(
-    (item: Intervention, code: string) => applyInterventionUpdate(item.id, { attribueA: code }),
+    (item: InterventionView, code: string) => applyInterventionUpdate(item.id, { attribueA: code }),
     [applyInterventionUpdate],
   )
 

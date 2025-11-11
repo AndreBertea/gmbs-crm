@@ -14,7 +14,7 @@ interface AvatarProps {
   photoProfilMetadata?: AvatarMetadata | null
   initials: string
   name?: string
-  size?: 40 | 80 | 160
+  size?: 40 | 48 | 80 | 160
   className?: string
   priority?: boolean
 }

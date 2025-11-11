@@ -209,8 +209,8 @@ export function MapLibreMapImpl({
 
         const marker = new maplibregl.Marker(markerOptions).setLngLat([markerCandidate.lng, markerCandidate.lat])
 
-        if (!markerOptions.color && markerCandidate.color && typeof marker.setColor === "function") {
-          marker.setColor(markerCandidate.color)
+        if (!markerOptions.color && markerCandidate.color && typeof (marker as any).setColor === "function") {
+          ;(marker as any).setColor(markerCandidate.color)
         }
 
         marker.getElement().style.cursor = "pointer"

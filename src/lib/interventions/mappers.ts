@@ -204,12 +204,15 @@ export const buildStatusUpdatePayload = (
   updated_at: new Date().toISOString(),
 })
 
-type DuplicateRow = Pick<InterventionRow, "id" | "adresse" | "agence" | "contexte_intervention" | "commentaire_agent">
+type DuplicateRow = Pick<InterventionRow, "id" | "adresse" | "contexte_intervention" | "commentaire_agent"> & {
+  agence?: string | null
+  agence_id?: string | null
+}
 
 export const buildDuplicateSummary = (rows: DuplicateRow[]) =>
   rows.map((row) => ({
     id: row.id,
     name: deriveName(row),
     address: coerceNullableString(row.adresse) ?? "",
-    agency: coerceNullableString(row.agence),
+    agency: coerceNullableString(row.agence ?? row.agence_id ?? null),
   }))
