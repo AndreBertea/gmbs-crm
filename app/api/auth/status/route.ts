@@ -1,12 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabase, bearerFrom } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 
 const ALLOWED = new Set(['connected','busy','dnd','offline'])
 
 export async function PATCH(req: Request) {
-  const token = bearerFrom(req)
+  // Lire le token depuis le header Authorization OU depuis les cookies HTTP-only
+  let token = bearerFrom(req)
+  
+  // Si pas de token dans le header, lire depuis les cookies HTTP-only
+  if (!token) {
+    const cookieStore = await cookies()
+    token = cookieStore.get('sb-access-token')?.value || null
+  }
+  
   if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const supabase = createServerSupabase(token)
   const body = await req.json().catch(() => ({}))
