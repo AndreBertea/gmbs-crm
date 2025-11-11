@@ -116,7 +116,7 @@ export default function DashboardPage() {
     const timer = setTimeout(() => {
       if (dashboardContentRef.current) {
         dashboardContentRef.current.style.clipPath = 'none'
-        dashboardContentRef.current.style.webkitClipPath = 'none'
+        ;(dashboardContentRef.current.style as any).webkitClipPath = 'none'
       }
       if (loginIframeRef.current) {
         loginIframeRef.current.style.opacity = '0'
@@ -225,7 +225,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
-            <p className="text-muted-foreground">Vue d'ensemble de l'activité</p>
+            <p className="text-muted-foreground">Vue d&apos;ensemble de l&apos;activité</p>
           </div>
           <div className="flex gap-2">
             <Button asChild>

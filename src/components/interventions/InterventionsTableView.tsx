@@ -57,22 +57,6 @@ export default function InterventionsTableView({ interventions, loading, error }
     return map
   }, [referenceData])
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-        {error}
-      </div>
-    )
-  }
-
   const tableRows: InterventionTableRow[] = useMemo(
     () =>
       interventions.map((item) => {
@@ -107,6 +91,22 @@ export default function InterventionsTableView({ interventions, loading, error }
   )
 
   const orderedIds = useMemo(() => tableRows.map((row) => row.id), [tableRows])
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        {error}
+      </div>
+    )
+  }
 
   return (
     <Card>

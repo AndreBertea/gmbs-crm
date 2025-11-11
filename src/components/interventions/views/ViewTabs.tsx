@@ -287,7 +287,7 @@ function SortableTab({
                   <span>Mode d&apos;affichage</span>
                 </div>
               </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent align="end" className="w-64">
+              <DropdownMenuSubContent className="w-64">
                 {MODE_OPTIONS.map((option) => {
                   const OptionIcon = ModeIcons[option.mode]
                   const isModeActive = preferredMode === option.mode

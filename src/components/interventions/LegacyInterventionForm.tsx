@@ -1202,7 +1202,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
                     />
                   ) : (
                     <p className="text-xs italic text-muted-foreground">
-                      Les commentaires seront disponibles après la création de l'intervention.
+                      Les commentaires seront disponibles après la création de l&apos;intervention.
                     </p>
                   )}
                   <div className="space-y-2">

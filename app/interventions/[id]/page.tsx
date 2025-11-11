@@ -2,13 +2,13 @@ import { notFound } from "next/navigation"
 import { getIntervention } from "@/lib/api/interventions"
 
 type Params = {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function InterventionDetailPage({ params }: Params) {
-  const { id } = params
+  const { id } = await params
   const intervention = await getIntervention({ id })
 
   if (!intervention) {

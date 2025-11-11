@@ -3,9 +3,9 @@ import { deleteIntervention, getIntervention, updateIntervention } from "@/lib/a
 import { bearerFrom, createServerSupabase } from "@/lib/supabase/server"
 
 type Params = {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(_request: Request, { params }: Params) {

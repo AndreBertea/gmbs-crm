@@ -27,14 +27,14 @@ export function ModalDisplayPreferencesCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Préférences d'affichage des Modals</CardTitle>
+        <CardTitle>Préférences d&apos;affichage des Modals</CardTitle>
         <CardDescription>
-          Choisissez le mode d'ouverture appliqué par défaut lorsque vous consultez une intervention.
+          Choisissez le mode d&apos;ouverture appliqué par défaut lorsque vous consultez une intervention.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <Label className="text-base font-medium">Mode d'ouverture par défaut</Label>
+          <Label className="text-base font-medium">Mode d&apos;ouverture par défaut</Label>
           <RadioGroup
             value={defaultMode}
             onValueChange={handleModeChange}
@@ -99,7 +99,7 @@ export function ModalDisplayPreferencesCard() {
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">Affiche la fiche au centre de l'écran</p>
+                <p className="text-xs text-muted-foreground">Affiche la fiche au centre de l&apos;écran</p>
               </div>
 
               {/* Fullpage - Pleine page */}

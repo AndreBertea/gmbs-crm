@@ -4,8 +4,9 @@ import { useCallback, useRef, useState } from "react"
 
 import { ScrollableTableCard } from "@/components/interventions/ScrollableTableCard"
 import { InterventionsTable, type InterventionsTableColumn } from "@/components/interventions/InterventionsTable"
-import type { ColumnWidths } from "@/hooks/useColumnResize"
 import { Button } from "@/components/ui/button"
+
+type ColumnWidths = Record<string, number | undefined>
 
 type PreviewRow = {
   id: string

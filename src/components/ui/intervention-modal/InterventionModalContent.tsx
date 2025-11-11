@@ -282,7 +282,7 @@ export function InterventionModalContent({
           </div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
             <div className="modal-config-columns-title">
-              Modifier l'intervention
+              Modifier l&apos;intervention
               {activeIndex !== undefined && totalCount !== undefined && totalCount > 1 && (
                 <span className="text-sm text-muted-foreground ml-2">
                   ({activeIndex + 1} / {totalCount})

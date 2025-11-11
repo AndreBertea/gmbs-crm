@@ -1181,7 +1181,7 @@ export function TableView({
                           colSpan={Math.max(view.visibleProperties.length + 1, 1)}
                           className="px-4 py-12 text-center text-sm text-muted-foreground"
                         >
-                          Aucune intervention ne correspond à ces filtres. Ajustez votre sélection pour reprendre l'affichage.
+                          Aucune intervention ne correspond à ces filtres. Ajustez votre sélection pour reprendre l&apos;affichage.
                         </td>
                       </tr>
                     ) : (
@@ -1426,7 +1426,7 @@ export function TableView({
                 : "Créer un rappel"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Ajoutez une note et/ou définissez une date d'échéance. Utilisez @ pour notifier un gestionnaire.
+              Ajoutez une note et/ou définissez une date d&apos;échéance. Utilisez @ pour notifier un gestionnaire.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
@@ -1442,7 +1442,7 @@ export function TableView({
               />
             </div>
             <div className="space-y-2">
-              <span className="text-sm font-medium">Date d'échéance (optionnel)</span>
+              <span className="text-sm font-medium">Date d&apos;échéance (optionnel)</span>
               <DatePicker
                 date={dueDateValue}
                 onDateChange={setDueDateValue}

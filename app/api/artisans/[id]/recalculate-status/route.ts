@@ -14,9 +14,9 @@ const execAsync = promisify(exec);
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const artisanId = params.id;
+  const { id: artisanId } = await params;
 
   if (!artisanId) {
     return NextResponse.json(
