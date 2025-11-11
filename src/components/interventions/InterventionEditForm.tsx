@@ -34,7 +34,6 @@ const INTERVENTION_DOCUMENT_KINDS = [
   { kind: "facture_materiel", label: "Facture Matériel" },
   { kind: "photos", label: "Photos" },
   { kind: "facture_artisan", label: "Facture Artisan" },
-  { kind: "a_classe", label: "À classer" },
 ]
 
 const MAX_RADIUS_KM = 10000

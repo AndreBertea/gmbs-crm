@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 import { remindersApi } from "@/lib/api/v2/reminders"
 import type { InterventionReminder } from "@/lib/api/v2"
+import { supabase } from "@/lib/supabase-client"
 
 const normalizeIdentifier = (input: string): string => {
   return input
@@ -192,64 +193,64 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
   }, [refreshReminders])
 
   // Subscription realtime pour mettre à jour automatiquement tous les composants
-  // IMPORTANT: Ne s'exécute que côté client pour éviter les problèmes SSR/cookies
   useEffect(() => {
-    // Ne s'exécuter que côté client
-    if (typeof window === 'undefined') return
+    if (typeof window === "undefined") return
 
     let mounted = true
-    let channel: { unsubscribe: () => void } | null = null
+    let channel: ReturnType<typeof supabase.channel> | null = null
 
-    const setupRealtime = async () => {
-      try {
-        // Import dynamique pour éviter les problèmes SSR/cookies
-        const { supabase } = await import('@/lib/supabase-client')
-        
-        // Vérifier que l'utilisateur est authentifié avant de souscrire
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session || !mounted) {
-          console.log("[RemindersContext] No session, skipping realtime subscription")
-          return
-        }
-
-        const realtimeChannel = supabase
-          .channel("intervention_reminders_realtime")
-          .on(
-            "postgres_changes",
-            {
-              event: "*", // INSERT, UPDATE, DELETE
-              schema: "public",
-              table: "intervention_reminders",
-            },
-            (payload) => {
-              if (mounted) {
-                console.log("[RemindersContext] Realtime event received:", payload.eventType)
-                // Rafraîchir les reminders quand il y a un changement
-                refreshReminders()
-              }
-            },
-          )
-          .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-              console.log("[RemindersContext] Realtime subscription active")
-            } else if (status === 'CHANNEL_ERROR') {
-              console.warn("[RemindersContext] Realtime subscription error:", status)
-            }
-          })
-        
-        channel = realtimeChannel
-      } catch (error) {
-        console.warn("[RemindersContext] Failed to setup realtime subscription", error)
-      }
-    }
-
-    setupRealtime()
-
-    return () => {
-      mounted = false
+    const bindChannel = () => {
       if (channel) {
         channel.unsubscribe()
       }
+
+      channel = supabase
+        .channel("intervention_reminders_realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "intervention_reminders",
+          },
+          () => {
+            if (mounted) {
+              refreshReminders()
+            }
+          },
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR") {
+            console.warn("[RemindersContext] Realtime subscription error:", status)
+          }
+        })
+    }
+
+    const ensureSubscription = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (data?.session && mounted) {
+        bindChannel()
+      }
+    }
+
+    ensureSubscription()
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+
+      if (session) {
+        bindChannel()
+        refreshReminders()
+      } else if (channel) {
+        channel.unsubscribe()
+        channel = null
+      }
+    })
+
+    return () => {
+      mounted = false
+      channel?.unsubscribe()
+      authListener.subscription.unsubscribe()
     }
   }, [refreshReminders])
 

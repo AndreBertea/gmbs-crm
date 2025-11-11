@@ -147,15 +147,42 @@ export const documentsApi = {
       let canonicalKind = data.kind;
       if (data.entity_type === 'intervention') {
         const trimmed = data.kind.trim();
-        const compact = trimmed.toLowerCase().replace(/[_\s-]/g, '');
-        if (compact === 'facturegmbs') {
-          canonicalKind = 'factureGMBS';
-        } else if (compact === 'factureartisan') {
-          canonicalKind = 'factureArtisan';
-        } else if (compact === 'facturemateriel') {
-          canonicalKind = 'factureMateriel';
+        const lower = trimmed.toLowerCase();
+        const compact = lower.replace(/[_\s-]/g, '');
+        
+        // Mapping vers les valeurs canoniques avec 's' (comme dans l'Edge Function)
+        const canonicalMap: Record<string, string> = {
+          facturegmbs: 'facturesGMBS',
+          facturesgmbs: 'facturesGMBS',
+          factureartisan: 'facturesArtisans',
+          facturesartisan: 'facturesArtisans',
+          facturemateriel: 'facturesMateriel',
+          facturesmateriel: 'facturesMateriel'
+        };
+        
+        if (canonicalMap[compact]) {
+          canonicalKind = canonicalMap[compact];
         } else {
-          canonicalKind = trimmed;
+          // Gérer les cas spéciaux comme 'a_classe'
+          const needsClassification = [
+            'aclasser',
+            'aclassifier',
+            'àclasser',
+            'àclassifier',
+            'aclasse',
+            'àclasse'
+          ];
+          if (
+            needsClassification.includes(compact) ||
+            lower === 'a classer' ||
+            lower === 'a classifier' ||
+            lower === 'à classer' ||
+            lower === 'à classifier'
+          ) {
+            canonicalKind = 'a_classe';
+          } else {
+            canonicalKind = trimmed;
+          }
         }
       }
       
