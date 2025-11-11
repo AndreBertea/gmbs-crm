@@ -610,18 +610,19 @@ export default function Topbar() {
               />
             ) : null}
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-                <Bell className="h-4 w-4" />
-                {isMounted && allRemindersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
-                    {allRemindersCount > 99 ? "99+" : allRemindersCount}
-                  </span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-96">
+          {isMounted ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
+                  <Bell className="h-4 w-4" />
+                  {allRemindersCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                      {allRemindersCount > 99 ? "99+" : allRemindersCount}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-96">
               <div className="flex gap-1 border-b p-2">
                 <Button
                   variant={reminderFilter === "all" ? "default" : "ghost"}
@@ -727,7 +728,14 @@ export default function Topbar() {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-          <AvatarStatus />
+          ) : (
+            <Button variant="ghost" size="icon" aria-label="Notifications" className="relative" disabled>
+              <Bell className="h-4 w-4" />
+            </Button>
+          )}
+          {isMounted ? <AvatarStatus /> : (
+            <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+          )}
         </div>
       </div>
     </div>

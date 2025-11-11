@@ -33,7 +33,7 @@ INSERT INTO auth.users (
   '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000013',
   'authenticated', 'authenticated', 'badr@gmbs.fr', crypt('badr123', gen_salt('bf')),
   NOW(), NULL, NULL, '{"provider": "email", "providers": ["email"]}',
-  '{"name": "Badr", "prenom": "Admin"}', NOW(), NOW(), '', '', '', ''
+  '{"name": "Boss", "prenom": "Badr"}', NOW(), NOW(), '', '', '', ''
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Manager user (andrea) - Elevated permissions

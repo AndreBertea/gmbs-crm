@@ -5,33 +5,82 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase-client"
 
-const TABS = [
-  { key: "profile", label: "Profile" },
-  { key: "interface", label: "Interface" },
-  { key: "team", label: "Team" },
-  { key: "security", label: "Security" },
+const ALL_TABS = [
+  { key: "profile", label: "Profile", requiresRole: null },
+  { key: "interface", label: "Interface", requiresRole: null },
+  { key: "team", label: "Team", requiresRole: "admin" },
+  { key: "targets", label: "Perf", requiresRole: ["admin", "manager"] },
+  { key: "security", label: "Security", requiresRole: null },
 ]
 
 export default function SettingsNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const active = pathname?.split("/")[2] ?? "profile"
+  // Extraire l'onglet actif depuis le pathname
+  const pathSegment = pathname?.split("/")[2] ?? "profile"
+  const active = pathSegment === "targets" ? "targets" : pathSegment
   const [isVisible, setIsVisible] = useState(true)
+  const [userRoles, setUserRoles] = useState<string[]>([])
+  const [rolesLoading, setRolesLoading] = useState(true)
   const lastScrollYRef = useRef(0)
   const scrollContainerRef = useRef<HTMLElement | null>(null)
   const tickingRef = useRef(false)
   const scrollDirectionRef = useRef<'up' | 'down' | null>(null)
 
+  // Charger les rôles de l'utilisateur
   useEffect(() => {
-    const run = () => TABS.forEach((t) => router.prefetch(`/settings/${t.key}`))
+    const loadUserRoles = async () => {
+      try {
+        setRolesLoading(true)
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        const res = await fetch("/api/auth/me", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        const json = await res.json()
+        const user = json?.user || null
+        if (user) {
+          setUserRoles(user.roles || [])
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des rôles:", error)
+      } finally {
+        setRolesLoading(false)
+      }
+    }
+    loadUserRoles()
+  }, [])
+
+  // Filtrer les onglets selon les permissions
+  const visibleTabs = ALL_TABS.filter((tab) => {
+    if (!tab.requiresRole) return true // Onglets accessibles à tous
+    if (rolesLoading) return false // Masquer les onglets restreints pendant le chargement
+    
+    const userRolesLower = userRoles.map((r) => (r || "").toLowerCase().trim())
+    
+    if (Array.isArray(tab.requiresRole)) {
+      // Pour les onglets nécessitant plusieurs rôles (OR)
+      return tab.requiresRole.some((role) => userRolesLower.includes(role.toLowerCase()))
+    } else {
+      // Pour les onglets nécessitant un seul rôle
+      return userRolesLower.includes(tab.requiresRole.toLowerCase())
+    }
+  })
+
+  useEffect(() => {
+    const run = () => visibleTabs.forEach((t) => {
+      const url = t.key === "targets" ? "/settings/targets" : `/settings/${t.key}`
+      router.prefetch(url)
+    })
     if (typeof window !== "undefined" && "requestIdleCallback" in window) {
       const id = (window as any).requestIdleCallback(run)
       return () => (window as any).cancelIdleCallback?.(id)
     }
     const id = setTimeout(run, 150)
     return () => clearTimeout(id)
-  }, [router])
+  }, [router, visibleTabs])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -117,19 +166,29 @@ export default function SettingsNav() {
     >
       <div className="mx-auto max-w-5xl px-4">
         <Tabs value={active} className="py-3">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-4 h-10 -ml-6 w-[calc(100%+30px)]">
-            {TABS.map((t) => (
-              <TabsTrigger key={t.key} value={t.key} asChild>
-                <Link
-                  href={`/settings/${t.key}`}
-                  prefetch
-                  aria-current={active === t.key ? "page" : undefined}
-                  onMouseEnter={() => router.prefetch(`/settings/${t.key}`)}
-                >
-                  {t.label}
-                </Link>
-              </TabsTrigger>
-            ))}
+          <TabsList className={`grid h-10 -ml-6 w-[calc(100%+30px)] ${
+            visibleTabs.length === 2 ? "grid-cols-2" :
+            visibleTabs.length === 3 ? "grid-cols-3" :
+            visibleTabs.length === 4 ? "grid-cols-2 sm:grid-cols-4" :
+            visibleTabs.length === 5 ? "grid-cols-2 sm:grid-cols-5" :
+            "grid-cols-2 sm:grid-cols-4"
+          }`}>
+            {visibleTabs.map((t) => {
+              const href = t.key === "targets" ? "/settings/targets" : `/settings/${t.key}`
+              const isActive = active === t.key
+              return (
+                <TabsTrigger key={t.key} value={t.key} asChild>
+                  <Link
+                    href={href}
+                    prefetch
+                    aria-current={isActive ? "page" : undefined}
+                    onMouseEnter={() => router.prefetch(href)}
+                  >
+                    {t.label}
+                  </Link>
+                </TabsTrigger>
+              )
+            })}
           </TabsList>
         </Tabs>
       </div>

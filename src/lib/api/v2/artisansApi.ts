@@ -637,4 +637,125 @@ export const artisansApi = {
       },
     };
   },
+
+  /**
+   * Récupère les 5 artisans les plus actifs pour un gestionnaire avec leur dernière intervention et statut de disponibilité
+   * @param gestionnaireId - ID du gestionnaire
+   * @returns Liste des artisans avec leur nombre d'interventions, dernière date d'intervention et statut de disponibilité
+   */
+  async getTopArtisansByGestionnaire(
+    gestionnaireId: string
+  ): Promise<Array<{
+    artisan_id: string;
+    artisan_nom: string;
+    artisan_prenom: string;
+    total_interventions: number;
+    derniere_intervention_date: string | null;
+    is_available: boolean;
+    absence_reason: string | null;
+    absence_end_date: string | null;
+  }>> {
+    if (!gestionnaireId) {
+      throw new Error("gestionnaireId is required");
+    }
+
+    // Récupérer les artisans du gestionnaire avec leur nombre d'interventions
+    const { data: artisansStats, error: statsError } = await supabase
+      .from("artisans")
+      .select(
+        `
+        id,
+        nom,
+        prenom,
+        intervention_artisans!inner(
+          intervention_id,
+          interventions!inner(
+            date,
+            is_active
+          )
+        )
+        `
+      )
+      .eq("gestionnaire_id", gestionnaireId)
+      .eq("is_active", true);
+
+    if (statsError) {
+      throw new Error(`Erreur lors de la récupération des artisans: ${statsError.message}`);
+    }
+
+    // Compter les interventions par artisan et trouver la dernière date
+    const artisanMap = new Map<string, {
+      artisan_id: string;
+      artisan_nom: string;
+      artisan_prenom: string;
+      intervention_dates: string[];
+    }>();
+
+    (artisansStats || []).forEach((artisan: any) => {
+      const interventionDates = (artisan.intervention_artisans || [])
+        .filter((ia: any) => ia.interventions?.is_active)
+        .map((ia: any) => ia.interventions?.date)
+        .filter((date: string | null) => date !== null);
+
+      if (interventionDates.length > 0) {
+        artisanMap.set(artisan.id, {
+          artisan_id: artisan.id,
+          artisan_nom: artisan.nom || "",
+          artisan_prenom: artisan.prenom || "",
+          intervention_dates: interventionDates,
+        });
+      }
+    });
+
+    // Trier par nombre d'interventions et prendre les 5 premiers
+    const topArtisans = Array.from(artisanMap.values())
+      .map(artisan => ({
+        ...artisan,
+        total_interventions: artisan.intervention_dates.length,
+        derniere_intervention_date: artisan.intervention_dates
+          .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null,
+      }))
+      .sort((a, b) => b.total_interventions - a.total_interventions)
+      .slice(0, 5);
+
+    // Récupérer les absences pour vérifier la disponibilité
+    const artisanIds = topArtisans.map(a => a.artisan_id);
+    const now = new Date().toISOString();
+
+    const { data: absences, error: absencesError } = await supabase
+      .from("artisan_absences")
+      .select("artisan_id, start_date, end_date, reason, is_confirmed")
+      .in("artisan_id", artisanIds)
+      .lte("start_date", now)
+      .gte("end_date", now)
+      .eq("is_confirmed", true);
+
+    if (absencesError) {
+      console.warn("Erreur lors de la récupération des absences:", absencesError);
+    }
+
+    // Créer un map des absences par artisan
+    const absenceMap = new Map<string, { reason: string | null; end_date: string }>();
+    (absences || []).forEach((absence: any) => {
+      absenceMap.set(absence.artisan_id, {
+        reason: absence.reason,
+        end_date: absence.end_date,
+      });
+    });
+
+    // Ajouter les informations de disponibilité
+    return topArtisans.map(artisan => {
+      const absence = absenceMap.get(artisan.artisan_id);
+      return {
+        artisan_id: artisan.artisan_id,
+        artisan_nom: artisan.artisan_nom,
+        artisan_prenom: artisan.artisan_prenom,
+        total_interventions: artisan.total_interventions,
+        derniere_intervention_date: artisan.derniere_intervention_date,
+        is_available: !absence,
+        absence_reason: absence?.reason || null,
+        absence_end_date: absence?.end_date || null,
+      };
+    });
+  },
 };

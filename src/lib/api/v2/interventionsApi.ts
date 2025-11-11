@@ -3,6 +3,7 @@
 
 import { referenceApi } from "../../reference-api";
 import { supabase } from "../../supabase-client";
+import { isCheckStatus } from "../../interventions/checkStatus";
 import type {
   BulkOperationResult,
   CreateInterventionData,
@@ -562,6 +563,11 @@ export const interventionsApi = {
       metadata?: any;
     }
   ): Promise<InterventionCost> {
+    // "total" n'est pas un type valide pour la base de données, on l'ignore
+    if (data.cost_type === "total") {
+      throw new Error("Le type 'total' n'est pas un type de coût valide. Utilisez 'sst', 'materiel', 'intervention' ou 'marge'.");
+    }
+
     // Vérifier si le coût existe déjà
     const { data: existingCost, error: findError } = await supabase
       .from('intervention_costs')
@@ -595,8 +601,14 @@ export const interventionsApi = {
 
       return result;
     } else {
-      // Créer un nouveau coût
-      return this.addCost(interventionId, data);
+      // Créer un nouveau coût (on sait que cost_type n'est pas "total" grâce à la vérification au début)
+      return this.addCost(interventionId, data as {
+        cost_type: "sst" | "materiel" | "intervention" | "marge";
+        label?: string;
+        amount: number;
+        currency?: string;
+        metadata?: any;
+      });
     }
   },
 
@@ -899,6 +911,7 @@ export const interventionsApi = {
       .select(
         `
         statut_id,
+        date_prevue,
         status:intervention_statuses(id, code, label)
         `,
         { count: "exact" }
@@ -923,10 +936,19 @@ export const interventionsApi = {
     // Initialiser les compteurs
     const byStatus: Record<string, number> = {};
     const byStatusLabel: Record<string, number> = {};
+    let interventionsAChecker = 0;
 
     // Compter les interventions par statut
     (data || []).forEach((item: any) => {
       const status = item.status;
+      const statusCode = status?.code || null;
+      const datePrevue = item.date_prevue || null;
+      
+      // Vérifier si c'est une intervention CHECK
+      if (isCheckStatus(statusCode, datePrevue)) {
+        interventionsAChecker++;
+      }
+      
       if (status) {
         const code = status.code || "SANS_STATUT";
         const label = status.label || "Sans statut";
@@ -944,6 +966,7 @@ export const interventionsApi = {
       total: count || 0,
       by_status: byStatus,
       by_status_label: byStatusLabel,
+      interventions_a_checker: interventionsAChecker,
       period: {
         start_date: startDate || null,
         end_date: endDate || null,
@@ -1753,5 +1776,81 @@ export const interventionsApi = {
     }
 
     throw new Error(`Période non supportée: ${period}`);
+  },
+
+  /**
+   * Récupère les interventions récentes pour un utilisateur, triées par due_date
+   * @param userId - ID de l'utilisateur
+   * @param limit - Nombre d'interventions à récupérer (défaut: 10)
+   * @param startDate - Date de début (optionnelle)
+   * @param endDate - Date de fin (optionnelle)
+   * @returns Liste des interventions avec leurs informations de base
+   */
+  async getRecentInterventionsByUser(
+    userId: string,
+    limit: number = 10,
+    startDate?: string,
+    endDate?: string
+  ): Promise<Array<{
+    id: string;
+    id_inter: string | null;
+    due_date: string | null;
+    date_prevue: string | null;
+    date: string;
+    status: { label: string; code: string } | null;
+    adresse: string | null;
+    ville: string | null;
+  }>> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    let query = supabase
+      .from("interventions")
+      .select(
+        `
+        id,
+        id_inter,
+        due_date,
+        date_prevue,
+        date,
+        adresse,
+        ville,
+        status:intervention_statuses(id, code, label)
+        `
+      )
+      .eq("assigned_user_id", userId)
+      .eq("is_active", true);
+
+    // Appliquer les filtres de date si fournis
+    if (startDate) {
+      query = query.gte("date", startDate);
+    }
+    if (endDate) {
+      query = query.lte("date", endDate);
+    }
+
+    // Trier par due_date (nulls en dernier), puis par date
+    query = query
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .order("date", { ascending: true })
+      .limit(limit);
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des interventions récentes: ${error.message}`);
+    }
+
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      id_inter: item.id_inter,
+      due_date: item.due_date,
+      date_prevue: item.date_prevue,
+      date: item.date,
+      status: item.status ? { label: item.status.label, code: item.status.code } : null,
+      adresse: item.adresse,
+      ville: item.ville,
+    }));
   },
 };

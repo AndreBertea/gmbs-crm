@@ -25,7 +25,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "GMBS CRM - Dashboard",
   description: "Interface CRM moderne pour GMBS",
-    generator: 'v0.app'
+  generator: 'v0.app'
 }
 
 export default async function RootLayout({
@@ -197,15 +197,15 @@ export default async function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        {/* React Grab - Development only */}
-        {process.env.NODE_ENV === "development" && (
+        {/* React Grab - Development only - Temporairement désactivé pour éviter les erreurs de chargement */}
+        {/* {process.env.NODE_ENV === "development" && (
           <Script
             src="https://unpkg.com/react-grab/dist/index.global.js"
             crossOrigin="anonymous"
             strategy="lazyOnload"
             data-enabled="true"
           />
-        )}
+        )} */}
         <a href="#main" className="sr-only focus:not-sr-only fixed top-2 left-2 z-[1000] bg-background border rounded px-2 py-1">
           Aller au contenu
         </a>

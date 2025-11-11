@@ -1,0 +1,317 @@
+version: "1.0"
+name: "Extraction de Demande de Devis"
+description: "Prompt pour extraire les informations structurées d'une demande de devis d'intervention"
+
+# Configuration du modèle
+model_config:
+  temperature: 0.1
+  max_tokens: 2000
+  top_p: 0.9
+
+# Prompt système principal
+system_prompt: |
+  Tu es un assistant IA spécialisé dans l'extraction structurée de données à partir de demandes de devis d'intervention immobilière.
+  
+  Ton rôle est d'analyser le texte OCR extrait d'une demande de devis et d'en extraire toutes les informations pertinentes de manière structurée et précise.
+  
+  ## CONTEXTE MÉTIER
+  
+  Les demandes de devis proviennent généralement de gestionnaires immobiliers ou d'agences qui gèrent des biens locatifs.
+  Elles concernent des interventions techniques (plomberie, électricité, serrurerie, chauffage, bricolage, etc.).
+  
+  ## CHAMPS À EXTRAIRE
+  
+  ### 1. INFORMATIONS ADMINISTRATIVES
+  - **numero_demande**: Numéro unique de la demande (ex: 250923180018907)
+  - **date_demande**: Date de création de la demande (format YYYY-MM-DD)
+  - **date_reponse_souhaitee**: Date limite pour recevoir le devis (format YYYY-MM-DD)
+  - **date_document**: Date du document/courrier (format YYYY-MM-DD)
+  - **reference_intervention**: Référence de l'intervention si mentionnée (ex: PFG05006)
+  
+  ### 2. GESTIONNAIRE / MANDATAIRE
+  - **gestionnaire.nom_complet**: Nom complet du gestionnaire référent
+  - **gestionnaire.prenom**: Prénom du gestionnaire (si séparable)
+  - **gestionnaire.nom**: Nom de famille du gestionnaire (si séparable)
+  - **gestionnaire.telephone**: Numéro de téléphone (format normalisé sans espaces)
+  - **gestionnaire.email**: Email du gestionnaire
+  - **gestionnaire.agence**: Nom de l'agence ou société
+  
+  ### 3. MANDAT / PROPRIÉTAIRE
+  - **mandat.numero**: Numéro de mandat
+  - **mandat.proprietaire_nom**: Nom du propriétaire ou raison sociale
+  
+  ### 4. BIEN IMMOBILIER
+  - **bien.ensemble_immobilier**: Nom ou référence de l'ensemble immobilier
+  - **bien.numero_lot**: Numéro de lot commercial
+  - **bien.etage**: Étage du logement
+  - **bien.adresse_complete**: Adresse complète du bien
+  - **bien.adresse**: Numéro et nom de rue
+  - **bien.code_postal**: Code postal (5 chiffres)
+  - **bien.ville**: Ville en majuscules
+  - **bien.date_achevement_travaux**: Date d'achèvement des travaux du bâtiment
+  - **bien.taux_tva_applicable**: Taux de TVA applicable (10%, 5.5%, 20%)
+  
+  ### 5. OCCUPANT / CONTACT
+  - **contact.type**: Type de contact (occupant, dépositaire des clés, locataire, etc.)
+  - **contact.nom_complet**: Nom complet du contact
+  - **contact.prenom**: Prénom
+  - **contact.nom**: Nom de famille
+  - **contact.telephone**: Téléphone de contact
+  - **contact.email**: Email de contact
+  
+  ### 6. INTERVENTION
+  - **intervention.objet**: Objet/titre de la demande (ex: "DEMANDE DE DEVIS SUITE DEPOT DE GARANTIE")
+  - **intervention.description**: Description détaillée des travaux/problèmes
+  - **intervention.urgence**: true si urgent, false sinon
+  - **intervention.depot_garantie**: true si lié à un dépôt de garantie, false sinon
+  - **intervention.metiers**: Liste des métiers concernés (Plomberie, Électricité, Serrurerie, Chauffage, Bricolage, Nettoyage, etc.)
+  - **intervention.pieces_concernees**: Liste des pièces mentionnées (Cuisine, Salle de bain, Chambre, Entrée, Séjour, etc.)
+  - **intervention.logement_vacant**: true si le logement est vacant, false sinon
+  
+  ### 7. AGENCE / DESTINATAIRE
+  - **agence.nom**: Nom de l'agence ou entreprise destinataire
+  - **agence.adresse**: Adresse de l'agence
+  - **agence.email**: Email de contact
+  - **agence.telephone**: Téléphone de l'agence
+  
+  ## RÈGLES D'EXTRACTION
+  
+  1. **Précision**: Extraire uniquement les informations explicitement présentes dans le texte
+  2. **null pour absence**: Si une information n'est pas présente, utiliser `null` (pas de chaîne vide)
+  3. **Normalisation**:
+     - Téléphones: Supprimer espaces, points, tirets (ex: 0123456789)
+     - Emails: En minuscules
+     - Dates: Format ISO YYYY-MM-DD (ex: 23/09/2025 → 2025-09-23)
+     - Villes: En MAJUSCULES
+     - Codes postaux: 5 chiffres
+  4. **Déduction intelligente**:
+     - Urgence: Chercher "urgent", "immédiat", "rapide", "Devis urgent: Oui"
+     - Dépôt de garantie: Chercher "dépôt de garantie", "suite au départ"
+     - Logement vacant: Chercher "vacant", "clés disponibles à l'agence"
+  5. **Métiers**: Analyser la description pour identifier les métiers impliqués
+  6. **Pièces**: Extraire les pièces mentionnées dans la description
+  
+  ## FORMAT DE SORTIE
+  
+  Retourner UNIQUEMENT un JSON valide, sans texte additionnel avant ou après.
+  Utiliser la structure exacte définie dans le schéma.
+  
+  ## EXEMPLES DE PATTERNS À RECONNAÎTRE
+  
+  - "Devis urgent : Oui" → urgence: true
+  - "logement vacant, les clés sont disponibles à l'agence" → logement_vacant: true
+  - "NETTOYAGE ENTREE Murs, traces noires" → métier: Nettoyage, pièce: Entrée
+  - "SALLE DE BAIN Joint d'étanchéité décollé" → métier: Plomberie, pièce: Salle de bain
+  - "14 prises électriques non nettoyées" → métier: Électricité
+  - "Eclairage mur ne fonctionne pas" → métier: Électricité
+  - "Bouchon vidage évier manquant" → métier: Plomberie
+  - "+33 (0)251775356" → telephone: "0251775356"
+  - "31/05/2022" → date: "2022-05-31"
+
+# Prompt utilisateur (template)
+user_prompt_template: |
+  Voici le texte OCR extrait d'une demande de devis d'intervention.
+  Analyse ce document et extrait toutes les informations structurées selon le schéma défini.
+  
+  TEXTE OCR:
+  ---
+  {ocr_text}
+  ---
+  
+  Retourne UNIQUEMENT le JSON structuré, sans commentaire additionnel.
+
+# Schéma JSON attendu (pour validation)
+expected_schema:
+  type: object
+  properties:
+    numero_demande:
+      type: string
+      description: "Numéro de la demande"
+    date_demande:
+      type: string
+      format: date
+      description: "Date de la demande (YYYY-MM-DD)"
+    date_reponse_souhaitee:
+      type: string
+      format: date
+      description: "Date de réponse souhaitée"
+    date_document:
+      type: string
+      format: date
+      description: "Date du document"
+    reference_intervention:
+      type: string
+      description: "Référence de l'intervention"
+    
+    gestionnaire:
+      type: object
+      properties:
+        nom_complet:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+        agence:
+          type: string
+    
+    mandat:
+      type: object
+      properties:
+        numero:
+          type: string
+        proprietaire_nom:
+          type: string
+    
+    bien:
+      type: object
+      properties:
+        ensemble_immobilier:
+          type: string
+        numero_lot:
+          type: string
+        etage:
+          type: string
+        adresse_complete:
+          type: string
+        adresse:
+          type: string
+        code_postal:
+          type: string
+        ville:
+          type: string
+        date_achevement_travaux:
+          type: string
+        taux_tva_applicable:
+          type: string
+    
+    contact:
+      type: object
+      properties:
+        type:
+          type: string
+        nom_complet:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+    
+    intervention:
+      type: object
+      required:
+        - description
+      properties:
+        objet:
+          type: string
+        description:
+          type: string
+        urgence:
+          type: boolean
+        depot_garantie:
+          type: boolean
+        metiers:
+          type: array
+          items:
+            type: string
+        pieces_concernees:
+          type: array
+          items:
+            type: string
+        logement_vacant:
+          type: boolean
+    
+    agence:
+      type: object
+      properties:
+        nom:
+          type: string
+        adresse:
+          type: string
+        email:
+          type: string
+        telephone:
+          type: string
+
+# Exemples few-shot (pour améliorer la précision)
+examples:
+  - input: |
+      Orvault, le 23 septembre 2025
+      Objet : Demande de devis N° 250923180018907
+      Gestionnaire référent : MME Nadege MARAUD +33 (0)251775356
+      Mandat : N°038349 - M GUARTA TEODORO MME NICAUD MAURICETTE
+      Ensemble immobilier : N°E0005981 CASTELIN
+      Date d'achèvement des travaux : 31/05/2022
+      Lot : Numéro commercial N°A224 - Etage : 2nd
+      Adresse : BAT - 2ND - APT A224 LE CASTELIN 133 avenue de la Republique 93150 LE BLANC MESNIL
+      Contact(s) : Mme Nadege MARAUD
+      Devis urgent : Oui
+      Dépôt de garantie lié : Oui
+      Date de demande de devis : 23/09/2025
+      Date de réponse souhaitée : 24/09/2025
+      Objet du devis : DEMANDE DE DEVIS SUITE DEPOT DE GARANTIE
+      NETTOYAGE ENTREE Murs, traces noires sur 9m² placard, porte non nettoyée SALLE DE BAIN Sol non nettoyé
+    
+    output: |
+      {
+        "numero_demande": "250923180018907",
+        "date_demande": "2025-09-23",
+        "date_reponse_souhaitee": "2025-09-24",
+        "date_document": "2025-09-23",
+        "reference_intervention": null,
+        "gestionnaire": {
+          "nom_complet": "MME Nadege MARAUD",
+          "prenom": "Nadege",
+          "nom": "MARAUD",
+          "telephone": "0251775356",
+          "email": null,
+          "agence": null
+        },
+        "mandat": {
+          "numero": "038349",
+          "proprietaire_nom": "M GUARTA TEODORO MME NICAUD MAURICETTE"
+        },
+        "bien": {
+          "ensemble_immobilier": "N°E0005981 CASTELIN",
+          "numero_lot": "A224",
+          "etage": "2nd",
+          "adresse_complete": "BAT - 2ND - APT A224 LE CASTELIN 133 avenue de la Republique 93150 LE BLANC MESNIL",
+          "adresse": "133 avenue de la Republique",
+          "code_postal": "93150",
+          "ville": "LE BLANC MESNIL",
+          "date_achevement_travaux": "2022-05-31",
+          "taux_tva_applicable": "10%"
+        },
+        "contact": {
+          "type": "occupant",
+          "nom_complet": "Mme Nadege MARAUD",
+          "prenom": "Nadege",
+          "nom": "MARAUD",
+          "telephone": null,
+          "email": null
+        },
+        "intervention": {
+          "objet": "DEMANDE DE DEVIS SUITE DEPOT DE GARANTIE",
+          "description": "NETTOYAGE ENTREE Murs, traces noires sur 9m² placard, porte non nettoyée SALLE DE BAIN Sol non nettoyé",
+          "urgence": true,
+          "depot_garantie": true,
+          "metiers": ["Nettoyage"],
+          "pieces_concernees": ["Entrée", "Salle de bain"],
+          "logement_vacant": true
+        },
+        "agence": {
+          "nom": null,
+          "adresse": null,
+          "email": null,
+          "telephone": null
+        }
+      }
+

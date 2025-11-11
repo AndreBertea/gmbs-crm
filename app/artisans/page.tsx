@@ -287,6 +287,40 @@ export default function ArtisansPage(): ReactElement {
   const [metierFilter, setMetierFilter] = useState<string>("all")
   const [loadingMore, setLoadingMore] = useState(false)
 
+  // Appliquer les filtres depuis sessionStorage (pour les liens du dashboard)
+  useEffect(() => {
+    if (!isReady || artisanStatuses.length === 0) return
+    
+    const pendingFilterStr = sessionStorage.getItem('pending-artisan-filter')
+    if (pendingFilterStr) {
+      try {
+        const pendingFilter = JSON.parse(pendingFilterStr)
+        
+        // Activer la vue spécifiée (ex: "ma-liste-artisans")
+        if (pendingFilter.viewId && views.some(v => v.id === pendingFilter.viewId)) {
+          setActiveView(pendingFilter.viewId)
+        }
+        
+        // Activer le filtre de statut spécifié (ex: "Potentiel")
+        if (pendingFilter.statusFilter) {
+          // Trouver le statut correspondant dans la liste des statuts d'artisans
+          const statusLabel = pendingFilter.statusFilter
+          // Vérifier si le statut existe dans la liste des statuts disponibles
+          const statusExists = artisanStatuses.some(s => s.label === statusLabel)
+          if (statusExists) {
+            setSelectedStatuses([statusLabel])
+          }
+        }
+        
+        // Nettoyer sessionStorage après avoir appliqué les filtres
+        sessionStorage.removeItem('pending-artisan-filter')
+      } catch (error) {
+        console.error("Erreur lors de l'application du filtre depuis sessionStorage:", error)
+        sessionStorage.removeItem('pending-artisan-filter')
+      }
+    }
+  }, [isReady, views, setActiveView, artisanStatuses])
+
   useEffect(() => {
     if (!referenceData) return
     const statuses = referenceData.artisanStatuses || []

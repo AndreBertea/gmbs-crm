@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { interventionsApi } from "@/lib/api/v2"
+import { interventionsApi, usersApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
-import type { MarginStats } from "@/lib/api/v2"
-import { Loader2, Euro } from "lucide-react"
+import type { MarginStats, TargetPeriodType } from "@/lib/api/v2"
+import { Loader2 } from "lucide-react"
+import { Speedometer } from "./speedometer"
 
 interface MarginTotalCardProps {
     period?: {
@@ -14,11 +15,34 @@ interface MarginTotalCardProps {
     }
 }
 
+// Objectif par défaut si aucun objectif n'est défini
+const DEFAULT_TARGET = 10000 // 10 000 € par défaut
+
+// Helper pour déterminer le type de période à partir des dates
+function getPeriodTypeFromDates(startDate?: string, endDate?: string): TargetPeriodType {
+    if (!startDate || !endDate) return "month"
+    
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (diffDays <= 7) return "week"
+    if (diffDays <= 35) return "month"
+    return "year"
+}
+
 export function MarginTotalCard({ period }: MarginTotalCardProps) {
     const [stats, setStats] = useState<MarginStats | null>(null)
+    const [marginTarget, setMarginTarget] = useState<number>(DEFAULT_TARGET)
+    const [showPercentage, setShowPercentage] = useState<boolean>(true)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [userId, setUserId] = useState<string | null>(null)
+
+    // Déterminer le type de période
+    const periodType = useMemo(() => {
+        return getPeriodTypeFromDates(period?.startDate, period?.endDate)
+    }, [period?.startDate, period?.endDate])
 
     // Charger l'utilisateur actuel
     useEffect(() => {
@@ -66,6 +90,39 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
             cancelled = true
         }
     }, [])
+
+    // Charger l'objectif et les préférences pour l'utilisateur et la période
+    useEffect(() => {
+        if (!userId) return
+
+        let cancelled = false
+
+        const loadTargetAndPreferences = async () => {
+            try {
+                const [targetData, preferences] = await Promise.all([
+                    usersApi.getTargetByUserAndPeriod(userId, periodType),
+                    usersApi.getUserPreferences(userId),
+                ])
+                
+                if (!cancelled) {
+                    setMarginTarget(targetData?.margin_target || DEFAULT_TARGET)
+                    setShowPercentage(preferences?.speedometer_margin_total_show_percentage ?? true)
+                }
+            } catch (err: any) {
+                // Si erreur, utiliser les valeurs par défaut
+                if (!cancelled) {
+                    setMarginTarget(DEFAULT_TARGET)
+                    setShowPercentage(true)
+                }
+            }
+        }
+
+        loadTargetAndPreferences()
+
+        return () => {
+            cancelled = true
+        }
+    }, [userId, periodType])
 
     // Charger les statistiques de marge une fois l'utilisateur chargé
     useEffect(() => {
@@ -117,7 +174,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (loading) {
         return (
-            <Card>
+            <Card className="border-border/30 shadow-sm/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -133,7 +190,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (error) {
         return (
-            <Card>
+            <Card className="border-border/30 shadow-sm/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -146,7 +203,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (!userId) {
         return (
-            <Card>
+            <Card className="border-border/30 shadow-sm/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -161,7 +218,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
 
     if (!stats || stats.total_interventions === 0) {
         return (
-            <Card>
+            <Card className="border-border/30 shadow-sm/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
                 </CardHeader>
@@ -175,9 +232,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
         )
     }
 
-    const marginColor = stats.total_margin >= 0 ? "text-green-600" : "text-red-600"
     const formatCurrency = (amount: number) => {
-        // Formater avec séparateurs de milliers et signe négatif visible
         const absAmount = Math.abs(amount)
         const formatted = new Intl.NumberFormat("fr-FR", {
             style: "currency",
@@ -185,34 +240,80 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(absAmount)
-
-        // Ajouter le signe négatif si nécessaire
         return amount < 0 ? `-${formatted}` : formatted
     }
 
+    // Calculer le pourcentage de l'objectif
+    const percentage = marginTarget > 0 
+        ? Math.min(Math.abs(stats.total_margin) / marginTarget * 100, 100)
+        : 0
+    
+    // Calculer le pourcentage réel affiché dans le speedometer
+    const speedometerPercentage = Math.min(Math.max(percentage, 0), 100)
+    
+    // Déterminer la couleur basée sur le pourcentage du speedometer (cohérent avec l'aiguille)
+    const getPercentageColor = () => {
+        if (speedometerPercentage >= 95) return "text-purple-500 dark:text-purple-400"
+        if (speedometerPercentage >= 90) return "text-green-600 dark:text-green-400"
+        if (speedometerPercentage >= 75) return "text-green-600 dark:text-green-400"
+        if (speedometerPercentage >= 50) return "text-yellow-600 dark:text-yellow-400"
+        if (speedometerPercentage >= 25) return "text-orange-600 dark:text-orange-400"
+        return "text-red-600 dark:text-red-400"
+    }
+    
+    const percentageColor = getPercentageColor()
+
     return (
-        <Card>
+        <Card className="border-border/30 shadow-sm/50">
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center gap-2">
-                    <Euro className={`h-5 w-5 ${marginColor}`} />
-                    <div className="text-2xl font-bold" style={{ color: stats.total_margin >= 0 ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}>
-                        {formatCurrency(stats.total_margin)}
+                <div className="space-y-4">
+                    {/* Cadran de vitesse */}
+                    <div className="flex justify-center">
+                        <Speedometer
+                            value={Math.abs(stats.total_margin)}
+                            max={marginTarget}
+                            size={140}
+                            strokeWidth={14}
+                            label={`${formatCurrency(stats.total_margin)}`}
+                            showPercentage={showPercentage}
+                            onContextMenu={async (e) => {
+                                e.preventDefault()
+                                const newValue = !showPercentage
+                                setShowPercentage(newValue)
+                                if (userId) {
+                                    try {
+                                        await usersApi.updateUserPreferences(userId, {
+                                            speedometer_margin_total_show_percentage: newValue,
+                                        })
+                                    } catch (err) {
+                                        console.error("Erreur lors de la mise à jour des préférences:", err)
+                                        // Revert on error
+                                        setShowPercentage(!newValue)
+                                    }
+                                }
+                            }}
+                        />
+                    </div>
+
+                    {/* Informations */}
+                    <div className="space-y-1 mt-2">
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1"></div>
+                            <div className={`text-sm font-semibold ${percentageColor}`}>
+                                {formatCurrency(stats.total_margin)}
+                            </div>
+                            <div className="flex-1 flex justify-end">
+                                <div className="text-[10px] text-muted-foreground font-light tracking-wide">
+                                    Objectif: {formatCurrency(marginTarget)}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                {stats.period?.start_date && stats.period?.end_date && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(stats.period.start_date).toLocaleDateString("fr-FR")} -{" "}
-                        {new Date(stats.period.end_date).toLocaleDateString("fr-FR")}
-                    </p>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
-                    {stats.total_interventions} intervention{stats.total_interventions > 1 ? "s" : ""}
-                </p>
             </CardContent>
         </Card>
     )
 }
-

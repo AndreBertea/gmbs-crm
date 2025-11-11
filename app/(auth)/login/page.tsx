@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,11 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const buttonRef = useRef<HTMLButtonElement>(null)
+
+  // Précharger le dashboard au chargement
+  useEffect(() => {
+    router.prefetch('/dashboard')
+  }, [router])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()

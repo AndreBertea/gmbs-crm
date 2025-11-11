@@ -137,6 +137,29 @@ WHERE az.id IS NULL
   AND a.created_at >= CURRENT_DATE - INTERVAL '7 days'
 ORDER BY a.created_at DESC;
 
+-- 7.5. ARTISANS SANS NOM (À VÉRIFIER)
+-- ===================================
+-- Comptage total
+SELECT 
+    COUNT(*) as total_artisans_sans_nom
+FROM artisans a
+WHERE (a.nom IS NULL OR a.nom = '');
+
+-- Liste détaillée
+SELECT 
+    a.id,
+    a.prenom,
+    a.nom,
+    a.telephone,
+    a.email,
+    a.raison_sociale,
+    a.ville_siege_social,
+    a.departement,
+    a.created_at
+FROM artisans a
+WHERE (a.nom IS NULL OR a.nom = '')
+ORDER BY a.created_at DESC;
+
 -- 8. STATISTIQUES DES MÉTIERS ASSIGNÉS
 -- ===================================
 SELECT 

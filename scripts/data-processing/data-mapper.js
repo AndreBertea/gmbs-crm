@@ -105,27 +105,15 @@ class DataMapper {
     // Vérifier si la ligne contient des informations valides
     // Note: La colonne s'appelle "Nom" dans le Google Sheets, pas "Nom Prénom"
     const nomPrenom = this.getCSVValue(csvRow, "Nom") || this.getCSVValue(csvRow, "Nom Prénom");
-    let prenom = this.extractPrenom(nomPrenom);
-    let nom = this.extractNom(nomPrenom);
-
-    // STRATÉGIE : Importer TOUS les artisans, même sans nom/email/téléphone
-    // Les warnings seront gérés dans le frontend
-    // On garde seulement la détection de doublons sur SIRET et Email
-
-    // Détecter et corriger l'inversion nom/prénom
-    // Si le "prénom" semble être un nom de famille (plus long, moins courant)
-    // et le "nom" semble être un prénom (plus court, plus courant)
-    if (prenom && nom && this.shouldInvertNames(prenom, nom)) {
-      const temp = prenom;
-      prenom = nom;
-      nom = temp;
-    }
+    
+    // Extraction stricte selon les règles définies
+    const { prenom, nom } = this.extractNomPrenomStrict(nomPrenom);
 
     const mapped = {
       // Informations personnelles (selon le schéma artisans)
       prenom: prenom,
       nom: nom,
-      plain_nom: nomPrenom.trim(), // Sauvegarder la colonne originale "Nom Prénom"
+      plain_nom: nomPrenom ? nomPrenom.trim() : '', // Sauvegarder la colonne originale "Nom Prénom"
 
       // Contact
       email: this.cleanEmail(this.getCSVValue(csvRow, "Adresse Mail")),
@@ -1072,73 +1060,88 @@ class DataMapper {
     return null;
   }
 
-  extractPrenom(nomPrenom) {
-    if (!nomPrenom || nomPrenom.trim() === "") return null;
+  /**
+   * Extraction stricte du nom et prénom selon les règles définies
+   * Format attendu: "NOM PRENOM DPT" ou variations
+   * 
+   * Règles:
+   * - 0 espace (1 mot): PRENOM = undefined, NOM = plain_nom
+   * - 1 espace (2 mots): PRENOM = première partie, NOM = plain_nom
+   * - 2 espaces (3 mots): NOM = première partie, PRENOM = deuxième partie (DPT ignoré)
+   * - 3+ espaces (4+ mots): 
+   *   - Si particule (Monsieur, Mr, M, Madame, Mme, Mlle) → enlever et réappliquer
+   *   - Sinon: PRENOM = undefined, NOM = plain_nom
+   * 
+   * @param {string} nomPrenom - Valeur brute de la colonne "Nom Prénom"
+   * @returns {Object} - { prenom: string|undefined, nom: string }
+   */
+  extractNomPrenomStrict(nomPrenom) {
+    // plain_nom est toujours la valeur brute de la colonne
+    const plain_nom = nomPrenom ? nomPrenom.trim() : '';
+    
+    if (!plain_nom) {
+      return { prenom: undefined, nom: undefined };
+    }
 
-    const parts = nomPrenom.trim().split(/\s+/);
-    if (parts.length === 0) return null;
+    // Nettoyer et séparer en parties
+    let parts = plain_nom.split(/\s+/).filter(p => p.trim() !== '');
+    const spaceCount = parts.length - 1;
 
-    // Détecter les noms à particule (Le, De, Du, etc.)
-    const particles = ["le", "de", "du", "la", "les", "des"];
-    const firstPart = parts[0].toLowerCase();
-
-    if (particles.includes(firstPart)) {
-      // Si le premier mot est une particule, le prénom est le dernier mot
-      if (parts.length >= 3) {
-        // Cas: "Le Maire Jean" → prenom = "Jean"
-        const prenom = parts[parts.length - 1].replace(/\d+/g, "").trim();
-        return prenom || null;
-      } else if (parts.length === 2) {
-        // Cas: "Le Jean" → prenom = "Jean" (inversion nécessaire)
-        const prenom = parts[1].replace(/\d+/g, "").trim();
-        return prenom || null;
+    // Traitement des particules (Monsieur, Mr, M, Madame, Mme, Mlle)
+    const particles = ['monsieur', 'mr', 'm', 'madame', 'mme', 'mlle'];
+    const firstPartLower = parts[0] ? parts[0].toLowerCase() : '';
+    
+    // Si particule détectée et 2 espaces ou plus, l'enlever et réappliquer les règles
+    if (spaceCount >= 2 && particles.includes(firstPartLower)) {
+      parts = parts.slice(1); // Enlever la particule
+      const newSpaceCount = parts.length - 1;
+      
+      // Réappliquer les règles avec les parties restantes
+      if (newSpaceCount === 0) {
+        // 0 espace après suppression: PRENOM = undefined, NOM = plain_nom
+        return { prenom: undefined, nom: plain_nom };
+      } else if (newSpaceCount === 1) {
+        // 1 espace après suppression: PRENOM = première partie, NOM = plain_nom
+        return { prenom: parts[0], nom: plain_nom };
+      } else if (newSpaceCount === 2) {
+        // 2 espaces après suppression: NOM = première partie, PRENOM = deuxième partie
+        return { prenom: parts[1], nom: parts[0] };
+      } else {
+        // Plus de 2 espaces après suppression: PRENOM = undefined, NOM = plain_nom
+        return { prenom: undefined, nom: plain_nom };
       }
     }
 
-    // Supprimer les chiffres du premier élément
-    const prenom = parts[0].replace(/\d+/g, "").trim();
+    // Application des règles selon le nombre d'espaces
+    if (spaceCount === 0) {
+      // 0 espace (1 mot): PRENOM = undefined, NOM = plain_nom
+      return { prenom: undefined, nom: plain_nom };
+    } else if (spaceCount === 1) {
+      // 1 espace (2 mots): PRENOM = première partie, NOM = plain_nom
+      return { prenom: parts[0], nom: plain_nom };
+    } else if (spaceCount === 2) {
+      // 2 espaces (3 mots): NOM = première partie, PRENOM = deuxième partie (DPT ignoré)
+      return { prenom: parts[1], nom: parts[0] };
+    } else {
+      // Plus de 2 espaces (4+ mots): PRENOM = undefined, NOM = plain_nom
+      return { prenom: undefined, nom: plain_nom };
+    }
+  }
+
+  /**
+   * @deprecated Utiliser extractNomPrenomStrict à la place
+   */
+  extractPrenom(nomPrenom) {
+    const { prenom } = this.extractNomPrenomStrict(nomPrenom);
     return prenom || null;
   }
 
+  /**
+   * @deprecated Utiliser extractNomPrenomStrict à la place
+   */
   extractNom(nomPrenom) {
-    if (!nomPrenom || nomPrenom.trim() === "") return null;
-
-    const parts = nomPrenom.trim().split(/\s+/);
-    if (parts.length <= 1) return null;
-
-    // Détecter les noms à particule (Le, De, Du, etc.)
-    const particles = ["le", "de", "du", "la", "les", "des"];
-    const firstPart = parts[0].toLowerCase();
-
-    if (particles.includes(firstPart)) {
-      // Si le premier mot est une particule, déterminer où finit le nom
-      if (parts.length >= 4) {
-        // Cas: "De La Roche Pierre" → nom = "De La Roche", prenom = "Pierre"
-        // Prendre tous les mots sauf le dernier comme nom
-        const nomParts = parts
-          .slice(0, -1)
-          .map((part) => part.replace(/\d+/g, "").trim())
-          .filter((part) => part);
-        return nomParts.join(" ") || null;
-      } else if (parts.length === 3) {
-        // Cas: "Le Maire Jean" → nom = "Le Maire", prenom = "Jean"
-        const nomParts = parts
-          .slice(0, 2)
-          .map((part) => part.replace(/\d+/g, "").trim())
-          .filter((part) => part);
-        return nomParts.join(" ") || null;
-      } else if (parts.length === 2) {
-        // Cas: "Le Jean" → nom = "Le", prenom = "Jean" (inversion nécessaire)
-        return parts[0].replace(/\d+/g, "").trim() || null;
-      }
-    }
-
-    // Prendre tous les éléments sauf le premier et supprimer les chiffres
-    const nomParts = parts
-      .slice(1)
-      .map((part) => part.replace(/\d+/g, "").trim())
-      .filter((part) => part);
-    return nomParts.join(" ") || null;
+    const { nom } = this.extractNomPrenomStrict(nomPrenom);
+    return nom || null;
   }
 
   shouldInvertNames(prenom, nom) {

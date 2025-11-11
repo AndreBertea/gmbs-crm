@@ -71,7 +71,7 @@ class GoogleSheetsImportCleanV2 {
     });
     
     this.results = {
-      artisans: { processed: 0, valid: 0, invalid: 0, inserted: 0, errors: 0 },
+      artisans: { processed: 0, valid: 0, invalid: 0, inserted: 0, errors: 0, withoutName: [] },
       interventions: { processed: 0, valid: 0, invalid: 0, inserted: 0, errors: 0 },
       clients: { processed: 0, valid: 0, invalid: 0, inserted: 0, errors: 0 },
       costs: { processed: 0, valid: 0, invalid: 0, inserted: 0, errors: 0 }
@@ -271,6 +271,13 @@ class GoogleSheetsImportCleanV2 {
         const insertResults = await this.databaseManager.insertArtisans(validArtisans);
         this.results.artisans.inserted += insertResults.success;
         this.results.artisans.errors += insertResults.errors;
+        // Stocker les artisans sans nom détectés (rejetés)
+        if (insertResults.withoutName && insertResults.withoutName.length > 0) {
+          this.results.artisans.withoutName = insertResults.withoutName;
+          // Ajuster les compteurs : les artisans rejetés sont comptés dans errors
+          // mais doivent aussi être retirés des valid car ils n'ont pas été insérés
+          this.results.artisans.valid -= insertResults.withoutName.length;
+        }
       }
       
       console.log(`✅ Artisans importés: ${this.results.artisans.inserted} succès, ${this.results.artisans.errors} erreurs`);
@@ -439,6 +446,21 @@ class GoogleSheetsImportCleanV2 {
       console.log(`  - Invalides: ${this.results.clients.invalid}`);
       console.log(`  - Insérés: ${this.results.clients.inserted}`);
       console.log(`  - Erreurs: ${this.results.clients.errors}`);
+      
+      // Afficher les artisans sans nom si disponibles
+      if (this.results.artisans.withoutName && this.results.artisans.withoutName.length > 0) {
+        console.log('\n⚠️ Artisans rejetés (sans nom):');
+        console.log(`  - Total rejeté: ${this.results.artisans.withoutName.length}`);
+        if (this.options.verbose) {
+          console.log('  - Détails des artisans rejetés:');
+          this.results.artisans.withoutName.slice(0, 10).forEach((item, idx) => {
+            console.log(`    ${idx + 1}. Ligne ${item.index + 1}: ${item.prenom || 'N/A'} (tél: ${item.telephone || 'N/A'}, email: ${item.email || 'N/A'})`);
+          });
+          if (this.results.artisans.withoutName.length > 10) {
+            console.log(`    ... et ${this.results.artisans.withoutName.length - 10} autre(s)`);
+          }
+        }
+      }
       
       // Générer le rapport détaillé si demandé
       if (this.options.test || this.options.verbose) {

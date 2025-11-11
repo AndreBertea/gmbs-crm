@@ -10,6 +10,10 @@ import type {
     User,
     UserQueryParams,
     UserStats,
+    GestionnaireTarget,
+    CreateGestionnaireTargetData,
+    UpdateGestionnaireTargetData,
+    TargetPeriodType,
 } from "./common/types";
 
 export const usersApi = {
@@ -407,5 +411,278 @@ export const usersApi = {
     }
 
     return results;
+  },
+
+  // ===== GESTION DES OBJECTIFS DE MARGE =====
+  
+  /**
+   * Récupère l'objectif de marge pour un gestionnaire et une période donnée
+   * @param userId - ID du gestionnaire
+   * @param periodType - Type de période (week, month, year)
+   * @returns L'objectif ou null si non défini
+   */
+  async getTargetByUserAndPeriod(
+    userId: string,
+    periodType: TargetPeriodType
+  ): Promise<GestionnaireTarget | null> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    const { data, error } = await supabase
+      .from("gestionnaire_targets")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("period_type", periodType)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // Aucun résultat trouvé
+        return null;
+      }
+      throw new Error(`Erreur lors de la récupération de l'objectif: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  /**
+   * Récupère tous les objectifs pour un gestionnaire
+   * @param userId - ID du gestionnaire
+   * @returns Liste des objectifs
+   */
+  async getTargetsByUser(userId: string): Promise<GestionnaireTarget[]> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    const { data, error } = await supabase
+      .from("gestionnaire_targets")
+      .select("*")
+      .eq("user_id", userId)
+      .order("period_type", { ascending: true });
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des objectifs: ${error.message}`);
+    }
+
+    return data || [];
+  },
+
+  /**
+   * Récupère tous les objectifs pour une période donnée (tous les gestionnaires)
+   * @param periodType - Type de période (week, month, year)
+   * @returns Liste des objectifs
+   */
+  async getTargetsByPeriod(periodType: TargetPeriodType): Promise<GestionnaireTarget[]> {
+    const { data, error } = await supabase
+      .from("gestionnaire_targets")
+      .select("*")
+      .eq("period_type", periodType)
+      .order("user_id", { ascending: true });
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des objectifs: ${error.message}`);
+    }
+
+    return data || [];
+  },
+
+  /**
+   * Crée ou met à jour un objectif pour un gestionnaire
+   * @param data - Données de l'objectif
+   * @param createdBy - ID de l'utilisateur qui crée/modifie l'objectif
+   * @returns L'objectif créé ou mis à jour
+   */
+  async upsertTarget(
+    data: CreateGestionnaireTargetData,
+    createdBy: string
+  ): Promise<GestionnaireTarget> {
+    if (!data.user_id) {
+      throw new Error("user_id is required");
+    }
+    if (!data.period_type) {
+      throw new Error("period_type is required");
+    }
+    if (data.margin_target === undefined || data.margin_target === null) {
+      throw new Error("margin_target is required");
+    }
+
+    const { data: result, error } = await supabase
+      .from("gestionnaire_targets")
+      .upsert(
+        {
+          ...data,
+          created_by: createdBy,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id,period_type",
+        }
+      )
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Erreur lors de la création/mise à jour de l'objectif: ${error.message}`);
+    }
+
+    return result;
+  },
+
+  /**
+   * Met à jour un objectif existant
+   * @param targetId - ID de l'objectif
+   * @param data - Données à mettre à jour
+   * @param updatedBy - ID de l'utilisateur qui met à jour l'objectif
+   * @returns L'objectif mis à jour
+   */
+  async updateTarget(
+    targetId: string,
+    data: UpdateGestionnaireTargetData,
+    updatedBy: string
+  ): Promise<GestionnaireTarget> {
+    if (!targetId) {
+      throw new Error("targetId is required");
+    }
+
+    const { data: result, error } = await supabase
+      .from("gestionnaire_targets")
+      .update({
+        ...data,
+        created_by: updatedBy,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", targetId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Erreur lors de la mise à jour de l'objectif: ${error.message}`);
+    }
+
+    return result;
+  },
+
+  /**
+   * Supprime un objectif
+   * @param targetId - ID de l'objectif
+   */
+  async deleteTarget(targetId: string): Promise<void> {
+    if (!targetId) {
+      throw new Error("targetId is required");
+    }
+
+    const { error } = await supabase
+      .from("gestionnaire_targets")
+      .delete()
+      .eq("id", targetId);
+
+    if (error) {
+      throw new Error(`Erreur lors de la suppression de l'objectif: ${error.message}`);
+    }
+  },
+
+  /**
+   * Récupère tous les objectifs (pour l'admin/president)
+   * @returns Liste de tous les objectifs
+   */
+  async getAllTargets(): Promise<GestionnaireTarget[]> {
+    const { data, error } = await supabase
+      .from("gestionnaire_targets")
+      .select("*")
+      .order("user_id", { ascending: true })
+      .order("period_type", { ascending: true });
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des objectifs: ${error.message}`);
+    }
+
+    return data || [];
+  },
+
+  // ===== GESTION DES PRÉFÉRENCES UTILISATEUR =====
+  
+  /**
+   * Récupère les préférences utilisateur
+   * @param userId - ID de l'utilisateur
+   * @returns Les préférences ou null si non définies
+   */
+  async getUserPreferences(userId: string): Promise<{
+    speedometer_margin_average_show_percentage: boolean
+    speedometer_margin_total_show_percentage: boolean
+  } | null> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    const { data, error } = await supabase
+      .from("user_preferences")
+      .select("speedometer_margin_average_show_percentage, speedometer_margin_total_show_percentage")
+      .eq("user_id", userId)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // Aucun résultat trouvé, retourner les valeurs par défaut
+        return {
+          speedometer_margin_average_show_percentage: true,
+          speedometer_margin_total_show_percentage: true,
+        };
+      }
+      throw new Error(`Erreur lors de la récupération des préférences: ${error.message}`);
+    }
+
+    return data;
+  },
+
+  /**
+   * Met à jour les préférences utilisateur
+   * @param userId - ID de l'utilisateur
+   * @param preferences - Les préférences à mettre à jour
+   */
+  async updateUserPreferences(
+    userId: string,
+    preferences: {
+      speedometer_margin_average_show_percentage?: boolean
+      speedometer_margin_total_show_percentage?: boolean
+    }
+  ): Promise<void> {
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    // Vérifier si les préférences existent déjà
+    const { data: existing } = await supabase
+      .from("user_preferences")
+      .select("id")
+      .eq("user_id", userId)
+      .single();
+
+    if (existing) {
+      // Mise à jour
+      const { error } = await supabase
+        .from("user_preferences")
+        .update(preferences)
+        .eq("user_id", userId);
+
+      if (error) {
+        throw new Error(`Erreur lors de la mise à jour des préférences: ${error.message}`);
+      }
+    } else {
+      // Insertion
+      const { error } = await supabase
+        .from("user_preferences")
+        .insert({
+          user_id: userId,
+          speedometer_margin_average_show_percentage: preferences.speedometer_margin_average_show_percentage ?? true,
+          speedometer_margin_total_show_percentage: preferences.speedometer_margin_total_show_percentage ?? true,
+        });
+
+      if (error) {
+        throw new Error(`Erreur lors de la création des préférences: ${error.message}`);
+      }
+    }
   },
 };

@@ -507,6 +507,7 @@ export interface InterventionStatsByStatus {
   total: number;
   by_status: Record<string, number>; // Clé = code du statut (ex: "EN_COURS", "TERMINE")
   by_status_label: Record<string, number>; // Clé = label du statut (ex: "En cours", "Terminé")
+  interventions_a_checker?: number; // Nombre d'interventions à checker (statut CHECK)
   period?: {
     start_date: string | null;
     end_date: string | null;
@@ -562,7 +563,34 @@ export interface MarginRankingResult {
   };
 }
 
-export type StatsPeriod = "week" | "month" | "year";
+export type TargetPeriodType = "week" | "month" | "year"
+
+// Alias pour compatibilité avec le code existant
+export type StatsPeriod = "week" | "month" | "year"
+
+export interface GestionnaireTarget {
+  id: string
+  user_id: string
+  period_type: TargetPeriodType
+  margin_target: number // Objectif de marge totale en euros
+  performance_target: number | null // Objectif de performance en pourcentage (optionnel)
+  created_at: string | null
+  updated_at: string | null
+  created_by: string | null // ID de l'utilisateur qui a créé/modifié l'objectif
+}
+
+export interface CreateGestionnaireTargetData {
+  user_id: string
+  period_type: TargetPeriodType
+  margin_target: number
+  performance_target?: number | null
+}
+
+export interface UpdateGestionnaireTargetData {
+  margin_target?: number
+  performance_target?: number | null
+}
+;
 
 // Stats pour la semaine (jours de la semaine)
 export interface WeekDayStats {

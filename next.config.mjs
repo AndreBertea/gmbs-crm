@@ -1,6 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  outputFileTracingRoot: '/Users/andrebertea/Projects/GMBS/gmbs-crm',
+  // Retirer outputFileTracingRoot en développement (causait des problèmes sur Windows)
+  // outputFileTracingRoot est principalement utile pour le build de production
+  ...(process.env.NODE_ENV === 'production' && {
+    outputFileTracingRoot: process.cwd(),
+  }),
+  
+  // Optimisations pour le développement
+  ...(process.env.NODE_ENV === 'development' && {
+    // Réduire la verbosité des logs en développement
+    logging: {
+      fetches: {
+        fullUrl: false,
+      },
+    },
+    // Augmenter le timeout pour éviter les erreurs ChunkLoadError
+    turbopack: {
+      resolveAlias: {
+        // Éviter les problèmes de résolution de modules
+      },
+    },
+  }),
+
   images: {
     remotePatterns: [
       {
@@ -22,11 +43,38 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
+  webpack: (config, { dev, isServer }) => {
+    // Configuration pour les fichiers GLB/GLTF
     config.module.rules.push({
       test: /\.(glb|gltf)$/,
       type: 'asset/resource',
     });
+
+    // Optimisations pour le développement - exclure les répertoires non nécessaires du watch
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          '**/node_modules/**',
+          '**/.next/**',
+          '**/out/**',
+          '**/build/**',
+          '**/scripts/**',
+          '**/docs/**',
+          '**/data/**',
+          '**/tests/**',
+          '**/examples/**',
+          '**/supabase/migrations/**',
+          '**/supabase/seeds/**',
+          '**/supabase/samples/**',
+          '**/*.md',
+          '**/*.log',
+          '**/geocode.log',
+          '**/user-credentials*.json',
+        ],
+      };
+    }
+
     return config;
   },
   async headers() {

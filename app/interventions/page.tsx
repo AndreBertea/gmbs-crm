@@ -1,7 +1,7 @@
 "use client"
 
 import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import Interventions from "@/components/interventions/Interventions"
 import { FiltersBar, type DateRange, type SortDir, type SortField } from "@/components/interventions/FiltersBar"
@@ -56,6 +56,7 @@ import { WORKFLOW_EVENT_KEY } from "@/hooks/useWorkflowConfig"
 import { cn } from "@/lib/utils"
 import type { WorkflowConfig } from "@/types/intervention-workflow"
 import { mapStatusFromDb, mapStatusToDb } from "@/lib/interventions/mappers"
+import { isCheckStatus } from "@/lib/interventions/checkStatus"
 import type { InterventionStatusValue } from "@/types/interventions"
 import { getDistinctInterventionValues } from "@/lib/supabase-api-v2"
 import type { InterventionView as InterventionEntity } from "@/types/intervention-view"
@@ -235,13 +236,16 @@ export default function Page() {
     () => fetchedInterventions.map((item) => {
       const statusCode = item.status?.code ?? item.statusValue ?? (item as any).statut
       const normalizedStatus = mapStatusFromDb(statusCode)
+      const datePrevue = (item as any).date_prevue || (item as any).datePrevue || null
       return {
         ...item,
         statusValue: normalizedStatus,
         statusLabel: item.status?.label ?? (item as any).statusLabel ?? null,
         statusColor: item.status?.color ?? (item as any).statusColor ?? null,
         assignedUserColor: (item as any).assignedUserColor ?? null,
-      } as InterventionEntity
+        datePrevue: datePrevue,
+        isCheck: isCheckStatus(statusCode, datePrevue),
+      } as InterventionEntity & { datePrevue: string | null; isCheck: boolean }
     }),
     [fetchedInterventions],
   )
@@ -422,6 +426,33 @@ export default function Page() {
     },
     [activeView, updateFilters],
   )
+
+  // Appliquer le filtre CHECK depuis sessionStorage (pour les liens du dashboard)
+  useEffect(() => {
+    if (!isReady || !activeView) return
+    
+    const pendingFilterStr = sessionStorage.getItem('pending-intervention-filter')
+    if (pendingFilterStr) {
+      try {
+        const pendingFilter = JSON.parse(pendingFilterStr)
+        if (pendingFilter.property === "isCheck" && pendingFilter.operator === "eq" && pendingFilter.value === true) {
+          const checkFilter = { property: "isCheck", operator: "eq" as const, value: true }
+          const hasCheckFilter = activeView.filters.some(
+            (f) => f.property === "isCheck" && f.operator === "eq" && f.value === true
+          )
+          
+          if (!hasCheckFilter) {
+            updateFilterForProperty("isCheck", checkFilter)
+          }
+        }
+        // Nettoyer sessionStorage après avoir appliqué le filtre
+        sessionStorage.removeItem('pending-intervention-filter')
+      } catch (error) {
+        console.error("Erreur lors de l'application du filtre depuis sessionStorage:", error)
+        sessionStorage.removeItem('pending-intervention-filter')
+      }
+    }
+  }, [isReady, activeView, updateFilterForProperty])
 
   useEffect(() => {
     if (!activeView) return
