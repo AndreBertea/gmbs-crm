@@ -7,6 +7,16 @@ const {
 } = require("../../../src/lib/api/v2");
 const { dataValidator } = require("../../data-processing/data-validator");
 
+// Créer un client Supabase pour les insertions directes (évite les Edge Functions)
+const { createClient } = require('@supabase/supabase-js');
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+let supabaseClient = null;
+if (supabaseUrl && supabaseServiceKey) {
+  supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+}
+
 class DatabaseManager {
   constructor(options = {}) {
     this.options = {
@@ -284,31 +294,78 @@ class DatabaseManager {
           // Assigner les métiers après l'upsert
           if (metiersData.length > 0 && upsertedArtisan.id) {
             try {
-              // Créer les relations métiers
-              for (let j = 0; j < metiersData.length; j++) {
-                const metier = metiersData[j];
-                try {
-                  await artisansApi.assignMetier(
-                    upsertedArtisan.id,
-                    metier.metier_id,
-                    metier.is_primary || false
-                  );
+              // Insérer directement dans la table artisan_metiers (évite les Edge Functions)
+              if (supabaseClient) {
+                const metierInserts = metiersData.map(metier => ({
+                  artisan_id: upsertedArtisan.id,
+                  metier_id: metier.metier_id,
+                  is_primary: metier.is_primary || false
+                }));
+
+                // Insérer chaque métier individuellement pour gérer les doublons
+                let successCount = 0;
+                let duplicateCount = 0;
+                
+                for (const metierInsert of metierInserts) {
+                  const { error: metierError } = await supabaseClient
+                    .from('artisan_metiers')
+                    .insert(metierInsert);
+
+                  if (metierError) {
+                    // Si erreur de duplicate key, c'est OK (déjà assigné)
+                    if (metierError.message && (
+                      metierError.message.includes('duplicate key') ||
+                      metierError.message.includes('unique constraint') ||
+                      metierError.code === '23505' // PostgreSQL unique violation
+                    )) {
+                      duplicateCount++;
+                    } else {
+                      this.log(
+                        `  ⚠️ Erreur assignation métier ${metierInsert.metier_id}: ${metierError.message}`,
+                        "warning"
+                      );
+                    }
+                  } else {
+                    successCount++;
+                  }
+                }
+                
+                if (successCount > 0) {
                   this.log(
-                    `  → Métier assigné: ${metier.metier_id}${metier.is_primary ? ' (principal)' : ''}`,
+                    `  → ${successCount} métier(s) assigné(s)${duplicateCount > 0 ? `, ${duplicateCount} déjà assigné(s)` : ''}`,
                     "verbose"
                   );
-                } catch (error) {
-                  // Ignorer les doublons (contrainte unique)
-                  if (
-                    error.message &&
-                    error.message.includes("duplicate key value violates unique constraint")
-                  ) {
-                    this.log(`  ℹ️ Métier déjà assigné: ${metier.metier_id}`, "verbose");
-                  } else {
-                    this.log(
-                      `  ⚠️ Erreur assignation métier ${metier.metier_id}: ${error.message}`,
-                      "warning"
+                } else if (duplicateCount > 0) {
+                  this.log(`  ℹ️ Tous les métiers étaient déjà assignés`, "verbose");
+                }
+              } else {
+                // Fallback: utiliser l'API (peut échouer si Edge Function n'existe pas)
+                for (let j = 0; j < metiersData.length; j++) {
+                  const metier = metiersData[j];
+                  try {
+                    await artisansApi.assignMetier(
+                      upsertedArtisan.id,
+                      metier.metier_id,
+                      metier.is_primary || false
                     );
+                    this.log(
+                      `  → Métier assigné: ${metier.metier_id}${metier.is_primary ? ' (principal)' : ''}`,
+                      "verbose"
+                    );
+                  } catch (error) {
+                    // Ignorer les doublons (contrainte unique)
+                    if (
+                      error.message &&
+                      (error.message.includes("duplicate key value violates unique constraint") ||
+                       error.message.includes("NOT_FOUND"))
+                    ) {
+                      this.log(`  ℹ️ Métier déjà assigné ou Edge Function non disponible: ${metier.metier_id}`, "verbose");
+                    } else {
+                      this.log(
+                        `  ⚠️ Erreur assignation métier ${metier.metier_id}: ${error.message}`,
+                        "warning"
+                      );
+                    }
                   }
                 }
               }
