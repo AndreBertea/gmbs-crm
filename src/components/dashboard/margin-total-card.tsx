@@ -230,7 +230,7 @@ export function MarginTotalCard({ period, userId: propUserId }: MarginTotalCardP
             <CardContent>
                 <div className="space-y-4">
                     {/* Cadran de vitesse */}
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center">
                         <Speedometer
                             value={Math.abs(stats.total_margin)}
                             max={marginTarget}

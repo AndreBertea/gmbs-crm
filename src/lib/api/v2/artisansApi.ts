@@ -981,10 +981,11 @@ export const artisansApi = {
 
     const { data, error } = await supabase
       .from("artisans")
-      .select("id, nom, prenom")
+      .select("id, nom, prenom, statut_id, artisan_statuses!inner(code)")
       .eq("gestionnaire_id", gestionnaireId)
       .eq("is_active", true)
-      .eq("statut_dossier", "À compléter");
+      .eq("statut_dossier", "À compléter")
+      .neq("artisan_statuses.code", "ARCHIVE");
 
     if (error) {
       throw new Error(`Erreur lors de la récupération des artisans: ${error.message}`);

@@ -274,7 +274,6 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
   const getStatusColor = useCallback((statusLabel: string): string => {
     // Cas spécial pour "Check" qui n'est pas dans INTERVENTION_STATUS
     if (statusLabel === "Check") {
-      console.log(`[Dashboard Colors] "Check" → #EF4444 (statut spécial)`)
       return "#EF4444" // Rouge pour Check
     }
 
@@ -282,7 +281,6 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     // Le hook useInterventionStatuses stocke les labels en minuscule dans statusesByLabel
     const dbStatusByLabel = statusesByLabel.get(statusLabel.toLowerCase())
     if (dbStatusByLabel?.color) {
-      console.log(`[Dashboard Colors] "${statusLabel}" → DB (${dbStatusByLabel.code}) → ${dbStatusByLabel.color}`)
       return dbStatusByLabel.color
     }
 
@@ -304,7 +302,6 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     if (mappedCode) {
       const dbStatusByCode = statusesByCode.get(mappedCode)
       if (dbStatusByCode?.color) {
-        console.log(`[Dashboard Colors] "${statusLabel}" → DB (${mappedCode}) → ${dbStatusByCode.color}`)
         return dbStatusByCode.color
       }
     }
@@ -349,45 +346,196 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
   }, [fundamentalStatuses, getStatusColor])
 
   // Préparer les données pour le graphique (uniquement les statuts fondamentaux)
-  const chartData = stats?.by_status_label
-    ? Object.entries(stats.by_status_label)
-        .map(([label, count]) => {
-          const color = getStatusColor(label)
-          return {
-            name: label,
-            value: count,
-            isCheck: false,
-            color: color, // Ajouter la couleur directement dans les données
-          }
-        })
-        .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
-        .map((item) => {
-          // Log pour déboguer les couleurs
-          console.log(`[Dashboard Chart] Statut: "${item.name}", Count: ${item.value}, Color: ${item.color}`)
-          return item
-        })
-        .sort((a, b) => {
-          // Trier selon l'ordre des statuts fondamentaux
-          const indexA = fundamentalStatuses.indexOf(a.name)
-          const indexB = fundamentalStatuses.indexOf(b.name)
-          if (indexA === -1) return 1
-          if (indexB === -1) return -1
-          return indexA - indexB
-        })
-        .concat(
-          // Ajouter la barre "Check" si elle existe
-          stats.interventions_a_checker && stats.interventions_a_checker > 0
-            ? [
-                {
-                  name: "Check",
-                  value: stats.interventions_a_checker,
-                  isCheck: true,
-                  color: "#EF4444", // Rouge pour Check
-                },
-              ]
-            : []
-        )
-    : []
+  // Mémorisé pour éviter les recalculs constants qui causent la boucle infinie
+  const chartData = useMemo(() => {
+    if (!stats?.by_status_label) return []
+
+    return Object.entries(stats.by_status_label)
+      .map(([label, count]) => {
+        const color = getStatusColor(label)
+        return {
+          name: label,
+          value: count,
+          isCheck: false,
+          color: color, // Ajouter la couleur directement dans les données
+        }
+      })
+      .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
+      .sort((a, b) => {
+        // Trier selon l'ordre des statuts fondamentaux
+        const indexA = fundamentalStatuses.indexOf(a.name)
+        const indexB = fundamentalStatuses.indexOf(b.name)
+        if (indexA === -1) return 1
+        if (indexB === -1) return -1
+        return indexA - indexB
+      })
+      .concat(
+        // Ajouter la barre "Check" si elle existe
+        stats.interventions_a_checker && stats.interventions_a_checker > 0
+          ? [
+              {
+                name: "Check",
+                value: stats.interventions_a_checker,
+                isCheck: true,
+                color: "#EF4444", // Rouge pour Check
+              },
+            ]
+          : []
+      )
+  }, [stats?.by_status_label, stats?.interventions_a_checker, fundamentalStatuses, getStatusColor])
+
+  // Tous les hooks doivent être appelés AVANT les retours conditionnels
+  // Fonction pour assombrir une couleur hex - mémorisée avec useCallback
+  const adjustColor = useCallback((color: string, amount: number) => {
+    // Convertir hex en RGB
+    const hex = color.replace('#', '')
+    const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount))
+    const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount))
+    const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount))
+    return `#${[r, g, b].map(x => {
+      const hex = x.toString(16)
+      return hex.length === 1 ? '0' + hex : hex
+    }).join('')}`
+  }, [])
+
+  // Mémoriser les cellules avec leurs couleurs pour éviter les recalculs
+  const chartCells = useMemo(() => {
+    if (chartData.length === 0) return []
+    return chartData.map((entry, index) => {
+      const statusColor = entry.color || getStatusColor(entry.name)
+      const isHovered = hoveredBarIndex === index
+      const hoverColor = isHovered ? adjustColor(statusColor, -20) : statusColor
+      
+      return (
+        <Cell 
+          key={`cell-${index}`}
+          fill={hoverColor}
+          style={{ 
+            cursor: "pointer",
+            transition: "fill 0.2s ease-in-out",
+          }}
+        />
+      )
+    })
+  }, [chartData, hoveredBarIndex, adjustColor, getStatusColor])
+
+  // Mémoriser les handlers pour éviter les recréations
+  const handleBarMouseEnter = useCallback((data: any, index: number) => {
+    // Annuler tout timeout de fermeture en cours
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    
+    setHoveredBarIndex(index)
+    
+    const statusLabel = chartData[index]?.name
+    if (statusLabel) {
+      // Fixer la position du trigger au moment de l'ouverture
+      const position = triggerPositionRef.current || { 
+        x: window.innerWidth / 2, 
+        y: window.innerHeight / 2 
+      }
+      fixedTriggerPositionRef.current = position
+      // Mettre à jour l'état pour déclencher le re-render
+      setTriggerPosition({
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        width: 16,
+        height: 16,
+      })
+      setHoveredStatus(statusLabel)
+      setHoverCardOpen(true)
+    }
+  }, [chartData])
+
+  const handleBarMouseLeave = useCallback(() => {
+    setHoveredBarIndex(null)
+    // Ne pas fermer immédiatement - laisser un délai plus long pour permettre
+    // de déplacer la souris vers le HoverCard de manière fluide
+    closeTimeoutRef.current = setTimeout(() => {
+      setHoverCardOpen(false)
+      // Nettoyer les positions après la fermeture
+      setTimeout(() => {
+        setHoveredStatus(null)
+        fixedTriggerPositionRef.current = null
+        setTriggerPosition(null)
+      }, 150)
+      closeTimeoutRef.current = null
+    }, 500) // Délai plus long pour une transition très fluide
+  }, [])
+
+  const handleBarClick = useCallback((data: any, index: number) => {
+    const clickedBar = chartData[index]
+    if (clickedBar?.isCheck) {
+      sessionStorage.setItem('pending-intervention-filter', JSON.stringify({
+        property: "isCheck",
+        operator: "eq",
+        value: true
+      }))
+      router.push("/interventions")
+    }
+  }, [chartData, router])
+
+  // État pour suivre la position du trigger (les refs ne déclenchent pas de re-renders)
+  const [triggerPosition, setTriggerPosition] = useState<{ left: string; top: string; width: number; height: number } | null>(null)
+
+  // Précharger les données des interventions pour tous les statuts visibles
+  // Cela garantit un affichage instantané au survol
+  // Utiliser des dépendances stables pour éviter les boucles infinies
+  useEffect(() => {
+    if (!userId || !stats?.by_status_label || !period?.startDate || !period?.endDate) return
+
+    const preloadInterventions = async () => {
+      const startDate = period.startDate
+      const endDate = period.endDate
+
+      // Précharger les données pour chaque statut visible en parallèle
+      // Utiliser directement stats.by_status_label au lieu de chartData pour éviter les dépendances circulaires
+      const statusLabels = Object.entries(stats.by_status_label)
+        .filter(([label, count]) => count > 0 && fundamentalStatuses.includes(label))
+        .map(([label]) => label)
+
+      const preloadPromises = statusLabels.map(async (statusLabel) => {
+        const cacheKey = `${statusLabel}-${startDate}-${endDate}`
+        
+        // Vérifier si déjà en cache
+        const cachedEntry = interventionsCacheRef.current.get(cacheKey)
+        const isCacheValid = cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_DURATION)
+        
+        if (isCacheValid) {
+          return // Déjà en cache, pas besoin de recharger
+        }
+
+        try {
+          // Précharger en arrière-plan sans bloquer
+          const data = await interventionsApi.getRecentInterventionsByStatusAndUser(
+            userId,
+            statusLabel,
+            5,
+            startDate,
+            endDate
+          )
+          
+          // Mettre en cache
+          interventionsCacheRef.current.set(cacheKey, {
+            data,
+            timestamp: Date.now()
+          })
+        } catch (err) {
+          // Ignorer les erreurs de préchargement silencieusement
+          console.warn(`[Dashboard] Erreur préchargement ${statusLabel}:`, err)
+        }
+      })
+
+      // Lancer tous les préchargements en parallèle sans attendre
+      Promise.all(preloadPromises).catch(() => {
+        // Ignorer les erreurs
+      })
+    }
+
+    preloadInterventions()
+  }, [userId, statsByStatusLabelKey, period, fundamentalStatuses, CACHE_DURATION, stats?.by_status_label])
 
   if (loading) {
     return (

@@ -1,14 +1,10 @@
 
-- dans la page artisan pouvoir combiner plusieurs filtres pour le statut
-        synchro à faire avec DD
-
-- implémenter les logiques des interventions CHECK dans la page DashBoard
-
-    CHECK = due date dépassé + STATUT C {ENCOURS, VISITE TECHNIQUE}
-
-- récupérer 
-
 npx tsx scripts/geocode-artisans.ts à ajouter dans le package.json
+
+
+
+
+
 
 - refacto migrations make one clean schema business operations, one for user
 

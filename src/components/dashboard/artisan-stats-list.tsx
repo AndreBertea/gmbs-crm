@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
 import { useInterventionModal } from "@/hooks/useInterventionModal"
 import { getArtisanStatusStyles } from "@/config/status-colors"
+import { getMetierColor } from "@/config/metier-colors"
 import Loader from "@/components/ui/Loader"
 
 interface ArtisanStatsListProps {
@@ -22,6 +23,28 @@ interface ArtisanStatsListProps {
   }
   userId?: string | null
 }
+
+type ArtisanHoverData = Array<{
+  artisan_id: string;
+  artisan_nom: string;
+  artisan_prenom: string;
+  recent_interventions: Array<{
+    id: string;
+    id_inter: string | null;
+    date: string;
+    marge: number;
+    status_label: string | null;
+    status_color: string | null;
+    due_date: string | null;
+    metier_label: string | null;
+  }>;
+}>
+
+type DossiersACompleterData = Array<{
+  artisan_id: string;
+  artisan_nom: string;
+  artisan_prenom: string;
+}>
 
 export function ArtisanStatsList({ period, userId: propUserId }: ArtisanStatsListProps) {
   const [stats, setStats] = useState<ArtisanStatsByStatus | null>(null)
@@ -261,60 +284,7 @@ export function ArtisanStatsList({ period, userId: propUserId }: ArtisanStatsLis
     onOpenArtisan: (id: string) => void
     onOpenIntervention: (id: string) => void
   }) => {
-    const [artisansData, setArtisansData] = useState<Array<{
-      artisan_id: string;
-      artisan_nom: string;
-      artisan_prenom: string;
-      recent_interventions: Array<{
-        id: string;
-        id_inter: string | null;
-        date: string;
-        marge: number;
-        status_label: string | null;
-        status_color: string | null;
-        due_date: string | null;
-        metier_label: string | null;
-      }>;
-    }> | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    // Charger les données au montage du composant avec période
-    useEffect(() => {
-      if (!userId || !statusLabel) return
-
-      let cancelled = false
-
-      const loadData = async () => {
-        try {
-          setLoading(true)
-          setError(null)
-          const data = await artisansApi.getArtisansByStatusWithRecentInterventions(
-            userId, 
-            statusLabel,
-            period?.startDate,  // Passer la période
-            period?.endDate     // Passer la période
-          )
-          if (!cancelled) {
-            setArtisansData(data)
-            setLoading(false)
-          }
-        } catch (err: any) {
-          if (!cancelled) {
-            setError(err.message || "Erreur lors du chargement")
-            setLoading(false)
-          }
-        }
-      }
-
-      loadData()
-
-      return () => {
-        cancelled = true
-      }
-    }, [userId, statusLabel, period])
-
-    if (loading) {
+    if (loadingHoverData) {
       return (
         <div className="flex items-center justify-center p-4">
           <div style={{ transform: 'scale(0.75)' }}>
@@ -378,7 +348,7 @@ export function ArtisanStatsList({ period, userId: propUserId }: ArtisanStatsLis
                           {intervention.id_inter || "N/A"}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Métier : <span className="font-medium">{intervention.metier_label || "N/A"}</span> | 
+                          Métier : <span style={{ color: getMetierColor(null, intervention.metier_label) }} className="font-medium">{intervention.metier_label || "N/A"}</span> | 
                           Marge : <span className="font-medium">{formatCurrency(intervention.marge)}</span> | 
                           Date : <span className="font-medium">{formatDate(intervention.due_date)}</span>
                         </div>
@@ -406,45 +376,7 @@ export function ArtisanStatsList({ period, userId: propUserId }: ArtisanStatsLis
     artisansData: DossiersACompleterData | null
     onOpenArtisan: (id: string) => void 
   }) => {
-    const [artisansData, setArtisansData] = useState<Array<{
-      artisan_id: string;
-      artisan_nom: string;
-      artisan_prenom: string;
-    }> | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    // Charger les données au montage du composant
-    useEffect(() => {
-      if (!userId) return
-
-      let cancelled = false
-
-      const loadData = async () => {
-        try {
-          setLoading(true)
-          setError(null)
-          const data = await artisansApi.getArtisansWithDossiersACompleter(userId)
-          if (!cancelled) {
-            setArtisansData(data)
-            setLoading(false)
-          }
-        } catch (err: any) {
-          if (!cancelled) {
-            setError(err.message || "Erreur lors du chargement")
-            setLoading(false)
-          }
-        }
-      }
-
-      loadData()
-
-      return () => {
-        cancelled = true
-      }
-    }, [])
-
-    if (loading) {
+    if (loadingHoverData) {
       return (
         <div className="flex items-center justify-center p-4">
           <div style={{ transform: 'scale(0.75)' }}>
