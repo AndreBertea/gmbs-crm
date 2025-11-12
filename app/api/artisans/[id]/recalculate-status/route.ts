@@ -5,6 +5,12 @@ import path from 'path';
 
 const execAsync = promisify(exec);
 
+type Params = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
 /**
  * API Route pour recalculer le statut d'un seul artisan
  * 
@@ -14,7 +20,7 @@ const execAsync = promisify(exec);
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: Params
 ) {
   const { id: artisanId } = await params;
 

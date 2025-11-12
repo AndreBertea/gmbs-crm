@@ -196,7 +196,8 @@ const AvatarGroup = React.forwardRef<HTMLDivElement, AvatarGroupProps>(({
           const zIndex = invertOverlap ? React.Children.count(children) - index : index;
           
           // Chercher AvatarGroupTooltip dans les enfants
-          const tooltipChild = React.Children.toArray(child.props.children || []).find(
+          const childProps = child.props as { children?: React.ReactNode };
+          const tooltipChild = React.Children.toArray(childProps.children || []).find(
             (c) => {
               if (!React.isValidElement(c)) return false;
               // Comparer le type du composant (gère les cas où React optimise)
@@ -206,7 +207,7 @@ const AvatarGroup = React.forwardRef<HTMLDivElement, AvatarGroupProps>(({
             }
           );
           const tooltipContent = tooltipChild && React.isValidElement(tooltipChild) 
-            ? tooltipChild.props.children 
+            ? (tooltipChild.props as { children?: React.ReactNode }).children 
             : undefined;
 
           if (variant === 'motion') {
@@ -219,14 +220,14 @@ const AvatarGroup = React.forwardRef<HTMLDivElement, AvatarGroupProps>(({
                 tooltipContent={tooltipContent}
                 tooltipProps={tooltipProps}
               >
-                {React.cloneElement(child, { children: React.Children.toArray(child.props.children || []).filter(
+                {React.cloneElement(child, { children: React.Children.toArray(childProps.children || []).filter(
                   (c) => {
                     if (!React.isValidElement(c)) return true;
                     return c.type !== AvatarGroupTooltip && 
                            !(typeof c.type === 'function' && c.type.name === 'AvatarGroupTooltip') &&
                            !(c.type && (c.type as any).displayName === 'AvatarGroupTooltip');
                   }
-                )})}
+                )} as any)}
               </AvatarMotionContainer>
             );
           }
@@ -238,14 +239,14 @@ const AvatarGroup = React.forwardRef<HTMLDivElement, AvatarGroupProps>(({
               tooltipContent={tooltipContent}
               tooltipProps={tooltipProps}
             >
-              {React.cloneElement(child, { children: React.Children.toArray(child.props.children || []).filter(
+              {React.cloneElement(child, { children: React.Children.toArray(childProps.children || []).filter(
                 (c) => {
                   if (!React.isValidElement(c)) return true;
                   return c.type !== AvatarGroupTooltip && 
                          !(typeof c.type === 'function' && c.type.name === 'AvatarGroupTooltip') &&
                          !(c.type && (c.type as any).displayName === 'AvatarGroupTooltip');
                 }
-              )})}
+              )} as any)}
             </AvatarCSSContainer>
           );
         })}
