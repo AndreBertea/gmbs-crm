@@ -249,9 +249,6 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
                 }
               }}
             />
-            <div className="text-[10px] text-muted-foreground text-center mt-1 opacity-60">
-              Clic droit pour {showPercentage ? 'masquer' : 'afficher'} le pourcentage
-            </div>
           </div>
 
           {/* Informations */}
