@@ -654,11 +654,15 @@ export const usersApi = {
     }
 
     // Vérifier si les préférences existent déjà
-    const { data: existing } = await supabase
+    const { data: existing, error: findError } = await supabase
       .from("user_preferences")
       .select("id")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
+
+    if (findError && findError.code !== 'PGRST116') {
+      throw new Error(`Erreur lors de la recherche des préférences: ${findError.message}`);
+    }
 
     if (existing) {
       // Mise à jour

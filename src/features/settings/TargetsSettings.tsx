@@ -185,14 +185,45 @@ export function TargetsSettings() {
       return
     }
 
-    // Vérifier si on modifie un objectif créé par un admin (et que l'utilisateur n'est pas admin)
-    if (editingTarget && !canModifyTarget(editingTarget)) {
-      toast({
-        title: "Erreur",
-        description: "Vous ne pouvez pas modifier un objectif créé par un administrateur",
-        variant: "destructive",
-      })
-      return
+    // Vérifier si un objectif existe déjà pour cette période et ce gestionnaire
+    const existingTargetForPeriod = targets.find(
+      (t) => t.user_id === formData.user_id && t.period_type === formData.period_type
+    )
+
+    // Si on modifie un objectif existant (même période ou changement de période)
+    if (editingTarget) {
+      // Vérifier si on peut modifier l'objectif original
+      if (!canModifyTarget(editingTarget)) {
+        toast({
+          title: "Erreur",
+          description: "Vous ne pouvez pas modifier un objectif créé par un administrateur",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Si on change de période et qu'un objectif existe déjà pour la nouvelle période
+      if (editingTarget.period_type !== formData.period_type && existingTargetForPeriod) {
+        // Vérifier si on peut modifier l'objectif existant pour la nouvelle période
+        if (!canModifyTarget(existingTargetForPeriod)) {
+          toast({
+            title: "Erreur",
+            description: "Un objectif existe déjà pour cette période et vous n'avez pas les permissions pour le modifier",
+            variant: "destructive",
+          })
+          return
+        }
+      }
+    } else if (existingTargetForPeriod) {
+      // Si on crée un nouvel objectif mais qu'un objectif existe déjà pour cette période
+      if (!canModifyTarget(existingTargetForPeriod)) {
+        toast({
+          title: "Erreur",
+          description: "Un objectif existe déjà pour cette période et vous n'avez pas les permissions pour le modifier",
+          variant: "destructive",
+        })
+        return
+      }
     }
 
     try {
@@ -203,17 +234,19 @@ export function TargetsSettings() {
         performance_target: formData.performance_target ?? 40, // Utiliser 40% par défaut si null
       }
 
-      if (editingTarget) {
+      // Si on modifie un objectif et qu'on ne change pas de période, utiliser updateTarget
+      if (editingTarget && editingTarget.period_type === formData.period_type) {
         await usersApi.updateTarget(editingTarget.id, targetData, currentUser.id)
         toast({
           title: "Succès",
           description: "Objectif mis à jour avec succès",
         })
       } else {
+        // Sinon, utiliser upsertTarget (gère création et mise à jour)
         await usersApi.upsertTarget(targetData, currentUser.id)
         toast({
           title: "Succès",
-          description: "Objectif créé avec succès",
+          description: existingTargetForPeriod ? "Objectif mis à jour avec succès" : "Objectif créé avec succès",
         })
       }
 
@@ -301,15 +334,6 @@ export function TargetsSettings() {
     return user.username?.toLowerCase() !== "admin"
   })
 
-  // Grouper les objectifs par utilisateur (seulement pour les gestionnaires, pas les admins)
-  const targetsByUser = gestionnaires.reduce((acc, user) => {
-    acc[user.id] = {
-      user,
-      targets: targets.filter((t) => t.user_id === user.id),
-    }
-    return acc
-  }, {} as Record<string, { user: User; targets: GestionnaireTarget[] }>)
-
   if (loading) {
     return (
       <Card>
@@ -342,69 +366,156 @@ export function TargetsSettings() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            {Object.values(targetsByUser).map(({ user, targets: userTargets }) => (
-              <div key={user.id} className="space-y-2">
-                <h3 className="text-lg font-semibold">
-                  {getUserName(user.id)} {user.code_gestionnaire && `(${user.code_gestionnaire})`}
-                </h3>
-                {userTargets.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Aucun objectif défini</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Période</TableHead>
-                        <TableHead>Objectif de marge</TableHead>
-                        <TableHead>Objectif de performance</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {userTargets.map((target) => (
-                        <TableRow key={target.id}>
-                          <TableCell className="font-medium">{getPeriodLabel(target.period_type)}</TableCell>
-                          <TableCell>{formatCurrency(target.margin_target)}</TableCell>
-                          <TableCell>
-                            {target.performance_target !== null ? `${target.performance_target}%` : "—"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              {canModifyTarget(target) ? (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleOpenDialog(target)}
-                                    className="gap-2"
-                                  >
-                                    <Edit2 className="h-4 w-4" />
-                                    Modifier
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDelete(target.id)}
-                                    className="gap-2 text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    Supprimer
-                                  </Button>
-                                </>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">
-                                  Créé par un administrateur
+          <div className="overflow-x-auto scrollbar-hide">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent h-14">
+                  <TableHead className="w-[200px] font-bold text-foreground">Gestionnaire</TableHead>
+                  {/* Colonnes Semaine */}
+                  <TableHead colSpan={2} className="text-center font-bold text-foreground border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Semaine</div>
+                  </TableHead>
+                  {/* Colonnes Mois */}
+                  <TableHead colSpan={2} className="text-center font-bold text-foreground border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Mois</div>
+                  </TableHead>
+                  {/* Colonnes Année */}
+                  <TableHead colSpan={2} className="text-center font-bold text-foreground border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Année</div>
+                  </TableHead>
+                  <TableHead className="text-right font-bold text-foreground min-w-[100px]">Actions</TableHead>
+                </TableRow>
+                <TableRow className="bg-muted/30 dark:bg-muted/20 border-b border-border/40 hover:bg-transparent">
+                  <TableHead className="font-semibold"></TableHead>
+                  {/* Sous-colonnes pour Semaine */}
+                  <TableHead className="text-center font-semibold text-sm border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Objectif Marge</div>
+                  </TableHead>
+                  <TableHead className="text-center font-semibold text-sm border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Objectif Pourcentage</div>
+                  </TableHead>
+                  {/* Sous-colonnes pour Mois */}
+                  <TableHead className="text-center font-semibold text-sm border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Objectif Marge</div>
+                  </TableHead>
+                  <TableHead className="text-center font-semibold text-sm border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Objectif Pourcentage</div>
+                  </TableHead>
+                  {/* Sous-colonnes pour Année */}
+                  <TableHead className="text-center font-semibold text-sm border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Objectif Marge</div>
+                  </TableHead>
+                  <TableHead className="text-center font-semibold text-sm border-x border-border/40">
+                    <div className="flex items-center justify-center w-full">Objectif Pourcentage</div>
+                  </TableHead>
+                  <TableHead className="text-right font-semibold"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {gestionnaires.map((user) => {
+                  const weekTarget = targets.find((t) => t.user_id === user.id && t.period_type === "week")
+                  const monthTarget = targets.find((t) => t.user_id === user.id && t.period_type === "month")
+                  const yearTarget = targets.find((t) => t.user_id === user.id && t.period_type === "year")
+
+                  const getUserDisplayName = () => {
+                    const name = getUserName(user.id)
+                    return user.code_gestionnaire ? `${name} (${user.code_gestionnaire})` : name
+                  }
+
+                  return (
+                    <TableRow key={user.id} className="hover:bg-muted/50 transition-colors duration-200 border-b border-border/30">
+                      <TableCell className="font-medium py-4">
+                        {getUserDisplayName()}
+                      </TableCell>
+                      {/* Cellules Semaine */}
+                      <TableCell className="text-center py-4 border-x border-border/40">
+                        {weekTarget ? formatCurrency(weekTarget.margin_target) : "—"}
+                      </TableCell>
+                      <TableCell className="text-center py-4 border-x border-border/40">
+                        {weekTarget?.performance_target !== null && weekTarget?.performance_target !== undefined
+                          ? `${weekTarget.performance_target}%`
+                          : "—"}
+                      </TableCell>
+                      {/* Cellules Mois */}
+                      <TableCell className="text-center py-4 border-x border-border/40">
+                        {monthTarget ? formatCurrency(monthTarget.margin_target) : "—"}
+                      </TableCell>
+                      <TableCell className="text-center py-4 border-x border-border/40">
+                        {monthTarget?.performance_target !== null && monthTarget?.performance_target !== undefined
+                          ? `${monthTarget.performance_target}%`
+                          : "—"}
+                      </TableCell>
+                      {/* Cellules Année */}
+                      <TableCell className="text-center py-4 border-x border-border/40">
+                        {yearTarget ? formatCurrency(yearTarget.margin_target) : "—"}
+                      </TableCell>
+                      <TableCell className="text-center py-4 border-x border-border/40">
+                        {yearTarget?.performance_target !== null && yearTarget?.performance_target !== undefined
+                          ? `${yearTarget.performance_target}%`
+                          : "—"}
+                      </TableCell>
+                      {/* Actions */}
+                      <TableCell className="text-right py-4">
+                        <div className="flex justify-end">
+                          {/* Trouver le premier objectif modifiable ou utiliser le premier objectif existant */}
+                          {(() => {
+                            const modifiableTarget = [weekTarget, monthTarget, yearTarget].find(
+                              (target) => target && canModifyTarget(target)
+                            )
+                            const anyTarget = weekTarget || monthTarget || yearTarget
+                            
+                            // Si l'utilisateur a au moins un objectif modifiable, on ouvre avec celui-ci
+                            // Sinon, on ouvre en mode création avec le gestionnaire pré-sélectionné
+                            if (modifiableTarget) {
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleOpenDialog(modifiableTarget)}
+                                  className="gap-1 h-8"
+                                  title="Modifier les objectifs"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              )
+                            } else if (anyTarget) {
+                              // Objectif existe mais créé par admin, on ne peut pas modifier
+                              return (
+                                <span className="text-xs text-muted-foreground" title="Créé par un administrateur">
+                                  —
                                 </span>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </div>
-            ))}
+                              )
+                            } else {
+                              // Aucun objectif, on ouvre en mode création
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setFormData({
+                                      user_id: user.id,
+                                      period_type: "month",
+                                      margin_target: getDefaultMarginTarget("month"),
+                                      performance_target: 40,
+                                    })
+                                    setEditingTarget(null)
+                                    setIsDialogOpen(true)
+                                  }}
+                                  className="gap-1 h-8"
+                                  title="Créer un objectif"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              )
+                            }
+                          })()}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
@@ -443,14 +554,31 @@ export function TargetsSettings() {
                 value={formData.period_type}
                 onValueChange={(value) => {
                   const periodType = value as TargetPeriodType
-                  setFormData({
-                    ...formData,
-                    period_type: periodType,
-                    // Mettre à jour margin_target avec la valeur par défaut si on crée un nouvel objectif
-                    margin_target: editingTarget ? formData.margin_target : getDefaultMarginTarget(periodType),
-                  })
+                  // Si on change de période, charger les valeurs existantes pour cette période si elles existent
+                  const existingTarget = targets.find(
+                    (t) => t.user_id === formData.user_id && t.period_type === periodType
+                  )
+                  
+                  if (existingTarget) {
+                    // Si un objectif existe pour cette période, charger ses valeurs
+                    setFormData({
+                      ...formData,
+                      period_type: periodType,
+                      margin_target: existingTarget.margin_target,
+                      performance_target: existingTarget.performance_target ?? 40,
+                    })
+                    setEditingTarget(existingTarget)
+                  } else {
+                    // Sinon, utiliser les valeurs par défaut pour cette période
+                    setFormData({
+                      ...formData,
+                      period_type: periodType,
+                      margin_target: getDefaultMarginTarget(periodType),
+                      performance_target: 40,
+                    })
+                    setEditingTarget(null)
+                  }
                 }}
-                disabled={!!editingTarget}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -486,7 +614,7 @@ export function TargetsSettings() {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    performance_target: e.target.value ? parseFloat(e.target.value) : 40,
+                    performance_target: e.target.value === "" ? null : (parseFloat(e.target.value) || null),
                   })
                 }
                 placeholder="40"

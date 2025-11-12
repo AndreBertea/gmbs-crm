@@ -227,7 +227,7 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
             <CardContent>
                 <div className="space-y-4">
                     {/* Cadran de vitesse */}
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center">
                         <Speedometer
                             value={Math.abs(stats.total_margin)}
                             max={marginTarget}
@@ -252,6 +252,9 @@ export function MarginTotalCard({ period }: MarginTotalCardProps) {
                                 }
                             }}
                         />
+                        <div className="text-[10px] text-muted-foreground text-center mt-1 opacity-60">
+                            Clic droit pour {showPercentage ? 'masquer' : 'afficher'} le pourcentage
+                        </div>
                     </div>
 
                     {/* Informations */}

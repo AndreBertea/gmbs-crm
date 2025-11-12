@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
 import { useInterventionModal } from "@/hooks/useInterventionModal"
 import { getArtisanStatusStyles } from "@/config/status-colors"
+import { getMetierColor } from "@/config/metier-colors"
 import { Loader2 as Loader2Icon } from "lucide-react"
 
 interface ArtisanStatsListProps {
@@ -341,7 +342,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
                           {intervention.id_inter || "N/A"}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Métier : <span className="font-medium">{intervention.metier_label || "N/A"}</span> | 
+                          Métier : <span style={{ color: getMetierColor(null, intervention.metier_label) }} className="font-medium">{intervention.metier_label || "N/A"}</span> | 
                           Marge : <span className="font-medium">{formatCurrency(intervention.marge)}</span> | 
                           Date : <span className="font-medium">{formatDate(intervention.due_date)}</span>
                         </div>
