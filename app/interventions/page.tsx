@@ -506,6 +506,15 @@ export default function Page() {
     })
   }, [activeView])
 
+  // Détecter si le filtre CHECK est actif
+  const isCheckFilterActive = useMemo(() => {
+    if (!activeView) return false
+    const checkFilter = activeView.filters.find(
+      (f) => f.property === "isCheck" && f.operator === "eq" && f.value === true
+    )
+    return Boolean(checkFilter)
+  }, [activeView])
+
   const usersForFilter = useMemo(() => {
     const s = new Set<string>()
     filteredInterventions.forEach((i) => i.attribueA && s.add(i.attribueA))
@@ -583,6 +592,14 @@ export default function Page() {
     [normalizedInterventions],
   )
 
+  // Comptage des interventions CHECK (date d'échéance dépassée)
+  const getCheckCount = useCallback(() => {
+    return normalizedInterventions.filter((intervention) => {
+      const isCheck = (intervention as any).isCheck === true
+      return isCheck
+    }).length
+  }, [normalizedInterventions])
+
   const handlePinStatus = useCallback(
     (status: InterventionStatusValue) => {
       updatePinnedStatus(status, true)
@@ -600,9 +617,10 @@ export default function Page() {
   const handleSelectStatus = useCallback(
     (status: InterventionStatusValue | null) => {
       if (status === null) {
-        // "Toutes" réinitialise tous les filtres de statut
+        // "Toutes" réinitialise tous les filtres de statut ET le filtre CHECK
         setSelectedStatuses([])
         updateFilterForProperty(managedFilterKeys.status, null)
+        updateFilterForProperty("isCheck", null)
         return
       }
       
@@ -1392,13 +1410,45 @@ export default function Page() {
               </button>
             )
           })}
-          {selectedStatuses.length > 0 && (
+          {/* Bouton CHECK rouge - Multi-sélection avec les autres statuts */}
+          <button
+            onClick={() => {
+              if (isCheckFilterActive) {
+                // Désactiver le filtre CHECK
+                updateFilterForProperty("isCheck", null)
+              } else {
+                // Activer le filtre CHECK (peut être combiné avec d'autres statuts)
+                updateFilterForProperty("isCheck", { property: "isCheck", operator: "eq", value: true })
+              }
+            }}
+            className={`status-chip transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5 ${
+              isCheckFilterActive
+                ? "ring-2 ring-foreground/20"
+                : "hover:shadow-card border border-border bg-transparent"
+            }`}
+            style={isCheckFilterActive ? { 
+              backgroundColor: "#EF444415", 
+              borderColor: "#EF4444",
+              color: "#EF4444" 
+            } : {}}
+            title="Interventions avec date d'échéance dépassée (peut être combiné avec d'autres statuts)"
+          >
+            <span className="inline-flex items-center">
+              <span className="h-3.5 w-3.5 mr-1 rounded-full bg-red-500" />
+              CHECK
+            </span>
+            <span className="text-muted-foreground">({getCheckCount()})</span>
+          </button>
+          {(selectedStatuses.length > 0 || isCheckFilterActive) && (
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              onClick={() => handleSelectStatus(null)}
-              title="Réinitialiser les filtres"
+              onClick={() => {
+                handleSelectStatus(null)
+                updateFilterForProperty("isCheck", null)
+              }}
+              title="Réinitialiser tous les filtres"
             >
               <X className="h-4 w-4" />
             </Button>

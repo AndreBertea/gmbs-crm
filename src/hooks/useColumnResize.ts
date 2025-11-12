@@ -27,7 +27,7 @@ export function useColumnResize(
     (event: PointerEvent) => {
       if (!activeColumn) return
       const delta = event.clientX - startX
-      const nextWidth = Math.max(40, startWidth + delta)
+      const nextWidth = Math.max(50, startWidth + delta)
       const draft: Record<string, number | undefined> = {
         ...columnWidths,
         [activeColumn]: nextWidth,
