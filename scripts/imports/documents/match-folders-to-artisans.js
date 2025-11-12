@@ -192,71 +192,68 @@ async function extractFoldersFromDrive(drive) {
   console.log('📁 Extraction des noms de dossiers depuis Google Drive...\n');
 
   try {
-    // 1. Trouver le dossier artisans
-    console.log('🔍 Recherche du dossier artisans...');
-    const rootFolderId = googleDriveConfig.getRootFolderId();
-    const artisansFolder = await findArtisansFolder(drive, rootFolderId);
-
-    if (!artisansFolder) {
-      console.error('❌ Dossier "artisans" non trouvé dans Google Drive');
+    // 1. Récupérer directement le dossier Artisans depuis la variable d'environnement
+    console.log('🔍 Recherche du dossier Artisans...');
+    const artisansRootFolderId = googleDriveConfig.getArtisansRootFolderId();
+    
+    if (!artisansRootFolderId) {
+      console.error('❌ GOOGLE_DRIVE_GMBS_ARTISANS_ROOT_FOLDER non défini dans les variables d\'environnement');
       console.log('\n💡 Suggestions:');
-      console.log('   - Vérifiez que le dossier "artisans" existe dans Google Drive');
-      console.log('   - Vérifiez que le Service Account a accès au dossier');
-      console.log('   - Spécifiez GOOGLE_DRIVE_ROOT_FOLDER_ID dans .env.local si le dossier a un nom différent');
-      throw new Error('Dossier artisans non trouvé');
+      console.log('   - Vérifiez que GOOGLE_DRIVE_GMBS_ARTISANS_ROOT_FOLDER est défini dans .env.local');
+      console.log('   - Cette variable doit pointer directement vers le dossier "Artisans"');
+      throw new Error('GOOGLE_DRIVE_GMBS_ARTISANS_ROOT_FOLDER non défini');
     }
 
-    console.log(`✅ Dossier racine trouvé: ${artisansFolder.name} (ID: ${artisansFolder.id})\n`);
-
-    // 2. Lister tous les dossiers dans le dossier racine
-    console.log('📂 Liste des dossiers dans le dossier racine...');
-    const rootFolders = await listArtisanFolders(drive, artisansFolder.id);
-    console.log(`✅ ${rootFolders.length} dossiers trouvés\n`);
-
-    // 3. Chercher le dossier "Artisans" dans les résultats
-    console.log('🔍 Recherche du dossier "Artisans"...');
-    const artisansSubFolder = rootFolders.find(f => 
-      normalizeName(f.name) === 'artisans' || f.name === 'Artisans'
-    );
-
-    let artisansSubFolders = [];
-    let artisansSubFolderData = [];
-
-    if (artisansSubFolder) {
-      console.log(`✅ Dossier "Artisans" trouvé: ${artisansSubFolder.name} (ID: ${artisansSubFolder.id})\n`);
+    // Vérifier que le dossier existe et récupérer ses infos
+    let artisansFolder;
+    try {
+      const response = await drive.files.get({
+        fileId: artisansRootFolderId,
+        fields: 'id, name, mimeType'
+      });
       
-      // 4. Lister les sous-dossiers dans "Artisans"
-      console.log('📂 Liste des sous-dossiers dans "Artisans"...');
-      artisansSubFolders = await listArtisanFolders(drive, artisansSubFolder.id);
-      console.log(`✅ ${artisansSubFolders.length} sous-dossiers trouvés dans "Artisans"\n`);
-
-      // 5. Extraire les informations pour chaque sous-dossier d'Artisans
-      console.log('📊 Extraction des informations des sous-dossiers d\'Artisans...');
-      
-      for (let i = 0; i < artisansSubFolders.length; i++) {
-        const folder = artisansSubFolders[i];
-        const documents = await countDocumentsInFolder(drive, folder.id);
-
-        artisansSubFolderData.push({
-          name: folder.name,
-          normalizedName: normalizeName(folder.name),
-          folderId: folder.id,
-          documentCount: documents.length,
-          createdTime: folder.createdTime,
-          modifiedTime: folder.modifiedTime
-        });
-
-        if ((i + 1) % 10 === 0) {
-          console.log(`  Traité ${i + 1}/${artisansSubFolders.length} sous-dossiers...`);
-        }
+      if (response.data.mimeType !== 'application/vnd.google-apps.folder') {
+        throw new Error('L\'ID fourni ne correspond pas à un dossier');
       }
       
-      console.log(`✅ Extraction des sous-dossiers d'Artisans terminée\n`);
-    } else {
-      console.log('⚠️ Dossier "Artisans" non trouvé dans les sous-dossiers\n');
+      artisansFolder = response.data;
+    } catch (error) {
+      console.error(`❌ Erreur lors de l'accès au dossier Artisans (ID: ${artisansRootFolderId}):`, error.message);
+      throw new Error('Impossible d\'accéder au dossier Artisans');
     }
 
-    // 6. Préparer les données pour export
+    console.log(`✅ Dossier Artisans trouvé: ${artisansFolder.name} (ID: ${artisansFolder.id})\n`);
+
+    // 2. Lister directement les sous-dossiers dans "Artisans" (plus besoin de chercher un sous-dossier)
+    console.log('📂 Liste des sous-dossiers dans "Artisans"...');
+    const artisansSubFolders = await listArtisanFolders(drive, artisansFolder.id);
+    console.log(`✅ ${artisansSubFolders.length} sous-dossiers trouvés dans "Artisans"\n`);
+
+    // 3. Extraire les informations pour chaque sous-dossier d'Artisans
+    console.log('📊 Extraction des informations des sous-dossiers d\'Artisans...');
+    const artisansSubFolderData = [];
+    
+    for (let i = 0; i < artisansSubFolders.length; i++) {
+      const folder = artisansSubFolders[i];
+      const documents = await countDocumentsInFolder(drive, folder.id);
+
+      artisansSubFolderData.push({
+        name: folder.name,
+        normalizedName: normalizeName(folder.name),
+        folderId: folder.id,
+        documentCount: documents.length,
+        createdTime: folder.createdTime,
+        modifiedTime: folder.modifiedTime
+      });
+
+      if ((i + 1) % 10 === 0) {
+        console.log(`  Traité ${i + 1}/${artisansSubFolders.length} sous-dossiers...`);
+      }
+    }
+    
+    console.log(`✅ Extraction des sous-dossiers d'Artisans terminée\n`);
+
+    // 4. Préparer les données pour export
     const exportData = {
       extractedAt: new Date().toISOString(),
       artisansFolder: {
@@ -274,7 +271,7 @@ async function extractFoldersFromDrive(drive) {
       subFoldersWithDetails: artisansSubFolderData // Version avec folderId pour récupération des documents
     };
 
-    // 7. Sauvegarder dans le fichier JSON
+    // 5. Sauvegarder dans le fichier JSON
     const outputDir = path.join(__dirname, '../../../data/docs_imports/');
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });

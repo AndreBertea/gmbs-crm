@@ -67,3 +67,4 @@ VALUES
 ON CONFLICT (user_id, period_type) DO NOTHING;
 
 
+

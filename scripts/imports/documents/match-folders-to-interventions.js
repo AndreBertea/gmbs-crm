@@ -218,39 +218,44 @@ async function extractFoldersFromDrive(drive) {
   console.log('📁 Extraction des dossiers d\'interventions depuis Google Drive...\n');
 
   try {
-    // 1. Trouver le dossier racine (GMBS)
-    console.log('🔍 Recherche du dossier racine (GMBS)...');
-    const rootFolderId = googleDriveConfig.getRootFolderId();
-    const rootFolder = await findRootFolder(drive, rootFolderId);
-
-    if (!rootFolder) {
-      console.error('❌ Dossier racine (GMBS) non trouvé dans Google Drive');
+    // 1. Récupérer directement le dossier Interventions depuis la variable d'environnement
+    console.log('🔍 Recherche du dossier Interventions...');
+    const interventionsRootFolderId = googleDriveConfig.getInterventionsRootFolderId();
+    
+    if (!interventionsRootFolderId) {
+      console.error('❌ GOOGLE_DRIVE_GMBS_INTERVENTIONS_YEAR_ROOT_FOLDER non défini dans les variables d\'environnement');
       console.log('\n💡 Suggestions:');
-      console.log('   - Vérifiez que le dossier GMBS existe dans Google Drive');
-      console.log('   - Vérifiez que le Service Account a accès au dossier');
-      console.log('   - Spécifiez GOOGLE_DRIVE_ROOT_FOLDER_ID dans .env.local');
-      throw new Error('Dossier racine non trouvé');
+      console.log('   - Vérifiez que GOOGLE_DRIVE_GMBS_INTERVENTIONS_YEAR_ROOT_FOLDER est défini dans .env.local');
+      console.log('   - Cette variable doit pointer directement vers le dossier "Interventions-2025-GMBS"');
+      throw new Error('GOOGLE_DRIVE_GMBS_INTERVENTIONS_YEAR_ROOT_FOLDER non défini');
     }
 
-    console.log(`✅ Dossier racine trouvé: ${rootFolder.name} (ID: ${rootFolder.id})\n`);
-
-    // 2. Trouver le dossier "Interventions 2025 GMBS"
-    console.log('🔍 Recherche du dossier "Interventions 2025 GMBS"...');
-    const interventionsFolder = await findInterventionsFolder(drive, rootFolder.id);
-
-    if (!interventionsFolder) {
-      console.error('❌ Dossier "Interventions 2025 GMBS" non trouvé dans le dossier racine');
-      throw new Error('Dossier interventions non trouvé');
+    // Vérifier que le dossier existe et récupérer ses infos
+    let interventionsFolder;
+    try {
+      const response = await drive.files.get({
+        fileId: interventionsRootFolderId,
+        fields: 'id, name, mimeType'
+      });
+      
+      if (response.data.mimeType !== 'application/vnd.google-apps.folder') {
+        throw new Error('L\'ID fourni ne correspond pas à un dossier');
+      }
+      
+      interventionsFolder = response.data;
+    } catch (error) {
+      console.error(`❌ Erreur lors de l'accès au dossier Interventions (ID: ${interventionsRootFolderId}):`, error.message);
+      throw new Error('Impossible d\'accéder au dossier Interventions');
     }
 
     console.log(`✅ Dossier trouvé: ${interventionsFolder.name} (ID: ${interventionsFolder.id})\n`);
 
-    // 3. Lister les dossiers de mois
+    // 2. Lister directement les dossiers de mois (plus besoin de chercher dans GMBS)
     console.log('📂 Liste des dossiers de mois...');
     const monthFolders = await listFolders(drive, interventionsFolder.id);
     console.log(`✅ ${monthFolders.length} dossier(s) de mois trouvé(s)\n`);
 
-    // 4. Pour chaque mois, lister les dossiers INTER
+    // 3. Pour chaque mois, lister les dossiers INTER
     const allInterventionFolders = [];
     const monthData = [];
 
@@ -313,7 +318,7 @@ async function extractFoldersFromDrive(drive) {
       console.log(`   ✅ ${parsedFolders.length} dossier(s) INTER traité(s) (${parsedFolders.filter(f => f.hasId).length} avec ID)\n`);
     }
 
-    // 5. Vérifier quels IDs existent en base de données
+    // 4. Vérifier quels IDs existent en base de données
     const foldersWithId = allInterventionFolders.filter(f => f.hasId && f.interventionId);
     const uniqueInterventionIds = [...new Set(foldersWithId.map(f => f.interventionId))];
     
@@ -393,7 +398,7 @@ async function extractFoldersFromDrive(drive) {
       matchingStats.foldersWithoutMatch = allInterventionFolders.length;
     }
 
-    // 6. Statistiques globales
+    // 5. Statistiques globales
     console.log('📊 Statistiques globales:');
     console.log(`   Total dossiers INTER: ${allInterventionFolders.length}`);
     console.log(`   Dossiers avec ID extrait: ${foldersWithId.length}`);
@@ -409,7 +414,7 @@ async function extractFoldersFromDrive(drive) {
       console.log('');
     }
 
-    // 7. Sauvegarder les données
+    // 6. Sauvegarder les données
     const outputDir = path.join(__dirname, '../../../data/docs_imports/');
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
@@ -417,10 +422,6 @@ async function extractFoldersFromDrive(drive) {
 
     const exportData = {
       extractedAt: new Date().toISOString(),
-      rootFolder: {
-        id: rootFolder.id,
-        name: rootFolder.name
-      },
       interventionsFolder: {
         id: interventionsFolder.id,
         name: interventionsFolder.name

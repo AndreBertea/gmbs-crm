@@ -13,6 +13,8 @@ class GoogleDriveConfig {
     this.credentials = null;
     this.rootFolderId = null;
     this.rootFolderPath = null;
+    this.artisansRootFolderId = null;
+    this.interventionsRootFolderId = null;
     this.loadConfig();
   }
 
@@ -48,6 +50,8 @@ class GoogleDriveConfig {
     this.credentials = null;
     this.rootFolderId = null;
     this.rootFolderPath = null;
+    this.artisansRootFolderId = null;
+    this.interventionsRootFolderId = null;
     this.loadConfig();
   }
 
@@ -63,6 +67,8 @@ class GoogleDriveConfig {
     // Configuration spécifique Drive
     const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
     const rootFolderPath = process.env.GOOGLE_DRIVE_ROOT_FOLDER_PATH || 'artisans';
+    const artisansRootFolderId = process.env.GOOGLE_DRIVE_GMBS_ARTISANS_ROOT_FOLDER;
+    const interventionsRootFolderId = process.env.GOOGLE_DRIVE_GMBS_INTERVENTIONS_YEAR_ROOT_FOLDER;
 
     // Priorité 1: Fichier de credentials
     if (credentialsPath && fs.existsSync(credentialsPath)) {
@@ -75,6 +81,12 @@ class GoogleDriveConfig {
         }
         if (rootFolderPath) {
           this.rootFolderPath = rootFolderPath;
+        }
+        if (artisansRootFolderId) {
+          this.artisansRootFolderId = artisansRootFolderId;
+        }
+        if (interventionsRootFolderId) {
+          this.interventionsRootFolderId = interventionsRootFolderId;
         }
         
         return true;
@@ -96,6 +108,12 @@ class GoogleDriveConfig {
       }
       if (rootFolderPath) {
         this.rootFolderPath = rootFolderPath;
+      }
+      if (artisansRootFolderId) {
+        this.artisansRootFolderId = artisansRootFolderId;
+      }
+      if (interventionsRootFolderId) {
+        this.interventionsRootFolderId = interventionsRootFolderId;
       }
       
       return true;
@@ -122,6 +140,8 @@ class GoogleDriveConfig {
       const privateKey = envVars.GOOGLE_SHEETS_PRIVATE_KEY || envVars.GOOGLE_DRIVE_PRIVATE_KEY;
       const rootFolderId = envVars.GOOGLE_DRIVE_ROOT_FOLDER_ID;
       const rootFolderPath = envVars.GOOGLE_DRIVE_ROOT_FOLDER_PATH || 'artisans';
+      const artisansRootFolderId = envVars.GOOGLE_DRIVE_GMBS_ARTISANS_ROOT_FOLDER;
+      const interventionsRootFolderId = envVars.GOOGLE_DRIVE_GMBS_INTERVENTIONS_YEAR_ROOT_FOLDER;
 
       if (clientEmail && privateKey) {
         this.credentials = {
@@ -135,6 +155,12 @@ class GoogleDriveConfig {
         }
         if (rootFolderPath) {
           this.rootFolderPath = rootFolderPath;
+        }
+        if (artisansRootFolderId) {
+          this.artisansRootFolderId = artisansRootFolderId;
+        }
+        if (interventionsRootFolderId) {
+          this.interventionsRootFolderId = interventionsRootFolderId;
         }
         
         return true;
@@ -208,6 +234,20 @@ class GoogleDriveConfig {
   }
 
   /**
+   * Retourne l'ID du dossier racine Artisans
+   */
+  getArtisansRootFolderId() {
+    return this.artisansRootFolderId;
+  }
+
+  /**
+   * Retourne l'ID du dossier racine Interventions
+   */
+  getInterventionsRootFolderId() {
+    return this.interventionsRootFolderId;
+  }
+
+  /**
    * Vérifie si la configuration est valide
    */
   isValid() {
@@ -223,6 +263,8 @@ class GoogleDriveConfig {
     console.log(`  Private Key: ${this.credentials?.private_key ? '✅ Définie' : '❌ Non définie'}`);
     console.log(`  Root Folder ID: ${this.rootFolderId || 'Non défini'}`);
     console.log(`  Root Folder Path: ${this.rootFolderPath || 'artisans'}`);
+    console.log(`  Artisans Root Folder ID: ${this.artisansRootFolderId || 'Non défini'}`);
+    console.log(`  Interventions Root Folder ID: ${this.interventionsRootFolderId || 'Non défini'}`);
     console.log(`  Configuration valide: ${this.isValid() ? '✅ Oui' : '❌ Non'}`);
   }
 }
