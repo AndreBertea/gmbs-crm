@@ -23,14 +23,29 @@ import { GestionnaireBadge } from "@/components/ui/gestionnaire-badge"
 import { useGestionnaires, type Gestionnaire } from "@/hooks/useGestionnaires"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import {
+  addDays,
+  eachMonthOfInterval,
+  eachWeekOfInterval,
+  endOfYear,
+  format,
+  getYear,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+} from "date-fns"
+import { fr } from "date-fns/locale"
 
 type PeriodType = "week" | "month" | "year"
 
 const STORAGE_KEY = "dashboard-period-type"
+const STORAGE_KEY_SELECTED = "dashboard-period-selected"
 
 export default function DashboardPage() {
   // Initialiser avec "month" par défaut pour éviter les erreurs d'hydratation
   const [periodType, setPeriodType] = useState<PeriodType>("month")
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("") // Format: "yyyy-MM" pour month, "yyyy-MM-dd" pour week, "yyyy" pour year
   const [isMounted, setIsMounted] = useState(false)
   const [totalInterventions, setTotalInterventions] = useState<number | null>(null)
   const [showTransition, setShowTransition] = useState(false)
@@ -81,6 +96,10 @@ export default function DashboardPage() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved === "week" || saved === "month" || saved === "year") {
       setPeriodType(saved as PeriodType)
+    }
+    const savedSelected = localStorage.getItem(STORAGE_KEY_SELECTED)
+    if (savedSelected) {
+      setSelectedPeriod(savedSelected)
     }
   }, [])
 
@@ -170,43 +189,154 @@ export default function DashboardPage() {
     }
   }, [periodType, isMounted])
 
+  // Sauvegarder la sélection spécifique
+  useEffect(() => {
+    if (isMounted && selectedPeriod) {
+      localStorage.setItem(STORAGE_KEY_SELECTED, selectedPeriod)
+    }
+  }, [selectedPeriod, isMounted])
+
+  // Générer les listes selon le type de période
+  const periodOptions = useMemo(() => {
+    const currentYear = getYear(new Date())
+    const years = [currentYear - 1, currentYear, currentYear + 1]
+
+    if (periodType === "month") {
+      const months: Date[] = []
+      years.forEach((year) => {
+        const start = startOfYear(new Date(year, 0, 1))
+        const end = endOfYear(new Date(year, 0, 1))
+        months.push(...eachMonthOfInterval({ start, end }))
+      })
+      return months.map((month) => ({
+        value: format(month, "yyyy-MM"),
+        label: format(month, "MMMM yyyy", { locale: fr }),
+        year: getYear(month),
+      }))
+    }
+
+    if (periodType === "week") {
+      const weeks: Date[] = []
+      years.forEach((year) => {
+        const start = startOfYear(new Date(year, 0, 1))
+        const end = endOfYear(new Date(year, 0, 1))
+        weeks.push(...eachWeekOfInterval({ start, end }, { weekStartsOn: 1 }))
+      })
+      // Dédupliquer les semaines qui peuvent se chevaucher entre années
+      const uniqueWeeks = new Map<string, Date>()
+      weeks.forEach((week) => {
+        const weekStart = startOfWeek(week, { weekStartsOn: 1 })
+        const key = format(weekStart, "yyyy-MM-dd")
+        if (!uniqueWeeks.has(key)) {
+          uniqueWeeks.set(key, weekStart)
+        }
+      })
+      return Array.from(uniqueWeeks.values())
+        .sort((a, b) => a.getTime() - b.getTime())
+        .map((weekStart) => {
+          const weekEnd = addDays(weekStart, 6)
+          return {
+            value: format(weekStart, "yyyy-MM-dd"),
+            label: `${format(weekStart, "d MMM", { locale: fr })} – ${format(weekEnd, "d MMM yyyy", { locale: fr })}`,
+            year: getYear(weekStart),
+          }
+        })
+    }
+
+    // Pour year
+    return years.map((year) => ({
+      value: year.toString(),
+      label: `Année ${year}`,
+      year,
+    }))
+  }, [periodType])
+
+  // Obtenir la valeur actuelle pour le Select
+  const getCurrentSelectValue = () => {
+    if (selectedPeriod) return selectedPeriod
+    
+    // Par défaut, utiliser la période courante
+    const now = new Date()
+    if (periodType === "month") {
+      return format(now, "yyyy-MM")
+    }
+    if (periodType === "week") {
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 })
+      return format(weekStart, "yyyy-MM-dd")
+    }
+    return getYear(now).toString()
+  }
+
+  // Gérer le changement de sélection
+  const handlePeriodSelect = (value: string) => {
+    setSelectedPeriod(value)
+  }
+
+  // Réinitialiser la sélection quand on change de type
+  useEffect(() => {
+    setSelectedPeriod("")
+  }, [periodType])
+
   // Calculer les dates selon la période sélectionnée
   const period = useMemo(() => {
-    const now = new Date()
     let startDate: Date
     let endDate: Date
 
-    if (periodType === "week") {
-      // Semaine en cours (lundi à vendredi)
-      const day = now.getDay()
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1)
-      startDate = new Date(now.getFullYear(), now.getMonth(), diff)
-      startDate.setHours(0, 0, 0, 0)
-      
-      endDate = new Date(startDate)
-      endDate.setDate(startDate.getDate() + 4) // Vendredi
-      endDate.setHours(23, 59, 59, 999)
-    } else if (periodType === "month") {
-      // Mois en cours
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-      startDate.setHours(0, 0, 0, 0)
-      
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+    if (selectedPeriod) {
+      // Utiliser la période sélectionnée
+      if (periodType === "month") {
+        const [year, month] = selectedPeriod.split("-").map(Number)
+        startDate = new Date(year, month - 1, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(year, month, 0, 23, 59, 59, 999)
+      } else if (periodType === "week") {
+        const selectedDate = parseISO(selectedPeriod)
+        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 })
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(startDate)
+        endDate.setDate(startDate.getDate() + 4) // Vendredi
+        endDate.setHours(23, 59, 59, 999)
+      } else {
+        const year = parseInt(selectedPeriod)
+        startDate = new Date(year, 0, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(year, 11, 31, 23, 59, 59, 999)
+      }
     } else {
-      // Année en cours
-      startDate = new Date(now.getFullYear(), 0, 1)
-      startDate.setHours(0, 0, 0, 0)
-      
-      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+      // Comportement par défaut (période courante)
+      const now = new Date()
+      if (periodType === "week") {
+        const day = now.getDay()
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1)
+        startDate = new Date(now.getFullYear(), now.getMonth(), diff)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(startDate)
+        endDate.setDate(startDate.getDate() + 4)
+        endDate.setHours(23, 59, 59, 999)
+      } else if (periodType === "month") {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+      } else {
+        startDate = new Date(now.getFullYear(), 0, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+      }
     }
 
     return {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
     }
-  }, [periodType])
+  }, [periodType, selectedPeriod])
 
   const periodLabel = useMemo(() => {
+    if (selectedPeriod) {
+      const option = periodOptions.find((opt) => opt.value === selectedPeriod)
+      if (option) return option.label
+    }
+
+    // Comportement par défaut
     const now = new Date()
     if (periodType === "week") {
       const day = now.getDay()
@@ -221,7 +351,7 @@ export default function DashboardPage() {
     } else {
       return `Année ${now.getFullYear()}`
     }
-  }, [periodType])
+  }, [periodType, selectedPeriod, periodOptions])
 
   // Charger le nombre total d'interventions pour la période
   useEffect(() => {
@@ -299,17 +429,93 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{periodLabel}</span>
-              <span className="text-foreground font-medium">
-                {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-              </span>
-              {totalInterventions !== null && (
-                <span className="text-foreground font-medium">
-                  {totalInterventions} intervention{totalInterventions > 1 ? "s" : ""}
-                </span>
+            
+            {/* Deuxième filtre adaptatif */}
+            <div className="flex items-center gap-2">
+              {isMounted ? (
+                <Select
+                  value={getCurrentSelectValue()}
+                  onValueChange={handlePeriodSelect}
+                >
+                  <SelectTrigger className={cn(
+                    periodType === "week" && "w-[220px]",
+                    periodType === "month" && "w-[180px]",
+                    periodType === "year" && "w-[150px]"
+                  )}>
+                    <SelectValue>
+                      {periodOptions.find((opt) => opt.value === getCurrentSelectValue())?.label || "Sélectionner"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {(() => {
+                      const currentYear = getYear(new Date())
+                      const years = [currentYear - 1, currentYear, currentYear + 1]
+                      
+                      if (periodType === "month") {
+                        return years.map((year) => {
+                          const yearMonths = periodOptions.filter((opt) => opt.year === year)
+                          if (yearMonths.length === 0) return null
+                          return (
+                            <div key={year}>
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground sticky top-0 bg-popover">
+                                {year}
+                              </div>
+                              {yearMonths.map((month) => (
+                                <SelectItem key={month.value} value={month.value}>
+                                  {month.label}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          )
+                        })
+                      }
+                      
+                      if (periodType === "week") {
+                        return years.map((year) => {
+                          const yearWeeks = periodOptions.filter((opt) => opt.year === year)
+                          if (yearWeeks.length === 0) return null
+                          return (
+                            <div key={year}>
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground sticky top-0 bg-popover">
+                                {year}
+                              </div>
+                              {yearWeeks.map((week) => (
+                                <SelectItem key={week.value} value={week.value}>
+                                  {week.label}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          )
+                        })
+                      }
+                      
+                      // Pour year
+                      return periodOptions.map((year) => (
+                        <SelectItem key={year.value} value={year.value}>
+                          {year.label}
+                        </SelectItem>
+                      ))
+                    })()}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="w-[180px] h-10 rounded-md border bg-background flex items-center px-3">
+                  <span className="text-sm text-muted-foreground">Chargement...</span>
+                </div>
               )}
             </div>
+          </div>
+          
+          {/* Partie centrale : Dates et nombre d'interventions */}
+          <div className="flex items-center gap-4 text-sm flex-1 justify-center">
+            <span className="text-foreground font-medium">
+              {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+            </span>
+            {totalInterventions !== null && (
+              <span className="text-foreground font-medium">
+                {totalInterventions} intervention{totalInterventions > 1 ? "s" : ""}
+              </span>
+            )}
           </div>
           
           {/* Partie droite : AvatarGroup des gestionnaires */}
