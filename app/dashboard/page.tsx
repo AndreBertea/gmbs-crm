@@ -23,6 +23,8 @@ import { GestionnaireBadge } from "@/components/ui/gestionnaire-badge"
 import { useGestionnaires, type Gestionnaire } from "@/hooks/useGestionnaires"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
+import { AppleBienvenueEffect } from "@/components/ui/shadcn-io/apple-hello-effect"
 import {
   addDays,
   eachMonthOfInterval,
@@ -506,8 +508,59 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          {/* Partie centrale : Dates et nombre d'interventions */}
+          {/* Partie centrale : Badge gestionnaire sélectionné + Dates et nombre d'interventions */}
           <div className="flex items-center gap-4 text-sm flex-1 justify-center">
+            {/* Effet "Bienvenue" seulement pour l'utilisateur connecté */}
+            {currentUser?.id && selectedGestionnaireId === currentUser.id && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="flex items-center mr-2"
+              >
+                <AppleBienvenueEffect speed={0.2} className="text-black h-8" />
+              </motion.div>
+            )}
+            
+            {/* Badge du gestionnaire sélectionné au centre */}
+            {selectedGestionnaireId && (() => {
+              const selectedGestionnaire = gestionnaires.find(g => g.id === selectedGestionnaireId)
+              if (!selectedGestionnaire) return null
+              const displayName = getDisplayName(selectedGestionnaire)
+              
+              return (
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    key={selectedGestionnaireId}
+                    layoutId={`gestionnaire-badge-${selectedGestionnaireId}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{ width: "2.25rem", height: "2.25rem" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  >
+                    <GestionnaireBadge
+                      firstname={selectedGestionnaire.firstname}
+                      lastname={selectedGestionnaire.lastname}
+                      prenom={selectedGestionnaire.prenom}
+                      name={selectedGestionnaire.name}
+                      color={selectedGestionnaire.color}
+                      size="md"
+                      className="ring-2 ring-primary ring-offset-2"
+                    />
+                  </motion.div>
+                  <motion.div 
+                    className="flex flex-col"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <span className="text-sm font-medium text-foreground">{displayName}</span>
+                  </motion.div>
+                </div>
+              )
+            })()}
+            
             <span className="text-foreground font-medium">
               {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
             </span>
@@ -532,37 +585,48 @@ export default function DashboardPage() {
                   const displayName = getDisplayName(gestionnaire)
                   
                   return (
-                    <GestionnaireBadge
+                    <motion.div
                       key={gestionnaire.id}
-                      firstname={gestionnaire.firstname}
-                      lastname={gestionnaire.lastname}
-                      prenom={gestionnaire.prenom}
-                      name={gestionnaire.name}
-                      color={gestionnaire.color}
-                      size="md"
-                      className={cn(
-                        "transition-all",
-                        isSelected && "ring-2 ring-primary ring-offset-2 scale-110",
-                        isCurrentUser && !isSelected && "ring-2 ring-green-500/50"
-                      )}
-                      onClick={() => setSelectedGestionnaireId(gestionnaire.id)}
+                      layoutId={`gestionnaire-badge-${gestionnaire.id}`}
+                      initial={false}
+                      animate={{
+                        opacity: isSelected ? 0 : 1,
+                        scale: isSelected ? 0.8 : 1,
+                      }}
+                      style={{ width: "2.25rem", height: "2.25rem" }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     >
-                      <AvatarGroupTooltip>
-                        <div className="flex flex-col gap-1">
-                          <p className="font-semibold">{displayName}</p>
-                          {isCurrentUser && (
-                            <Badge variant="secondary" className="w-fit text-xs">
-                              Vous
-                            </Badge>
-                          )}
-                          {gestionnaire.code_gestionnaire && (
-                            <p className="text-xs text-muted-foreground">
-                              {gestionnaire.code_gestionnaire}
-                            </p>
-                          )}
-                        </div>
-                      </AvatarGroupTooltip>
-                    </GestionnaireBadge>
+                      <GestionnaireBadge
+                        firstname={gestionnaire.firstname}
+                        lastname={gestionnaire.lastname}
+                        prenom={gestionnaire.prenom}
+                        name={gestionnaire.name}
+                        color={gestionnaire.color}
+                        size="md"
+                        className={cn(
+                          "transition-all",
+                          isSelected && "pointer-events-none",
+                          isCurrentUser && !isSelected && "ring-2 ring-green-500/50"
+                        )}
+                        onClick={() => setSelectedGestionnaireId(gestionnaire.id)}
+                      >
+                        <AvatarGroupTooltip>
+                          <div className="flex flex-col gap-1">
+                            <p className="font-semibold">{displayName}</p>
+                            {isCurrentUser && (
+                              <Badge variant="secondary" className="w-fit text-xs">
+                                Vous
+                              </Badge>
+                            )}
+                            {gestionnaire.code_gestionnaire && (
+                              <p className="text-xs text-muted-foreground">
+                                {gestionnaire.code_gestionnaire}
+                              </p>
+                            )}
+                          </div>
+                        </AvatarGroupTooltip>
+                      </GestionnaireBadge>
+                    </motion.div>
                   )
                 })}
               </AvatarGroup>

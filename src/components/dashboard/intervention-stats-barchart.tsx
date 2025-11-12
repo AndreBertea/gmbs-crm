@@ -257,13 +257,23 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     }
   }, [userId, isLoadingUser, period?.startDate, period?.endDate])
 
+  // Créer une version stable de la liste des statuts pour éviter les boucles infinies
+  // Utiliser une sérialisation JSON pour comparer le contenu plutôt que la référence
+  const statsByStatusLabelKey = useMemo(() => {
+    if (!stats?.by_status_label) return null
+    return JSON.stringify(stats.by_status_label)
+  }, [stats?.by_status_label])
+
+
+  // Statuts fondamentaux à afficher
+  const fundamentalStatuses = useMemo(() => ["Demandé", "Inter en cours", "Visite technique", "Accepté", "Check"], [])
 
   // Fonction helper pour obtenir la couleur d'un statut
   // Priorité : 1) DB (source de vérité), 2) INTERVENTION_STATUS, 3) Fallback
-  const getStatusColor = (statusLabel: string): string => {
+  // Mémorisée pour éviter les recalculs constants
+  const getStatusColor = useCallback((statusLabel: string): string => {
     // Cas spécial pour "Check" qui n'est pas dans INTERVENTION_STATUS
     if (statusLabel === "Check") {
-      console.log(`[Dashboard Colors] "Check" → #EF4444 (statut spécial)`)
       return "#EF4444" // Rouge pour Check
     }
 
@@ -271,7 +281,6 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     // Le hook useInterventionStatuses stocke les labels en minuscule dans statusesByLabel
     const dbStatusByLabel = statusesByLabel.get(statusLabel.toLowerCase())
     if (dbStatusByLabel?.color) {
-      console.log(`[Dashboard Colors] "${statusLabel}" → DB (${dbStatusByLabel.code}) → ${dbStatusByLabel.color}`)
       return dbStatusByLabel.color
     }
 
@@ -293,7 +302,6 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     if (mappedCode) {
       const dbStatusByCode = statusesByCode.get(mappedCode)
       if (dbStatusByCode?.color) {
-        console.log(`[Dashboard Colors] "${statusLabel}" → DB (${mappedCode}) → ${dbStatusByCode.color}`)
         return dbStatusByCode.color
       }
     }
@@ -305,79 +313,76 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     )
     
     if (statusConfig?.hexColor) {
-      console.warn(`[Dashboard Colors] "${statusLabel}" → INTERVENTION_STATUS (${statusConfig.value}) → ${statusConfig.hexColor} (fallback, pas en DB)`)
       return statusConfig.hexColor
     }
 
     // 4. Dernier fallback
-    const fallbackColor = getInterventionStatusColor(statusLabel) || "#6366F1"
-    console.warn(`[Dashboard Colors] "${statusLabel}" → FALLBACK → ${fallbackColor}`)
-    return fallbackColor
-  }
-
-  // Statuts fondamentaux à afficher
-  const fundamentalStatuses = ["Demandé", "Inter en cours", "Visite technique", "Accepté", "Check"]
+    return getInterventionStatusColor(statusLabel) || "#6366F1"
+  }, [statusesByLabel, statusesByCode])
 
   // Créer le chartConfig avec les couleurs pour chaque statut possible
-  const chartConfig: ChartConfig = {
-    value: {
-      label: "Valeur",
-      color: "hsl(var(--chart-1))",
-    },
-  }
-
-  // Ajouter une entrée pour chaque statut possible dans le config (pour les tooltips)
-  fundamentalStatuses.forEach((status) => {
-    chartConfig[status] = {
-      label: status,
-      color: getStatusColor(status),
+  // Mémorisé pour éviter les recalculs constants
+  const chartConfig: ChartConfig = useMemo(() => {
+    const config: ChartConfig = {
+      value: {
+        label: "Valeur",
+        color: "hsl(var(--chart-1))",
+      },
     }
-  })
-  chartConfig["Check"] = {
-    label: "Check",
-    color: getStatusColor("Check"),
-  }
+
+    // Ajouter une entrée pour chaque statut possible dans le config (pour les tooltips)
+    fundamentalStatuses.forEach((status) => {
+      config[status] = {
+        label: status,
+        color: getStatusColor(status),
+      }
+    })
+    config["Check"] = {
+      label: "Check",
+      color: getStatusColor("Check"),
+    }
+
+    return config
+  }, [fundamentalStatuses, getStatusColor])
 
   // Préparer les données pour le graphique (uniquement les statuts fondamentaux)
-  const chartData = stats?.by_status_label
-    ? Object.entries(stats.by_status_label)
-        .map(([label, count]) => {
-          const color = getStatusColor(label)
-          return {
-            name: label,
-            value: count,
-            isCheck: false,
-            color: color, // Ajouter la couleur directement dans les données
-          }
-        })
-        .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
-        .map((item) => {
-          // Log pour déboguer les couleurs
-          console.log(`[Dashboard Chart] Statut: "${item.name}", Count: ${item.value}, Color: ${item.color}`)
-          return item
-        })
-        .sort((a, b) => {
-          // Trier selon l'ordre des statuts fondamentaux
-          const indexA = fundamentalStatuses.indexOf(a.name)
-          const indexB = fundamentalStatuses.indexOf(b.name)
-          if (indexA === -1) return 1
-          if (indexB === -1) return -1
-          return indexA - indexB
-        })
-        .concat(
-          // Ajouter la barre "Check" si elle existe
-          stats.interventions_a_checker && stats.interventions_a_checker > 0
-            ? [
-                {
-                  name: "Check",
-                  value: stats.interventions_a_checker,
-                  isCheck: true,
-                  color: "#EF4444", // Rouge pour Check
-                },
-              ]
-            : []
-        )
-    : []
+  // Mémorisé pour éviter les recalculs constants qui causent la boucle infinie
+  const chartData = useMemo(() => {
+    if (!stats?.by_status_label) return []
+
+    return Object.entries(stats.by_status_label)
+      .map(([label, count]) => {
+        const color = getStatusColor(label)
+        return {
+          name: label,
+          value: count,
+          isCheck: false,
+          color: color, // Ajouter la couleur directement dans les données
+        }
+      })
+      .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
+      .sort((a, b) => {
+        // Trier selon l'ordre des statuts fondamentaux
+        const indexA = fundamentalStatuses.indexOf(a.name)
+        const indexB = fundamentalStatuses.indexOf(b.name)
+        if (indexA === -1) return 1
+        if (indexB === -1) return -1
+        return indexA - indexB
+      })
+      .concat(
+        // Ajouter la barre "Check" si elle existe
+        stats.interventions_a_checker && stats.interventions_a_checker > 0
+          ? [
+              {
+                name: "Check",
+                value: stats.interventions_a_checker,
+                isCheck: true,
+                color: "#EF4444", // Rouge pour Check
+              },
+            ]
+          : []
+      )
+  }, [stats?.by_status_label, stats?.interventions_a_checker, fundamentalStatuses, getStatusColor])
 
   // Tous les hooks doivent être appelés AVANT les retours conditionnels
   // Fonction pour assombrir une couleur hex - mémorisée avec useCallback
@@ -412,7 +417,7 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
         />
       )
     })
-  }, [chartData, hoveredBarIndex, adjustColor])
+  }, [chartData, hoveredBarIndex, adjustColor, getStatusColor])
 
   // Mémoriser les handlers pour éviter les recréations
   const handleBarMouseEnter = useCallback((data: any, index: number) => {
@@ -477,48 +482,51 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
 
   // Précharger les données des interventions pour tous les statuts visibles
   // Cela garantit un affichage instantané au survol
+  // Utiliser des dépendances stables pour éviter les boucles infinies
   useEffect(() => {
-    if (!userId || !stats || chartData.length === 0) return
+    if (!userId || !stats?.by_status_label || !period?.startDate || !period?.endDate) return
 
     const preloadInterventions = async () => {
-      const startDate = period?.startDate
-      const endDate = period?.endDate
+      const startDate = period.startDate
+      const endDate = period.endDate
 
       // Précharger les données pour chaque statut visible en parallèle
-      const preloadPromises = chartData
-        .filter((item) => !item.isCheck && item.value > 0)
-        .map(async (item) => {
-          const statusLabel = item.name
-          const cacheKey = `${statusLabel}-${startDate || ''}-${endDate || ''}`
-          
-          // Vérifier si déjà en cache
-          const cachedEntry = interventionsCacheRef.current.get(cacheKey)
-          const isCacheValid = cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_DURATION)
-          
-          if (isCacheValid) {
-            return // Déjà en cache, pas besoin de recharger
-          }
+      // Utiliser directement stats.by_status_label au lieu de chartData pour éviter les dépendances circulaires
+      const statusLabels = Object.entries(stats.by_status_label)
+        .filter(([label, count]) => count > 0 && fundamentalStatuses.includes(label))
+        .map(([label]) => label)
 
-          try {
-            // Précharger en arrière-plan sans bloquer
-            const data = await interventionsApi.getRecentInterventionsByStatusAndUser(
-              userId,
-              statusLabel,
-              5,
-              startDate,
-              endDate
-            )
-            
-            // Mettre en cache
-            interventionsCacheRef.current.set(cacheKey, {
-              data,
-              timestamp: Date.now()
-            })
-          } catch (err) {
-            // Ignorer les erreurs de préchargement silencieusement
-            console.warn(`[Dashboard] Erreur préchargement ${statusLabel}:`, err)
-          }
-        })
+      const preloadPromises = statusLabels.map(async (statusLabel) => {
+        const cacheKey = `${statusLabel}-${startDate}-${endDate}`
+        
+        // Vérifier si déjà en cache
+        const cachedEntry = interventionsCacheRef.current.get(cacheKey)
+        const isCacheValid = cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_DURATION)
+        
+        if (isCacheValid) {
+          return // Déjà en cache, pas besoin de recharger
+        }
+
+        try {
+          // Précharger en arrière-plan sans bloquer
+          const data = await interventionsApi.getRecentInterventionsByStatusAndUser(
+            userId,
+            statusLabel,
+            5,
+            startDate,
+            endDate
+          )
+          
+          // Mettre en cache
+          interventionsCacheRef.current.set(cacheKey, {
+            data,
+            timestamp: Date.now()
+          })
+        } catch (err) {
+          // Ignorer les erreurs de préchargement silencieusement
+          console.warn(`[Dashboard] Erreur préchargement ${statusLabel}:`, err)
+        }
+      })
 
       // Lancer tous les préchargements en parallèle sans attendre
       Promise.all(preloadPromises).catch(() => {
@@ -527,7 +535,7 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     }
 
     preloadInterventions()
-  }, [userId, stats, chartData, period?.startDate, period?.endDate])
+  }, [userId, statsByStatusLabelKey, period?.startDate, period?.endDate, fundamentalStatuses])
 
   if (loading) {
     return (
