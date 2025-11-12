@@ -3458,9 +3458,9 @@ export const DOCUMENT_TYPES = {
   intervention: [
     "devis",
     "photos",
-    "facture_gmbs",
-    "facture_artisan",
-    "facture_materiel",
+    "facturesGMBS",
+    "facturesArtisans",
+    "facturesMateriel",
     "rapport_intervention",
     "plan",
     "schema",

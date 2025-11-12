@@ -118,6 +118,68 @@ interface CreatePaymentRequest {
 const TERMINATED_INTERVENTION_CODES = ['TERMINE', 'INTER_TERMINEE'];
 const ARTISAN_LEVEL_CODES = ['NOVICE', 'FORMATION', 'CONFIRME', 'EXPERT'];
 const REQUIRED_DOCUMENT_KINDS = ['kbis', 'assurance', 'cni_recto_verso', 'iban', 'decharge_partenariat'];
+const INTERVENTION_ATTACHMENT_KINDS = [
+  'devis',
+  'photos',
+  'facturesGMBS',
+  'facturesArtisans',
+  'facturesMateriel',
+  'autre',
+  'a_classe',
+];
+
+function normalizeInterventionAttachmentKind(kind: string): string {
+  if (!kind) return kind;
+
+  const trimmed = kind.trim();
+  if (!trimmed) return kind;
+
+  const lower = trimmed.toLowerCase();
+  const compact = lower.replace(/[_\s-]/g, '');
+
+  const needsClassification = new Set([
+    'aclasser',
+    'aclassifier',
+    'àclasser',
+    'àclassifier',
+    'aclasse',
+    'àclasse',
+  ]);
+  if (
+    needsClassification.has(compact) ||
+    lower === 'a classer' ||
+    lower === 'a classifier' ||
+    lower === 'à classer' ||
+    lower === 'à classifier'
+  ) {
+    return 'a_classe';
+  }
+
+  const canonicalMap: Record<string, string> = {
+    facturegmbs: 'facturesGMBS',
+    facturesgmbs: 'facturesGMBS',
+    factureartisan: 'facturesArtisans',
+    facturesartisan: 'facturesArtisans',
+    facturemateriel: 'facturesMateriel',
+    facturesmateriel: 'facturesMateriel',
+  };
+  if (canonicalMap[compact]) {
+    return canonicalMap[compact];
+  }
+
+  const legacyToAutre = new Set([
+    'rapportintervention',
+    'plan',
+    'schema',
+    'intervention',
+    'cout',
+  ]);
+  if (legacyToAutre.has(compact)) {
+    return 'autre';
+  }
+
+  return trimmed;
+}
 
 /**
  * Calcule le statut de dossier d'un artisan basé sur ses documents
@@ -1482,11 +1544,21 @@ serve(async (req: Request) => {
         );
       }
 
+      const canonicalKind = normalizeInterventionAttachmentKind(body.kind);
+      if (!INTERVENTION_ATTACHMENT_KINDS.includes(canonicalKind)) {
+        return new Response(
+          JSON.stringify({
+            error: `Invalid attachment kind. Allowed: ${INTERVENTION_ATTACHMENT_KINDS.join(', ')}`
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const { data, error } = await supabase
         .from('intervention_attachments')
         .insert([{
           intervention_id: resourceId,
-          kind: body.kind,
+          kind: canonicalKind,
           url: body.url,
           filename: body.filename,
           mime_type: body.mime_type,

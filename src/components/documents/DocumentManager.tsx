@@ -106,6 +106,29 @@ const INVOICE_KINDS = new Set([
   "facturesArtisans",
   "facturesMateriel",
 ]);
+const CANONICAL_KIND_MAP: Record<string, string> = {
+  facturegmbs: "facturesGMBS",
+  facturesgmbs: "facturesGMBS",
+  factureartisan: "facturesArtisans",
+  facturesartisan: "facturesArtisans",
+  facturemateriel: "facturesMateriel",
+  facturesmateriel: "facturesMateriel",
+};
+const NEEDS_CLASSIFICATION_KINDS = new Set([
+  "aclasser",
+  "aclassifier",
+  "àclasser",
+  "àclassifier",
+  "aclasse",
+  "àclasse",
+]);
+const LEGACY_AUTRE_KINDS = new Set([
+  "rapportintervention",
+  "plan",
+  "schema",
+  "intervention",
+  "cout",
+]);
 
 type PreviewSize = {
   width: number;
@@ -119,23 +142,29 @@ const MIN_PREVIEW_HEIGHT = 320;
 function normalizeKind(rawKind: string): string {
   if (!rawKind) return rawKind;
   const trimmed = rawKind.trim();
-  const compact = trimmed.toLowerCase().replace(/[_\s-]/g, "");
+  if (!trimmed) return rawKind;
 
-  // Mapping vers les valeurs canoniques avec 's' (comme dans la DB)
-  const canonicalMap: Record<string, string> = {
-    facturegmbs: 'facturesGMBS',
-    facturesgmbs: 'facturesGMBS',
-    factureartisan: 'facturesArtisans',
-    facturesartisan: 'facturesArtisans',
-    facturemateriel: 'facturesMateriel',
-    facturesmateriel: 'facturesMateriel'
-  };
-  
-  if (canonicalMap[compact]) {
-    return canonicalMap[compact];
+  const lower = trimmed.toLowerCase();
+  const compact = lower.replace(/[_\s-]/g, "");
+
+  if (
+    NEEDS_CLASSIFICATION_KINDS.has(compact) ||
+    lower === "a classer" ||
+    lower === "a classifier" ||
+    lower === "à classer" ||
+    lower === "à classifier"
+  ) {
+    return "a_classe";
   }
-  
-  // Pour les autres kinds, retourner la valeur originale (trimmed)
+
+  if (CANONICAL_KIND_MAP[compact]) {
+    return CANONICAL_KIND_MAP[compact];
+  }
+
+  if (LEGACY_AUTRE_KINDS.has(compact)) {
+    return "autre";
+  }
+
   return trimmed;
 }
 
