@@ -23,7 +23,7 @@ export default function NewInterventionPage() {
 
     document.addEventListener("keydown", handleEscape)
     return () => document.removeEventListener("keydown", handleEscape)
-  }, [])
+  }, [handleClose])
 
   return (
     <TooltipProvider>

@@ -606,8 +606,9 @@ export const usersApi = {
   
   /**
    * Récupère les préférences utilisateur
-   * @param userId - ID de l'utilisateur
-   * @returns Les préférences ou null si non définies
+   * Utilise une route API pour contourner les politiques RLS en production
+   * @param userId - ID de l'utilisateur (non utilisé côté serveur, mais conservé pour compatibilité)
+   * @returns Les préférences ou les valeurs par défaut si non définies
    */
   async getUserPreferences(userId: string): Promise<{
     speedometer_margin_average_show_percentage: boolean
@@ -617,29 +618,56 @@ export const usersApi = {
       throw new Error("userId is required");
     }
 
-    const { data, error } = await supabase
-      .from("user_preferences")
-      .select("speedometer_margin_average_show_percentage, speedometer_margin_total_show_percentage")
-      .eq("user_id", userId)
-      .single();
+    try {
+      // Utiliser la route API qui utilise le service role key pour contourner les politiques RLS
+      const response = await fetch('/api/user-preferences', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Inclure les cookies pour l'authentification
+      });
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        // Aucun résultat trouvé, retourner les valeurs par défaut
+      if (!response.ok) {
+        // Si 404 ou autre erreur, retourner les valeurs par défaut
+        if (response.status === 404) {
+          return {
+            speedometer_margin_average_show_percentage: true,
+            speedometer_margin_total_show_percentage: true,
+          };
+        }
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+        throw new Error(errorData.error || `Erreur HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Si aucune donnée, retourner les valeurs par défaut
+      if (!result.data) {
         return {
           speedometer_margin_average_show_percentage: true,
           speedometer_margin_total_show_percentage: true,
         };
       }
-      throw new Error(`Erreur lors de la récupération des préférences: ${error.message}`);
-    }
 
-    return data;
+      return {
+        speedometer_margin_average_show_percentage: result.data.speedometer_margin_average_show_percentage ?? true,
+        speedometer_margin_total_show_percentage: result.data.speedometer_margin_total_show_percentage ?? true,
+      };
+    } catch (error: any) {
+      // Si l'erreur est déjà une Error avec un message, la relancer
+      if (error instanceof Error) {
+        throw error;
+      }
+      // Sinon, créer une nouvelle erreur
+      throw new Error(`Erreur lors de la récupération des préférences: ${error?.message || 'Erreur inconnue'}`);
+    }
   },
 
   /**
    * Met à jour les préférences utilisateur
-   * @param userId - ID de l'utilisateur
+   * Utilise une route API pour contourner les politiques RLS en production
+   * @param userId - ID de l'utilisateur (non utilisé côté serveur, mais conservé pour compatibilité)
    * @param preferences - Les préférences à mettre à jour
    */
   async updateUserPreferences(
@@ -653,40 +681,28 @@ export const usersApi = {
       throw new Error("userId is required");
     }
 
-    // Vérifier si les préférences existent déjà
-    const { data: existing, error: findError } = await supabase
-      .from("user_preferences")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
+    try {
+      // Utiliser la route API qui utilise le service role key pour contourner les politiques RLS
+      const response = await fetch('/api/user-preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Inclure les cookies pour l'authentification
+        body: JSON.stringify(preferences),
+      });
 
-    if (findError && findError.code !== 'PGRST116') {
-      throw new Error(`Erreur lors de la recherche des préférences: ${findError.message}`);
-    }
-
-    if (existing) {
-      // Mise à jour
-      const { error } = await supabase
-        .from("user_preferences")
-        .update(preferences)
-        .eq("user_id", userId);
-
-      if (error) {
-        throw new Error(`Erreur lors de la mise à jour des préférences: ${error.message}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+        throw new Error(errorData.error || `Erreur HTTP ${response.status}`);
       }
-    } else {
-      // Insertion
-      const { error } = await supabase
-        .from("user_preferences")
-        .insert({
-          user_id: userId,
-          speedometer_margin_average_show_percentage: preferences.speedometer_margin_average_show_percentage ?? true,
-          speedometer_margin_total_show_percentage: preferences.speedometer_margin_total_show_percentage ?? true,
-        });
-
-      if (error) {
-        throw new Error(`Erreur lors de la création des préférences: ${error.message}`);
+    } catch (error: any) {
+      // Si l'erreur est déjà une Error avec un message, la relancer
+      if (error instanceof Error) {
+        throw error;
       }
+      // Sinon, créer une nouvelle erreur
+      throw new Error(`Erreur lors de la mise à jour des préférences: ${error?.message || 'Erreur inconnue'}`);
     }
   },
 };

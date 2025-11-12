@@ -14,6 +14,7 @@ import { SimpleOptimizedProvider } from "@/contexts/SimpleOptimizedContext"
 import { InterfaceProvider } from "@/contexts/interface-context"
 import { UserStatusProvider } from "@/contexts/user-status-context"
 import { RemindersProvider } from "@/contexts/RemindersContext"
+import { AuthGuard } from "@/components/layout/auth-guard"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { cookies } from "next/headers"
@@ -219,21 +220,23 @@ export default async function RootLayout({
                   <InterfaceProvider>
                     <RemindersProvider>
                       <ThemeWrapper>
-                        <SidebarProvider>
-                          <div className="flex min-h-screen w-full overflow-hidden flex-col">
-                            <TopbarGate />
-                            <ConditionalPadding>
-                              <SidebarGate isAuthed={isAuthed} />
-                              <main id="main" className="flex flex-1 min-h-[calc(100vh-4rem)] flex-col overflow-hidden">
-                                <GlobalShortcuts />
-                                <GlobalModalHost />
-                                <div className="flex-1 overflow-auto">
-                                  {children}
-                                </div>
-                              </main>
-                            </ConditionalPadding>
-                          </div>
-                        </SidebarProvider>
+                        <AuthGuard>
+                          <SidebarProvider>
+                            <div className="flex min-h-screen w-full overflow-hidden flex-col">
+                              <TopbarGate />
+                              <ConditionalPadding>
+                                <SidebarGate isAuthed={isAuthed} />
+                                <main id="main" className="flex flex-1 min-h-[calc(100vh-4rem)] flex-col overflow-hidden">
+                                  <GlobalShortcuts />
+                                  <GlobalModalHost />
+                                  <div className="flex-1 overflow-auto">
+                                    {children}
+                                  </div>
+                                </main>
+                              </ConditionalPadding>
+                            </div>
+                          </SidebarProvider>
+                        </AuthGuard>
                       </ThemeWrapper>
                     </RemindersProvider>
                   </InterfaceProvider>

@@ -717,6 +717,8 @@ export function CommentSection({
     bottomFadeBackground,
     latestCommentId,
     editingCommentId,
+    handleDeleteRequest,
+    handleSaveEdit,
     editingContent,
     updateComment.isPending,
     CONTEXT_MENU_ENABLED,

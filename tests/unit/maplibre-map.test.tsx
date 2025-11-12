@@ -3,7 +3,6 @@ import React from "react"
 import { render, screen } from "@testing-library/react"
 
 // Vitest environment requires React on the global scope for legacy JSX runtime
-// eslint-disable-next-line no-undef
 globalThis.React = React
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 

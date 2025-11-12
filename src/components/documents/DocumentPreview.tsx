@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import { FileText, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,10 +51,13 @@ export function DocumentPreview({ url, mimeType, filename, className }: Document
   if (previewType === "image") {
     return (
       <div className={cn("overflow-hidden rounded-md border bg-muted min-h-[10rem]", className)}>
-        <img
+        <Image
           src={url}
           alt={filename ?? "Document"}
+          width={800}
+          height={600}
           className="h-full w-full object-contain"
+          unoptimized
         />
       </div>
     );

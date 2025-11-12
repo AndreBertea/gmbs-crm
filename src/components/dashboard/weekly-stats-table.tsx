@@ -1,13 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { interventionsApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
 import type { WeeklyStats, MonthlyStats, YearlyStats, StatsPeriod } from "@/lib/api/v2"
-import { Loader2 } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 interface WeeklyStatsTableProps {
@@ -16,6 +14,7 @@ interface WeeklyStatsTableProps {
     startDate?: string
     endDate?: string
   }
+  userId?: string | null
 }
 
 // Helper pour déterminer le type de période à partir des dates
@@ -31,7 +30,7 @@ function getPeriodTypeFromDates(startDate?: string, endDate?: string): StatsPeri
   return "year"
 }
 
-export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: WeeklyStatsTableProps) {
+export function WeeklyStatsTable({ weekStartDate, period: externalPeriod, userId: propUserId }: WeeklyStatsTableProps) {
   // Si une période externe est fournie, utiliser son type, sinon semaine par défaut
   const [period, setPeriod] = useState<StatsPeriod>(
     externalPeriod ? getPeriodTypeFromDates(externalPeriod.startDate, externalPeriod.endDate) : "week"
@@ -43,14 +42,15 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
       const newPeriod = getPeriodTypeFromDates(externalPeriod.startDate, externalPeriod.endDate)
       setPeriod(newPeriod)
     }
-  }, [externalPeriod?.startDate, externalPeriod?.endDate])
+  }, [externalPeriod])
   const [stats, setStats] = useState<WeeklyStats | MonthlyStats | YearlyStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
-  const userId = currentUser?.id ?? null
+  // Utiliser le prop userId s'il est fourni, sinon utiliser currentUser
+  const userId = propUserId ?? currentUser?.id ?? null
 
   // Charger les statistiques selon la période choisie
   useEffect(() => {
@@ -120,97 +120,53 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
 
   if (loading) {
     return (
-      <Card className="bg-background border-border/5 shadow-sm/30">
-        <CardHeader>
-          <CardTitle>Statistiques</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-[300px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center h-[300px] rounded-xl bg-background border border-border/40 shadow-lg">
+        <div style={{ transform: 'scale(1.25)' }}>
+          <Loader />
+        </div>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <Card className="bg-background border-border/5 shadow-sm/30">
-        <CardHeader>
-          <CardTitle>Statistiques</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-destructive">{error}</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl bg-background border border-border/40 shadow-lg p-6">
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
     )
   }
 
   if (!userId) {
     return (
-      <Card className="bg-background border-border/5 shadow-sm/30">
-        <CardHeader>
-          <CardTitle>Statistiques</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Veuillez vous connecter pour voir vos statistiques
-          </p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl bg-background border border-border/40 shadow-lg p-6">
+        <p className="text-sm text-muted-foreground">
+          Veuillez vous connecter pour voir vos statistiques
+        </p>
+      </div>
     )
   }
 
   if (!stats) {
     return (
-      <Card className="bg-background border-border/5 shadow-sm/30">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Statistiques</CardTitle>
-            {!externalPeriod && (
-              <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Semaine</SelectItem>
-                  <SelectItem value="month">Mois</SelectItem>
-                  <SelectItem value="year">Année</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Aucune donnée disponible pour cette période.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Vérifiez la console du navigateur (F12) pour voir les détails de debug.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Possibles causes :
-            </p>
-            <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1 ml-2">
-              <li>L&apos;utilisateur n&apos;a pas d&apos;interventions assignées</li>
-              <li>Les données sont en dehors de la période sélectionnée</li>
-              <li>Les interventions n&apos;ont pas les statuts recherchés (DEVIS_ENVOYE, INTER_EN_COURS, INTER_TERMINEE)</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl bg-background border border-border/40 shadow-lg p-6">
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Aucune donnée disponible pour cette période.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Vérifiez la console du navigateur (F12) pour voir les détails de debug.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Possibles causes :
+          </p>
+          <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1 ml-2">
+            <li>L&apos;utilisateur n&apos;a pas d&apos;interventions assignées</li>
+            <li>Les données sont en dehors de la période sélectionnée</li>
+            <li>Les interventions n&apos;ont pas les statuts recherchés (DEVIS_ENVOYE, INTER_EN_COURS, INTER_TERMINEE)</li>
+          </ul>
+        </div>
+      </div>
     )
-  }
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
-  }
-
-  const formatMonthYear = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
   }
 
   // Rendu pour la semaine
@@ -224,32 +180,9 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     ]
 
     return (
-      <Card className="border border-border/40 shadow-sm/50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Statistiques de la semaine</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Semaine du {formatDate(weekStats.week_start)} au {formatDate(weekStats.week_end)}
-              </p>
-            </div>
-            {!externalPeriod && (
-              <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Semaine</SelectItem>
-                  <SelectItem value="month">Mois</SelectItem>
-                  <SelectItem value="year">Année</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto scrollbar-hide">
-            <Table>
+      <div className="rounded-xl bg-background border border-border/40 shadow-lg overflow-hidden">
+        <div className="overflow-x-auto scrollbar-hide">
+          <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent h-14">
                   <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
@@ -314,9 +247,8 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                 })}
               </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
@@ -330,36 +262,10 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
       { label: "Nouveaux Artisans", data: monthStats.nouveaux_artisans },
     ]
 
-    const monthNames = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
-    const monthName = monthNames[monthStats.month - 1]
-
     return (
-      <Card className="border border-border/40 shadow-sm/50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Statistiques du mois</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {monthName.charAt(0).toUpperCase() + monthName.slice(1)} {monthStats.year}
-              </p>
-            </div>
-            {!externalPeriod && (
-              <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Semaine</SelectItem>
-                  <SelectItem value="month">Mois</SelectItem>
-                  <SelectItem value="year">Année</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto scrollbar-hide">
-            <Table>
+      <div className="rounded-xl bg-background border border-border/40 shadow-lg overflow-hidden">
+        <div className="overflow-x-auto scrollbar-hide">
+          <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent h-14">
                   <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
@@ -424,9 +330,8 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                 })}
               </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
@@ -446,32 +351,9 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
     ]
 
     return (
-      <Card className="border border-border/40 shadow-sm/50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Statistiques</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Année {yearStats.year}
-              </p>
-            </div>
-            {!externalPeriod && (
-              <Select value={period} onValueChange={(value) => setPeriod(value as StatsPeriod)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">Semaine</SelectItem>
-                  <SelectItem value="month">Mois</SelectItem>
-                  <SelectItem value="year">Année</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto scrollbar-hide">
-            <Table>
+      <div className="rounded-xl bg-background border border-border/40 shadow-lg overflow-hidden">
+        <div className="overflow-x-auto scrollbar-hide">
+          <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 dark:bg-muted/30 border-b-2 border-border/60 hover:bg-transparent h-14">
                   <TableHead className="w-[180px] font-bold text-foreground">Action</TableHead>
@@ -543,9 +425,8 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod }: Week
                 })}
               </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi } from "@/lib/api/v2"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
-import { Loader2, AlertCircle, Loader2 as Loader2Icon } from "lucide-react"
+import { AlertCircle } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 import { Pie, PieChart, Cell, LabelList } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
@@ -321,7 +322,9 @@ export function InterventionStatsPieChart({ period }: InterventionStatsPieChartP
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[350px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div style={{ transform: 'scale(1.25)' }}>
+              <Loader />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -467,7 +470,7 @@ export function InterventionStatsPieChart({ period }: InterventionStatsPieChartP
       return () => {
         cancelled = true
       }
-    }, [userId, statusLabel, cacheKey, period?.startDate, period?.endDate])
+    }, [statusLabel, cacheKey, period])
 
     useEffect(() => {
       const cleanup = setInterval(() => {
@@ -485,7 +488,9 @@ export function InterventionStatsPieChart({ period }: InterventionStatsPieChartP
     if (loading) {
       return (
         <div className="flex items-center justify-center p-4">
-          <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+          <div style={{ transform: 'scale(0.75)' }}>
+            <Loader />
+          </div>
         </div>
       )
     }

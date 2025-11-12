@@ -1,5 +1,5 @@
-const { usersApi, interventionsApi, artisansApi, clientsApi } = require('../src/lib/api/v2');
-const { usersApiV2, interventionsApiV2, artisansApiV2, clientsApi } = require('../src/lib/supabase-api-v2');
+const { usersApi, interventionsApi, artisansApi } = require('../src/lib/api/v2');
+const { usersApiV2, interventionsApiV2, artisansApiV2 } = require('../src/lib/supabase-api-v2');
 
 class ApiComparisonSuite {
   constructor() {

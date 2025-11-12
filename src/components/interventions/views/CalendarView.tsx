@@ -6,15 +6,20 @@ import {
   addMonths,
   addWeeks,
   eachDayOfInterval,
+  eachMonthOfInterval,
+  eachWeekOfInterval,
   endOfMonth,
   endOfWeek,
+  endOfYear,
   format,
+  getYear,
   isSameDay,
   isSameMonth,
   parseISO,
   startOfDay,
   startOfMonth,
   startOfWeek,
+  startOfYear,
 } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Calendar as CalendarIcon, Clock, CornerDownRight, MapPin, User } from "lucide-react"
@@ -23,6 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import Loader from "@/components/ui/Loader"
 import { runQuery } from "@/lib/query-engine"
@@ -104,7 +110,7 @@ export function CalendarView({
   onLayoutOptionsChange,
 }: CalendarViewProps) {
   const { layoutOptions } = view
-  const [referenceDate, setReferenceDate] = useState(() => startOfDay(new Date()))
+  const [referenceDate, setReferenceDate] = useState(() => startOfMonth(new Date()))
   const dataset = useMemo(
     () => runQuery(interventions, view.filters, view.sorts),
     [interventions, view.filters, view.sorts],
@@ -170,8 +176,77 @@ export function CalendarView({
     return eachDayOfInterval({ start, end })
   }, [referenceDate, layoutOptions.viewMode])
 
+  // Générer la liste des mois de l'année courante et années adjacentes
+  const monthsList = useMemo(() => {
+    const currentYear = getYear(new Date())
+    const years = [currentYear - 1, currentYear, currentYear + 1]
+    const months: Date[] = []
+    years.forEach((year) => {
+      const start = startOfYear(new Date(year, 0, 1))
+      const end = endOfYear(new Date(year, 0, 1))
+      months.push(...eachMonthOfInterval({ start, end }))
+    })
+    return months
+  }, [])
+
+  // Générer la liste des semaines de l'année courante et années adjacentes
+  const weeksList = useMemo(() => {
+    const currentYear = getYear(new Date())
+    const years = [currentYear - 1, currentYear, currentYear + 1]
+    const weeks: Date[] = []
+    years.forEach((year) => {
+      const start = startOfYear(new Date(year, 0, 1))
+      const end = endOfYear(new Date(year, 0, 1))
+      weeks.push(...eachWeekOfInterval({ start, end }, { weekStartsOn: 1 }))
+    })
+    return weeks
+  }, [])
+
+  // Générer la liste des années (année courante ± 2 ans)
+  const yearsList = useMemo(() => {
+    const currentYear = getYear(new Date())
+    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i)
+  }, [])
+
+  // Obtenir la valeur actuelle pour le Select
+  const getCurrentSelectValue = () => {
+    if (layoutOptions.viewMode === "month") {
+      return format(referenceDate, "yyyy-MM")
+    }
+    if (layoutOptions.viewMode === "week") {
+      const weekStart = startOfWeek(referenceDate, { weekStartsOn: 1 })
+      return format(weekStart, "yyyy-MM-dd")
+    }
+    return format(referenceDate, "yyyy-MM-dd")
+  }
+
+  // Gérer le changement de sélection
+  const handleDateSelect = (value: string) => {
+    if (layoutOptions.viewMode === "month") {
+      const [year, month] = value.split("-").map(Number)
+      setReferenceDate(startOfMonth(new Date(year, month - 1, 1)))
+    } else if (layoutOptions.viewMode === "week") {
+      const selectedDate = parseISO(value)
+      setReferenceDate(startOfWeek(selectedDate, { weekStartsOn: 1 }))
+    } else {
+      const selectedDate = parseISO(value)
+      setReferenceDate(startOfDay(selectedDate))
+    }
+  }
+
   const handleChangeViewMode = (mode: CalendarLayoutOptions["viewMode"]) => {
     if (mode === layoutOptions.viewMode) return
+    
+    // Adapter la date de référence selon le nouveau mode
+    const currentDate = referenceDate
+    if (mode === "month") {
+      setReferenceDate(startOfMonth(currentDate))
+    } else if (mode === "week") {
+      setReferenceDate(startOfWeek(currentDate, { weekStartsOn: 1 }))
+    } else {
+      setReferenceDate(startOfDay(currentDate))
+    }
+    
     onLayoutOptionsChange?.({ viewMode: mode })
   }
 
@@ -196,7 +271,14 @@ export function CalendarView({
   }
 
   const goToToday = () => {
-    setReferenceDate(startOfDay(new Date()))
+    const today = new Date()
+    if (layoutOptions.viewMode === "month") {
+      setReferenceDate(startOfMonth(today))
+    } else if (layoutOptions.viewMode === "week") {
+      setReferenceDate(startOfWeek(today, { weekStartsOn: 1 }))
+    } else {
+      setReferenceDate(startOfDay(today))
+    }
   }
 
   if (loading) {
@@ -218,10 +300,131 @@ export function CalendarView({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="text-base font-medium text-foreground">{formatDayTitle(referenceDate, layoutOptions.viewMode)}</div>
+        <div className="flex items-center gap-3">
+          {layoutOptions.viewMode === "month" && (
+            <Select
+              value={getCurrentSelectValue()}
+              onValueChange={handleDateSelect}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue>
+                  {format(referenceDate, "MMMM yyyy", { locale: fr })}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {yearsList.map((year) => {
+                  const yearMonths = monthsList.filter((month) => getYear(month) === year)
+                  if (yearMonths.length === 0) return null
+                  return (
+                    <div key={year}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground sticky top-0 bg-popover">
+                        {year}
+                      </div>
+                      {yearMonths.map((month) => (
+                        <SelectItem key={format(month, "yyyy-MM")} value={format(month, "yyyy-MM")}>
+                          {format(month, "MMMM yyyy", { locale: fr })}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          )}
+
+          {layoutOptions.viewMode === "week" && (
+            <Select
+              value={getCurrentSelectValue()}
+              onValueChange={handleDateSelect}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue>
+                  {(() => {
+                    const start = startOfWeek(referenceDate, { weekStartsOn: 1 })
+                    const end = addDays(start, 6)
+                    return `${format(start, "d MMM", { locale: fr })} – ${format(end, "d MMM yyyy", { locale: fr })}`
+                  })()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {yearsList.map((year) => {
+                  const yearWeeks = weeksList.filter(
+                    (week) => getYear(week) === year
+                  )
+                  if (yearWeeks.length === 0) return null
+                  return (
+                    <div key={year}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground sticky top-0 bg-popover">
+                        {year}
+                      </div>
+                      {yearWeeks.map((week) => {
+                        const weekStart = startOfWeek(week, { weekStartsOn: 1 })
+                        const weekEnd = addDays(weekStart, 6)
+                        return (
+                          <SelectItem
+                            key={format(weekStart, "yyyy-MM-dd")}
+                            value={format(weekStart, "yyyy-MM-dd")}
+                          >
+                            {format(weekStart, "d MMM", { locale: fr })} – {format(weekEnd, "d MMM yyyy", { locale: fr })}
+                          </SelectItem>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          )}
+
+          {layoutOptions.viewMode === "day" && (
+            <Select
+              value={getCurrentSelectValue()}
+              onValueChange={handleDateSelect}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue>
+                  {format(referenceDate, "eeee d MMMM yyyy", { locale: fr })}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {yearsList.map((year) => {
+                  const currentYear = getYear(new Date())
+                  // Pour l'année courante et les années adjacentes, générer tous les jours
+                  // Pour les autres années, générer seulement quelques mois autour de la date courante
+                  let days: Date[]
+                  if (Math.abs(year - currentYear) <= 1) {
+                    const yearStart = startOfYear(new Date(year, 0, 1))
+                    const yearEnd = endOfYear(new Date(year, 0, 1))
+                    days = eachDayOfInterval({ start: yearStart, end: yearEnd })
+                  } else {
+                    // Générer seulement les 3 mois autour de la date courante pour les autres années
+                    const refMonth = referenceDate.getMonth()
+                    const start = startOfMonth(new Date(year, refMonth, 1))
+                    const end = endOfMonth(new Date(year, refMonth + 2, 1))
+                    days = eachDayOfInterval({ start, end })
+                  }
+                  return (
+                    <div key={year}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground sticky top-0 bg-popover">
+                        {year}
+                      </div>
+                      {days.map((day) => (
+                        <SelectItem
+                          key={format(day, "yyyy-MM-dd")}
+                          value={format(day, "yyyy-MM-dd")}
+                        >
+                          {format(day, "eeee d MMMM yyyy", { locale: fr })}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          )}
+
           <div className="text-xs text-muted-foreground">
-            Basé sur la propriété « {layoutOptions.dateProperty} »
+            Basé sur la propriété « {layoutOptions.dateProperty} »
           </div>
         </div>
         <div className="flex items-center gap-2">

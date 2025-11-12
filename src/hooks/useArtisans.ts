@@ -96,7 +96,7 @@ export function useArtisans(options: UseArtisansOptions = {}): UseArtisansReturn
     if (autoLoad) {
       loadArtisans(true);
     }
-  }, [autoLoad, currentFilters]);
+  }, [autoLoad, currentFilters, loadArtisans]);
 
   return {
     artisans,

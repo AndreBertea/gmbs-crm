@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { artisansApi } from "@/lib/api/v2"
 import type { ArtisanStatsByStatus } from "@/lib/api/v2"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
-import { Loader2, FileText, Plus } from "lucide-react"
+import { FileText, Plus } from "lucide-react"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import Link from "next/link"
@@ -14,13 +14,14 @@ import { useArtisanModal } from "@/hooks/useArtisanModal"
 import { useInterventionModal } from "@/hooks/useInterventionModal"
 import { getArtisanStatusStyles } from "@/config/status-colors"
 import { getMetierColor } from "@/config/metier-colors"
-import { Loader2 as Loader2Icon } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 
 interface ArtisanStatsListProps {
   period?: {
     startDate?: string
     endDate?: string
   }
+  userId?: string | null
 }
 
 type ArtisanHoverData = Array<{
@@ -45,7 +46,7 @@ type DossiersACompleterData = Array<{
   artisan_prenom: string;
 }>
 
-export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
+export function ArtisanStatsList({ period, userId: propUserId }: ArtisanStatsListProps) {
   const [stats, setStats] = useState<ArtisanStatsByStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -59,7 +60,8 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
 
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
-  const userId = currentUser?.id ?? null
+  // Utiliser le prop userId s'il est fourni, sinon utiliser currentUser
+  const userId = propUserId ?? currentUser?.id ?? null
 
   // Charger les statistiques une fois l'utilisateur chargé
   useEffect(() => {
@@ -100,7 +102,7 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
     return () => {
       cancelled = true
     }
-  }, [userId, isLoadingUser, period?.startDate, period?.endDate])
+  }, [userId, isLoadingUser, period])
 
   // Précharger toutes les données HoverCard une seule fois après le chargement des stats
   useEffect(() => {
@@ -199,7 +201,9 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[350px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div style={{ transform: 'scale(1.25)' }}>
+              <Loader />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -283,7 +287,9 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
     if (loadingHoverData) {
       return (
         <div className="flex items-center justify-center p-4">
-          <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+          <div style={{ transform: 'scale(0.75)' }}>
+            <Loader />
+          </div>
         </div>
       )
     }
@@ -373,7 +379,9 @@ export function ArtisanStatsList({ period }: ArtisanStatsListProps) {
     if (loadingHoverData) {
       return (
         <div className="flex items-center justify-center p-4">
-          <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+          <div style={{ transform: 'scale(0.75)' }}>
+            <Loader />
+          </div>
         </div>
       )
     }

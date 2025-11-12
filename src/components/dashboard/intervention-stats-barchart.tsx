@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState, useRef, useMemo } from "react"
+import { useEffect, useState, useRef, useMemo, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi } from "@/lib/api/v2"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
-import { Loader2, AlertCircle, Loader2 as Loader2Icon } from "lucide-react"
+import { AlertCircle } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Cell } from "recharts"
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
@@ -24,9 +25,109 @@ interface InterventionStatsBarChartProps {
     startDate?: string
     endDate?: string
   }
+  userId?: string | null
 }
 
-export function InterventionStatsBarChart({ period }: InterventionStatsBarChartProps) {
+// Déplacer les composants de labels EN DEHORS du composant pour éviter leur recréation
+const CustomValueLabel = (props: any) => {
+  const { x, y, width, value } = props
+  
+  if (x === undefined || y === undefined || width === undefined || value === undefined) {
+    return null
+  }
+  
+  // Si la barre est assez large (>80px), mettre le nombre à l'intérieur à droite
+  // Sinon, le mettre à l'extérieur pour éviter qu'il dépasse
+  if (width > 80) {
+    return (
+      <text
+        x={x + width - 8}
+        y={y + 12}
+        fill="hsl(var(--foreground))"
+        textAnchor="end"
+        fontSize={12}
+        fontWeight={600}
+      >
+        {value}
+      </text>
+    )
+  } else {
+    // Barre trop petite, mettre le nombre à l'extérieur
+    return (
+      <text
+        x={x + width + 8}
+        y={y + 12}
+        fill="hsl(var(--foreground))"
+        textAnchor="start"
+        fontSize={12}
+        fontWeight={600}
+      >
+        {value}
+      </text>
+    )
+  }
+}
+
+const CustomNameLabel = (props: any) => {
+  const { x, y, width, value } = props
+  
+  if (x === undefined || y === undefined || width === undefined || value === undefined) {
+    return null
+  }
+  
+  // Calculer la largeur approximative du texte (environ 7px par caractère)
+  const textWidth = value.length * 7
+  
+  // Si la barre est très petite (<50px), mettre le nom à l'extérieur à gauche
+  if (width < 50) {
+    return (
+      <text
+        x={x - 8}
+        y={y + 12}
+        fill="hsl(var(--foreground))"
+        textAnchor="end"
+        fontSize={11}
+        fontWeight={500}
+      >
+        {value}
+      </text>
+    )
+  }
+  
+  // Si le texte dépasse mais la barre est moyenne, tronquer avec "..."
+  if (textWidth > width - 16 && width < 80) {
+    const maxChars = Math.floor((width - 24) / 7) // -24 pour l'espace et "..."
+    const truncated = value.substring(0, Math.max(1, maxChars)) + "..."
+    return (
+      <text
+        x={x + 8}
+        y={y + 12}
+        fill="#FFFFFF"
+        textAnchor="start"
+        fontSize={12}
+        fontWeight={600}
+      >
+        {truncated}
+      </text>
+    )
+  }
+  
+  // Sinon, afficher normalement à l'intérieur
+  return (
+    <text
+      x={x + 8}
+      y={y + 12}
+      fill="#FFFFFF"
+      textAnchor="start"
+      fontSize={12}
+      fontWeight={600}
+    >
+      {value}
+    </text>
+  )
+}
+
+export function InterventionStatsBarChart({ period, userId: propUserId }: InterventionStatsBarChartProps) {
   const [stats, setStats] = useState<InterventionStatsByStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,7 +162,8 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
 
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
-  const userId = currentUser?.id ?? null
+  // Utiliser le prop userId s'il est fourni, sinon utiliser currentUser
+  const userId = propUserId ?? currentUser?.id ?? null
 
   // Charger les statuts depuis la DB pour avoir les couleurs exactes
   const { statuses: dbStatuses, statusesByCode, statusesByLabel } = useInterventionStatuses()
@@ -76,20 +178,26 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
   }, [dbStatuses])
 
   // Suivre la position de la souris pour positionner le trigger du HoverCard
+  // Utiliser une ref pour éviter les re-enregistrements du listener
+  const hoverCardOpenRef = useRef(false)
+  useEffect(() => {
+    hoverCardOpenRef.current = hoverCardOpen
+  }, [hoverCardOpen])
+
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       // Mettre à jour seulement si le HoverCard n'est pas ouvert
-      // pour éviter les re-renders fréquents qui causent des rafraîchissements
-      if (!hoverCardOpen) {
+      // Utiliser la ref pour éviter les re-renders
+      if (!hoverCardOpenRef.current) {
         triggerPositionRef.current = { x: event.clientX, y: event.clientY }
       }
     }
 
-    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mousemove", handleMouseMove, { passive: true })
     return () => {
       window.removeEventListener("mousemove", handleMouseMove)
     }
-  }, [hoverCardOpen])
+  }, []) // Plus de dépendance sur hoverCardOpen
 
   // Nettoyer le timeout au démontage
   useEffect(() => {
@@ -149,15 +257,23 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     }
   }, [userId, isLoadingUser, period?.startDate, period?.endDate])
 
+  // Créer une version stable de la liste des statuts pour éviter les boucles infinies
+  // Utiliser une sérialisation JSON pour comparer le contenu plutôt que la référence
+  const statsByStatusLabelKey = useMemo(() => {
+    if (!stats?.by_status_label) return null
+    return JSON.stringify(stats.by_status_label)
+  }, [stats?.by_status_label])
+
+
+  // Statuts fondamentaux à afficher
+  const fundamentalStatuses = useMemo(() => ["Demandé", "Inter en cours", "Visite technique", "Accepté", "Check"], [])
 
   // Fonction helper pour obtenir la couleur d'un statut
   // Priorité : 1) DB (source de vérité), 2) INTERVENTION_STATUS, 3) Fallback
-  const getStatusColor = (statusLabel: string): string => {
+  // Mémorisée pour éviter les recalculs constants
+  const getStatusColor = useCallback((statusLabel: string): string => {
     // Cas spécial pour "Check" qui n'est pas dans INTERVENTION_STATUS
     if (statusLabel === "Check") {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard Colors] "Check" → #EF4444 (statut spécial)`)
-      }
       return "#EF4444" // Rouge pour Check
     }
 
@@ -165,9 +281,6 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     // Le hook useInterventionStatuses stocke les labels en minuscule dans statusesByLabel
     const dbStatusByLabel = statusesByLabel.get(statusLabel.toLowerCase())
     if (dbStatusByLabel?.color) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard Colors] "${statusLabel}" → DB (${dbStatusByLabel.code}) → ${dbStatusByLabel.color}`)
-      }
       return dbStatusByLabel.color
     }
 
@@ -189,9 +302,6 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     if (mappedCode) {
       const dbStatusByCode = statusesByCode.get(mappedCode)
       if (dbStatusByCode?.color) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[Dashboard Colors] "${statusLabel}" → DB (${mappedCode}) → ${dbStatusByCode.color}`)
-        }
         return dbStatusByCode.color
       }
     }
@@ -203,175 +313,229 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     )
     
     if (statusConfig?.hexColor) {
-      console.warn(`[Dashboard Colors] "${statusLabel}" → INTERVENTION_STATUS (${statusConfig.value}) → ${statusConfig.hexColor} (fallback, pas en DB)`)
       return statusConfig.hexColor
     }
 
     // 4. Dernier fallback
-    const fallbackColor = getInterventionStatusColor(statusLabel) || "#6366F1"
-    console.warn(`[Dashboard Colors] "${statusLabel}" → FALLBACK → ${fallbackColor}`)
-    return fallbackColor
-  }
-
-  // Composant personnalisé pour le label de valeur (nombre)
-  // S'adapte dynamiquement selon la largeur de la barre
-  const CustomValueLabel = (props: any) => {
-    const { x, y, width, value } = props
-    
-    // Si la barre est assez large (>80px), mettre le nombre à l'intérieur à droite
-    // Sinon, le mettre à l'extérieur pour éviter qu'il dépasse
-    if (width > 80) {
-      return (
-        <text
-          x={x + width - 8}
-          y={y + 12}
-          fill="hsl(var(--foreground))"
-          textAnchor="end"
-          fontSize={12}
-          fontWeight={600}
-        >
-          {value}
-        </text>
-      )
-    } else {
-      // Barre trop petite, mettre le nombre à l'extérieur
-      return (
-        <text
-          x={x + width + 8}
-          y={y + 12}
-          fill="hsl(var(--foreground))"
-          textAnchor="start"
-          fontSize={12}
-          fontWeight={600}
-        >
-          {value}
-        </text>
-      )
-    }
-  }
-
-  // Composant personnalisé pour le label du nom (statut)
-  // Positionnement intelligent selon la largeur de la barre
-  const CustomNameLabel = (props: any) => {
-    const { x, y, width, value } = props
-    
-    // Calculer la largeur approximative du texte (environ 7px par caractère)
-    const textWidth = value.length * 7
-    
-    // Si la barre est très petite (<50px), mettre le nom à l'extérieur à gauche
-    if (width < 50) {
-      return (
-        <text
-          x={x - 8}
-          y={y + 12}
-          fill="hsl(var(--foreground))"
-          textAnchor="end"
-          fontSize={11}
-          fontWeight={500}
-        >
-          {value}
-        </text>
-      )
-    }
-    
-    // Si le texte dépasse mais la barre est moyenne, tronquer avec "..."
-    if (textWidth > width - 16 && width < 80) {
-      const maxChars = Math.floor((width - 24) / 7) // -24 pour l'espace et "..."
-      const truncated = value.substring(0, Math.max(1, maxChars)) + "..."
-      return (
-        <text
-          x={x + 8}
-          y={y + 12}
-          fill="#FFFFFF"
-          textAnchor="start"
-          fontSize={12}
-          fontWeight={600}
-        >
-          {truncated}
-        </text>
-      )
-    }
-    
-    // Sinon, afficher normalement à l'intérieur
-    return (
-      <text
-        x={x + 8}
-        y={y + 12}
-        fill="#FFFFFF"
-        textAnchor="start"
-        fontSize={12}
-        fontWeight={600}
-      >
-        {value}
-      </text>
-    )
-  }
-
-  // Statuts fondamentaux à afficher
-  const fundamentalStatuses = ["Demandé", "Inter en cours", "Visite technique", "Accepté", "Check"]
+    return getInterventionStatusColor(statusLabel) || "#6366F1"
+  }, [statusesByLabel, statusesByCode])
 
   // Créer le chartConfig avec les couleurs pour chaque statut possible
-  const chartConfig: ChartConfig = {
-    value: {
-      label: "Valeur",
-      color: "hsl(var(--chart-1))",
-    },
-  }
-
-  // Ajouter une entrée pour chaque statut possible dans le config (pour les tooltips)
-  fundamentalStatuses.forEach((status) => {
-    chartConfig[status] = {
-      label: status,
-      color: getStatusColor(status),
+  // Mémorisé pour éviter les recalculs constants
+  const chartConfig: ChartConfig = useMemo(() => {
+    const config: ChartConfig = {
+      value: {
+        label: "Valeur",
+        color: "hsl(var(--chart-1))",
+      },
     }
-  })
-  chartConfig["Check"] = {
-    label: "Check",
-    color: getStatusColor("Check"),
-  }
+
+    // Ajouter une entrée pour chaque statut possible dans le config (pour les tooltips)
+    fundamentalStatuses.forEach((status) => {
+      config[status] = {
+        label: status,
+        color: getStatusColor(status),
+      }
+    })
+    config["Check"] = {
+      label: "Check",
+      color: getStatusColor("Check"),
+    }
+
+    return config
+  }, [fundamentalStatuses, getStatusColor])
 
   // Préparer les données pour le graphique (uniquement les statuts fondamentaux)
-  const chartData = stats?.by_status_label
-    ? Object.entries(stats.by_status_label)
-        .map(([label, count]) => {
-          const color = getStatusColor(label)
-          return {
-            name: label,
-            value: count,
-            isCheck: false,
-            color: color, // Ajouter la couleur directement dans les données
-          }
-        })
-        .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
-        .map((item) => {
-          // Log pour déboguer les couleurs
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`[Dashboard Chart] Statut: "${item.name}", Count: ${item.value}, Color: ${item.color}`)
-          }
-          return item
-        })
-        .sort((a, b) => {
-          // Trier selon l'ordre des statuts fondamentaux
-          const indexA = fundamentalStatuses.indexOf(a.name)
-          const indexB = fundamentalStatuses.indexOf(b.name)
-          if (indexA === -1) return 1
-          if (indexB === -1) return -1
-          return indexA - indexB
-        })
-        .concat(
-          // Ajouter la barre "Check" si elle existe
-          stats.interventions_a_checker && stats.interventions_a_checker > 0
-            ? [
-                {
-                  name: "Check",
-                  value: stats.interventions_a_checker,
-                  isCheck: true,
-                  color: "#EF4444", // Rouge pour Check
-                },
-              ]
-            : []
-        )
-    : []
+  // Mémorisé pour éviter les recalculs constants qui causent la boucle infinie
+  const chartData = useMemo(() => {
+    if (!stats?.by_status_label) return []
+
+    return Object.entries(stats.by_status_label)
+      .map(([label, count]) => {
+        const color = getStatusColor(label)
+        return {
+          name: label,
+          value: count,
+          isCheck: false,
+          color: color, // Ajouter la couleur directement dans les données
+        }
+      })
+      .filter((item) => item.value > 0 && fundamentalStatuses.includes(item.name))
+      .sort((a, b) => {
+        // Trier selon l'ordre des statuts fondamentaux
+        const indexA = fundamentalStatuses.indexOf(a.name)
+        const indexB = fundamentalStatuses.indexOf(b.name)
+        if (indexA === -1) return 1
+        if (indexB === -1) return -1
+        return indexA - indexB
+      })
+      .concat(
+        // Ajouter la barre "Check" si elle existe
+        stats.interventions_a_checker && stats.interventions_a_checker > 0
+          ? [
+              {
+                name: "Check",
+                value: stats.interventions_a_checker,
+                isCheck: true,
+                color: "#EF4444", // Rouge pour Check
+              },
+            ]
+          : []
+      )
+  }, [stats?.by_status_label, stats?.interventions_a_checker, fundamentalStatuses, getStatusColor])
+
+  // Tous les hooks doivent être appelés AVANT les retours conditionnels
+  // Fonction pour assombrir une couleur hex - mémorisée avec useCallback
+  const adjustColor = useCallback((color: string, amount: number) => {
+    // Convertir hex en RGB
+    const hex = color.replace('#', '')
+    const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount))
+    const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount))
+    const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount))
+    return `#${[r, g, b].map(x => {
+      const hex = x.toString(16)
+      return hex.length === 1 ? '0' + hex : hex
+    }).join('')}`
+  }, [])
+
+  // Mémoriser les cellules avec leurs couleurs pour éviter les recalculs
+  const chartCells = useMemo(() => {
+    if (chartData.length === 0) return []
+    return chartData.map((entry, index) => {
+      const statusColor = entry.color || getStatusColor(entry.name)
+      const isHovered = hoveredBarIndex === index
+      const hoverColor = isHovered ? adjustColor(statusColor, -20) : statusColor
+      
+      return (
+        <Cell 
+          key={`cell-${index}`}
+          fill={hoverColor}
+          style={{ 
+            cursor: "pointer",
+            transition: "fill 0.2s ease-in-out",
+          }}
+        />
+      )
+    })
+  }, [chartData, hoveredBarIndex, adjustColor, getStatusColor])
+
+  // Mémoriser les handlers pour éviter les recréations
+  const handleBarMouseEnter = useCallback((data: any, index: number) => {
+    // Annuler tout timeout de fermeture en cours
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    
+    setHoveredBarIndex(index)
+    
+    const statusLabel = chartData[index]?.name
+    if (statusLabel) {
+      // Fixer la position du trigger au moment de l'ouverture
+      const position = triggerPositionRef.current || { 
+        x: window.innerWidth / 2, 
+        y: window.innerHeight / 2 
+      }
+      fixedTriggerPositionRef.current = position
+      // Mettre à jour l'état pour déclencher le re-render
+      setTriggerPosition({
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        width: 16,
+        height: 16,
+      })
+      setHoveredStatus(statusLabel)
+      setHoverCardOpen(true)
+    }
+  }, [chartData])
+
+  const handleBarMouseLeave = useCallback(() => {
+    setHoveredBarIndex(null)
+    // Ne pas fermer immédiatement - laisser un délai plus long pour permettre
+    // de déplacer la souris vers le HoverCard de manière fluide
+    closeTimeoutRef.current = setTimeout(() => {
+      setHoverCardOpen(false)
+      // Nettoyer les positions après la fermeture
+      setTimeout(() => {
+        setHoveredStatus(null)
+        fixedTriggerPositionRef.current = null
+        setTriggerPosition(null)
+      }, 150)
+      closeTimeoutRef.current = null
+    }, 500) // Délai plus long pour une transition très fluide
+  }, [])
+
+  const handleBarClick = useCallback((data: any, index: number) => {
+    const clickedBar = chartData[index]
+    if (clickedBar?.isCheck) {
+      sessionStorage.setItem('pending-intervention-filter', JSON.stringify({
+        property: "isCheck",
+        operator: "eq",
+        value: true
+      }))
+      router.push("/interventions")
+    }
+  }, [chartData, router])
+
+  // État pour suivre la position du trigger (les refs ne déclenchent pas de re-renders)
+  const [triggerPosition, setTriggerPosition] = useState<{ left: string; top: string; width: number; height: number } | null>(null)
+
+  // Précharger les données des interventions pour tous les statuts visibles
+  // Cela garantit un affichage instantané au survol
+  // Utiliser des dépendances stables pour éviter les boucles infinies
+  useEffect(() => {
+    if (!userId || !stats?.by_status_label || !period?.startDate || !period?.endDate) return
+
+    const preloadInterventions = async () => {
+      const startDate = period.startDate
+      const endDate = period.endDate
+
+      // Précharger les données pour chaque statut visible en parallèle
+      // Utiliser directement stats.by_status_label au lieu de chartData pour éviter les dépendances circulaires
+      const statusLabels = Object.entries(stats.by_status_label)
+        .filter(([label, count]) => count > 0 && fundamentalStatuses.includes(label))
+        .map(([label]) => label)
+
+      const preloadPromises = statusLabels.map(async (statusLabel) => {
+        const cacheKey = `${statusLabel}-${startDate}-${endDate}`
+        
+        // Vérifier si déjà en cache
+        const cachedEntry = interventionsCacheRef.current.get(cacheKey)
+        const isCacheValid = cachedEntry && (Date.now() - cachedEntry.timestamp < CACHE_DURATION)
+        
+        if (isCacheValid) {
+          return // Déjà en cache, pas besoin de recharger
+        }
+
+        try {
+          // Précharger en arrière-plan sans bloquer
+          const data = await interventionsApi.getRecentInterventionsByStatusAndUser(
+            userId,
+            statusLabel,
+            5,
+            startDate,
+            endDate
+          )
+          
+          // Mettre en cache
+          interventionsCacheRef.current.set(cacheKey, {
+            data,
+            timestamp: Date.now()
+          })
+        } catch (err) {
+          // Ignorer les erreurs de préchargement silencieusement
+          console.warn(`[Dashboard] Erreur préchargement ${statusLabel}:`, err)
+        }
+      })
+
+      // Lancer tous les préchargements en parallèle sans attendre
+      Promise.all(preloadPromises).catch(() => {
+        // Ignorer les erreurs
+      })
+    }
+
+    preloadInterventions()
+  }, [userId, statsByStatusLabelKey, period, fundamentalStatuses, CACHE_DURATION, stats?.by_status_label])
 
   if (loading) {
     return (
@@ -381,7 +545,9 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[350px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div style={{ transform: 'scale(1.25)' }}>
+              <Loader />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -430,8 +596,6 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
       </Card>
     )
   }
-
-  // Les données sont déjà préchargées, pas besoin de handleMouseEnter
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "N/A"
@@ -487,7 +651,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     const [loading, setLoading] = useState(() => getCachedData() === null)
     const [error, setError] = useState<string | null>(null)
 
-    // Charger les données seulement si nécessaire
+    // Charger les données seulement si nécessaire (pas en cache)
     useEffect(() => {
       if (!userId || !statusLabel) return
 
@@ -502,6 +666,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
         return
       }
 
+      // Si pas en cache, charger (normalement ça ne devrait jamais arriver grâce au préchargement)
       let cancelled = false
 
       const loadData = async () => {
@@ -537,7 +702,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
       return () => {
         cancelled = true
       }
-    }, [userId, statusLabel, cacheKey, period?.startDate, period?.endDate])
+    }, [statusLabel, cacheKey, period])
 
     // Nettoyer le cache périodiquement (optionnel, pour éviter la croissance mémoire)
     useEffect(() => {
@@ -556,7 +721,9 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     if (loading) {
       return (
         <div className="flex items-center justify-center p-4">
-          <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground" />
+          <div style={{ transform: 'scale(0.75)' }}>
+            <Loader />
+          </div>
         </div>
       )
     }
@@ -652,52 +819,10 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                   <Bar
                     dataKey="value"
                     radius={[0, 4, 4, 0]}
-                    onMouseEnter={(data: any, index: number) => {
-                      // Annuler tout timeout de fermeture en cours
-                      if (closeTimeoutRef.current) {
-                        clearTimeout(closeTimeoutRef.current)
-                        closeTimeoutRef.current = null
-                      }
-                      
-                      setHoveredBarIndex(index)
-                      
-                      const statusLabel = chartData[index]?.name
-                      if (statusLabel) {
-                        // Fixer la position du trigger au moment de l'ouverture
-                        // pour éviter les re-renders fréquents qui causent des rafraîchissements
-                        fixedTriggerPositionRef.current = triggerPositionRef.current || { 
-                          x: window.innerWidth / 2, 
-                          y: window.innerHeight / 2 
-                        }
-                        setHoveredStatus(statusLabel)
-                        setHoverCardOpen(true)
-                      }
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredBarIndex(null)
-                      // Ne pas fermer immédiatement - laisser un délai plus long pour permettre
-                      // de déplacer la souris vers le HoverCard de manière fluide
-                      closeTimeoutRef.current = setTimeout(() => {
-                        setHoverCardOpen(false)
-                        // Nettoyer les positions après la fermeture
-                        setTimeout(() => {
-                          setHoveredStatus(null)
-                          fixedTriggerPositionRef.current = null
-                        }, 150)
-                        closeTimeoutRef.current = null
-                      }, 500) // Délai plus long pour une transition très fluide
-                    }}
-                    onClick={(data: any, index: number) => {
-                      const clickedBar = chartData[index]
-                      if (clickedBar?.isCheck) {
-                        sessionStorage.setItem('pending-intervention-filter', JSON.stringify({
-                          property: "isCheck",
-                          operator: "eq",
-                          value: true
-                        }))
-                        router.push("/interventions")
-                      }
-                    }}
+                    onMouseEnter={handleBarMouseEnter}
+                    onMouseLeave={handleBarMouseLeave}
+                    onClick={handleBarClick}
+                    isAnimationActive={false} // Disable Recharts animation to avoid StrictMode setState loop
                   >
                     <LabelList
                       dataKey="name"
@@ -707,44 +832,14 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                       dataKey="value"
                       content={<CustomValueLabel />}
                     />
-                    {chartData.map((entry, index) => {
-                      const statusColor = entry.color || getStatusColor(entry.name)
-                      const isHovered = hoveredBarIndex === index
-                      
-                      // Fonction pour assombrir une couleur hex
-                      const adjustColor = (color: string, amount: number) => {
-                        // Convertir hex en RGB
-                        const hex = color.replace('#', '')
-                        const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount))
-                        const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount))
-                        const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount))
-                        return `#${[r, g, b].map(x => {
-                          const hex = x.toString(16)
-                          return hex.length === 1 ? '0' + hex : hex
-                        }).join('')}`
-                      }
-                      
-                      // Assombrir la couleur au survol (soustraire 20 pour assombrir)
-                      const hoverColor = isHovered ? adjustColor(statusColor, -20) : statusColor
-                      
-                      return (
-                        <Cell 
-                          key={`cell-${index}`}
-                          fill={hoverColor}
-                          style={{ 
-                            cursor: "pointer",
-                            transition: "fill 0.2s ease-in-out",
-                          }}
-                        />
-                      )
-                    })}
+                    {chartCells}
                   </Bar>
                 </BarChart>
               </ChartContainer>
             </div>
 
             {/* HoverCard pour afficher les détails au survol */}
-            {hoveredStatus && fixedTriggerPositionRef.current && (
+            {hoveredStatus && triggerPosition && (
               <HoverCard 
                 open={hoverCardOpen} 
                 onOpenChange={(open) => {
@@ -759,6 +854,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                     setTimeout(() => {
                       setHoveredStatus(null)
                       fixedTriggerPositionRef.current = null
+                      setTriggerPosition(null)
                     }, 100)
                   }
                 }} 
@@ -768,12 +864,7 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
                 <HoverCardTrigger asChild>
                   <div
                     className="fixed pointer-events-none z-0"
-                    style={{
-                      left: `${fixedTriggerPositionRef.current.x}px`,
-                      top: `${fixedTriggerPositionRef.current.y}px`,
-                      width: 16,
-                      height: 16,
-                    }}
+                    style={triggerPosition}
                     aria-hidden="true"
                   />
                 </HoverCardTrigger>
@@ -847,4 +938,3 @@ export function InterventionStatsBarChart({ period }: InterventionStatsBarChartP
     </ContextMenu>
   )
 }
-

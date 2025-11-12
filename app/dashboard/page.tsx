@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import React, { useState, useMemo, useEffect, useRef } from "react"
 import { InterventionStatsBarChart } from "@/components/dashboard/intervention-stats-barchart"
 import { ArtisanStatsList } from "@/components/dashboard/artisan-stats-list"
 import { MarginStatsCard } from "@/components/dashboard/margin-stats-card"
@@ -18,23 +18,67 @@ import { useRevealTransition } from "@/hooks/useRevealTransition"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
 import useModal from "@/hooks/useModal"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
+import { AvatarGroup, AvatarGroupTooltip } from "@/components/ui/avatar-group"
+import { GestionnaireBadge } from "@/components/ui/gestionnaire-badge"
+import { useGestionnaires, type Gestionnaire } from "@/hooks/useGestionnaires"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
+import { AppleBienvenueEffect } from "@/components/ui/shadcn-io/apple-hello-effect"
+import {
+  addDays,
+  eachMonthOfInterval,
+  eachWeekOfInterval,
+  endOfYear,
+  format,
+  getYear,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+} from "date-fns"
+import { fr } from "date-fns/locale"
 
 type PeriodType = "week" | "month" | "year"
 
 const STORAGE_KEY = "dashboard-period-type"
+const STORAGE_KEY_SELECTED = "dashboard-period-selected"
 
 export default function DashboardPage() {
   // Initialiser avec "month" par défaut pour éviter les erreurs d'hydratation
   const [periodType, setPeriodType] = useState<PeriodType>("month")
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("") // Format: "yyyy-MM" pour month, "yyyy-MM-dd" pour week, "yyyy" pour year
   const [isMounted, setIsMounted] = useState(false)
   const [totalInterventions, setTotalInterventions] = useState<number | null>(null)
   const [showTransition, setShowTransition] = useState(false)
+  const [selectedGestionnaireId, setSelectedGestionnaireId] = useState<string | null>(null)
   const { open: openModal } = useModal()
   const artisanModal = useArtisanModal()
   
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
-  const userId = currentUser?.id ?? null
+  const { data: gestionnaires = [], isLoading: isLoadingGestionnaires } = useGestionnaires()
+  
+  // Initialiser avec l'utilisateur courant par défaut
+  useEffect(() => {
+    if (currentUser?.id && !selectedGestionnaireId) {
+      setSelectedGestionnaireId(currentUser.id)
+    }
+  }, [currentUser?.id, selectedGestionnaireId])
+  
+  // Fonction pour obtenir le nom d'affichage
+  const getDisplayName = (gestionnaire: Gestionnaire) => {
+    const parts = [
+      gestionnaire.firstname || gestionnaire.prenom,
+      gestionnaire.lastname || gestionnaire.name
+    ].filter(Boolean)
+    return parts.length > 0
+      ? parts.join(" ")
+      : gestionnaire.code_gestionnaire || gestionnaire.username || "Gestionnaire"
+  }
+  
+  // Filtrer les données selon le gestionnaire sélectionné
+  const effectiveUserId = selectedGestionnaireId || currentUser?.id || null
   
   // Références pour l'animation
   const dashboardContentRef = useRef<HTMLDivElement>(null)
@@ -54,6 +98,10 @@ export default function DashboardPage() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved === "week" || saved === "month" || saved === "year") {
       setPeriodType(saved as PeriodType)
+    }
+    const savedSelected = localStorage.getItem(STORAGE_KEY_SELECTED)
+    if (savedSelected) {
+      setSelectedPeriod(savedSelected)
     }
   }, [])
 
@@ -167,43 +215,154 @@ export default function DashboardPage() {
     }
   }, [periodType, isMounted])
 
+  // Sauvegarder la sélection spécifique
+  useEffect(() => {
+    if (isMounted && selectedPeriod) {
+      localStorage.setItem(STORAGE_KEY_SELECTED, selectedPeriod)
+    }
+  }, [selectedPeriod, isMounted])
+
+  // Générer les listes selon le type de période
+  const periodOptions = useMemo(() => {
+    const currentYear = getYear(new Date())
+    const years = [currentYear - 1, currentYear, currentYear + 1]
+
+    if (periodType === "month") {
+      const months: Date[] = []
+      years.forEach((year) => {
+        const start = startOfYear(new Date(year, 0, 1))
+        const end = endOfYear(new Date(year, 0, 1))
+        months.push(...eachMonthOfInterval({ start, end }))
+      })
+      return months.map((month) => ({
+        value: format(month, "yyyy-MM"),
+        label: format(month, "MMMM yyyy", { locale: fr }),
+        year: getYear(month),
+      }))
+    }
+
+    if (periodType === "week") {
+      const weeks: Date[] = []
+      years.forEach((year) => {
+        const start = startOfYear(new Date(year, 0, 1))
+        const end = endOfYear(new Date(year, 0, 1))
+        weeks.push(...eachWeekOfInterval({ start, end }, { weekStartsOn: 1 }))
+      })
+      // Dédupliquer les semaines qui peuvent se chevaucher entre années
+      const uniqueWeeks = new Map<string, Date>()
+      weeks.forEach((week) => {
+        const weekStart = startOfWeek(week, { weekStartsOn: 1 })
+        const key = format(weekStart, "yyyy-MM-dd")
+        if (!uniqueWeeks.has(key)) {
+          uniqueWeeks.set(key, weekStart)
+        }
+      })
+      return Array.from(uniqueWeeks.values())
+        .sort((a, b) => a.getTime() - b.getTime())
+        .map((weekStart) => {
+          const weekEnd = addDays(weekStart, 6)
+          return {
+            value: format(weekStart, "yyyy-MM-dd"),
+            label: `${format(weekStart, "d MMM", { locale: fr })} – ${format(weekEnd, "d MMM yyyy", { locale: fr })}`,
+            year: getYear(weekStart),
+          }
+        })
+    }
+
+    // Pour year
+    return years.map((year) => ({
+      value: year.toString(),
+      label: `Année ${year}`,
+      year,
+    }))
+  }, [periodType])
+
+  // Obtenir la valeur actuelle pour le Select
+  const getCurrentSelectValue = () => {
+    if (selectedPeriod) return selectedPeriod
+    
+    // Par défaut, utiliser la période courante
+    const now = new Date()
+    if (periodType === "month") {
+      return format(now, "yyyy-MM")
+    }
+    if (periodType === "week") {
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 })
+      return format(weekStart, "yyyy-MM-dd")
+    }
+    return getYear(now).toString()
+  }
+
+  // Gérer le changement de sélection
+  const handlePeriodSelect = (value: string) => {
+    setSelectedPeriod(value)
+  }
+
+  // Réinitialiser la sélection quand on change de type
+  useEffect(() => {
+    setSelectedPeriod("")
+  }, [periodType])
+
   // Calculer les dates selon la période sélectionnée
   const period = useMemo(() => {
-    const now = new Date()
     let startDate: Date
     let endDate: Date
 
-    if (periodType === "week") {
-      // Semaine en cours (lundi à vendredi)
-      const day = now.getDay()
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1)
-      startDate = new Date(now.getFullYear(), now.getMonth(), diff)
-      startDate.setHours(0, 0, 0, 0)
-      
-      endDate = new Date(startDate)
-      endDate.setDate(startDate.getDate() + 4) // Vendredi
-      endDate.setHours(23, 59, 59, 999)
-    } else if (periodType === "month") {
-      // Mois en cours
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-      startDate.setHours(0, 0, 0, 0)
-      
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+    if (selectedPeriod) {
+      // Utiliser la période sélectionnée
+      if (periodType === "month") {
+        const [year, month] = selectedPeriod.split("-").map(Number)
+        startDate = new Date(year, month - 1, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(year, month, 0, 23, 59, 59, 999)
+      } else if (periodType === "week") {
+        const selectedDate = parseISO(selectedPeriod)
+        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 })
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(startDate)
+        endDate.setDate(startDate.getDate() + 4) // Vendredi
+        endDate.setHours(23, 59, 59, 999)
+      } else {
+        const year = parseInt(selectedPeriod)
+        startDate = new Date(year, 0, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(year, 11, 31, 23, 59, 59, 999)
+      }
     } else {
-      // Année en cours
-      startDate = new Date(now.getFullYear(), 0, 1)
-      startDate.setHours(0, 0, 0, 0)
-      
-      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+      // Comportement par défaut (période courante)
+      const now = new Date()
+      if (periodType === "week") {
+        const day = now.getDay()
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1)
+        startDate = new Date(now.getFullYear(), now.getMonth(), diff)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(startDate)
+        endDate.setDate(startDate.getDate() + 4)
+        endDate.setHours(23, 59, 59, 999)
+      } else if (periodType === "month") {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+      } else {
+        startDate = new Date(now.getFullYear(), 0, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+      }
     }
 
     return {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
     }
-  }, [periodType])
+  }, [periodType, selectedPeriod])
 
   const periodLabel = useMemo(() => {
+    if (selectedPeriod) {
+      const option = periodOptions.find((opt) => opt.value === selectedPeriod)
+      if (option) return option.label
+    }
+
+    // Comportement par défaut
     const now = new Date()
     if (periodType === "week") {
       const day = now.getDay()
@@ -218,11 +377,11 @@ export default function DashboardPage() {
     } else {
       return `Année ${now.getFullYear()}`
     }
-  }, [periodType])
+  }, [periodType, selectedPeriod, periodOptions])
 
   // Charger le nombre total d'interventions pour la période
   useEffect(() => {
-    if (!userId || isLoadingUser || !period.startDate || !period.endDate) {
+    if (!effectiveUserId || isLoadingUser || !period.startDate || !period.endDate) {
       setTotalInterventions(null)
       return
     }
@@ -231,7 +390,7 @@ export default function DashboardPage() {
 
     const loadTotalInterventions = async () => {
       try {
-        const statsData = await interventionsApi.getStatsByUser(userId, period.startDate, period.endDate)
+        const statsData = await interventionsApi.getStatsByUser(effectiveUserId, period.startDate, period.endDate)
         if (!cancelled) {
           setTotalInterventions(statsData.total)
         }
@@ -248,7 +407,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [userId, isLoadingUser, period.startDate, period.endDate])
+  }, [effectiveUserId, isLoadingUser, period.startDate, period.endDate])
 
   return (
     <>
@@ -274,14 +433,10 @@ export default function DashboardPage() {
             style={{ willChange: isAnimating ? 'clip-path' : 'auto' } as React.CSSProperties}
           >
             <div className="flex-1 p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
-            <p className="text-muted-foreground">Vue d&apos;ensemble de l&apos;activité</p>
-          </div>
-          
-          {/* Sélecteur de période au milieu */}
-          <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
+        {/* Filterbar avec AvatarGroup à droite */}
+        <div className="flex items-center justify-between gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
+          {/* Partie gauche : Sélecteur de période */}
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Période :</span>
               {isMounted ? (
@@ -301,65 +456,226 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{periodLabel}</span>
-              <span className="text-foreground font-medium">
-                {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-              </span>
-              {totalInterventions !== null && (
-                <span className="text-foreground font-medium">
-                  {totalInterventions} intervention{totalInterventions > 1 ? "s" : ""}
-                </span>
+            
+            {/* Deuxième filtre adaptatif */}
+            <div className="flex items-center gap-2">
+              {isMounted ? (
+                <Select
+                  value={getCurrentSelectValue()}
+                  onValueChange={handlePeriodSelect}
+                >
+                  <SelectTrigger className={cn(
+                    periodType === "week" && "w-[220px]",
+                    periodType === "month" && "w-[180px]",
+                    periodType === "year" && "w-[150px]"
+                  )}>
+                    <SelectValue>
+                      {periodOptions.find((opt) => opt.value === getCurrentSelectValue())?.label || "Sélectionner"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {(() => {
+                      const currentYear = getYear(new Date())
+                      const years = [currentYear - 1, currentYear, currentYear + 1]
+                      
+                      if (periodType === "month") {
+                        return years.map((year) => {
+                          const yearMonths = periodOptions.filter((opt) => opt.year === year)
+                          if (yearMonths.length === 0) return null
+                          return (
+                            <div key={year}>
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground sticky top-0 bg-popover">
+                                {year}
+                              </div>
+                              {yearMonths.map((month) => (
+                                <SelectItem key={month.value} value={month.value}>
+                                  {month.label}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          )
+                        })
+                      }
+                      
+                      if (periodType === "week") {
+                        return years.map((year) => {
+                          const yearWeeks = periodOptions.filter((opt) => opt.year === year)
+                          if (yearWeeks.length === 0) return null
+                          return (
+                            <div key={year}>
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground sticky top-0 bg-popover">
+                                {year}
+                              </div>
+                              {yearWeeks.map((week) => (
+                                <SelectItem key={week.value} value={week.value}>
+                                  {week.label}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          )
+                        })
+                      }
+                      
+                      // Pour year
+                      return periodOptions.map((year) => (
+                        <SelectItem key={year.value} value={year.value}>
+                          {year.label}
+                        </SelectItem>
+                      ))
+                    })()}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="w-[180px] h-10 rounded-md border bg-background flex items-center px-3">
+                  <span className="text-sm text-muted-foreground">Chargement...</span>
+                </div>
               )}
             </div>
           </div>
-
-          <div className="flex gap-2">
-            <ContextMenu>
-              <ContextMenuTrigger asChild>
-                <Button asChild>
-                  <Link href="/interventions">Voir les {t("deals")}</Link>
-                </Button>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => openModal("new", { content: "new-intervention" })} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nouvelle intervention
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-            <ContextMenu>
-              <ContextMenuTrigger asChild>
-                <Button variant="outline" asChild>
-                  <Link href="/artisans">Voir les {t("contacts")}</Link>
-                </Button>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => artisanModal.openNew()} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nouvel artisan
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
+          
+          {/* Partie centrale : Badge gestionnaire sélectionné + Dates et nombre d'interventions */}
+          <div className="flex items-center gap-4 text-sm flex-1 justify-center">
+            {/* Effet "Bienvenue" seulement pour l'utilisateur connecté */}
+            {currentUser?.id && selectedGestionnaireId === currentUser.id && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="flex items-center mr-2"
+              >
+                <AppleBienvenueEffect speed={0.2} className="text-black h-8" />
+              </motion.div>
+            )}
+            
+            {/* Badge du gestionnaire sélectionné au centre */}
+            {selectedGestionnaireId && (() => {
+              const selectedGestionnaire = gestionnaires.find(g => g.id === selectedGestionnaireId)
+              if (!selectedGestionnaire) return null
+              const displayName = getDisplayName(selectedGestionnaire)
+              
+              return (
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    key={selectedGestionnaireId}
+                    layoutId={`gestionnaire-badge-${selectedGestionnaireId}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{ width: "2.25rem", height: "2.25rem" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  >
+                    <GestionnaireBadge
+                      firstname={selectedGestionnaire.firstname}
+                      lastname={selectedGestionnaire.lastname}
+                      prenom={selectedGestionnaire.prenom}
+                      name={selectedGestionnaire.name}
+                      color={selectedGestionnaire.color}
+                      size="md"
+                      className="ring-2 ring-primary ring-offset-2"
+                    />
+                  </motion.div>
+                  <motion.div 
+                    className="flex flex-col"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <span className="text-sm font-medium text-foreground">{displayName}</span>
+                  </motion.div>
+                </div>
+              )
+            })()}
+            
+            <span className="text-foreground font-medium">
+              {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+            </span>
+            {totalInterventions !== null && (
+              <span className="text-foreground font-medium">
+                {totalInterventions} intervention{totalInterventions > 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          
+          {/* Partie droite : AvatarGroup des gestionnaires */}
+          <div className="flex items-center gap-3">
+            {isLoadingGestionnaires ? (
+              <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+            ) : gestionnaires.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Aucun gestionnaire</div>
+            ) : (
+              <AvatarGroup variant="motion" className="h-9 -space-x-2">
+                {gestionnaires.map((gestionnaire) => {
+                  const isSelected = selectedGestionnaireId === gestionnaire.id
+                  const isCurrentUser = currentUser?.id === gestionnaire.id
+                  const displayName = getDisplayName(gestionnaire)
+                  
+                  return (
+                    <motion.div
+                      key={gestionnaire.id}
+                      layoutId={`gestionnaire-badge-${gestionnaire.id}`}
+                      initial={false}
+                      animate={{
+                        opacity: isSelected ? 0 : 1,
+                        scale: isSelected ? 0.8 : 1,
+                      }}
+                      style={{ width: "2.25rem", height: "2.25rem" }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    >
+                      <GestionnaireBadge
+                        firstname={gestionnaire.firstname}
+                        lastname={gestionnaire.lastname}
+                        prenom={gestionnaire.prenom}
+                        name={gestionnaire.name}
+                        color={gestionnaire.color}
+                        size="md"
+                        className={cn(
+                          "transition-all",
+                          isSelected && "pointer-events-none",
+                          isCurrentUser && !isSelected && "ring-2 ring-green-500/50"
+                        )}
+                        onClick={() => setSelectedGestionnaireId(gestionnaire.id)}
+                      >
+                        <AvatarGroupTooltip>
+                          <div className="flex flex-col gap-1">
+                            <p className="font-semibold">{displayName}</p>
+                            {isCurrentUser && (
+                              <Badge variant="secondary" className="w-fit text-xs">
+                                Vous
+                              </Badge>
+                            )}
+                            {gestionnaire.code_gestionnaire && (
+                              <p className="text-xs text-muted-foreground">
+                                {gestionnaire.code_gestionnaire}
+                              </p>
+                            )}
+                          </div>
+                        </AvatarGroupTooltip>
+                      </GestionnaireBadge>
+                    </motion.div>
+                  )
+                })}
+              </AvatarGroup>
+            )}
           </div>
         </div>
 
+        {/* Passer effectiveUserId aux composants de stats */}
         {/* Première ligne : Interventions (40%), Artisans (30%), Performance (30%) */}
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-10">
           <div className="lg:col-span-4">
-            <InterventionStatsBarChart period={period} />
+            <InterventionStatsBarChart period={period} userId={effectiveUserId} />
           </div>
           <div className="lg:col-span-3">
-            <ArtisanStatsList period={period} />
+            <ArtisanStatsList period={period} userId={effectiveUserId} />
           </div>
           <div className="lg:col-span-3 space-y-4">
             {/* Performance Moyenne et Totale côte à côte */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <MarginStatsCard period={period} />
+                <MarginStatsCard period={period} userId={effectiveUserId} />
               </div>
               <div>
-                <MarginTotalCard period={period} />
+                <MarginTotalCard period={period} userId={effectiveUserId} />
               </div>
             </div>
           </div>
@@ -368,7 +684,7 @@ export default function DashboardPage() {
         {/* Deuxième ligne : Statistiques (70%) et Podium (30%) alignés */}
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-10 items-end">
           <div className="lg:col-span-7">
-            <WeeklyStatsTable period={period} />
+            <WeeklyStatsTable period={period} userId={effectiveUserId} />
           </div>
           <div className="lg:col-span-3">
             <GestionnaireRankingPodium period={period} />

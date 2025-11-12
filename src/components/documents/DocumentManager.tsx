@@ -102,9 +102,32 @@ type PreviewState =
 
 const DEFAULT_ACCEPT = ".pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.doc,.docx,.xls,.xlsx,.zip,.mp4";
 const INVOICE_KINDS = new Set([
-  "facture_gmbs",
-  "facture_artisan",
-  "facture_materiel",
+  "facturesGMBS",
+  "facturesArtisans",
+  "facturesMateriel",
+]);
+const CANONICAL_KIND_MAP: Record<string, string> = {
+  facturegmbs: "facturesGMBS",
+  facturesgmbs: "facturesGMBS",
+  factureartisan: "facturesArtisans",
+  facturesartisan: "facturesArtisans",
+  facturemateriel: "facturesMateriel",
+  facturesmateriel: "facturesMateriel",
+};
+const NEEDS_CLASSIFICATION_KINDS = new Set([
+  "aclasser",
+  "aclassifier",
+  "àclasser",
+  "àclassifier",
+  "aclasse",
+  "àclasse",
+]);
+const LEGACY_AUTRE_KINDS = new Set([
+  "rapportintervention",
+  "plan",
+  "schema",
+  "intervention",
+  "cout",
 ]);
 
 type PreviewSize = {
@@ -119,18 +142,30 @@ const MIN_PREVIEW_HEIGHT = 320;
 function normalizeKind(rawKind: string): string {
   if (!rawKind) return rawKind;
   const trimmed = rawKind.trim();
-  const compact = trimmed.toLowerCase().replace(/[_\s-]/g, "");
+  if (!trimmed) return rawKind;
 
-  switch (compact) {
-    case "facturegmbs":
-      return "facture_gmbs";
-    case "factureartisan":
-      return "facture_artisan";
-    case "facturemateriel":
-      return "facture_materiel";
-    default:
-      return trimmed;
+  const lower = trimmed.toLowerCase();
+  const compact = lower.replace(/[_\s-]/g, "");
+
+  if (
+    NEEDS_CLASSIFICATION_KINDS.has(compact) ||
+    lower === "a classer" ||
+    lower === "a classifier" ||
+    lower === "à classer" ||
+    lower === "à classifier"
+  ) {
+    return "a_classe";
   }
+
+  if (CANONICAL_KIND_MAP[compact]) {
+    return CANONICAL_KIND_MAP[compact];
+  }
+
+  if (LEGACY_AUTRE_KINDS.has(compact)) {
+    return "autre";
+  }
+
+  return trimmed;
 }
 
 function isInvoiceKind(kind: string): boolean {
