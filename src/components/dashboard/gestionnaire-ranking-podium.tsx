@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi } from "@/lib/api/v2"
 import type { MarginRankingResult } from "@/lib/api/v2"
-import { Loader2, Trophy } from "lucide-react"
+import { Trophy } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 import { PodiumCard } from "@/components/dashboard/leaderboard/PodiumCard"
 import { BottomCard } from "@/components/dashboard/leaderboard/BottomCard"
 
@@ -82,7 +83,9 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[400px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div style={{ transform: 'scale(1.25)' }}>
+              <Loader />
+            </div>
           </div>
         </CardContent>
       </Card>

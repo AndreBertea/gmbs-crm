@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import React, { useState, useMemo, useEffect, useRef } from "react"
 import { InterventionStatsBarChart } from "@/components/dashboard/intervention-stats-barchart"
 import { ArtisanStatsList } from "@/components/dashboard/artisan-stats-list"
 import { MarginStatsCard } from "@/components/dashboard/margin-stats-card"
@@ -18,6 +18,11 @@ import { useRevealTransition } from "@/hooks/useRevealTransition"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
 import useModal from "@/hooks/useModal"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
+import { AvatarGroup, AvatarGroupTooltip } from "@/components/ui/avatar-group"
+import { GestionnaireBadge } from "@/components/ui/gestionnaire-badge"
+import { useGestionnaires, type Gestionnaire } from "@/hooks/useGestionnaires"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 type PeriodType = "week" | "month" | "year"
 
@@ -29,12 +34,34 @@ export default function DashboardPage() {
   const [isMounted, setIsMounted] = useState(false)
   const [totalInterventions, setTotalInterventions] = useState<number | null>(null)
   const [showTransition, setShowTransition] = useState(false)
+  const [selectedGestionnaireId, setSelectedGestionnaireId] = useState<string | null>(null)
   const { open: openModal } = useModal()
   const artisanModal = useArtisanModal()
   
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
-  const userId = currentUser?.id ?? null
+  const { data: gestionnaires = [], isLoading: isLoadingGestionnaires } = useGestionnaires()
+  
+  // Initialiser avec l'utilisateur courant par défaut
+  useEffect(() => {
+    if (currentUser?.id && !selectedGestionnaireId) {
+      setSelectedGestionnaireId(currentUser.id)
+    }
+  }, [currentUser?.id, selectedGestionnaireId])
+  
+  // Fonction pour obtenir le nom d'affichage
+  const getDisplayName = (gestionnaire: Gestionnaire) => {
+    const parts = [
+      gestionnaire.firstname || gestionnaire.prenom,
+      gestionnaire.lastname || gestionnaire.name
+    ].filter(Boolean)
+    return parts.length > 0
+      ? parts.join(" ")
+      : gestionnaire.code_gestionnaire || gestionnaire.username || "Gestionnaire"
+  }
+  
+  // Filtrer les données selon le gestionnaire sélectionné
+  const effectiveUserId = selectedGestionnaireId || currentUser?.id || null
   
   // Références pour l'animation
   const dashboardContentRef = useRef<HTMLDivElement>(null)
@@ -198,7 +225,7 @@ export default function DashboardPage() {
 
   // Charger le nombre total d'interventions pour la période
   useEffect(() => {
-    if (!userId || isLoadingUser || !period.startDate || !period.endDate) {
+    if (!effectiveUserId || isLoadingUser || !period.startDate || !period.endDate) {
       setTotalInterventions(null)
       return
     }
@@ -207,7 +234,7 @@ export default function DashboardPage() {
 
     const loadTotalInterventions = async () => {
       try {
-        const statsData = await interventionsApi.getStatsByUser(userId, period.startDate, period.endDate)
+        const statsData = await interventionsApi.getStatsByUser(effectiveUserId, period.startDate, period.endDate)
         if (!cancelled) {
           setTotalInterventions(statsData.total)
         }
@@ -224,7 +251,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [userId, isLoadingUser, period.startDate, period.endDate])
+  }, [effectiveUserId, isLoadingUser, period.startDate, period.endDate])
 
   return (
     <>
@@ -249,14 +276,10 @@ export default function DashboardPage() {
             className="flex flex-col min-h-screen relative z-10"
           >
             <div className="flex-1 p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
-            <p className="text-muted-foreground">Vue d&apos;ensemble de l&apos;activité</p>
-          </div>
-          
-          {/* Sélecteur de période au milieu */}
-          <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
+        {/* Filterbar avec AvatarGroup à droite */}
+        <div className="flex items-center justify-between gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
+          {/* Partie gauche : Sélecteur de période */}
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Période :</span>
               {isMounted ? (
@@ -288,53 +311,76 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-
-          <div className="flex gap-2">
-            <ContextMenu>
-              <ContextMenuTrigger asChild>
-                <Button asChild>
-                  <Link href="/interventions">Voir les {t("deals")}</Link>
-                </Button>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => openModal("new", { content: "new-intervention" })} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nouvelle intervention
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
-            <ContextMenu>
-              <ContextMenuTrigger asChild>
-                <Button variant="outline" asChild>
-                  <Link href="/artisans">Voir les {t("contacts")}</Link>
-                </Button>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem onClick={() => artisanModal.openNew()} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nouvel artisan
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
+          
+          {/* Partie droite : AvatarGroup des gestionnaires */}
+          <div className="flex items-center gap-3">
+            {isLoadingGestionnaires ? (
+              <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+            ) : gestionnaires.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Aucun gestionnaire</div>
+            ) : (
+              <AvatarGroup variant="motion" className="h-9 -space-x-2">
+                {gestionnaires.map((gestionnaire) => {
+                  const isSelected = selectedGestionnaireId === gestionnaire.id
+                  const isCurrentUser = currentUser?.id === gestionnaire.id
+                  const displayName = getDisplayName(gestionnaire)
+                  
+                  return (
+                    <GestionnaireBadge
+                      key={gestionnaire.id}
+                      firstname={gestionnaire.firstname}
+                      lastname={gestionnaire.lastname}
+                      prenom={gestionnaire.prenom}
+                      name={gestionnaire.name}
+                      color={gestionnaire.color}
+                      size="md"
+                      className={cn(
+                        "transition-all",
+                        isSelected && "ring-2 ring-primary ring-offset-2 scale-110",
+                        isCurrentUser && !isSelected && "ring-2 ring-green-500/50"
+                      )}
+                      onClick={() => setSelectedGestionnaireId(gestionnaire.id)}
+                    >
+                      <AvatarGroupTooltip>
+                        <div className="flex flex-col gap-1">
+                          <p className="font-semibold">{displayName}</p>
+                          {isCurrentUser && (
+                            <Badge variant="secondary" className="w-fit text-xs">
+                              Vous
+                            </Badge>
+                          )}
+                          {gestionnaire.code_gestionnaire && (
+                            <p className="text-xs text-muted-foreground">
+                              {gestionnaire.code_gestionnaire}
+                            </p>
+                          )}
+                        </div>
+                      </AvatarGroupTooltip>
+                    </GestionnaireBadge>
+                  )
+                })}
+              </AvatarGroup>
+            )}
           </div>
         </div>
 
+        {/* Passer effectiveUserId aux composants de stats */}
         {/* Première ligne : Interventions (40%), Artisans (30%), Performance (30%) */}
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-10">
           <div className="lg:col-span-4">
-            <InterventionStatsBarChart period={period} />
+            <InterventionStatsBarChart period={period} userId={effectiveUserId} />
           </div>
           <div className="lg:col-span-3">
-            <ArtisanStatsList period={period} />
+            <ArtisanStatsList period={period} userId={effectiveUserId} />
           </div>
           <div className="lg:col-span-3 space-y-4">
             {/* Performance Moyenne et Totale côte à côte */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <MarginStatsCard period={period} />
+                <MarginStatsCard period={period} userId={effectiveUserId} />
               </div>
               <div>
-                <MarginTotalCard period={period} />
+                <MarginTotalCard period={period} userId={effectiveUserId} />
               </div>
             </div>
           </div>
@@ -343,7 +389,7 @@ export default function DashboardPage() {
         {/* Deuxième ligne : Statistiques (70%) et Podium (30%) alignés */}
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-10 items-end">
           <div className="lg:col-span-7">
-            <WeeklyStatsTable period={period} />
+            <WeeklyStatsTable period={period} userId={effectiveUserId} />
           </div>
           <div className="lg:col-span-3">
             <GestionnaireRankingPodium period={period} />

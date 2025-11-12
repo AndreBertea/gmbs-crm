@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi, usersApi } from "@/lib/api/v2"
 import type { MarginStats, TargetPeriodType } from "@/lib/api/v2"
-import { Loader2, TrendingUp, TrendingDown } from "lucide-react"
+import { TrendingUp, TrendingDown } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 import { Speedometer } from "./speedometer"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
 
@@ -13,6 +14,7 @@ interface MarginStatsCardProps {
     startDate?: string
     endDate?: string
   }
+  userId?: string | null
 }
 
 // Objectif par défaut si aucun objectif n'est défini
@@ -31,7 +33,7 @@ function getPeriodTypeFromDates(startDate?: string, endDate?: string): TargetPer
   return "year"
 }
 
-export function MarginStatsCard({ period }: MarginStatsCardProps) {
+export function MarginStatsCard({ period, userId: propUserId }: MarginStatsCardProps) {
   const [stats, setStats] = useState<MarginStats | null>(null)
   const [performanceTarget, setPerformanceTarget] = useState<number>(DEFAULT_PERFORMANCE_TARGET)
   const [showPercentage, setShowPercentage] = useState<boolean>(true)
@@ -45,7 +47,8 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
 
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
-  const userId = currentUser?.id ?? null
+  // Utiliser le prop userId s'il est fourni, sinon utiliser currentUser
+  const userId = propUserId ?? currentUser?.id ?? null
 
   // Charger l'objectif de performance et les préférences pour l'utilisateur et la période
   useEffect(() => {
@@ -135,9 +138,10 @@ export function MarginStatsCard({ period }: MarginStatsCardProps) {
           <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+          <div className="flex items-center justify-center">
+            <div style={{ transform: 'scale(1.25)' }}>
+              <Loader />
+            </div>
           </div>
         </CardContent>
       </Card>
