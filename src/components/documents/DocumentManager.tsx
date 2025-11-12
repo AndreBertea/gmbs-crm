@@ -102,9 +102,9 @@ type PreviewState =
 
 const DEFAULT_ACCEPT = ".pdf,.jpg,.jpeg,.png,.gif,.heic,.heif,.doc,.docx,.xls,.xlsx,.zip,.mp4";
 const INVOICE_KINDS = new Set([
-  "facture_gmbs",
-  "facture_artisan",
-  "facture_materiel",
+  "facturesGMBS",
+  "facturesArtisans",
+  "facturesMateriel",
 ]);
 
 type PreviewSize = {
@@ -121,16 +121,22 @@ function normalizeKind(rawKind: string): string {
   const trimmed = rawKind.trim();
   const compact = trimmed.toLowerCase().replace(/[_\s-]/g, "");
 
-  switch (compact) {
-    case "facturegmbs":
-      return "facture_gmbs";
-    case "factureartisan":
-      return "facture_artisan";
-    case "facturemateriel":
-      return "facture_materiel";
-    default:
-      return trimmed;
+  // Mapping vers les valeurs canoniques avec 's' (comme dans la DB)
+  const canonicalMap: Record<string, string> = {
+    facturegmbs: 'facturesGMBS',
+    facturesgmbs: 'facturesGMBS',
+    factureartisan: 'facturesArtisans',
+    facturesartisan: 'facturesArtisans',
+    facturemateriel: 'facturesMateriel',
+    facturesmateriel: 'facturesMateriel'
+  };
+  
+  if (canonicalMap[compact]) {
+    return canonicalMap[compact];
   }
+  
+  // Pour les autres kinds, retourner la valeur originale (trimmed)
+  return trimmed;
 }
 
 function isInvoiceKind(kind: string): boolean {

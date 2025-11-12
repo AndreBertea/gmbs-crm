@@ -22,10 +22,10 @@ import type { CreateInterventionData } from "@/lib/api/v2/common/types"
 
 const INTERVENTION_DOCUMENT_KINDS = [
   { kind: "devis", label: "Devis" },
-  { kind: "facture_gmbs", label: "Facture GMBS" },
-  { kind: "facture_materiel", label: "Facture Matériel" },
+  { kind: "facturesGMBS", label: "Facture GMBS" },
+  { kind: "facturesMateriel", label: "Facture Matériel" },
   { kind: "photos", label: "Photos" },
-  { kind: "facture_artisan", label: "Facture Artisan" },
+  { kind: "facturesArtisans", label: "Facture Artisan" },
 ]
 
 const AGENCIES_WITH_OPTIONAL_REFERENCE = new Set(["imodirect", "afedim", "oqoro"])

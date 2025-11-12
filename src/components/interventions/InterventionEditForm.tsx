@@ -30,10 +30,10 @@ import { Avatar } from "@/components/artisans/Avatar"
 
 const INTERVENTION_DOCUMENT_KINDS = [
   { kind: "devis", label: "Devis" },
-  { kind: "facture_gmbs", label: "Facture GMBS" },
-  { kind: "facture_materiel", label: "Facture Matériel" },
+  { kind: "facturesGMBS", label: "Facture GMBS" },
+  { kind: "facturesMateriel", label: "Facture Matériel" },
   { kind: "photos", label: "Photos" },
-  { kind: "facture_artisan", label: "Facture Artisan" },
+  { kind: "facturesArtisans", label: "Facture Artisan" },
 ]
 
 const MAX_RADIUS_KM = 10000
