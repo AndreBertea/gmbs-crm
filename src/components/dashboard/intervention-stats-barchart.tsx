@@ -822,6 +822,7 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
                     onMouseEnter={handleBarMouseEnter}
                     onMouseLeave={handleBarMouseLeave}
                     onClick={handleBarClick}
+                    isAnimationActive={false} // Disable Recharts animation to avoid StrictMode setState loop
                   >
                     <LabelList
                       dataKey="name"
@@ -937,4 +938,3 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     </ContextMenu>
   )
 }
-
