@@ -535,7 +535,7 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
     }
 
     preloadInterventions()
-  }, [userId, statsByStatusLabelKey, period?.startDate, period?.endDate, fundamentalStatuses])
+  }, [userId, statsByStatusLabelKey, period, fundamentalStatuses, CACHE_DURATION, stats?.by_status_label])
 
   if (loading) {
     return (
@@ -702,7 +702,7 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
       return () => {
         cancelled = true
       }
-    }, [userId, statusLabel, cacheKey, period?.startDate, period?.endDate])
+    }, [statusLabel, cacheKey, period])
 
     // Nettoyer le cache périodiquement (optionnel, pour éviter la croissance mémoire)
     useEffect(() => {

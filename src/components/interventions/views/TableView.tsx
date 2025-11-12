@@ -465,8 +465,8 @@ export function TableView({
 
   const columnWidths = view.layoutOptions.columnWidths ?? {}
   const tableLayoutOptions = view.layoutOptions as TableLayoutOptions
-  const columnStyles = tableLayoutOptions.columnStyles ?? {}
-  const columnAlignment = tableLayoutOptions.columnAlignment ?? {}
+  const columnStyles = useMemo(() => tableLayoutOptions.columnStyles ?? {}, [tableLayoutOptions.columnStyles])
+  const columnAlignment = useMemo(() => tableLayoutOptions.columnAlignment ?? {}, [tableLayoutOptions.columnAlignment])
   const statusBorderSize = (tableLayoutOptions.statusBorderSize ?? "m") as TableStatusBorderSize
   const statusBorderWidth = TABLE_STATUS_BORDER_WIDTHS[statusBorderSize] ?? TABLE_STATUS_BORDER_WIDTHS.m
   const statusBorderWidthPx = `${statusBorderWidth}px`
@@ -597,7 +597,7 @@ export function TableView({
 
   useEffect(() => {
     handleScrollWithFades()
-  }, [handleScrollWithFades, dataset.length, expandedRowId, tableViewportHeight, virtualItems.length])
+  }, [handleScrollWithFades, dataset.length, expandedRowId, tableViewportHeight])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -772,7 +772,7 @@ export function TableView({
       setMentionIds(validMentionIds)
       setShowNoteDialog(true)
     },
-    [getReminderDueDate, getReminderMentions, getReminderNote],
+    [getReminderDueDate, getReminderMentions, getReminderNote, uuidPattern],
   )
 
   const handleNoteSave = useCallback(async () => {

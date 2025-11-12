@@ -130,31 +130,39 @@ export function MapLibreMapImpl({
       markerRef.current = markerInstance
 
       return () => {
+        // Copier les valeurs des refs dans des variables locales pour le cleanup
+        const circleOutlineLayerId = circleOutlineLayerIdRef.current
+        const circleFillLayerId = circleFillLayerIdRef.current
+        const circleSourceId = circleSourceIdRef.current
+        const connectionLabelLayerId = connectionLabelLayerIdRef.current
+        const connectionLineLayerId = connectionLineLayerIdRef.current
+        const connectionSourceId = connectionSourceIdRef.current
+        
         if (mapInstance.isStyleLoaded()) {
-          const existingOutlineLayer = mapInstance.getLayer(circleOutlineLayerIdRef.current)
+          const existingOutlineLayer = mapInstance.getLayer(circleOutlineLayerId)
           if (existingOutlineLayer) {
-            mapInstance.removeLayer(circleOutlineLayerIdRef.current)
+            mapInstance.removeLayer(circleOutlineLayerId)
           }
-          const existingFillLayer = mapInstance.getLayer(circleFillLayerIdRef.current)
+          const existingFillLayer = mapInstance.getLayer(circleFillLayerId)
           if (existingFillLayer) {
-            mapInstance.removeLayer(circleFillLayerIdRef.current)
+            mapInstance.removeLayer(circleFillLayerId)
           }
-          const existingCircleSource = mapInstance.getSource(circleSourceIdRef.current)
+          const existingCircleSource = mapInstance.getSource(circleSourceId)
           if (existingCircleSource) {
-            mapInstance.removeSource(circleSourceIdRef.current)
+            mapInstance.removeSource(circleSourceId)
           }
 
-          const existingConnectionLabelLayer = mapInstance.getLayer(connectionLabelLayerIdRef.current)
+          const existingConnectionLabelLayer = mapInstance.getLayer(connectionLabelLayerId)
           if (existingConnectionLabelLayer) {
-            mapInstance.removeLayer(connectionLabelLayerIdRef.current)
+            mapInstance.removeLayer(connectionLabelLayerId)
           }
-          const existingConnectionLineLayer = mapInstance.getLayer(connectionLineLayerIdRef.current)
+          const existingConnectionLineLayer = mapInstance.getLayer(connectionLineLayerId)
           if (existingConnectionLineLayer) {
-            mapInstance.removeLayer(connectionLineLayerIdRef.current)
+            mapInstance.removeLayer(connectionLineLayerId)
           }
-          const existingConnectionSource = mapInstance.getSource(connectionSourceIdRef.current)
+          const existingConnectionSource = mapInstance.getSource(connectionSourceId)
           if (existingConnectionSource) {
-            mapInstance.removeSource(connectionSourceIdRef.current)
+            mapInstance.removeSource(connectionSourceId)
           }
         }
         markerInstance.remove()
@@ -296,7 +304,7 @@ export function MapLibreMapImpl({
 
       source.setData(circleFeatureCollection(lat, lng, circleRadiusKm))
     })
-  }, [lat, lng, circleRadiusKm])
+  }, [lat, lng, circleRadiusKm, enable3DBuildings])
 
   useEffect(() => {
     const mapInstance = mapRef.current
@@ -332,14 +340,14 @@ export function MapLibreMapImpl({
         ),
       )
     })
-  }, [lat, lng, selectedConnection?.lat, selectedConnection?.lng, selectedConnection?.distanceLabel])
+  }, [lat, lng, selectedConnection])
 
   useEffect(() => {
     const mapInstance = mapRef.current
     if (!mapInstance) return
 
     fitMapToCurrentExtent(mapInstance, lat, lng, circleRadiusKm, selectedConnection)
-  }, [lat, lng, circleRadiusKm, selectedConnection?.lat, selectedConnection?.lng])
+  }, [lat, lng, circleRadiusKm, selectedConnection])
 
   if (error) {
     return (

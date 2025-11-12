@@ -464,7 +464,7 @@ export function InterventionStatsPieChart({ period }: InterventionStatsPieChartP
       return () => {
         cancelled = true
       }
-    }, [userId, statusLabel, cacheKey, period?.startDate, period?.endDate])
+    }, [statusLabel, cacheKey, period])
 
     useEffect(() => {
       const cleanup = setInterval(() => {

@@ -84,23 +84,25 @@ class SQLToSheetsBackup {
       }
 
       // Préparer les données pour Google Sheets
-      const sheetData = artisans.map(artisan => ({
-        'ID': artisan.id,
-        'Nom Prénom': `${artisan.prenom || ''} ${artisan.nom || ''}`.trim(),
-        'Adresse Mail': artisan.email || '',
-        'Numéro Téléphone': artisan.telephone || '',
-        'Téléphone 2': artisan.telephone2 || '',
-        'Raison Social': artisan.raison_sociale || '',
-        'Siret': artisan.siret || '',
-        'STATUT JURIDIQUE': artisan.statut_juridique || '',
-        'STATUT': artisan.artisan_statuses?.code || '',
-        'Adresse Postale': this.formatAddress(artisan),
-        'Gestionnaire': artisan.users?.username || '',
-        'MÉTIER': await this.getArtisanMetiers(artisan.id),
-        'DATE D\'AJOUT': artisan.date_ajout ? new Date(artisan.date_ajout).toLocaleDateString('fr-FR') : '',
-        'SUIVI DES RELANCES DOCS': artisan.suivi_relances_docs || '',
-        'Date Export': new Date().toLocaleString('fr-FR')
-      }));
+      const sheetData = await Promise.all(
+        artisans.map(async (artisan) => ({
+          'ID': artisan.id,
+          'Nom Prénom': `${artisan.prenom || ''} ${artisan.nom || ''}`.trim(),
+          'Adresse Mail': artisan.email || '',
+          'Numéro Téléphone': artisan.telephone || '',
+          'Téléphone 2': artisan.telephone2 || '',
+          'Raison Social': artisan.raison_sociale || '',
+          'Siret': artisan.siret || '',
+          'STATUT JURIDIQUE': artisan.statut_juridique || '',
+          'STATUT': artisan.artisan_statuses?.code || '',
+          'Adresse Postale': this.formatAddress(artisan),
+          'Gestionnaire': artisan.users?.username || '',
+          'MÉTIER': await this.getArtisanMetiers(artisan.id),
+          'DATE D\'AJOUT': artisan.date_ajout ? new Date(artisan.date_ajout).toLocaleDateString('fr-FR') : '',
+          'SUIVI DES RELANCES DOCS': artisan.suivi_relances_docs || '',
+          'Date Export': new Date().toLocaleString('fr-FR')
+        }))
+      );
 
       // Créer ou utiliser la feuille existante
       let sheet = this.doc.sheetsByTitle[sheetName];
@@ -162,26 +164,28 @@ class SQLToSheetsBackup {
       }
 
       // Préparer les données pour Google Sheets
-      const sheetData = interventions.map(intervention => ({
-        'ID': intervention.id_inter || intervention.id,
-        'Date': intervention.date ? new Date(intervention.date).toLocaleDateString('fr-FR') : '',
-        'Agence': intervention.agencies?.name || '',
-        'Adresse d\'intervention': this.formatInterventionAddress(intervention),
-        'Statut': intervention.intervention_statuses?.code || '',
-        'Contexte d\'intervention': intervention.contexte_intervention || '',
-        'Métier': intervention.metiers?.code || '',
-        'Gest.': intervention.users?.username || '',
-        'SST': intervention.numero_sst || '',
-        'COUT SST': await this.getInterventionCost(intervention.id, 'sst'),
-        'COÛT MATERIEL': await this.getInterventionCost(intervention.id, 'materiel'),
-        'COUT INTER': await this.getInterventionCost(intervention.id, 'intervention'),
-        '% SST': intervention.pourcentage_sst || '',
-        'Date d\'intervention': intervention.date_intervention ? new Date(intervention.date_intervention).toLocaleDateString('fr-FR') : '',
-        'Date Terminé': intervention.date_termine ? new Date(intervention.date_termine).toLocaleDateString('fr-FR') : '',
-        'COMMENTAIRE': intervention.commentaire_agent || '',
-        'Client': this.formatClientInfo(intervention.clients),
-        'Date Export': new Date().toLocaleString('fr-FR')
-      }));
+      const sheetData = await Promise.all(
+        interventions.map(async (intervention) => ({
+          'ID': intervention.id_inter || intervention.id,
+          'Date': intervention.date ? new Date(intervention.date).toLocaleDateString('fr-FR') : '',
+          'Agence': intervention.agencies?.name || '',
+          'Adresse d\'intervention': this.formatInterventionAddress(intervention),
+          'Statut': intervention.intervention_statuses?.code || '',
+          'Contexte d\'intervention': intervention.contexte_intervention || '',
+          'Métier': intervention.metiers?.code || '',
+          'Gest.': intervention.users?.username || '',
+          'SST': intervention.numero_sst || '',
+          'COUT SST': await this.getInterventionCost(intervention.id, 'sst'),
+          'COÛT MATERIEL': await this.getInterventionCost(intervention.id, 'materiel'),
+          'COUT INTER': await this.getInterventionCost(intervention.id, 'intervention'),
+          '% SST': intervention.pourcentage_sst || '',
+          'Date d\'intervention': intervention.date_intervention ? new Date(intervention.date_intervention).toLocaleDateString('fr-FR') : '',
+          'Date Terminé': intervention.date_termine ? new Date(intervention.date_termine).toLocaleDateString('fr-FR') : '',
+          'COMMENTAIRE': intervention.commentaire_agent || '',
+          'Client': this.formatClientInfo(intervention.clients),
+          'Date Export': new Date().toLocaleString('fr-FR')
+        }))
+      );
 
       // Créer ou utiliser la feuille existante
       let sheet = this.doc.sheetsByTitle[sheetName];
@@ -482,4 +486,3 @@ class SQLToSheetsBackup {
 }
 
 module.exports = { SQLToSheetsBackup };
-

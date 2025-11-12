@@ -97,6 +97,7 @@ export function useInfiniteScroll<T>({
   const debouncedLoadMore = useDebounce(loadMore, debounceDelay);
 
   // Reset quand les dépendances changent
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setItems([]);
     setOffset(0);

@@ -43,7 +43,7 @@ export const remindersApiV2 = remindersApi;
 export const utilsApiV2 = utilsApi;
 
 // Export par défaut avec toutes les APIs
-export default {
+const apiV2 = {
   users: usersApi,
   interventions: interventionsApi,
   artisans: artisansApi,
@@ -72,4 +72,6 @@ export default {
   remindersApiV2,
   enumsApiV2,
   utilsApiV2,
-};
+}
+
+export default apiV2;

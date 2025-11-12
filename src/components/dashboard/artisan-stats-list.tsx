@@ -76,7 +76,7 @@ export function ArtisanStatsList({ period, userId: propUserId }: ArtisanStatsLis
     return () => {
       cancelled = true
     }
-  }, [userId, isLoadingUser, period?.startDate, period?.endDate])
+  }, [userId, isLoadingUser, period])
 
 
   // Préparer les données pour la liste (statuts avec nombre > 0)
@@ -237,7 +237,7 @@ export function ArtisanStatsList({ period, userId: propUserId }: ArtisanStatsLis
       return () => {
         cancelled = true
       }
-    }, [userId, statusLabel, period?.startDate, period?.endDate])
+    }, [userId, statusLabel, period])
 
     if (loading) {
       return (
@@ -373,7 +373,7 @@ export function ArtisanStatsList({ period, userId: propUserId }: ArtisanStatsLis
       return () => {
         cancelled = true
       }
-    }, [userId])
+    }, [])
 
     if (loading) {
       return (

@@ -116,7 +116,7 @@ export function useSimpleInterventions() {
     } finally {
       setLoading(false);
     }
-  }, [cache, interventions.length]);
+  }, [cache]);
 
   // Chargement initial
   useEffect(() => {

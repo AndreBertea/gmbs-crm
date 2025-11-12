@@ -247,7 +247,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
     // Mettre à jour la query pour refléter la sélection
     setLocationQuery(suggestion.label)
     setGeocodeError(null)
-  }, [clearSuggestions])
+  }, [clearSuggestions, setLocationQuery])
   
   // Fonction helper pour parser une adresse
   const parseAddress = (fullAddress: string): { street: string; postalCode: string; city: string } => {
@@ -332,7 +332,7 @@ export function LegacyInterventionForm({ onSuccess, onCancel, mode = "centerpage
     } finally {
       setIsGeocoding(false)
     }
-  }, [locationQuery, geocodeQuery, clearSuggestions])
+  }, [locationQuery, geocodeQuery, clearSuggestions, setLocationQuery])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()

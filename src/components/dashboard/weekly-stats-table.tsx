@@ -42,7 +42,7 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod, userId
       const newPeriod = getPeriodTypeFromDates(externalPeriod.startDate, externalPeriod.endDate)
       setPeriod(newPeriod)
     }
-  }, [externalPeriod?.startDate, externalPeriod?.endDate])
+  }, [externalPeriod])
   const [stats, setStats] = useState<WeeklyStats | MonthlyStats | YearlyStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

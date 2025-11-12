@@ -60,7 +60,7 @@ function validateBatchExample() {
 
 // ===== EXEMPLE 4: UTILISATION DES RÈGLES COMMUNES =====
 
-function useCommonRulesExample() {
+function showCommonRulesExample() {
   const { commonRules } = dataValidator;
   
   // Utiliser directement les règles communes
@@ -144,7 +144,7 @@ module.exports = {
   validateArtisanExample,
   validateForApiExample,
   validateBatchExample,
-  useCommonRulesExample,
+  showCommonRulesExample,
   generateReportExample,
   apiIntegrationExample,
   completeWorkflowExample
@@ -165,7 +165,7 @@ if (require.main === module) {
   validateBatchExample();
   
   console.log('\n4. Utilisation des règles communes:');
-  useCommonRulesExample();
+  showCommonRulesExample();
   
   console.log('\n5. Génération de rapport:');
   generateReportExample();
