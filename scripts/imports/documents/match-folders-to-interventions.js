@@ -14,8 +14,10 @@ const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
 
-// Charger les variables d'environnement depuis .env.local
-require('dotenv').config({ path: '.env.local' });
+// Charger les variables d'environnement selon l'environnement
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+require('dotenv').config({ path: envFile });
+console.log(`📁 Variables chargées depuis ${envFile}`);
 
 // Utiliser l'API v2 centralisée
 let interventionsApi, documentsApi;
@@ -272,15 +274,28 @@ async function extractFoldersFromDrive(drive) {
         };
       });
 
-      // Compter les documents dans chaque dossier INTER
+      // Compter les documents dans chaque dossier INTER (parallélisé par batches)
       console.log(`   📊 Analyse de ${parsedFolders.length} dossier(s) INTER...`);
-      for (let j = 0; j < parsedFolders.length; j++) {
-        const folder = parsedFolders[j];
-        const documents = await countDocumentsInFolder(drive, folder.folderId);
-        folder.documentCount = documents.length;
+      const BATCH_SIZE = 10; // Traiter 10 dossiers en parallèle pour éviter les limites API
+      for (let j = 0; j < parsedFolders.length; j += BATCH_SIZE) {
+        const batch = parsedFolders.slice(j, j + BATCH_SIZE);
+        const results = await Promise.all(
+          batch.map(folder => 
+            countDocumentsInFolder(drive, folder.folderId)
+              .then(documents => ({ folder, count: documents.length }))
+              .catch(error => {
+                console.warn(`     ⚠️ Erreur pour "${folder.originalName}": ${error.message}`);
+                return { folder, count: 0 };
+              })
+          )
+        );
         
-        if ((j + 1) % 10 === 0) {
-          console.log(`     Traité ${j + 1}/${parsedFolders.length} dossiers...`);
+        results.forEach(({ folder, count }) => {
+          folder.documentCount = count;
+        });
+        
+        if ((j + BATCH_SIZE) % 50 === 0 || j + BATCH_SIZE >= parsedFolders.length) {
+          console.log(`     Traité ${Math.min(j + BATCH_SIZE, parsedFolders.length)}/${parsedFolders.length} dossiers...`);
         }
       }
 
@@ -718,7 +733,16 @@ async function insertInterventionDocuments(interventionId, documents, drive, dry
     return results;
   }
 
-  for (const doc of documents) {
+  // Insérer les documents séquentiellement pour respecter la limite de 3 écritures/seconde
+  // Mais avec gestion d'erreur améliorée
+  for (let i = 0; i < documents.length; i++) {
+    const doc = documents[i];
+    
+    // Petit délai pour éviter de dépasser les limites d'écriture (3 req/s)
+    if (i > 0 && i % 3 === 0) {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Attendre 1 seconde tous les 3 documents
+    }
+    
     const result = await insertDocumentToDatabase(interventionId, doc, drive);
     
     if (result.success) {
@@ -961,46 +985,78 @@ Exemples:
       none: 0
     };
 
+    // Phase 1 : Matching (séquentiel mais rapide car utilise le cache)
+    console.log('🔗 Phase 1: Matching des dossiers avec les interventions (cache local)...\n');
+    const matchResults = [];
     for (let i = 0; i < foldersWithId.length; i++) {
       const folder = foldersWithId[i];
       // Utiliser interventionId pour le matching (correspond à id_inter)
+      // Utilise le cache en priorité, donc très rapide
       const matchResult = await findMatchingIntervention(folder.interventionId, interventionsCache);
+      matchResults.push({ folder, matchResult });
+      
+      if ((i + 1) % 100 === 0 || (i + 1) === foldersWithId.length) {
+        console.log(`  Matching: ${i + 1}/${foldersWithId.length} dossiers traités...`);
+      }
+    }
 
-      const matchInfo = {
-        folderName: folder.originalName,
-        interventionId: folder.interventionId, // Utilisé pour le matching (id_inter)
-        factureNumber: folder.factureNumber, // Gardé pour référence
-        folderId: folder.folderId,
-        monthFolder: folder.monthFolder,
-        documentCount: folder.documentCount || 0,
-        matchType: matchResult.matchType,
-        reason: matchResult.reason,
-        intervention: matchResult.intervention ? {
-          id: matchResult.intervention.id,
-          id_inter: matchResult.intervention.id_inter,
-          date: matchResult.intervention.date,
-          adresse: matchResult.intervention.adresse,
-          ville: matchResult.intervention.ville,
-          code_postal: matchResult.intervention.code_postal,
-          statut_id: matchResult.intervention.statut_id
-        } : null,
-        documents: null,
-        documentsInsertion: null
-      };
+    // Phase 2 : Récupération des documents (parallélisé par batches)
+    // Récupérer les documents pour tous les matchs (même en mode skipInsert pour sauvegarder dans JSON)
+    console.log('\n📄 Phase 2: Récupération des documents depuis Google Drive (parallélisé)...\n');
+    const foldersToProcess = matchResults.filter(r => r.matchResult.intervention && drive && r.folder.folderId);
+    const DOC_BATCH_SIZE = 5; // Traiter 5 dossiers en parallèle pour éviter les limites API
+    
+    for (let i = 0; i < foldersToProcess.length; i += DOC_BATCH_SIZE) {
+      const batch = foldersToProcess.slice(i, i + DOC_BATCH_SIZE);
+      
+      const batchResults = await Promise.all(
+        batch.map(async ({ folder, matchResult }) => {
+          try {
+            const driveDocuments = await listDocumentsInFolder(drive, folder.folderId);
+            return { folder, matchResult, driveDocuments, error: null };
+          } catch (error) {
+            console.warn(`  ⚠️ Erreur lors de la récupération des documents pour "${folder.originalName}": ${error.message}`);
+            return { folder, matchResult, driveDocuments: [], error: error.message };
+          }
+        })
+      );
+      
+      // Traiter les résultats du batch
+      for (const { folder, matchResult, driveDocuments, error } of batchResults) {
+        const matchInfo = {
+          folderName: folder.originalName,
+          interventionId: folder.interventionId,
+          factureNumber: folder.factureNumber,
+          folderId: folder.folderId,
+          monthFolder: folder.monthFolder,
+          documentCount: folder.documentCount || 0,
+          matchType: matchResult.matchType,
+          reason: matchResult.reason,
+          intervention: matchResult.intervention ? {
+            id: matchResult.intervention.id,
+            id_inter: matchResult.intervention.id_inter,
+            date: matchResult.intervention.date,
+            adresse: matchResult.intervention.adresse,
+            ville: matchResult.intervention.ville,
+            code_postal: matchResult.intervention.code_postal,
+            statut_id: matchResult.intervention.statut_id
+          } : null,
+          documents: null,
+          documentsInsertion: null
+        };
 
-      // Si match trouvé et qu'on doit insérer les documents
-      if (matchResult.intervention && !skipInsert && drive && folder.folderId) {
-        const interventionId = matchResult.intervention.id;
-        
-        // Récupérer les documents depuis Google Drive
-        console.log(`\n📄 Analyse des documents pour "${folder.originalName}"...`);
-        const driveDocuments = await listDocumentsInFolder(drive, folder.folderId);
-        
+        if (error) {
+          // En cas d'erreur, ajouter quand même le matchInfo mais sans documents
+          matches.push(matchInfo);
+          stats[matchResult.matchType]++;
+          continue;
+        }
+
         if (driveDocuments.length > 0) {
           // Préparer les documents (tous avec kind = "a_classe")
           const preparedDocuments = prepareDocumentsForInsertion(driveDocuments);
           matchInfo.documents = preparedDocuments.map(d => ({
-            id: d.id, // Inclure l'ID pour faciliter l'insertion ultérieure
+            id: d.id,
             name: d.name,
             kind: d.kind,
             mimeType: d.mimeType,
@@ -1008,47 +1064,86 @@ Exemples:
             driveUrl: d.driveUrl
           }));
 
-          // Afficher les statistiques
-          console.log(`    ✅ ${preparedDocuments.length} document(s) trouvé(s) et préparé(s)`);
-          console.log(`       - Tous classifiés comme: "a_classe"`);
-
-          // Insérer les documents en base
-          const insertionResults = await insertInterventionDocuments(
-            interventionId,
-            preparedDocuments,
-            drive,
-            dryRun
-          );
-          
-          matchInfo.documentsInsertion = {
-            total: insertionResults.total,
-            inserted: insertionResults.inserted,
-            errors: insertionResults.errors
-          };
-
-          if (dryRun) {
-            console.log(`    🔍 ${insertionResults.total} document(s) seraient inséré(s) en base`);
+          // Insérer les documents en base seulement si pas en mode skipInsert
+          if (!skipInsert) {
+            const interventionId = matchResult.intervention.id;
+            const insertionResults = await insertInterventionDocuments(
+              interventionId,
+              preparedDocuments,
+              drive,
+              dryRun
+            );
+            
+            matchInfo.documentsInsertion = {
+              total: insertionResults.total,
+              inserted: insertionResults.inserted,
+              errors: insertionResults.errors
+            };
           } else {
-            console.log(`    💾 ${insertionResults.inserted} document(s) inséré(s) en base, ${insertionResults.errors} erreur(s)`);
+            // En mode skipInsert, juste marquer le nombre de documents trouvés
+            matchInfo.documentsInsertion = {
+              total: preparedDocuments.length,
+              inserted: 0,
+              errors: 0
+            };
           }
-        } else {
-          console.log(`    ℹ️  Aucun document trouvé dans le dossier`);
         }
-      }
 
-      if (matchResult.intervention) {
         matches.push(matchInfo);
         stats[matchResult.matchType]++;
-      } else {
-        unmatched.push(matchInfo);
-        stats.none++;
       }
-
-      // Afficher la progression
-      if ((i + 1) % 50 === 0 || (i + 1) === foldersWithId.length) {
-        console.log(`\n  Traité ${i + 1}/${foldersWithId.length} dossiers... (${matches.length} matchs, ${unmatched.length} non matchés)`);
+      
+      if ((i + DOC_BATCH_SIZE) % 25 === 0 || i + DOC_BATCH_SIZE >= foldersToProcess.length) {
+        const processed = Math.min(i + DOC_BATCH_SIZE, foldersToProcess.length);
+        console.log(`  Documents récupérés: ${processed}/${foldersToProcess.length} dossiers...`);
       }
     }
+
+    // Ajouter les matchs qui n'ont pas pu être traités (pas de folderId ou pas de drive)
+    const processedFolderIds = new Set(foldersToProcess.map(r => r.folder.folderId));
+    matchResults.forEach(({ folder, matchResult }) => {
+      if (matchResult.intervention && !processedFolderIds.has(folder.folderId)) {
+        // Match trouvé mais pas de documents à récupérer (pas de folderId ou pas de drive)
+        matches.push({
+          folderName: folder.originalName,
+          interventionId: folder.interventionId,
+          factureNumber: folder.factureNumber,
+          folderId: folder.folderId,
+          monthFolder: folder.monthFolder,
+          documentCount: folder.documentCount || 0,
+          matchType: matchResult.matchType,
+          reason: matchResult.reason,
+          intervention: {
+            id: matchResult.intervention.id,
+            id_inter: matchResult.intervention.id_inter,
+            date: matchResult.intervention.date,
+            adresse: matchResult.intervention.adresse,
+            ville: matchResult.intervention.ville,
+            code_postal: matchResult.intervention.code_postal,
+            statut_id: matchResult.intervention.statut_id
+          },
+          documents: null,
+          documentsInsertion: null
+        });
+        stats[matchResult.matchType]++;
+      } else if (!matchResult.intervention) {
+        // Non-matchés
+        unmatched.push({
+          folderName: folder.originalName,
+          interventionId: folder.interventionId,
+          factureNumber: folder.factureNumber,
+          folderId: folder.folderId,
+          monthFolder: folder.monthFolder,
+          documentCount: folder.documentCount || 0,
+          matchType: matchResult.matchType,
+          reason: matchResult.reason,
+          intervention: null,
+          documents: null,
+          documentsInsertion: null
+        });
+        stats.none++;
+      }
+    });
 
     // 4. Calculer les statistiques d'insertion
     const insertionStats = {

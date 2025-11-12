@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 import { remindersApi } from "@/lib/api/v2/reminders"
 import type { InterventionReminder } from "@/lib/api/v2"
+import { supabase } from "@/lib/supabase-client"
 
 const normalizeIdentifier = (input: string): string => {
   return input
@@ -189,6 +190,68 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshReminders()
+  }, [refreshReminders])
+
+  // Subscription realtime pour mettre à jour automatiquement tous les composants
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    let mounted = true
+    let channel: ReturnType<typeof supabase.channel> | null = null
+
+    const bindChannel = () => {
+      if (channel) {
+        channel.unsubscribe()
+      }
+
+      channel = supabase
+        .channel("intervention_reminders_realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "intervention_reminders",
+          },
+          () => {
+            if (mounted) {
+              refreshReminders()
+            }
+          },
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR") {
+            console.warn("[RemindersContext] Realtime subscription error:", status)
+          }
+        })
+    }
+
+    const ensureSubscription = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (data?.session && mounted) {
+        bindChannel()
+      }
+    }
+
+    ensureSubscription()
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+
+      if (session) {
+        bindChannel()
+        refreshReminders()
+      } else if (channel) {
+        channel.unsubscribe()
+        channel = null
+      }
+    })
+
+    return () => {
+      mounted = false
+      channel?.unsubscribe()
+      authListener.subscription.unsubscribe()
+    }
   }, [refreshReminders])
 
   const toggleReminder = useCallback(

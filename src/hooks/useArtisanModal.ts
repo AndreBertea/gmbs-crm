@@ -30,7 +30,33 @@ export function useArtisanModal() {
     [modal],
   )
 
-  const close = modal.close
+  const close = useCallback(() => {
+    // Guard: only close if actually open and is an artisan-related modal
+    if (!modal.isOpen || (modal.content !== "artisan" && modal.content !== "new-artisan")) return
+
+    // Vérifier si le modal d'artisan vient d'un modal d'intervention AVANT de fermer
+    // car modal.close() va réinitialiser le state
+    const sourceLayoutId = modal.sourceLayoutId
+    const origin = typeof metadata?.origin === "string" ? metadata.origin : null
+    const isFromIntervention = origin?.startsWith("intervention:") || Boolean(sourceLayoutId)
+    const interventionId = isFromIntervention 
+      ? (origin?.replace("intervention:", "") ?? sourceLayoutId)
+      : null
+
+    // Fermer le modal d'artisan
+    modal.close()
+
+    // Si le modal venait d'une intervention, rouvrir le modal d'intervention
+    // Utiliser directement modal.open() pour éviter la dépendance circulaire
+    if (isFromIntervention && interventionId) {
+      // Petit délai pour laisser le modal d'artisan se fermer proprement
+      setTimeout(() => {
+        modal.open(interventionId, {
+          content: "intervention",
+        })
+      }, 100)
+    }
+  }, [metadata, modal])
 
   const openAtIndex = useCallback(
     (ids: string[], index: number, options?: Omit<ArtisanModalOpenOptions, "orderedIds" | "index">) => {

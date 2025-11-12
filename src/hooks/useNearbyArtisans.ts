@@ -35,6 +35,7 @@ type NearbyArtisanOptions = {
   limit?: number
   maxDistanceKm?: number
   sampleSize?: number
+  metier_id?: string | null
 }
 
 function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -62,13 +63,14 @@ export function useNearbyArtisans(
     error: null,
   })
 
-  const { limit, maxDistanceKm, sampleSize } = useMemo(
+  const { limit, maxDistanceKm, sampleSize, metier_id } = useMemo(
     () => ({
       limit: options?.limit ?? 5,
       maxDistanceKm: options?.maxDistanceKm ?? 100,
       sampleSize: options?.sampleSize ?? 150,
+      metier_id: options?.metier_id ?? null,
     }),
-    [options?.limit, options?.maxDistanceKm, options?.sampleSize],
+    [options?.limit, options?.maxDistanceKm, options?.sampleSize, options?.metier_id],
   )
 
   useEffect(() => {
@@ -82,35 +84,113 @@ export function useNearbyArtisans(
 
       setState((prev) => ({ ...prev, loading: true, error: null }))
 
-      const { data, error } = await supabase
-        .from("artisans")
-        .select(
-          [
-            "id",
-            "prenom",
-            "nom",
-            "raison_sociale",
-            "telephone",
-            "email",
-            "adresse_intervention",
-            "code_postal_intervention",
-            "ville_intervention",
-            "intervention_latitude",
-            "intervention_longitude",
-            "statut_id",
-            "artisan_attachments(kind, url, content_hash, derived_sizes, mime_preferred, mime_type)",
-          ].join(", "),
-        )
-        .not("intervention_latitude", "is", null)
-        .not("intervention_longitude", "is", null)
-        .limit(sampleSize)
+      // Si un metier_id est fourni, récupérer les IDs des artisans par lots pour éviter les URLs trop longues
+      let artisanIdsWithMetier: string[] | null = null
+      if (metier_id) {
+        const BATCH_SIZE = 1000 // Taille maximale pour éviter les URLs trop longues
+        const allArtisanIds: string[] = []
+        let offset = 0
+        let hasMore = true
+
+        while (hasMore && !cancelled) {
+          const { data: metierData, error: metierError } = await supabase
+            .from("artisan_metiers")
+            .select("artisan_id")
+            .eq("metier_id", metier_id)
+            .range(offset, offset + BATCH_SIZE - 1)
+
+          if (cancelled) return
+
+          if (metierError) {
+            setState({ artisans: [], loading: false, error: metierError.message })
+            return
+          }
+
+          const batchIds = metierData?.map((row) => row.artisan_id).filter(Boolean) as string[] || []
+          allArtisanIds.push(...batchIds)
+
+          hasMore = batchIds.length === BATCH_SIZE
+          offset += BATCH_SIZE
+        }
+
+        artisanIdsWithMetier = allArtisanIds
+        
+        // Si aucun artisan n'a ce métier, retourner une liste vide
+        if (artisanIdsWithMetier.length === 0) {
+          setState({ artisans: [], loading: false, error: null })
+          return
+        }
+      }
+
+      // Récupérer les artisans par lots si nécessaire pour éviter les URLs trop longues
+      const BATCH_SIZE = 100
+      const allArtisans: any[] = []
+      let queryOffset = 0
+      let hasMore = true
+
+      while (hasMore && !cancelled && allArtisans.length < sampleSize) {
+        let query = supabase
+          .from("artisans")
+          .select(
+            [
+              "id",
+              "prenom",
+              "nom",
+              "raison_sociale",
+              "telephone",
+              "email",
+              "adresse_intervention",
+              "code_postal_intervention",
+              "ville_intervention",
+              "intervention_latitude",
+              "intervention_longitude",
+              "statut_id",
+              "artisan_attachments(kind, url, content_hash, derived_sizes, mime_preferred, mime_type)",
+            ].join(", "),
+          )
+          .not("intervention_latitude", "is", null)
+          .not("intervention_longitude", "is", null)
+
+        // Filtrer par métier si nécessaire
+        if (artisanIdsWithMetier && artisanIdsWithMetier.length > 0) {
+          const batchIds = artisanIdsWithMetier.slice(queryOffset, queryOffset + BATCH_SIZE)
+          if (batchIds.length === 0) {
+            hasMore = false
+            break
+          }
+          query = query.in("id", batchIds)
+        } else {
+          // Pas de filtre par métier, paginer normalement
+          query = query.range(queryOffset, queryOffset + BATCH_SIZE - 1)
+        }
+
+        const { data, error } = await query.limit(BATCH_SIZE)
+
+        if (cancelled) return
+
+        if (error) {
+          setState({ artisans: [], loading: false, error: error.message })
+          return
+        }
+
+        if (data && data.length > 0) {
+          allArtisans.push(...data)
+          if (artisanIdsWithMetier && artisanIdsWithMetier.length > 0) {
+            // Filtré par métier : continuer tant qu'il y a des IDs à traiter
+            hasMore = queryOffset + BATCH_SIZE < artisanIdsWithMetier.length
+          } else {
+            // Pas de filtre : continuer tant qu'on reçoit des données et qu'on n'a pas atteint sampleSize
+            hasMore = data.length === BATCH_SIZE
+          }
+          queryOffset += BATCH_SIZE
+        } else {
+          hasMore = false
+        }
+      }
+
+      const data = allArtisans.slice(0, sampleSize)
 
       if (cancelled) return
-
-      if (error) {
-        setState({ artisans: [], loading: false, error: error.message })
-        return
-      }
 
       const enriched =
         data?.map((row: any) => {
@@ -175,7 +255,7 @@ export function useNearbyArtisans(
     return () => {
       cancelled = true
     }
-  }, [latitude, longitude, limit, maxDistanceKm, sampleSize])
+  }, [latitude, longitude, limit, maxDistanceKm, sampleSize, metier_id])
 
   return state
 }

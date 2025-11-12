@@ -1782,6 +1782,55 @@ export const clientsApi = {
 
 // ===== API DOCUMENTS =====
 
+/**
+ * Normalise le kind d'un document pour les interventions
+ * Transforme les variantes (facture_gmbs, factureGMBS, etc.) vers les valeurs canoniques (facturesGMBS)
+ */
+function normalizeInterventionKind(kind: string): string {
+  if (!kind) return kind;
+  
+  const trimmed = kind.trim();
+  if (!trimmed) return kind;
+  
+  const lower = trimmed.toLowerCase();
+  const compact = lower.replace(/[_\s-]/g, '');
+  
+  // Mapping vers les valeurs canoniques avec 's' (comme dans l'Edge Function et la DB)
+  const canonicalMap: Record<string, string> = {
+    facturegmbs: 'facturesGMBS',
+    facturesgmbs: 'facturesGMBS',
+    factureartisan: 'facturesArtisans',
+    facturesartisan: 'facturesArtisans',
+    facturemateriel: 'facturesMateriel',
+    facturesmateriel: 'facturesMateriel'
+  };
+  
+  if (canonicalMap[compact]) {
+    return canonicalMap[compact];
+  }
+  
+  // Gérer les cas spéciaux comme 'a_classe'
+  const needsClassification = [
+    'aclasser',
+    'aclassifier',
+    'àclasser',
+    'àclassifier',
+    'aclasse',
+    'àclasse'
+  ];
+  if (
+    needsClassification.includes(compact) ||
+    lower === 'a classer' ||
+    lower === 'a classifier' ||
+    lower === 'à classer' ||
+    lower === 'à classifier'
+  ) {
+    return 'a_classe';
+  }
+  
+  return trimmed;
+}
+
 export const documentsApi = {
   // Récupérer tous les documents
   async getAll(params?: {
@@ -1837,12 +1886,20 @@ export const documentsApi = {
     created_by_code?: string;
     created_by_color?: string;
   }): Promise<InterventionAttachment | ArtisanAttachment> {
+    // Normaliser le kind AVANT d'envoyer à l'Edge Function
+    const normalizedKind = data.entity_type === 'intervention'
+      ? normalizeInterventionKind(data.kind)
+      : data.kind;
+    
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/documents/documents`,
       {
         method: "POST",
         headers: await getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          kind: normalizedKind,
+        }),
       }
     );
     return handleResponse(response);
@@ -1862,12 +1919,20 @@ export const documentsApi = {
     created_by_code?: string;
     created_by_color?: string;
   }): Promise<InterventionAttachment | ArtisanAttachment> {
+    // Normaliser le kind AVANT d'envoyer à l'Edge Function
+    const normalizedKind = data.entity_type === 'intervention'
+      ? normalizeInterventionKind(data.kind)
+      : data.kind;
+    
     const response = await fetch(
       `${SUPABASE_FUNCTIONS_URL}/documents/documents/upload`,
       {
         method: "POST",
         headers: await getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          kind: normalizedKind,
+        }),
       }
     );
     return handleResponse(response);
@@ -1888,12 +1953,21 @@ export const documentsApi = {
     },
     entityType: "intervention" | "artisan" = "intervention"
   ): Promise<InterventionAttachment | ArtisanAttachment> {
+    // Normaliser le kind si présent
+    const normalizedData = {
+      ...data,
+      ...(data.kind && entityType === 'intervention' 
+        ? { kind: normalizeInterventionKind(data.kind) }
+        : {}
+      ),
+    };
+    
     const url = `${SUPABASE_FUNCTIONS_URL}/documents/documents/${id}?entity_type=${entityType}`;
 
     const response = await fetch(url, {
       method: "PUT",
       headers: await getHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify(normalizedData),
     });
     return handleResponse(response);
   },
@@ -3384,9 +3458,9 @@ export const DOCUMENT_TYPES = {
   intervention: [
     "devis",
     "photos",
-    "facture_gmbs",
-    "facture_artisan",
-    "facture_materiel",
+    "facturesGMBS",
+    "facturesArtisans",
+    "facturesMateriel",
     "rapport_intervention",
     "plan",
     "schema",

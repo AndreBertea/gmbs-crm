@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { Building, ChevronDown, ChevronRight, FileText, MessageSquare, Upload, X, Search } from "lucide-react"
+import { Building, ChevronDown, ChevronRight, FileText, MessageSquare, Upload, X, Search, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,14 +27,14 @@ import { getReasonTypeForTransition, type StatusReasonType } from "@/lib/comment
 import { cn } from "@/lib/utils"
 import { ArtisanSearchModal, type ArtisanSearchResult } from "@/components/artisans/ArtisanSearchModal"
 import { Avatar } from "@/components/artisans/Avatar"
+import { useArtisanModal } from "@/hooks/useArtisanModal"
 
 const INTERVENTION_DOCUMENT_KINDS = [
   { kind: "devis", label: "Devis" },
-  { kind: "facture_gmbs", label: "Facture GMBS" },
-  { kind: "facture_materiel", label: "Facture Matériel" },
+  { kind: "facturesGMBS", label: "Facture GMBS" },
+  { kind: "facturesMateriel", label: "Facture Matériel" },
   { kind: "photos", label: "Photos" },
-  { kind: "facture_artisan", label: "Facture Artisan" },
-  { kind: "a_classe", label: "À classer" },
+  { kind: "facturesArtisans", label: "Facture Artisan" },
 ]
 
 const MAX_RADIUS_KM = 10000
@@ -203,6 +203,7 @@ export function InterventionEditForm({
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
   const [showArtisanSearch, setShowArtisanSearch] = useState(false)
   const [artisanSearchPosition, setArtisanSearchPosition] = useState<{ x: number; y: number } | null>(null)
+  const { open: openArtisanModal } = useArtisanModal()
   const {
     artisans: nearbyArtisans,
     loading: isLoadingNearbyArtisans,
@@ -211,23 +212,75 @@ export function InterventionEditForm({
     limit: 100,
     maxDistanceKm: perimeterKmValue,
     sampleSize: 400,
+    metier_id: formData.metier_id || null,
   })
   const selectedArtisanData = useMemo(
     () => (selectedArtisanId ? nearbyArtisans.find((artisan) => artisan.id === selectedArtisanId) ?? null : null),
     [selectedArtisanId, nearbyArtisans],
   )
 
-  const mapMarkers = useMemo(() => {
-    const markers = nearbyArtisans.map((artisan) => ({
-      id: artisan.id,
-      lat: artisan.lat,
-      lng: artisan.lng,
-      color: artisan.id === selectedArtisanData?.id ? "#f97316" : "#2563eb",
-      title: artisan.displayName,
-    }))
+  // Trier les artisans : archivés en bas
+  const sortedNearbyArtisans = useMemo(() => {
+    if (!refData?.artisanStatuses) return nearbyArtisans
 
+    // Trouver les IDs des statuts ARCHIVE et ARCHIVER
+    const archiveStatuses = refData.artisanStatuses.filter(
+      (s) => s.code === "ARCHIVE" || s.code === "ARCHIVER"
+    )
+    if (archiveStatuses.length === 0) return nearbyArtisans
+
+    const archiveStatusIds = new Set(archiveStatuses.map((s) => s.id))
+
+    // Séparer les artisans archivés et non archivés
+    const nonArchived = nearbyArtisans.filter(
+      (artisan) => !artisan.statut_id || !archiveStatusIds.has(artisan.statut_id)
+    )
+    const archived = nearbyArtisans.filter(
+      (artisan) => artisan.statut_id && archiveStatusIds.has(artisan.statut_id)
+    )
+
+    // Retourner : non archivés d'abord (triés par distance), puis archivés (triés par distance)
+    return [...nonArchived, ...archived]
+  }, [nearbyArtisans, refData?.artisanStatuses])
+
+  const mapMarkers = useMemo(() => {
+    if (!refData?.artisanStatuses) {
+      // Fallback si pas de refData
+      return nearbyArtisans.map((artisan) => ({
+        id: artisan.id,
+        lat: artisan.lat,
+        lng: artisan.lng,
+        color: artisan.id === selectedArtisanData?.id ? "#f97316" : "#2563eb",
+        title: artisan.displayName,
+      }))
+    }
+
+    // Trouver les IDs des statuts ARCHIVE et ARCHIVER
+    const archiveStatuses = refData.artisanStatuses.filter(
+      (s) => s.code === "ARCHIVE" || s.code === "ARCHIVER"
+    )
+    const archiveStatusIds = new Set(archiveStatuses.map((s) => s.id))
+
+    const markers = nearbyArtisans.map((artisan) => {
+      // Si l'artisan est archivé (ARCHIVE ou ARCHIVER), utiliser la couleur grise
+      const isArchived =
+        artisan.statut_id && archiveStatusIds.has(artisan.statut_id)
+      const baseColor = isArchived
+        ? "#6B7280"
+        : artisan.id === selectedArtisanData?.id
+          ? "#f97316"
+          : "#2563eb"
+
+      return {
+        id: artisan.id,
+        lat: artisan.lat,
+        lng: artisan.lng,
+        color: baseColor,
+        title: artisan.displayName,
+      }
+    })
     return markers
-  }, [nearbyArtisans, selectedArtisanData])
+  }, [nearbyArtisans, selectedArtisanData, refData?.artisanStatuses])
 
   const mapSelectedConnection = useMemo(() => {
     if (!selectedArtisanData) return null
@@ -426,6 +479,16 @@ export function InterventionEditForm({
     }
   }, [nearbyArtisans])
 
+  const handleOpenArtisanModal = useCallback((artisanId: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+    // Ouvrir le modal d'artisan avec le layoutId de l'intervention actuelle
+    // pour pouvoir revenir à cette intervention à la fermeture
+    openArtisanModal(artisanId, {
+      layoutId: intervention.id,
+      origin: `intervention:${intervention.id}`,
+    })
+  }, [intervention.id, openArtisanModal])
+
   const handleSuggestionSelect = useCallback((suggestion: GeocodeSuggestion) => {
     // Annuler le timeout de blur si existant
     if (suggestionBlurTimeoutRef.current) {
@@ -454,7 +517,7 @@ export function InterventionEditForm({
     // Mettre à jour la query pour refléter la sélection
     setLocationQuery(suggestion.label)
     setGeocodeError(null)
-  }, [clearSuggestions])
+  }, [clearSuggestions, setLocationQuery])
   
   // Fonction helper pour parser une adresse
   const parseAddress = (fullAddress: string): { street: string; postalCode: string; city: string } => {
@@ -539,7 +602,7 @@ export function InterventionEditForm({
     } finally {
       setIsGeocoding(false)
     }
-  }, [locationQuery, geocodeQuery, clearSuggestions])
+  }, [locationQuery, geocodeQuery, clearSuggestions, setLocationQuery])
 
   const executeSubmit = async (options?: { reason?: string; reasonType?: StatusReasonType }) => {
     setIsSubmitting(true)
@@ -1315,7 +1378,7 @@ export function InterventionEditForm({
                   </div>
                 ) : (
                   <div className="flex max-h-64 flex-col gap-2 overflow-y-auto pr-1">
-                    {nearbyArtisans.map((artisan) => {
+                    {sortedNearbyArtisans.map((artisan) => {
                       const isSelected = selectedArtisanId === artisan.id
                       
                       // Calculer les initiales de l'artisan
@@ -1404,6 +1467,16 @@ export function InterventionEditForm({
                                     <Badge variant={isSelected ? "default" : "secondary"} className="flex-shrink-0">
                                       {formatDistanceKm(artisan.distanceKm)}
                                     </Badge>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 flex-shrink-0 text-muted-foreground hover:text-foreground"
+                                      onClick={(e) => handleOpenArtisanModal(artisan.id, e)}
+                                      title="Voir les détails de l'artisan"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
                                   </div>
                                 </div>
                                 <div className="mt-1 text-xs text-muted-foreground">

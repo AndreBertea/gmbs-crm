@@ -152,7 +152,6 @@ const ARTISAN_DOCUMENT_KINDS = [
   { kind: "decharge_partenariat", label: "Décharge partenariat" },
   { kind: "photo_profil", label: "Photo de profil" },
   { kind: "autre", label: "Autre document" },
-  { kind: "a_classe", label: "À classer" },
 ]
 
 const mapArtisanToForm = (artisan: ArtisanWithRelations | any): ArtisanFormValues => {

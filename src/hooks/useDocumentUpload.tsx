@@ -143,8 +143,7 @@ const DOCUMENT_KINDS = {
     { value: 'facturesGMBS', label: 'Facture GMBS' },
     { value: 'facturesArtisans', label: 'Facture Artisan' },
     { value: 'facturesMateriel', label: 'Facture Matériel' },
-    { value: 'autre', label: 'Autre' },
-    { value: 'a_classe', label: 'À classer' }
+    { value: 'autre', label: 'Autre' }
   ],
   artisan: [
     { value: 'kbis', label: 'KBIS' },
@@ -153,8 +152,7 @@ const DOCUMENT_KINDS = {
     { value: 'iban', label: 'IBAN' },
     { value: 'decharge_partenariat', label: 'Décharge partenariat' },
     { value: 'photo_profil', label: 'Photo de profil' },
-    { value: 'autre', label: 'Autre' },
-    { value: 'a_classe', label: 'À classer' }
+    { value: 'autre', label: 'Autre' }
   ]
 };
 

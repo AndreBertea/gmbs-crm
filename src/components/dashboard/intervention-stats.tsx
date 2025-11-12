@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi } from "@/lib/api/v2"
 import { supabase } from "@/lib/supabase-client"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
-import { Loader2 } from "lucide-react"
+import Loader from "@/components/ui/Loader"
 
 interface InterventionStatsCardsProps {
   period?: {
@@ -164,9 +164,10 @@ export function InterventionStatsCards({ period }: InterventionStatsCardsProps) 
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              <div className="flex items-center justify-center">
+                <div style={{ transform: 'scale(1.25)' }}>
+                  <Loader />
+                </div>
               </div>
             </CardContent>
           </Card>

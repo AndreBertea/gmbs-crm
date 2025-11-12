@@ -86,7 +86,7 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
     }
 
     return result as ServerFilters
-  }, [filtersKey, serverFilters])
+  }, [serverFilters])
 
   const normalizedFields = useMemo(() => {
     if (!fields || fields.length === 0) return undefined
@@ -98,7 +98,7 @@ export function useInterventions(options: UseInterventionsOptions = {}): UseInte
       ),
     )
     return unique.length > 0 ? unique : undefined
-  }, [fieldsKey, fields])
+  }, [fields])
 
   const requestParams = useMemo(() => {
     const params: GetAllParams = {

@@ -14,8 +14,10 @@ const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
 
-// Charger les variables d'environnement depuis .env.local
-require('dotenv').config({ path: '.env.local' });
+// Charger les variables d'environnement selon l'environnement
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+require('dotenv').config({ path: envFile });
+console.log(`📁 Variables chargées depuis ${envFile}`);
 
 // Utiliser l'API v2 centralisée (comme dans database-manager-v2.js)
 // Note: Le chemin est relatif depuis scripts/imports/documents/ (3 niveaux vers la racine)

@@ -90,7 +90,7 @@ export default function InterventionsCompatContainer() {
     } finally {
       setLoadingMore(false);
     }
-  }, [interventions.length, hasMore, loadingMore, totalCount]);
+  }, [interventions.length, hasMore, loadingMore]);
 
   // Affichage de l'erreur
   if (error) {

@@ -11,6 +11,7 @@ import Link from "next/link"
 import useModal from "@/hooks/useModal"
 import { useInterventionReminders } from "@/hooks/useInterventionReminders"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase-client"
 import { normalizeReminderIdentifier } from "@/contexts/RemindersContext"
@@ -299,6 +300,9 @@ export default function Topbar() {
   const isArtisans = pathname?.startsWith("/artisans")
   const showNewArtisanBtn = isArtisans
 
+  // Show dashboard navigation buttons on Dashboard page
+  const isDashboard = pathname === "/dashboard"
+
   // Search reveal on hover; pin on click
   const [searchPinned, setSearchPinned] = React.useState(false)
   const [searchHovering, setSearchHovering] = React.useState(false)
@@ -559,6 +563,36 @@ export default function Topbar() {
               <Plus className="mr-2 h-4 w-4" />
               Nouvel artisan
             </Button>
+          ) : null}
+          {isDashboard ? (
+            <>
+              <ContextMenu>
+                <ContextMenuTrigger asChild>
+                  <Button size="sm" asChild>
+                    <Link href="/interventions">Voir les {t("deals")}</Link>
+                  </Button>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => openModal("new", { content: "new-intervention" })} className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Nouvelle intervention
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
+              <ContextMenu>
+                <ContextMenuTrigger asChild>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href="/artisans">Voir les {t("contacts")}</Link>
+                  </Button>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => artisanModal.openNew()} className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Nouvel artisan
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
+            </>
           ) : null}
         </div>
 
