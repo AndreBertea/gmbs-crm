@@ -279,13 +279,20 @@ async function fetchNextBatch(): Promise<ArtisanRow[]> {
     )
     .or("intervention_latitude.is.null,intervention_longitude.is.null")
     .order("created_at", { ascending: true })
-    .limit(BATCH_SIZE);
+    .limit(BATCH_SIZE * 2); // Récupérer plus pour compenser le filtrage
 
   if (error) {
     throw new Error(`Supabase fetch error: ${error.message}`);
   }
 
-  return data ?? [];
+  // Filtrer côté client : uniquement ceux sans coordonnées valides
+  // (null, null) ou (0, 0) qui indique un échec précédent
+  return (data ?? []).filter(
+    (artisan) =>
+      !artisan.intervention_latitude ||
+      !artisan.intervention_longitude ||
+      (artisan.intervention_latitude === 0 && artisan.intervention_longitude === 0)
+  ).slice(0, BATCH_SIZE);
 }
 
 async function updateArtisanLocation(
@@ -349,6 +356,17 @@ function formatArtisanLabel(artisan: ArtisanRow): string {
 
 async function processArtisan(artisan: ArtisanRow): Promise<boolean> {
   const label = formatArtisanLabel(artisan);
+  
+  // Vérification de sécurité : ignorer si déjà géocodé avec des coordonnées valides
+  if (
+    artisan.intervention_latitude &&
+    artisan.intervention_longitude &&
+    !(artisan.intervention_latitude === 0 && artisan.intervention_longitude === 0)
+  ) {
+    console.log(`⏭️  ${label}: déjà géocodé (${artisan.intervention_latitude}, ${artisan.intervention_longitude}), ignoré.`);
+    return false;
+  }
+
   const candidates = buildAddressCandidates(artisan);
 
   if (candidates.length === 0) {

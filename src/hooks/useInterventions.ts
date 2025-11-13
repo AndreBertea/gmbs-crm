@@ -26,7 +26,7 @@ export interface UseInterventionsReturn {
   updateInterventionOptimistic: (id: string, updates: Partial<InterventionView>) => void
 }
 
-const DEFAULT_LIMIT = 10000
+const DEFAULT_LIMIT = 100
 
 export function useInterventions(options: UseInterventionsOptions = {}): UseInterventionsReturn {
   const {
