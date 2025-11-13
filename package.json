@@ -28,7 +28,9 @@
     "drive:verify-documents": "npx tsx scripts/imports/documents/verify-documents-insertion.js",
     "drive:verify-intervention-documents": "npx tsx scripts/imports/documents/verify-intervention-documents.js",
     "drive:verify-storage": "npx tsx scripts/imports/documents/verify-storage-upload.js",
-    "test:csv-interventions": "node scripts/test-interventions-folders-csv.js"
+    "test:csv-interventions": "node scripts/test-interventions-folders-csv.js",
+    "export:to-excel": "node scripts/exports/export-to-sheets.js",
+    "export:to-excel:verbose": "node scripts/exports/export-to-sheets.js --verbose"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -81,6 +83,7 @@
     "date-fns": "latest",
     "dotenv": "^17.2.1",
     "embla-carousel-react": "8.5.1",
+    "exceljs": "^4.4.0",
     "framer-motion": "^12.23.12",
     "geist": "^1.3.1",
     "google-auth-library": "^10.3.0",

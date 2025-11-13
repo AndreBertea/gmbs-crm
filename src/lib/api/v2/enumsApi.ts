@@ -82,12 +82,13 @@ export const findOrCreateUser = async (name: string): Promise<FindOrCreateResult
   }
 
   const normalizedName = name.trim();
+  const code = normalizedName.substring(0, 1).toUpperCase();
 
-  // Chercher d'abord par code_gestionnaire (priorité)
+  // Chercher d'abord par code_gestionnaire (avec le code généré)
   const { data: existingByCode } = await supabase
     .from('users')
     .select('id')
-    .ilike('code_gestionnaire', normalizedName)
+    .eq('code_gestionnaire', code)
     .single();
 
   if (existingByCode) {
@@ -107,7 +108,6 @@ export const findOrCreateUser = async (name: string): Promise<FindOrCreateResult
 
   // Si il n'existe pas, le créer
   const username = normalizedName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const code = normalizedName.substring(0, 1).toUpperCase();
   
   const { data: created, error: createError } = await supabase
     .from('users')
@@ -121,6 +121,18 @@ export const findOrCreateUser = async (name: string): Promise<FindOrCreateResult
     .single();
 
   if (createError) {
+    // Si erreur de duplicate key, refaire une recherche par code_gestionnaire
+    if (createError.message.includes('duplicate key')) {
+      const { data: retry } = await supabase
+        .from('users')
+        .select('id')
+        .eq('code_gestionnaire', code)
+        .single();
+      
+      if (retry) {
+        return { id: retry.id, created: false };
+      }
+    }
     throw new Error(`Erreur lors de la création de l'utilisateur: ${createError.message}`);
   }
 

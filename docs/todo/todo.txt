@@ -1,12 +1,31 @@
 
 - fetch data from gmbs drive
 
-- importer données depuis Sheets GMBS 
-        Créer bouton pour raffraichissement BDD
+CRM <-> google drive
+        - importer données depuis Sheets GMBS 
+                Créer bouton pour raffraichissement BDD
+        - faire spec script d'export quelles données on allait exportées
+        - créer un bouton pour lancer synchronisation depuis le sheet et export depuis le sheets        
 
-- faire spec script d'export quelles données on allait exportées
+- cache à mettre en place pour interventions et artisans
+        (évaluer d'abord la pertinence avant de faire)
 
-- faire une analyse des prix, analyse de la concurrence
+- 
+
+- Dashboard rendre le clickable le fond des composantes Mes Interventions Mes Artisans  
+        - clic général --> redirection vers la liste Mes Interventions générales. 
+
+- OCR pour le CRM
+        - Extraction devis
+        - Extraction informations Demande d'intervention --> Devis et donnée Nouvelle Interventions
+        - 
+
+______________________________________________________________________________________________
+______________________________________________________________________________________________
+______________________________________________________________________________________________
+
+- Faire une analyse des prix, analyse de la concurrence
+        - Gain en automatisation pour définir un bon prix
 
 
 - npx tsx scripts/geocode-artisans.ts à ajouter dans le package.json
