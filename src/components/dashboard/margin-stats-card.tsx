@@ -15,6 +15,7 @@ interface MarginStatsCardProps {
     endDate?: string
   }
   userId?: string | null
+  compact?: boolean
 }
 
 // Objectif par défaut si aucun objectif n'est défini
@@ -33,7 +34,7 @@ function getPeriodTypeFromDates(startDate?: string, endDate?: string): TargetPer
   return "year"
 }
 
-export function MarginStatsCard({ period, userId: propUserId }: MarginStatsCardProps) {
+export function MarginStatsCard({ period, userId: propUserId, compact = false }: MarginStatsCardProps) {
   const [stats, setStats] = useState<MarginStats | null>(null)
   const [performanceTarget, setPerformanceTarget] = useState<number>(DEFAULT_PERFORMANCE_TARGET)
   const [showPercentage, setShowPercentage] = useState<boolean>(true)
@@ -134,10 +135,12 @@ export function MarginStatsCard({ period, userId: propUserId }: MarginStatsCardP
   if (loading) {
     return (
       <Card className="bg-background border-border/5 shadow-sm/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {!compact && (
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
+          </CardHeader>
+        )}
+        <CardContent className={compact ? "px-3 pb-0 pt-0" : undefined}>
           <div className="flex items-center justify-center">
             <div style={{ transform: 'scale(1.25)' }}>
               <Loader />
@@ -151,10 +154,12 @@ export function MarginStatsCard({ period, userId: propUserId }: MarginStatsCardP
   if (error) {
     return (
       <Card className="bg-background border-border/5 shadow-sm/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {!compact && (
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
+          </CardHeader>
+        )}
+        <CardContent className={compact ? "px-3 pb-0 pt-0" : undefined}>
           <p className="text-sm text-destructive">{error}</p>
         </CardContent>
       </Card>
@@ -164,10 +169,12 @@ export function MarginStatsCard({ period, userId: propUserId }: MarginStatsCardP
   if (!userId) {
     return (
       <Card className="bg-background border-border/5 shadow-sm/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {!compact && (
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
+          </CardHeader>
+        )}
+        <CardContent className={compact ? "px-3 pb-0 pt-0" : undefined}>
           <p className="text-sm text-muted-foreground">
             Veuillez vous connecter pour voir vos statistiques
           </p>
@@ -179,10 +186,12 @@ export function MarginStatsCard({ period, userId: propUserId }: MarginStatsCardP
   if (!stats || stats.total_interventions === 0) {
     return (
       <Card className="bg-background border-border/5 shadow-sm/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {!compact && (
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
+          </CardHeader>
+        )}
+        <CardContent className={compact ? "px-3 pb-0 pt-0" : undefined}>
           <div className="text-2xl font-bold">-</div>
           <p className="text-xs text-muted-foreground mt-1">
             Aucune intervention avec coûts
@@ -222,11 +231,13 @@ export function MarginStatsCard({ period, userId: propUserId }: MarginStatsCardP
 
   return (
     <Card className="bg-background border-border/5 shadow-sm/30">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      {!compact && (
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
+        </CardHeader>
+      )}
+      <CardContent className={compact ? "px-3 pb-0 pt-0 flex flex-col gap-1" : undefined}>
+        <div className={compact ? "space-y-1" : "space-y-4"}>
           {/* Cadran de vitesse */}
           <div className="flex flex-col items-center">
             <Speedometer
@@ -256,7 +267,7 @@ export function MarginStatsCard({ period, userId: propUserId }: MarginStatsCardP
           </div>
 
           {/* Informations */}
-          <div className="space-y-1 mt-2">
+          <div className={compact ? "space-y-1 mt-0" : "space-y-1 mt-2"}>
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <TrendIcon className={`h-4 w-4 ${percentageColor}`} />

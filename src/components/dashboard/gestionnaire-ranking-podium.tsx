@@ -121,15 +121,15 @@ export function GestionnaireRankingPodium({ period }: GestionnaireRankingPodiumP
   }
 
   return (
-    <Card className="bg-background border-border/5 shadow-sm/30">
-      <CardHeader className="pb-3">
+    <Card className="bg-background border-border/5 shadow-sm/30 h-full flex flex-col">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-center gap-3">
           <Trophy className="w-6 h-6 text-gold" />
           <CardTitle className="text-xl font-bold">Podium</CardTitle>
           <Trophy className="w-6 h-6 text-gold" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 flex-1 overflow-auto pb-[30px]">
         {/* Podium - Top 3 */}
         {top3.length > 0 && (
           <div className="relative">

@@ -14,6 +14,7 @@ interface MarginTotalCardProps {
         endDate?: string
     }
     userId?: string | null
+    compact?: boolean
 }
 
 // Objectif par défaut si aucun objectif n'est défini
@@ -32,7 +33,7 @@ function getPeriodTypeFromDates(startDate?: string, endDate?: string): TargetPer
     return "year"
 }
 
-export function MarginTotalCard({ period, userId: propUserId }: MarginTotalCardProps) {
+export function MarginTotalCard({ period, userId: propUserId, compact = false }: MarginTotalCardProps) {
     const [stats, setStats] = useState<MarginStats | null>(null)
     const [marginTarget, setMarginTarget] = useState<number>(DEFAULT_TARGET)
     const [showPercentage, setShowPercentage] = useState<boolean>(true)
@@ -133,10 +134,12 @@ export function MarginTotalCard({ period, userId: propUserId }: MarginTotalCardP
     if (loading) {
         return (
             <Card className="bg-background border-border/5 shadow-sm/30">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
-                </CardHeader>
-                <CardContent>
+                {!compact && (
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
+                    </CardHeader>
+                )}
+                <CardContent className={compact ? "px-3 pb-0 pt-0" : undefined}>
                     <div className="flex items-center justify-center">
                         <div style={{ transform: 'scale(1.25)' }}>
                             <Loader />
@@ -150,10 +153,12 @@ export function MarginTotalCard({ period, userId: propUserId }: MarginTotalCardP
     if (error) {
         return (
             <Card className="bg-background border-border/5 shadow-sm/30">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
-                </CardHeader>
-                <CardContent>
+                {!compact && (
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
+                    </CardHeader>
+                )}
+                <CardContent className={compact ? "px-3 pb-0 pt-0" : undefined}>
                     <p className="text-sm text-destructive">{error}</p>
                 </CardContent>
             </Card>
@@ -163,10 +168,12 @@ export function MarginTotalCard({ period, userId: propUserId }: MarginTotalCardP
     if (!userId) {
         return (
             <Card className="bg-background border-border/5 shadow-sm/30">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
-                </CardHeader>
-                <CardContent>
+                {!compact && (
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
+                    </CardHeader>
+                )}
+                <CardContent className={compact ? "px-3 pb-0 pt-0" : undefined}>
                     <p className="text-sm text-muted-foreground">
                         Veuillez vous connecter pour voir vos statistiques
                     </p>
@@ -178,10 +185,12 @@ export function MarginTotalCard({ period, userId: propUserId }: MarginTotalCardP
     if (!stats || stats.total_interventions === 0) {
         return (
             <Card className="bg-background border-border/5 shadow-sm/30">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
-                </CardHeader>
-                <CardContent>
+                {!compact && (
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
+                    </CardHeader>
+                )}
+                <CardContent className={compact ? "px-3 pb-0 pt-0" : undefined}>
                     <div className="text-2xl font-bold">-</div>
                     <p className="text-xs text-muted-foreground mt-1">
                         Aucune intervention avec coûts
@@ -224,11 +233,13 @@ export function MarginTotalCard({ period, userId: propUserId }: MarginTotalCardP
 
     return (
         <Card className="bg-background border-border/5 shadow-sm/30">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
+            {!compact && (
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-muted-foreground">Marge totale</CardTitle>
+                </CardHeader>
+            )}
+            <CardContent className={compact ? "px-3 pb-0 pt-0 flex flex-col gap-1" : undefined}>
+                <div className={compact ? "space-y-1" : "space-y-4"}>
                     {/* Cadran de vitesse */}
                     <div className="flex flex-col items-center">
                         <Speedometer
@@ -258,7 +269,7 @@ export function MarginTotalCard({ period, userId: propUserId }: MarginTotalCardP
                     </div>
 
                     {/* Informations */}
-                    <div className="space-y-1 mt-2">
+                    <div className={compact ? "space-y-1 mt-0" : "space-y-1 mt-2"}>
                         <div className="flex flex-col items-center gap-1">
                             <div className={`text-sm font-semibold ${percentageColor}`}>
                                 {formatCurrency(stats.total_margin)}
