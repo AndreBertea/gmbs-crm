@@ -51,6 +51,7 @@ export default function DashboardPage() {
   const [isMounted, setIsMounted] = useState(false)
   const [totalInterventions, setTotalInterventions] = useState<number | null>(null)
   const [showTransition, setShowTransition] = useState(false)
+  const [showBienvenue, setShowBienvenue] = useState(false)
   const [selectedGestionnaireId, setSelectedGestionnaireId] = useState<string | null>(null)
   const { open: openModal } = useModal()
   const artisanModal = useArtisanModal()
@@ -110,6 +111,7 @@ export default function DashboardPage() {
     if (!isMounted) return
 
     const transitionData = sessionStorage.getItem('revealTransition')
+    
     if (transitionData) {
       try {
         const data = JSON.parse(transitionData)
@@ -120,6 +122,10 @@ export default function DashboardPage() {
           setTimeout(() => {
             startAnimationFromPosition(data.buttonPosition)
           }, 100)
+          // Délai de 2.5s avant d'afficher l'animation de bienvenue après connexion
+          setTimeout(() => {
+            setShowBienvenue(true)
+          }, 2500)
         }
         // Toujours nettoyer sessionStorage, même si timestamp expiré
         // Cela évite que des données obsolètes persistent entre sessions
@@ -130,6 +136,7 @@ export default function DashboardPage() {
         sessionStorage.removeItem('revealTransition')
       }
     }
+    // Ne pas afficher l'animation si on ne vient pas de la page login
   }, [isMounted, startAnimationFromPosition])
 
   // Appliquer le clipPath au contenu dashboard pendant l'animation
@@ -434,7 +441,7 @@ export default function DashboardPage() {
           >
             <div className="flex-1 p-6 space-y-6">
         {/* Filterbar avec AvatarGroup à droite */}
-        <div className="flex items-center justify-between gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
+        <div className="relative flex items-center justify-between gap-4 p-4 bg-muted/50 rounded-lg flex-wrap">
           {/* Partie gauche : Sélecteur de période */}
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
@@ -531,30 +538,45 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+            
+            {/* Dates et interventions à droite des boutons de sélection */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-foreground font-medium">
+                {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+              {totalInterventions !== null && (
+                <Badge variant="secondary" className="text-foreground font-medium">
+                  {totalInterventions} intervention{totalInterventions > 1 ? "s" : ""}
+                </Badge>
+              )}
+            </div>
           </div>
           
-          {/* Partie centrale : Badge gestionnaire sélectionné + Dates et nombre d'interventions */}
-          <div className="flex items-center gap-4 text-sm flex-1 justify-center">
-            {/* Effet "Bienvenue" seulement pour l'utilisateur connecté */}
-            {currentUser?.id && selectedGestionnaireId === currentUser.id && (
+          {/* Partie centrale : Bienvenue centré seul - centré par rapport à toute la filterbar */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center text-sm">
+            {/* Effet "Bienvenue" centré seul */}
+            {showBienvenue && currentUser?.id && selectedGestionnaireId === currentUser.id && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="flex items-center mr-2"
+                className="flex items-center"
               >
-                <AppleBienvenueEffect speed={0.2} className="text-black h-8" />
+                <AppleBienvenueEffect speed={0.2} className="text-primary h-8" />
               </motion.div>
             )}
-            
-            {/* Badge du gestionnaire sélectionné au centre */}
+          </div>
+          
+          {/* Partie droite : Badge gestionnaire sélectionné + Nom + AvatarGroup */}
+          <div className="flex items-center gap-3">
+            {/* Badge du gestionnaire sélectionné */}
             {selectedGestionnaireId && (() => {
               const selectedGestionnaire = gestionnaires.find(g => g.id === selectedGestionnaireId)
               if (!selectedGestionnaire) return null
               const displayName = getDisplayName(selectedGestionnaire)
               
               return (
-                <div className="flex items-center gap-2">
+                <>
                   <motion.div
                     key={selectedGestionnaireId}
                     layoutId={`gestionnaire-badge-${selectedGestionnaireId}`}
@@ -574,30 +596,19 @@ export default function DashboardPage() {
                       className="ring-2 ring-primary ring-offset-2"
                     />
                   </motion.div>
-                  <motion.div 
-                    className="flex flex-col"
+                  <motion.span 
+                    className="text-sm font-medium text-foreground"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
                   >
-                    <span className="text-sm font-medium text-foreground">{displayName}</span>
-                  </motion.div>
-                </div>
+                    {displayName}
+                  </motion.span>
+                </>
               )
             })()}
             
-            <span className="text-foreground font-medium">
-              {new Date(period.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} - {new Date(period.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-            </span>
-            {totalInterventions !== null && (
-              <span className="text-foreground font-medium">
-                {totalInterventions} intervention{totalInterventions > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          
-          {/* Partie droite : AvatarGroup des gestionnaires */}
-          <div className="flex items-center gap-3">
+            {/* AvatarGroup des gestionnaires */}
             {isLoadingGestionnaires ? (
               <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
             ) : gestionnaires.length === 0 ? (
