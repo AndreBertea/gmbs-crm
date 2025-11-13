@@ -908,6 +908,7 @@ Options:
   --interventions-only       Importer uniquement les interventions
   --dry-run                  Mode test sans écriture en base
   --verbose                  Affichage détaillé
+  --upsert                   Mode upsert (met à jour les enregistrements existants au lieu de créer des doublons)
   --limit=N                  Limiter le nombre d'interventions/artisans (pour debug)
   --batch-size=N             Taille des lots (défaut: 50)
   --credentials=PATH         Chemin vers credentials.json (défaut: ./credentials.json)
@@ -918,6 +919,9 @@ Options:
 Exemples:
   # Import complet
   npx tsx scripts/imports/google-sheets-import-clean-v2.js
+
+  # Import en mode upsert (évite les doublons, met à jour les données existantes)
+  npx tsx scripts/imports/google-sheets-import-clean-v2.js --upsert --verbose
 
   # Import en mode dry-run avec verbose
   npx tsx scripts/imports/google-sheets-import-clean-v2.js --dry-run --verbose
@@ -942,6 +946,7 @@ Exemples:
       if (args.includes('--test')) options.test = true;
       if (args.includes('--artisans-only')) options.artisansOnly = true;
       if (args.includes('--interventions-only')) options.interventionsOnly = true;
+      if (args.includes('--upsert')) options.upsert = true;
       
       // Limite pour debug
       const limitArg = args.find(arg => arg.startsWith('--limit='));

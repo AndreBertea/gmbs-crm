@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Livrable HTML — Proto v1 — Interventions & Artisans</title>
+<style>
+  :root {
+    --bg:#0b1021;
+    --panel:#111834;
+    --ink:#e6e9f2;
+    --muted:#b7bed1;
+    --accent:#7aa2f7;
+    --ok:#34d399;
+    --warn:#fbbf24;
+    --open:#f87171;
+    --chip:#1f2a4a;
+    --rule:#243055;
+    --highlight:#19254b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); font: 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Helvetica,Arial; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header { padding: 32px 24px 8px; background: linear-gradient(180deg, #0b1021 0%, #0b1021 60%, #0c1430 100%); border-bottom: 1px solid var(--rule); }
+  header h1 { margin:0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: 0.2px; }
+  header p { margin: 0; color: var(--muted); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px 24px 64px; }
+  nav.toc { background: var(--panel); border:1px solid var(--rule); border-radius: 12px; padding:16px; margin:20px 0 28px; }
+  nav.toc h2 { font-size: 18px; margin:0 0 10px; }
+  nav.toc ul { margin:0; padding:0; columns: 2; column-gap: 24px; }
+  nav.toc li { list-style:none; margin: 6px 0; }
+  section { background: var(--panel); border:1px solid var(--rule); border-radius: 14px; padding: 18px 18px 4px; margin: 22px 0; }
+  section h2 { margin: 4px 0 12px; font-size: 22px; }
+  section h3 { margin: 18px 0 8px; font-size: 18px; }
+  .chips { display:flex; gap:10px; flex-wrap: wrap; margin: 8px 0 4px; }
+  .chip { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:var(--chip); border:1px solid var(--rule); font-size: 13px; color: var(--muted); }
+  .chip b { color: var(--ink); }
+  .badge { font-weight:700; padding:2px 8px; border-radius:999px; font-size:12px; display:inline-block; vertical-align: middle; }
+  .valide { background: rgba(52,211,153,.15); color: var(--ok); border:1px solid rgba(52,211,153,.35); }
+  .avalider { background: rgba(251,191,36,.12); color: var(--warn); border:1px solid rgba(251,191,36,.35); }
+  .aclarifier { background: rgba(248,113,113,.12); color: var(--open); border:1px solid rgba(248,113,113,.35); }
+  .req { background: #0f1732; border:1px solid var(--rule); border-radius: 12px; padding: 14px; margin: 12px 0; }
+  .req header { display:flex; justify-content:space-between; align-items:center; background: transparent; border:0; padding:0; }
+  .req header h4 { margin: 0; font-size:16px; }
+  .req .meta { color: var(--muted); font-size: 13px; display:flex; gap:12px; }
+  .req .body p { margin: 8px 0; }
+  .req ul { margin: 6px 0 6px 18px; }
+  .kv { display:grid; grid-template-columns: 200px 1fr; gap:8px 14px; margin: 6px 0; }
+  .kv div { padding: 4px 0; }
+  code, pre { background: var(--highlight); padding: 2px 6px; border-radius: 6px; border:1px solid var(--rule); }
+  .note { color: var(--muted); font-size: 14px; }
+  .table { width:100%; border-collapse: collapse; border: 1px solid var(--rule); margin: 10px 0 0; }
+  .table th, .table td { border:1px solid var(--rule); padding:8px 10px; vertical-align: top; }
+  .table th { background: #0f1837; }
+  .callout { border-left: 4px solid var(--accent); background: #0f1632; padding: 10px 12px; border-radius: 8px; }
+  .foot { color: var(--muted); font-size: 13px; margin-top: 18px; }
+  .access-info { background: linear-gradient(135deg, rgba(52,211,153,.1) 0%, rgba(52,211,153,.05) 100%); border: 2px solid rgba(52,211,153,.3); border-radius: 14px; padding: 20px; margin: 20px 0 28px; }
+  .access-info h2 { margin: 0 0 16px; font-size: 20px; color: var(--ok); }
+  .access-info .link { font-size: 18px; margin: 12px 0; }
+  .access-info .credentials { background: var(--highlight); border: 1px solid var(--rule); border-radius: 8px; padding: 12px; margin: 8px 0; }
+  .access-info .credentials strong { color: var(--accent); display: block; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Livrable Proto v1 — Interventions &amp; Artisans</h1>
+  <p>Dernière mise à jour&nbsp;: 13/11/2025 &middot; Livraison du prototype version 1</p>
+</header>
+<div class="container">
+
+  <div class="access-info">
+    <h2>🔗 Accès au site</h2>
+    <div class="link">
+      <strong>URL :</strong> <a href="https://gmbs-crm-nine.vercel.app/login" target="_blank">https://gmbs-crm-nine.vercel.app/login</a>
+    </div>
+    <div class="credentials">
+      <strong>Comptes de test :</strong>
+      <div style="margin-top: 8px;">
+        <div><strong>badr@gmbs.fr</strong> / <code>badr123</code></div>
+        <div style="margin-top: 6px;"><strong>andrea@gmbs.fr</strong> / <code>andrea123</code></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <h2>Sommaire</h2>
+    <ul>
+      <li><a href="#taches-effectuees">1. Tâches effectuées</a></li>
+      <li><a href="#fonctionnalites-restantes">2. Fonctionnalités restantes</a></li>
+    </ul>
+  </nav>
+
+  <section id="taches-effectuees">
+    <h2>1) Tâches effectuées ✅</h2>
+    <div class="chips">
+      <span class="chip"><b>Validé</b> : éléments actés et livrés</span>
+    </div>
+
+    <div class="req">
+      <header>
+        <h4>Vue d'ensemble</h4>
+        <div class="meta">
+          <span class="badge valide">Validé &amp; livré</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li>Règles <b>due date → statut «&nbsp;Check&nbsp;»</b>, et retour au statut précédent via modification de la <b>date de fin</b>.</li>
+          <li>Champs obligatoires à la création d'une intervention&nbsp;: <b>Adresse</b>, <b>Contexte</b>, <b>Métier</b>, <b>Statut</b>, <b>Agence</b>.</li>
+          <li>Agences avec <b>Référence agence obligatoire</b>&nbsp;: <b>ImoDirect</b>, <b>AFEDIM</b>, <b>Locoro</b>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="MAP-001">
+      <header>
+        <h4>MSG‑003 · Mapping champ &laquo;&nbsp;Montant du budget&nbsp;&raquo;</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: Données</span>
+        </div>
+      </header>
+      <div class="body">
+        <p>Le champ <b>Montant du budget</b> correspond à la colonne <b>«&nbsp;SST&nbsp;»</b> du Google Sheet actuel.</p>
+      </div>
+    </div>
+
+    <div class="req" id="INT-001">
+      <header>
+        <h4>INT‑001 · Champs obligatoires</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: Données</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li><b>Adresse</b>, <b>Contexte</b>, <b>Métier</b>, <b>Statut</b>, <b>Agence</b> sont requis à la création (blocage si manquant).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="INT-003">
+      <header>
+        <h4>INT‑003 · Contexte&nbsp;: droits d'édition</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: Règle produit</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li>Modifiable uniquement à la création (<code>NewInterventionModalContent</code>).</li>
+          <li><code>InterventionModalContent</code> &rarr; en lecture seule.</li>
+          <li>Seuls les <b>Administrateurs</b> peuvent modifier <i>Contexte</i> après création.</li>
+        </ul>
+        <div class="callout" style="margin-top: 12px;">
+          <b>📝 Tutoriel de test :</b><br>
+          <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+            <li>Pour tester avec <b>andrea</b> : créer une intervention, une fois créée aller dans l'édition, il ne peut plus modifier la consigne.</li>
+            <li>Pour tester avec <b>badr</b> : même test sauf que lui pourra modifier la consigne.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="req" id="DAT-001">
+      <header>
+        <h4>DAT‑001 · Due date dépassée &rarr; statut «&nbsp;Check&nbsp;»</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: Automatisation</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li>Si la <b>due date</b> est dépassée et le statut est <b>«&nbsp;Visite technique&nbsp;»</b> ou <b>«&nbsp;Intervention en cours&nbsp;»</b>, le statut passe <b>automatiquement</b> à <b>«&nbsp;Check&nbsp;»</b>.</li>
+          <li>Pour <b>revenir</b> au statut précédent (VT / EC), l'utilisateur doit <b>modifier la date de fin</b> (prolongation validée).</li>
+          <li>Les dossiers en VT / EC doivent obligatoirement avoir une <b>due date</b> (blocage à défaut).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="AGN-001">
+      <header>
+        <h4>AGN‑001 · Référence agence — règle &amp; modèle de données</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: Données</span>
+        </div>
+      </header>
+      <div class="body">
+        <p>À la création d'une intervention, la <b>Référence agence</b> est <b>obligatoire</b> pour&nbsp;:</p>
+        <ul>
+          <li>ImoDirect</li>
+          <li>AFEDIM</li>
+          <li>Locoro</li>
+        </ul>
+        <p>Le champ <b>Référence agence</b> fait partie du <b>modèle de données</b> (base de données) et est <b>stocké sur l'intervention</b>. Pas de tâche distincte.</p>
+      </div>
+    </div>
+
+    <div class="req" id="ARC-001">
+      <header>
+        <h4>ARC‑001 · Archivage avec commentaire obligatoire</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: Gouvernance</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li>À l'archivage d'un <b>artisan</b> ou d'une <b>intervention terminée</b>, saisir un <b>commentaire</b> (bloquant).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="ARC-002">
+      <header>
+        <h4>ARC‑002 · Indication «&nbsp;Indisponible&nbsp;»</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: UX</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li>Les artisans indisponibles apparaissent dans les recherches, avec une <b>pastille «&nbsp;Indisponible&nbsp;»</b> clairement visible.</li>
+          <li>Les artisans <b>archivés</b> n'apparaissent <b>pas</b> sur la carte.</li>
+          <li>Un artisan archivé <b>conserve</b> son <b>statut de compétence</b> (Novice, Confirmé, Potentiel, etc.).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="ART-002">
+      <header>
+        <h4>ART‑002 · Règle «&nbsp;Incomplet → Novice → À compléter&nbsp;»</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: Automatisation</span>
+        </div>
+      </header>
+      <div class="body">
+        <p>Si le <i>statut dossier</i> d'un artisan est <b>Incomplet</b> et que son <i>niveau</i> devient <b>Novice</b>, alors le statut dossier passe automatiquement à <b>À compléter</b>.</p>
+      </div>
+    </div>
+
+    <div class="req" id="DEVI-001">
+      <header>
+        <h4>DEVI‑001 · Pré‑requis ID devis pour «&nbsp;Devis envoyé&nbsp;»</h4>
+        <div class="meta">
+          <span class="badge valide">Validé</span>
+          <span class="chip">Type&nbsp;: Règle produit</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li>L'<b>ID du devis</b> doit être <b>renseigné</b> <u>avant</u> le passage au statut <b>«&nbsp;Devis envoyé&nbsp;»</b>.</li>
+          <li>Si l'ID <b>n'est pas renseigné</b>, l'action «&nbsp;Passer à Devis envoyé&nbsp;» est <b>masquée</b> dans le clic droit.</li>
+          <li><b>Pas d'automatisation</b> du passage «&nbsp;Demandé → Devis envoyé&nbsp;» lors de la saisie de l'ID.</li>
+        </ul>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="fonctionnalites-restantes">
+    <h2>2) Fonctionnalités restantes</h2>
+    <div class="chips">
+      <span class="chip"><b>À valider</b> : décision produit à confirmer</span>
+      <span class="chip"><b>À clarifier</b> : question ouverte / besoin d'info</span>
+    </div>
+
+    <div class="req" id="UI-001">
+      <header>
+        <h4>UI‑001 · Menus contextuels (clic droit) — Interventions &amp; Artisans</h4>
+        <div class="meta">
+          <span class="badge avalider">À faire</span>
+          <span class="chip">Type&nbsp;: UX</span>
+        </div>
+      </header>
+      <div class="body">
+        <p>Menus contextuels (clic droit) sur <b>Interventions</b> &amp; <b>Artisans</b> (incluant pop-up d'archivage côté Artisans).</p>
+        <h3>Artisans</h3>
+        <ul>
+          <li><b>Ouvrir fiche artisan</b></li>
+          <li><b>Modifier fiche artisan</b></li>
+          <li><b>Archiver</b> &rarr; ouvre un pop‑up demandant le <b>motif d'archivage</b> (bloquant).</li>
+        </ul>
+        <h3>Market / Carte</h3>
+        <ul>
+          <li><b>Je gère</b> &rarr; attribue le dossier à l'utilisateur ayant déclenché l'action.</li>
+        </ul>
+        <h3>Liste des interventions</h3>
+        <ul>
+          <li>Ouvrir</li>
+          <li>Ouvrir dans un nouvel onglet</li>
+          <li>Passer de <b>«&nbsp;Demandé&nbsp;»</b> à <b>«&nbsp;Devis envoyé&nbsp;»</b> <i>(pré‑requis&nbsp;: ID devis renseigné)</i></li>
+          <li>Passer de <b>«&nbsp;Devis envoyé&nbsp;»</b> à <b>«&nbsp;Accepté&nbsp;»</b></li>
+          <li><b>Devis supp</b> : duplique le dossier (voir règles <a href="#devis-dup">DUP‑001</a>).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="INT-002">
+      <header>
+        <h4>INT‑002 · Case «&nbsp;Logement vacant&nbsp;» et champs conditionnels</h4>
+        <div class="meta">
+          <span class="badge avalider">À faire</span>
+          <span class="chip">Type&nbsp;: UX</span>
+        </div>
+      </header>
+      <div class="body">
+        <p>Dans <i>Détails propriétaire et client</i>, ajouter la case <b>Logement vacant</b>.</p>
+        <p><b>Logement vacant</b> → champs conditionnels <b>Information clef</b>, <b>Étage</b>, <b>N° appartement</b>, <b>Contexte</b>.</p>
+        <ul>
+          <li>Si cochée&nbsp;: <b>remplacer</b> «&nbsp;Client&nbsp;» et «&nbsp;Téléphone&nbsp;» par&nbsp;:
+            <ul>
+              <li><b>Information clef (code)</b></li>
+              <li><b>Étage</b></li>
+              <li><b>Numéro d'appartement</b></li>
+              <li><b>Contexte</b></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="NOT-001">
+      <header>
+        <h4>NOT‑001 · Pop-ups d'information simples</h4>
+        <div class="meta">
+          <span class="badge avalider">À faire</span>
+          <span class="chip">Type&nbsp;: UX</span>
+        </div>
+      </header>
+      <div class="body">
+        <p><b>Pop-ups d'information</b> à la création/modification.</p>
+        <ul>
+          <li>À la création ou modification d'un <b>artisan</b> ou d'une <b>intervention</b>&nbsp;: afficher un message d'information (ex.&nbsp;«&nbsp;Artisan créé&nbsp;», «&nbsp;Intervention modifiée&nbsp;»).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="ART-001">
+      <header>
+        <h4>ART‑001 · Artisans : IBAN avec validation réservée Admin</h4>
+        <div class="meta">
+          <span class="badge avalider">À faire</span>
+          <span class="chip">Type&nbsp;: Données</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li><b>Le gestionnaire peut saisir</b> un IBAN.</li>
+          <li><b>La validation</b> de l'IBAN doit être faite par un <b>Administrateur</b> (le gestionnaire ne peut pas valider).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="MSG-001">
+      <header>
+        <h4>MSG‑001 · Prévisualisation &amp; copie du message type</h4>
+        <div class="meta">
+          <span class="badge avalider">À faire</span>
+          <span class="chip">Type&nbsp;: Fonctionnel</span>
+        </div>
+      </header>
+      <div class="body">
+        <p>Le contenu type du message donne lieu à une <b>prévisualisation</b> et à la possibilité de <b>copier</b> le message via une <b>icône de copie</b>.</p>
+        <h3>Critères d'acceptation</h3>
+        <ul>
+          <li>Affichage d'une prévisualisation fidèle au rendu final (WhatsApp / SMS).</li>
+          <li>Icône «&nbsp;copier&nbsp;» qui copie l'intégralité du message dans le presse‑papiers.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="TPL-001">
+      <header>
+        <h4>TPL‑001 · 2 modèles d'e-mails + 1 modèle de SMS</h4>
+        <div class="meta">
+          <span class="badge avalider">À faire</span>
+          <span class="chip">Type&nbsp;: Contenu</span>
+        </div>
+      </header>
+      <div class="body">
+        <p>Les modèles ont été transmis par e‑mail (e‑mails ×2 + SMS ×1) pour intégration et mise en forme.</p>
+        <p><i>Intégrer la mise en forme dans l'outil d'envoi.</i></p>
+      </div>
+    </div>
+
+    <div class="req" id="devis-dup">
+      <header>
+        <h4>DUP‑001 · «&nbsp;Devis supp&nbsp;» — duplication de dossier</h4>
+        <div class="meta">
+          <span class="badge avalider">À faire</span>
+          <span class="chip">Type&nbsp;: Flux</span>
+        </div>
+      </header>
+      <div class="body">
+        <ul>
+          <li>L'action <b>Devis supp</b> crée une <b>nouvelle ligne</b> <u>et un nouvel enregistrement dans la base de données</u> (un devis = une ligne).</li>
+          <li>La duplication reprend les infos du dossier <b>sauf</b>&nbsp;: <b>ID</b>, <b>Contexte</b>, <b>Consignes</b>.</li>
+          <li>Sur le nouveau dossier, ajouter en <b>commentaire</b>&nbsp;: «&nbsp;devis supp avec l'ancien ID <code>[ID]</code>&nbsp;».</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req" id="ACPT-001">
+      <header>
+        <h4>ACPT‑001 · Acompte — saisie &amp; réception</h4>
+        <div class="meta">
+          <span class="badge avalider">À faire</span>
+          <span class="chip">Type&nbsp;: Automatisation</span>
+        </div>
+      </header>
+      <div class="body">
+        <ol>
+          <li>
+            <b>Saisie du montant d'acompte réclamé</b><br>
+            Lorsqu'un utilisateur saisit le montant de l'acompte réclamé dans le CRM, le statut du dossier passe automatiquement à
+            <b>«&nbsp;Attente acompte&nbsp;»</b> (<i>att acompte</i>).<br>
+            <i>Condition</i> : cette saisie n'est possible que si le dossier est actuellement au statut <b>«&nbsp;Accepté&nbsp;»</b>.
+          </li>
+          <li>
+            <b>Réception de l'acompte</b><br>
+            Lorsque l'acompte est effectivement reçu, le gestionnaire coche la case <b>«&nbsp;Acompte reçu&nbsp;»</b>.<br>
+            Cette action déclenche l'obligation de renseigner la <b>date de réception de l'acompte</b>.<br>
+            Tant que la date de réception n'est pas saisie, il est <b>impossible</b> de faire passer le dossier du statut <b>«&nbsp;Attente acompte&nbsp;»</b> à <b>«&nbsp;Accepté&nbsp;»</b>.
+          </li>
+          <li>
+            <b>Retour automatique au statut « Accepté $ »</b><br>
+            Une fois la <b>date de réception</b> saisie, le statut du dossier repasse automatiquement à <b>«&nbsp;Accepté $&nbsp;»</b>
+            (symbole <b>$</b> affiché pour indiquer que l'acompte a été reçu).
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Pour toute correction ou ajout, merci d'indiquer l'ID de la demande (ex.&nbsp;«&nbsp;DAT‑001&nbsp;»).</p>
+
+</div>
+</body>
+</html>
+

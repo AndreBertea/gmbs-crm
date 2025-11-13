@@ -80,7 +80,8 @@ echo ""
 # Exécuter l'import avec NODE_ENV=production
 # Les variables NEXT_PUBLIC_* sont maintenant disponibles dans l'environnement
 # Note: --verbose est passé via npm pour avoir plus de détails sur les erreurs
-NODE_ENV=production npx tsx scripts/imports/google-sheets-import-clean-v2.js --verbose && node scripts/recalculate-artisan-statuses.js
+# --upsert active le mode upsert pour éviter les doublons (met à jour les enregistrements existants)
+NODE_ENV=production npx tsx scripts/imports/google-sheets-import-clean-v2.js --verbose --upsert && node scripts/recalculate-artisan-statuses.js
 
 echo ""
 echo "✅ Import terminé avec succès!"
