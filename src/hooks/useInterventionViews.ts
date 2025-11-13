@@ -263,6 +263,11 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
       showStatusBorder: true,
       statusBorderSize: "m",
       showStatusFilter: true,
+      columnWidths: {
+        attribueA: 50,
+      },
+      rowDisplayMode: "gradient",
+      useAccentColor: false,
       columnStyles: {
         statusValue: { appearance: "badge" },
         attribueA: { appearance: "none" },
@@ -288,6 +293,9 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
       "datePrevue",
     ],
     layoutOptions: {
+      columnWidths: {
+        attribueA: 50,
+      },
       columnStyles: {
         attribueA: { appearance: "none" },
       },
@@ -303,6 +311,9 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
     ],
     showBadge: true,
     layoutOptions: {
+      columnWidths: {
+        attribueA: 50,
+      },
       columnStyles: {
         attribueA: { appearance: "none" },
       },
@@ -318,6 +329,9 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
     ],
     showBadge: true,
     layoutOptions: {
+      columnWidths: {
+        attribueA: 50,
+      },
       columnStyles: {
         attribueA: { appearance: "none" },
       },
@@ -333,6 +347,9 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
     ],
     showBadge: true,
     layoutOptions: {
+      columnWidths: {
+        attribueA: 50,
+      },
       columnStyles: {
         attribueA: { appearance: "none" },
       },
@@ -348,6 +365,9 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
     ],
     showBadge: true,
     layoutOptions: {
+      columnWidths: {
+        attribueA: 50,
+      },
       columnStyles: {
         attribueA: { appearance: "none" },
       },
