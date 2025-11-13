@@ -236,10 +236,10 @@ export function MarginStatsCard({ period, userId: propUserId, compact = false }:
           <CardTitle className="text-sm text-muted-foreground">Marge moyenne</CardTitle>
         </CardHeader>
       )}
-      <CardContent className={compact ? "px-3 pb-0 pt-0 flex flex-col gap-1" : undefined}>
-        <div className={compact ? "space-y-1" : "space-y-4"}>
+      <CardContent className={compact ? "px-3 py-3 flex flex-col gap-1" : undefined}>
+        <div className={compact ? "space-y-2" : "space-y-4"}>
           {/* Cadran de vitesse */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center py-2">
             <Speedometer
               value={Math.abs(stats.average_margin_percentage)}
               max={performanceTarget}
@@ -267,7 +267,7 @@ export function MarginStatsCard({ period, userId: propUserId, compact = false }:
           </div>
 
           {/* Informations */}
-          <div className={compact ? "space-y-1 mt-0" : "space-y-1 mt-2"}>
+          <div className={compact ? "space-y-1 mt-1" : "space-y-1 mt-2"}>
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <TrendIcon className={`h-4 w-4 ${percentageColor}`} />
