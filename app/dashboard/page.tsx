@@ -631,58 +631,60 @@ export default function DashboardPage() {
                     ) : gestionnaires.length === 0 ? (
                       <div className="text-sm text-muted-foreground">Aucun gestionnaire</div>
                     ) : (
-                      <AvatarGroup variant="motion" className="h-9 -space-x-2">
-                        {gestionnaires.map((gestionnaire) => {
-                          const isSelected = selectedGestionnaireId === gestionnaire.id
-                          const isCurrentUser = currentUser?.id === gestionnaire.id
-                          const displayName = getDisplayName(gestionnaire)
-                          
-                          return (
-                            <motion.div
-                              key={gestionnaire.id}
-                              layoutId={`gestionnaire-badge-${gestionnaire.id}`}
-                              initial={false}
-                              animate={{
-                                opacity: isSelected ? 0 : 1,
-                                scale: isSelected ? 0.8 : 1,
-                              }}
-                              style={{ width: "2.25rem", height: "2.25rem" }}
-                              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                            >
-                              <GestionnaireBadge
-                                firstname={gestionnaire.firstname}
-                                lastname={gestionnaire.lastname}
-                                prenom={gestionnaire.prenom}
-                                name={gestionnaire.name}
-                                color={gestionnaire.color}
-                                size="md"
-                                className={cn(
-                                  "transition-all",
-                                  isSelected && "pointer-events-none",
-                                  isCurrentUser && !isSelected && "ring-2 ring-green-500/50"
-                                )}
-                                onClick={() => setSelectedGestionnaireId(gestionnaire.id)}
-                              >
-                                <AvatarGroupTooltip>
-                                  <div className="flex flex-col gap-1">
-                                    <p className="font-semibold">{displayName}</p>
-                                    {isCurrentUser && (
-                                      <Badge variant="secondary" className="w-fit text-xs">
-                                        Vous
-                                      </Badge>
+                      <motion.div
+                        layout
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      >
+                        <AvatarGroup variant="motion" className="h-9 -space-x-2">
+                          {gestionnaires
+                            .filter((gestionnaire) => gestionnaire.id !== selectedGestionnaireId)
+                            .map((gestionnaire) => {
+                              const isCurrentUser = currentUser?.id === gestionnaire.id
+                              const displayName = getDisplayName(gestionnaire)
+                              
+                              return (
+                                <motion.div
+                                  key={gestionnaire.id}
+                                  layoutId={`gestionnaire-badge-${gestionnaire.id}`}
+                                  layout
+                                  initial={false}
+                                  style={{ width: "2.25rem", height: "2.25rem" }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                >
+                                  <GestionnaireBadge
+                                    firstname={gestionnaire.firstname}
+                                    lastname={gestionnaire.lastname}
+                                    prenom={gestionnaire.prenom}
+                                    name={gestionnaire.name}
+                                    color={gestionnaire.color}
+                                    size="md"
+                                    className={cn(
+                                      "transition-all",
+                                      isCurrentUser && "ring-2 ring-green-500/50"
                                     )}
-                                    {gestionnaire.code_gestionnaire && (
-                                      <p className="text-xs text-muted-foreground">
-                                        {gestionnaire.code_gestionnaire}
-                                      </p>
-                                    )}
-                                  </div>
-                                </AvatarGroupTooltip>
-                              </GestionnaireBadge>
-                            </motion.div>
-                          )
-                        })}
-                      </AvatarGroup>
+                                    onClick={() => setSelectedGestionnaireId(gestionnaire.id)}
+                                  >
+                                    <AvatarGroupTooltip>
+                                      <div className="flex flex-col gap-1">
+                                        <p className="font-semibold">{displayName}</p>
+                                        {isCurrentUser && (
+                                          <Badge variant="secondary" className="w-fit text-xs">
+                                            Vous
+                                          </Badge>
+                                        )}
+                                        {gestionnaire.code_gestionnaire && (
+                                          <p className="text-xs text-muted-foreground">
+                                            {gestionnaire.code_gestionnaire}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </AvatarGroupTooltip>
+                                  </GestionnaireBadge>
+                                </motion.div>
+                              )
+                            })}
+                        </AvatarGroup>
+                      </motion.div>
                     )}
                   </div>
                 </div>
