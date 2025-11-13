@@ -1,7 +1,8 @@
 import type { ViewFilter } from "@/types/intervention-views"
 import type { GetAllParams } from "@/lib/supabase-api-v2"
+import type { ArtisanViewFilter } from "@/hooks/useArtisanViews"
 
-export interface FilterConversionContext {
+interface FilterConversionContext {
   statusCodeToId: (code: string | string[]) => string | string[] | undefined
   userCodeToId: (code: string | string[]) => string | string[] | undefined
   currentUserId?: string
@@ -13,7 +14,7 @@ export interface FilterConversionContext {
  */
 export function convertViewFiltersToServerFilters(
   filters: ViewFilter[],
-  context: FilterConversionContext,
+  context: FilterConversionContext
 ): {
   serverFilters: Partial<GetAllParams>
   clientFilters: ViewFilter[]
@@ -32,9 +33,15 @@ export function convertViewFiltersToServerFilters(
           clientFilters.push(filter) // Fallback côté client si conversion échoue
         }
       } else if (filter.operator === "in" && Array.isArray(filter.value)) {
-        const statusIds = context.statusCodeToId(filter.value)
-        if (statusIds && Array.isArray(statusIds) && statusIds.length > 0) {
-          serverFilters.statut = statusIds
+        // Convertir le tableau en string[] pour statusCodeToId
+        const stringValues = filter.value.filter((v): v is string => typeof v === "string")
+        if (stringValues.length > 0) {
+          const statusIds = context.statusCodeToId(stringValues)
+          if (statusIds && Array.isArray(statusIds) && statusIds.length > 0) {
+            serverFilters.statut = statusIds
+          } else {
+            clientFilters.push(filter)
+          }
         } else {
           clientFilters.push(filter)
         }
@@ -63,22 +70,25 @@ export function convertViewFiltersToServerFilters(
           }
         }
       } else if (filter.operator === "in" && Array.isArray(filter.value)) {
-        const userIds = filter.value
-          .map((v) => {
-            if (v === "CURRENT_USER" || v === context.currentUserId) {
-              return context.currentUserId
-            }
-            return context.userCodeToId(v)
-          })
-          .filter((id): id is string => Boolean(id))
-        if (userIds.length > 0) {
-          serverFilters.user = userIds
+        // Convertir le tableau en string[] pour userCodeToId
+        const stringValues = filter.value.filter((v): v is string => typeof v === "string")
+        if (stringValues.length > 0) {
+          const userIds = stringValues
+            .map((v) => {
+              if (v === "CURRENT_USER" || v === context.currentUserId) {
+                return context.currentUserId
+              }
+              return context.userCodeToId(v)
+            })
+            .filter((id): id is string => Boolean(id))
+          if (userIds.length > 0) {
+            serverFilters.user = userIds
+          } else {
+            clientFilters.push(filter)
+          }
         } else {
           clientFilters.push(filter)
         }
-      } else if (filter.operator === "is_empty") {
-        // Pour les vues sans assignation (ex: Market)
-        serverFilters.user = null
       } else {
         clientFilters.push(filter)
       }
@@ -110,6 +120,60 @@ export function convertViewFiltersToServerFilters(
 
     // Filtres non supportés côté serveur → côté client
     // Exemples : isCheck, artisan, marge, etc.
+    clientFilters.push(filter)
+  }
+
+  return { serverFilters, clientFilters }
+}
+
+/**
+ * Convertit les ArtisanViewFilter en filtres serveur compatibles avec l'API
+ * Retourne { serverFilters, clientFilters } pour séparer les filtres serveur/client
+ */
+export function convertArtisanFiltersToServerFilters(
+  filters: ArtisanViewFilter[],
+  context: { currentUserId?: string }
+): {
+  serverFilters: {
+    gestionnaire?: string
+    statut?: string
+  }
+  clientFilters: ArtisanViewFilter[]
+} {
+  const serverFilters: {
+    gestionnaire?: string
+    statut?: string
+  } = {}
+  const clientFilters: ArtisanViewFilter[] = []
+
+  for (const filter of filters) {
+    // Filtre sur gestionnaire_id → gestionnaire (serveur)
+    if (filter.property === "gestionnaire_id") {
+      if (filter.operator === "eq") {
+        // Gérer CURRENT_USER_PLACEHOLDER ou __CURRENT_USER__
+        if (
+          filter.value === "CURRENT_USER" ||
+          filter.value === "__CURRENT_USER__" ||
+          filter.value === context.currentUserId
+        ) {
+          if (context.currentUserId) {
+            serverFilters.gestionnaire = context.currentUserId
+          } else {
+            clientFilters.push(filter)
+          }
+        } else if (typeof filter.value === "string") {
+          // UUID direct
+          serverFilters.gestionnaire = filter.value
+        } else {
+          clientFilters.push(filter)
+        }
+      } else {
+        clientFilters.push(filter)
+      }
+      continue
+    }
+
+    // Filtres non supportés côté serveur → côté client
     clientFilters.push(filter)
   }
 

@@ -24,6 +24,8 @@ import { useArtisanModal } from "@/hooks/useArtisanModal"
 import { useArtisanViews } from "@/hooks/useArtisanViews"
 import { ArtisanViewTabs } from "@/components/artisans/ArtisanViewTabs"
 import type { Artisan as ApiArtisan } from "@/lib/supabase-api-v2"
+import { getArtisanTotalCount } from "@/lib/supabase-api-v2"
+import { convertArtisanFiltersToServerFilters } from "@/lib/filter-converter"
 import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Wrench, X } from "lucide-react"
 import Loader from "@/components/ui/Loader"
 
@@ -255,6 +257,137 @@ const getDossierStatusColor = (status: string) => {
 }
 
 export default function ArtisansPage(): ReactElement {
+  const artisanModal = useArtisanModal()
+  const { views, activeView, activeViewId, setActiveView, isReady } = useArtisanViews()
+  
+  // Récupérer l'utilisateur actuel depuis useArtisanViews (qui le gère déjà)
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
+  
+  // État pour stocker les counts réels de chaque vue
+  const [viewCounts, setViewCounts] = useState<Record<string, number>>({})
+  const [countsLoading, setCountsLoading] = useState(false)
+  
+  // Récupérer l'utilisateur actuel (même logique que dans useArtisanViews)
+  useEffect(() => {
+    let cancelled = false
+    
+    const resolveUser = async () => {
+      try {
+        const { supabase } = await import("@/lib/supabase-client")
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        if (!token) {
+          if (!cancelled) {
+            setCurrentUserId(undefined)
+          }
+          return
+        }
+        
+        const response = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        })
+        if (!response.ok) {
+          throw new Error("Unable to fetch current user")
+        }
+        const payload = await response.json()
+        const user = payload?.user ?? null
+        const userId: string | undefined = user?.id ?? undefined
+        if (!cancelled) {
+          setCurrentUserId(userId)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setCurrentUserId(undefined)
+        }
+      }
+    }
+    
+    resolveUser()
+  }, [])
+
+  // Convertir les filtres de la vue active en filtres serveur
+  const { serverFilters, clientFilters } = useMemo(() => {
+    if (!activeView || !activeView.filters.length) {
+      return { serverFilters: undefined, clientFilters: [] }
+    }
+
+    return convertArtisanFiltersToServerFilters(activeView.filters, {
+      currentUserId: currentUserId,
+    })
+  }, [activeView, currentUserId])
+
+  // Fonction pour convertir ArtisanViewFilter en paramètres API pour le comptage
+  const convertFiltersToApiParams = useCallback(
+    (filters: Array<{ property: string; operator: string; value?: string | null }>): { gestionnaire?: string; statut?: string } => {
+      const params: { gestionnaire?: string; statut?: string } = {}
+
+      for (const filter of filters) {
+        if (filter.property === "gestionnaire_id" && filter.operator === "eq") {
+          if (
+            filter.value === "CURRENT_USER" ||
+            filter.value === "__CURRENT_USER__" ||
+            filter.value === currentUserId
+          ) {
+            if (currentUserId) {
+              params.gestionnaire = currentUserId
+            }
+          } else if (typeof filter.value === "string") {
+            params.gestionnaire = filter.value
+          }
+        }
+      }
+
+      return params
+    },
+    [currentUserId]
+  )
+
+  // Charger les counts réels pour toutes les vues
+  useEffect(() => {
+    if (!isReady || views.length === 0) return
+
+    let cancelled = false
+    setCountsLoading(true)
+
+    const loadCounts = async () => {
+      const counts: Record<string, number> = {}
+
+      // Charger les counts en parallèle pour toutes les vues
+      const countPromises = views.map(async (view) => {
+        try {
+          // Convertir les filtres de la vue en paramètres API
+          const apiParams = convertFiltersToApiParams(view.filters)
+
+          // Appeler getArtisanTotalCount avec les filtres
+          const count = await getArtisanTotalCount(apiParams)
+
+          if (!cancelled) {
+            counts[view.id] = count
+          }
+        } catch (error) {
+          console.error(`Erreur lors du comptage pour la vue ${view.id}:`, error)
+          if (!cancelled) {
+            counts[view.id] = 0
+          }
+        }
+      })
+
+      await Promise.all(countPromises)
+
+      if (!cancelled) {
+        setViewCounts(counts)
+        setCountsLoading(false)
+      }
+    }
+
+    loadCounts()
+
+    return () => {
+      cancelled = true
+    }
+  }, [views, isReady, convertFiltersToApiParams])
+
   const {
     artisans,
     loading: artisansLoading,
@@ -264,8 +397,9 @@ export default function ArtisansPage(): ReactElement {
     loadMore,
     refresh,
   } = useArtisans({
-    limit: 10000, // Charger tous les artisans d'un coup
+    limit: 100, // ✅ Limite fixe de 100
     autoLoad: true,
+    serverFilters, // ✅ Passer les filtres serveur ici
   })
 
   const {
@@ -273,9 +407,6 @@ export default function ArtisansPage(): ReactElement {
     loading: referenceLoading,
     error: referenceError,
   } = useReferenceData()
-
-  const artisanModal = useArtisanModal()
-  const { views, activeView, activeViewId, setActiveView, isReady } = useArtisanViews()
 
   const loading = artisansLoading || referenceLoading
   const error = artisansError || referenceError
@@ -366,12 +497,18 @@ export default function ArtisansPage(): ReactElement {
     }
   }, [refresh])
 
-  // Appliquer les filtres de la vue active
+  // Appliquer les filtres de la vue active (uniquement les filtres client)
   const viewFilteredContacts = useMemo(() => {
     if (!isReady || !activeView) return contacts
     
+    // Si pas de filtres client, retourner directement
+    if (clientFilters.length === 0) {
+      return contacts
+    }
+    
+    // Appliquer uniquement les filtres client
     return contacts.filter((contact) => {
-      return activeView.filters.every((filter) => {
+      return clientFilters.every((filter) => {
         if (filter.property === "gestionnaire_id") {
           if (filter.operator === "eq") {
             return contact.gestionnaire_id === filter.value
@@ -380,7 +517,7 @@ export default function ArtisansPage(): ReactElement {
         return true
       })
     })
-  }, [contacts, activeView, isReady])
+  }, [contacts, activeView, isReady, clientFilters])
 
   const filteredContacts = viewFilteredContacts.filter((contact) => {
     const matchesSearch =
@@ -392,24 +529,7 @@ export default function ArtisansPage(): ReactElement {
     return matchesSearch && matchesStatus && matchesMetier
   })
 
-  // Calculer les compteurs par vue
-  const viewCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    views.forEach((view) => {
-      const filtered = contacts.filter((contact) => {
-        return view.filters.every((filter) => {
-          if (filter.property === "gestionnaire_id") {
-            if (filter.operator === "eq") {
-              return contact.gestionnaire_id === filter.value
-            }
-          }
-          return true
-        })
-      })
-      counts[view.id] = filtered.length
-    })
-    return counts
-  }, [contacts, views])
+  // Utiliser viewCounts (counts réels depuis BDD) au lieu de calculer localement
 
   const handleEditContact = useCallback((contact: Contact) => {
     artisanModal.open(contact.id)

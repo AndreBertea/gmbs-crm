@@ -3189,6 +3189,36 @@ export async function getInterventionTotalCount(
 }
 
 /**
+ * Obtient le nombre total d'artisans correspondant aux filtres
+ * Utilise count: "exact", head: true pour ne transférer que le nombre
+ * @param params - Filtres optionnels à appliquer
+ * @returns Nombre total d'artisans correspondant
+ */
+export async function getArtisanTotalCount(
+  params?: {
+    gestionnaire?: string
+    statut?: string
+  }
+): Promise<number> {
+  let query = supabase
+    .from("artisans")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true)
+
+  if (params?.gestionnaire) {
+    query = query.eq("gestionnaire_id", params.gestionnaire)
+  }
+  if (params?.statut) {
+    query = query.eq("statut_id", params.statut)
+  }
+
+  const { count, error } = await query
+  if (error) throw error
+
+  return count ?? 0
+}
+
+/**
  * Obtient le nombre d'interventions par statut (pour les pastilles de vues)
  * @param params - Filtres à appliquer (user, agence, dates, etc.)
  * @returns Objet avec statut_id → count

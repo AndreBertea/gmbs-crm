@@ -58,7 +58,7 @@ import type { WorkflowConfig } from "@/types/intervention-workflow"
 import { mapStatusFromDb, mapStatusToDb } from "@/lib/interventions/mappers"
 import { isCheckStatus } from "@/lib/interventions/checkStatus"
 import type { InterventionStatusValue } from "@/types/interventions"
-import { getDistinctInterventionValues, getInterventionTotalCount } from "@/lib/supabase-api-v2"
+import { getDistinctInterventionValues, getInterventionTotalCount, type GetAllParams } from "@/lib/supabase-api-v2"
 import type { InterventionView as InterventionEntity } from "@/types/intervention-view"
 import type {
   LayoutOptions,
@@ -68,10 +68,10 @@ import type {
   ViewLayout,
 } from "@/types/intervention-views"
 import useInterventionModal, { InterventionModalOpenOptions } from "@/hooks/useInterventionModal"
+import { convertViewFiltersToServerFilters } from "@/lib/filter-converter"
 import { useInterventionStatusMap } from "@/hooks/useInterventionStatusMap"
 import { useUserMap } from "@/hooks/useUserMap"
-import { convertViewFiltersToServerFilters } from "@/lib/filter-converter"
-import type { GetAllParams } from "@/lib/supabase-api-v2"
+import { supabase } from "@/lib/supabase-client"
 
 type GalleryViewConfig = Parameters<typeof GalleryView>[0]["view"]
 type CalendarViewConfig = Parameters<typeof CalendarView>[0]["view"]
@@ -206,28 +206,55 @@ export default function Page() {
   // Hooks pour mapper CODE/USERNAME → UUID
   const { codeToId: statusCodeToId } = useInterventionStatusMap()
   const { nameToId: userCodeToId } = useUserMap()
-  
-  // État pour l'utilisateur actuel
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
   
-  // Charger l'utilisateur actuel
+  // État pour stocker les counts réels de chaque vue
+  const [viewCounts, setViewCounts] = useState<Record<string, number>>({})
+  const [countsLoading, setCountsLoading] = useState(false)
+  
+  // Récupérer l'utilisateur actuel
   useEffect(() => {
     let cancelled = false
-    const loadCurrentUser = async () => {
+    
+    const resolveUser = async () => {
       try {
-        const response = await fetch("/api/auth/me", { cache: "no-store" })
-        if (!response.ok) return
-        const data = await response.json()
-        if (!cancelled && data?.user?.id) {
-          setCurrentUserId(data.user.id)
+        const { data: session } = await supabase.auth.getSession()
+        const token = session?.session?.access_token
+        if (!token) {
+          if (!cancelled) {
+            setCurrentUserId(undefined)
+          }
+          return
+        }
+        
+        const response = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        })
+        if (!response.ok) {
+          throw new Error("Unable to fetch current user")
+        }
+        const payload = await response.json()
+        const user = payload?.user ?? null
+        const userId: string | undefined = user?.id ?? undefined
+        if (!cancelled) {
+          setCurrentUserId(userId)
         }
       } catch (error) {
-        console.error("Erreur lors du chargement de l'utilisateur actuel:", error)
+        if (!cancelled) {
+          setCurrentUserId(undefined)
+        }
       }
     }
-    loadCurrentUser()
+    
+    resolveUser()
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      resolveUser()
+    })
+    
     return () => {
       cancelled = true
+      authListener?.subscription.unsubscribe()
     }
   }, [])
   
@@ -251,7 +278,7 @@ export default function Page() {
     return Array.from(new Set(normalized))
   }, [activeView?.visibleProperties])
 
-  // Convertir les filtres de la vue active en filtres serveur/client
+  // Convertir les filtres de la vue active en filtres serveur
   const { serverFilters, clientFilters } = useMemo(() => {
     if (!activeView || !activeView.filters.length) {
       return { serverFilters: undefined, clientFilters: [] }
@@ -268,7 +295,130 @@ export default function Page() {
       },
       currentUserId: currentUserId,
     })
-  }, [activeView?.filters, statusCodeToId, userCodeToId, currentUserId])
+  }, [activeView, statusCodeToId, userCodeToId, currentUserId])
+
+  // Fonction pour convertir ViewFilter en paramètres API pour le comptage
+  const convertFiltersToApiParams = useCallback(
+    (filters: ViewFilter[]): Partial<GetAllParams> => {
+      const params: Partial<GetAllParams> = {}
+
+      for (const filter of filters) {
+        // Même logique que convertViewFiltersToServerFilters mais retourne directement les params
+        if (filter.property === "statusValue") {
+          if (filter.operator === "eq" && typeof filter.value === "string") {
+            const statusId = statusCodeToId(filter.value)
+            if (statusId && typeof statusId === "string") {
+              params.statut = statusId
+            }
+          } else if (filter.operator === "in" && Array.isArray(filter.value)) {
+            // Convertir le tableau en string[] pour statusCodeToId
+            const stringValues = filter.value.filter((v): v is string => typeof v === "string")
+            if (stringValues.length > 0) {
+              const statusIdsResult = statusCodeToId(stringValues)
+              if (statusIdsResult && Array.isArray(statusIdsResult)) {
+                const statusIds = statusIdsResult.filter(Boolean) as string[]
+                if (statusIds.length > 0) {
+                  params.statut = statusIds
+                }
+              }
+            }
+          }
+        }
+
+        if (filter.property === "attribueA") {
+          if (filter.operator === "eq" && typeof filter.value === "string") {
+            if (filter.value === "CURRENT_USER" || filter.value === currentUserId) {
+              if (currentUserId) params.user = currentUserId
+            } else {
+              const userId = userCodeToId(filter.value)
+              if (userId && typeof userId === "string") {
+                params.user = userId
+              }
+            }
+          } else if (filter.operator === "in" && Array.isArray(filter.value)) {
+            // Convertir le tableau en string[] pour userCodeToId
+            const stringValues = filter.value.filter((v): v is string => typeof v === "string")
+            if (stringValues.length > 0) {
+              const userIds = stringValues
+                .map((v) => {
+                  if (v === "CURRENT_USER" || v === currentUserId) return currentUserId
+                  return userCodeToId(v)
+                })
+                .filter((id): id is string => Boolean(id))
+              if (userIds.length > 0) {
+                params.user = userIds
+              }
+            }
+          }
+        }
+
+        if (filter.property === "dateIntervention" || filter.property === "date") {
+          if (filter.operator === "between") {
+            if (filter.value && typeof filter.value === "object" && !Array.isArray(filter.value)) {
+              const { from, to } = filter.value as { from?: string; to?: string }
+              if (from) params.startDate = from
+              if (to) params.endDate = to
+            } else if (Array.isArray(filter.value) && filter.value.length >= 2) {
+              if (filter.value[0]) params.startDate = String(filter.value[0])
+              if (filter.value[1]) params.endDate = String(filter.value[1])
+            }
+          } else if (filter.operator === "gte" && filter.value) {
+            params.startDate = String(filter.value)
+          } else if (filter.operator === "lte" && filter.value) {
+            params.endDate = String(filter.value)
+          }
+        }
+      }
+
+      return params
+    },
+    [statusCodeToId, userCodeToId, currentUserId]
+  )
+
+  // Charger les counts réels pour toutes les vues
+  useEffect(() => {
+    if (!isReady || views.length === 0) return
+
+    let cancelled = false
+    setCountsLoading(true)
+
+    const loadCounts = async () => {
+      const counts: Record<string, number> = {}
+
+      // Charger les counts en parallèle pour toutes les vues
+      const countPromises = views.map(async (view) => {
+        try {
+          // Convertir les filtres de la vue en paramètres API
+          const apiParams = convertFiltersToApiParams(view.filters)
+
+          // Appeler getInterventionTotalCount avec les filtres
+          const count = await getInterventionTotalCount(apiParams)
+
+          if (!cancelled) {
+            counts[view.id] = count
+          }
+        } catch (error) {
+          console.error(`Erreur lors du comptage pour la vue ${view.id}:`, error)
+          if (!cancelled) {
+            counts[view.id] = 0
+          }
+        }
+      })
+
+      await Promise.all(countPromises)
+
+      if (!cancelled) {
+        setViewCounts(counts)
+        setCountsLoading(false)
+      }
+    }
+
+    loadCounts()
+
+    return () => {
+      cancelled = true
+    }
+  }, [views, isReady, convertFiltersToApiParams])
 
   const {
     interventions: fetchedInterventions,
@@ -280,7 +430,7 @@ export default function Page() {
   } = useInterventions({
     viewId: activeViewId ?? undefined,
     fields: viewFields,
-    serverFilters,
+    serverFilters, // ✅ Passer les filtres serveur ici
   })
 
   const normalizedInterventions = useMemo(
@@ -303,7 +453,6 @@ export default function Page() {
   const loading = remoteLoading && normalizedInterventions.length === 0
   const error = remoteError ?? statusError
 
-  // Appliquer les filtres côté client uniquement sur les filtres non supportés
   const filteredInterventions = useMemo(() => {
     if (!activeView) {
       return normalizedInterventions
@@ -311,20 +460,10 @@ export default function Page() {
 
     // Si pas de filtres client, retourner directement
     if (clientFilters.length === 0) {
-      return runQuery(normalizedInterventions, [], activeView.sorts)
+      return normalizedInterventions
     }
 
     // Appliquer uniquement les filtres client (isCheck, etc.)
-    const datasetSize = normalizedInterventions.length
-    if (
-      clientFilters.length > 3 &&
-      datasetSize > SCROLL_CONFIG.CLIENT_FILTER_WARNING_THRESHOLD
-    ) {
-      console.warn(
-        `⚠️ Filtrage client important : ${clientFilters.length} filtres appliqués sur ${datasetSize} interventions. Vérifiez les performances si la taille augmente.`,
-      )
-    }
-
     return runQuery(normalizedInterventions, clientFilters, activeView.sorts)
   }, [activeView, normalizedInterventions, clientFilters])
 
@@ -581,129 +720,8 @@ export default function Page() {
 
   const viewInterventions = searchedInterventions
 
-  // État pour stocker les counts réels de chaque vue
-  const [viewCounts, setViewCounts] = useState<Record<string, number>>({})
-  const [countsLoading, setCountsLoading] = useState(false)
-
-  // Fonction pour convertir ViewFilter en paramètres API
-  const convertFiltersToApiParams = useCallback(
-    (filters: ViewFilter[]): Partial<GetAllParams> => {
-      const params: Partial<GetAllParams> = {}
-
-      for (const filter of filters) {
-        // Filtre sur statusValue → statut (UUID)
-        if (filter.property === "statusValue") {
-          if (filter.operator === "eq" && typeof filter.value === "string") {
-            const statusId = statusCodeToId(filter.value)
-            if (statusId && typeof statusId === "string") {
-              params.statut = statusId
-            }
-          } else if (filter.operator === "in" && Array.isArray(filter.value)) {
-            const statusIds = statusCodeToId(filter.value)
-            if (statusIds && Array.isArray(statusIds) && statusIds.length > 0) {
-              params.statut = statusIds
-            }
-          }
-        }
-
-        // Filtre sur attribueA → user (UUID)
-        if (filter.property === "attribueA") {
-          if (filter.operator === "eq" && typeof filter.value === "string") {
-            if (filter.value === "CURRENT_USER" || filter.value === currentUserId) {
-              if (currentUserId) params.user = currentUserId
-            } else {
-              const userId = userCodeToId(filter.value)
-              if (userId && typeof userId === "string") {
-                params.user = userId
-              }
-            }
-          } else if (filter.operator === "in" && Array.isArray(filter.value)) {
-            const userIds = filter.value
-              .map((v) => {
-                if (v === "CURRENT_USER" || v === currentUserId) return currentUserId
-                return userCodeToId(v)
-              })
-              .filter((id): id is string => Boolean(id))
-            if (userIds.length > 0) {
-              params.user = userIds
-            }
-          } else if (filter.operator === "is_empty") {
-            // Pour les vues sans assignation (ex: Market)
-            params.user = null
-          }
-        }
-
-        // Filtre sur dateIntervention → startDate/endDate
-        if (filter.property === "dateIntervention" || filter.property === "date") {
-          if (filter.operator === "between") {
-            if (filter.value && typeof filter.value === "object" && !Array.isArray(filter.value)) {
-              const { from, to } = filter.value as { from?: string; to?: string }
-              if (from) params.startDate = from
-              if (to) params.endDate = to
-            } else if (Array.isArray(filter.value) && filter.value.length >= 2) {
-              if (filter.value[0]) params.startDate = String(filter.value[0])
-              if (filter.value[1]) params.endDate = String(filter.value[1])
-            }
-          } else if (filter.operator === "gte" && filter.value) {
-            params.startDate = String(filter.value)
-          } else if (filter.operator === "lte" && filter.value) {
-            params.endDate = String(filter.value)
-          }
-        }
-
-        // Note: Les filtres isCheck, artisan, marge, etc. ne sont pas convertis
-        // car ils nécessitent un calcul côté client
-      }
-
-      return params
-    },
-    [statusCodeToId, userCodeToId, currentUserId],
-  )
-
-  // Charger les counts réels pour toutes les vues
-  useEffect(() => {
-    if (!isReady || views.length === 0) return
-
-    let cancelled = false
-    setCountsLoading(true)
-
-    const loadCounts = async () => {
-      const counts: Record<string, number> = {}
-
-      // Charger les counts en parallèle pour toutes les vues
-      const countPromises = views.map(async (view) => {
-        try {
-          // Convertir les filtres de la vue en paramètres API
-          const apiParams = convertFiltersToApiParams(view.filters)
-
-          // Appeler getInterventionTotalCount avec les filtres
-          const count = await getInterventionTotalCount(apiParams)
-
-          if (!cancelled) {
-            counts[view.id] = count
-          }
-        } catch (error) {
-          console.error(`Erreur lors du comptage pour la vue ${view.id}:`, error)
-          if (!cancelled) {
-            counts[view.id] = 0
-          }
-        }
-      })
-
-      await Promise.all(countPromises)
-
-      if (!cancelled) {
-        setViewCounts(counts)
-        setCountsLoading(false)
-      }
-    }
-
-    loadCounts()
-
-    return () => {
-      cancelled = true
-    }
-  }, [views, isReady, convertFiltersToApiParams])
+  // Remplacer localViewCounts par viewCounts (counts réels depuis BDD)
+  const combinedViewCounts = useMemo(() => viewCounts, [viewCounts])
 
   const uniqueStatuses = useMemo(() => {
     const set = new Set<InterventionStatusValue>()
@@ -750,9 +768,6 @@ export default function Page() {
       ),
     [uniqueStatuses, workflowPinnedStatuses],
   )
-
-  // Utiliser les counts réels depuis BDD au lieu des counts locaux
-  const combinedViewCounts = useMemo(() => viewCounts, [viewCounts])
 
   // Comptage par statut - basé sur TOUTES les interventions (sans filtres)
   // Les comptages doivent refléter le total réel de chaque statut, indépendamment des filtres actifs

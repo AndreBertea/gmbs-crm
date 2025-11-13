@@ -16,6 +16,10 @@ interface UseArtisansOptions {
     zone?: string;
     gestionnaire?: string;
   };
+  serverFilters?: {
+    gestionnaire?: string;
+    statut?: string;
+  };
 }
 
 interface UseArtisansReturn {
@@ -35,7 +39,8 @@ export function useArtisans(options: UseArtisansOptions = {}): UseArtisansReturn
     limit = 100,
     offset = 0,
     autoLoad = true,
-    filters = {}
+    filters = {},
+    serverFilters
   } = options;
 
   const [artisans, setArtisans] = useState<Artisan[]>([]);
@@ -53,7 +58,7 @@ export function useArtisans(options: UseArtisansOptions = {}): UseArtisansReturn
       const params = {
         limit,
         offset: reset ? 0 : artisans.length,
-        ...currentFilters
+        ...(serverFilters || currentFilters)
       };
 
       const result = await artisansApiV2.getAll(params);
@@ -73,7 +78,7 @@ export function useArtisans(options: UseArtisansOptions = {}): UseArtisansReturn
     } finally {
       setLoading(false);
     }
-  }, [limit, artisans.length, currentFilters]);
+  }, [limit, artisans.length, currentFilters, serverFilters]);
 
   const loadMore = useCallback(async () => {
     if (!loading && hasMore) {
