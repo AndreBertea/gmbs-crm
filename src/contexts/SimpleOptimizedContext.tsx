@@ -95,7 +95,7 @@ export function useSimpleInterventions() {
 
       // Import dynamique
       const { interventionsApiV2 } = await import('@/lib/supabase-api-v2');
-      const result = await interventionsApiV2.getAll({ limit: 10000 });
+      const result = await interventionsApiV2.getAll({ limit: 100 });
 
       const newData = result.data;
       const newTotal = result.total;

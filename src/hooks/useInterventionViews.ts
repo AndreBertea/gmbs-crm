@@ -138,8 +138,8 @@ const VIEW_TEMPLATES: Record<ViewLayout, InterventionViewDefinition> = {
       endDateProperty: "dateIntervention",
       viewMode: "month",
     },
-    description: "Vue calendrier (mois/semaine/jour) basée sur la date d’intervention",
-    isDefault: true,
+    description: "Vue calendrier (mois/semaine/jour) basée sur la date d'intervention",
+    isDefault: false,
   },
   timeline: {
     id: "timeline",
@@ -262,7 +262,7 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
     layoutOptions: {
       showStatusBorder: true,
       statusBorderSize: "m",
-      showStatusFilter: true,
+      showStatusFilter: false,
       columnWidths: {
         attribueA: 50,
       },
@@ -373,18 +373,19 @@ const DEFAULT_VIEW_PRESETS: DefaultViewPreset[] = [
       },
     },
   },
-  {
-    id: "calendar",
-    title: "Calendrier",
-    description: "Vue calendrier des interventions",
-    filters: [],
-    layoutOptions: {
-      layout: "calendar",
-      dateProperty: "dateIntervention",
-      endDateProperty: "dateIntervention",
-      viewMode: "month",
-    } as any,
-  },
+  // Vue calendar retirée des vues par défaut
+  // {
+  //   id: "calendar",
+  //   title: "Calendrier",
+  //   description: "Vue calendrier des interventions",
+  //   filters: [],
+  //   layoutOptions: {
+  //     layout: "calendar",
+  //     dateProperty: "dateIntervention",
+  //     endDateProperty: "dateIntervention",
+  //     viewMode: "month",
+  //   } as any,
+  // },
 ]
 
 const DEFAULT_VIEWS: InterventionViewDefinition[] = DEFAULT_VIEW_PRESETS.map((preset) => {
@@ -429,7 +430,7 @@ const DEFAULT_VIEWS: InterventionViewDefinition[] = DEFAULT_VIEW_PRESETS.map((pr
 
 const DEFAULT_VIEW_IDS = new Set(DEFAULT_VIEWS.map((view) => view.id))
 const DEFAULT_VIEW_MAP = new Map(DEFAULT_VIEWS.map((view) => [view.id, cloneViewDefinition(view)]))
-const LEGACY_DEFAULT_VIEW_IDS = new Set(["table", "cards", "calendar", "timeline", "ma-liste-accepte"])
+const LEGACY_DEFAULT_VIEW_IDS = new Set(["table", "cards", "timeline", "ma-liste-accepte"])
 
 const layoutTemplatesByLayout: Record<ViewLayout, InterventionViewDefinition> = VIEW_TEMPLATES
 

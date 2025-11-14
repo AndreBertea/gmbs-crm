@@ -823,6 +823,7 @@ type FilterValue = string | string[] | null | undefined;
 
 export type GetAllParams = {
   limit?: number;
+  offset?: number;
   statut?: FilterValue;
   agence?: FilterValue;
   artisan?: FilterValue;
@@ -918,11 +919,14 @@ function mapInterventionRecordsBatch(
 export const interventionsApiV2 = {
   // Récupérer toutes les interventions (chargement complet)
   async getAll(params: GetAllParams = {}): Promise<{ data: InterventionView[]; total: number }> {
-    const limit = Math.max(1, params.limit ?? 10000);
+    const limit = Math.max(1, params.limit ?? 100);
     const selectColumns = resolveSelectColumns(params?.fields);
 
     const searchParams = new URLSearchParams();
     searchParams.set("limit", limit.toString());
+    if (params.offset !== undefined) {
+      searchParams.set("offset", params.offset.toString());
+    }
     if (selectColumns) {
       searchParams.set("select", selectColumns);
     }
@@ -971,6 +975,9 @@ export const interventionsApiV2 = {
       queryString ? `?${queryString}` : ""
     }`;
 
+    console.log(`[interventionsApiV2.getAll] URL: ${url}`)
+    console.log(`[interventionsApiV2.getAll] Params: limit=${limit}, offset=${params.offset ?? 0}`)
+
     const fetchStart = Date.now();
     const response = await fetch(url, {
       headers: await getHeaders(),
@@ -1012,6 +1019,186 @@ export const interventionsApiV2 = {
     }
 
     return count || 0;
+  },
+
+  /**
+   * Obtient une liste légère d'interventions pour le warm-up (données minimales)
+   * Retourne uniquement les champs essentiels pour réduire la taille du payload
+   */
+  async getAllLight(params: GetAllParams = {}): Promise<{ data: InterventionView[]; total: number }> {
+    const limit = Math.max(1, Math.min(params.limit ?? 100, 50000));
+    const offset = Math.max(0, params.offset ?? 0);
+
+    const searchParams = new URLSearchParams();
+    searchParams.set("limit", limit.toString());
+    searchParams.set("offset", offset.toString());
+
+    const appendFilterParam = (key: string, value: FilterValue) => {
+      if (!value) {
+        return;
+      }
+      const values = Array.isArray(value) ? value : [value];
+      values.forEach((v) => {
+        if (v) {
+          searchParams.append(key, v);
+        }
+      });
+    };
+
+    appendFilterParam("statut", params.statut);
+    appendFilterParam("agence", params.agence);
+    appendFilterParam("artisan", params.artisan);
+    appendFilterParam("metier", params.metier);
+    appendFilterParam("user", params.user);
+
+    if (params.startDate) {
+      searchParams.set("startDate", params.startDate);
+    }
+    if (params.endDate) {
+      searchParams.set("endDate", params.endDate);
+    }
+    if (params.search) {
+      searchParams.set("search", params.search);
+    }
+
+    const queryString = searchParams.toString();
+    const url = `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/light${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    console.log(`[interventionsApiV2.getAllLight] URL: ${url}`)
+    console.log(`[interventionsApiV2.getAllLight] Params: limit=${limit}, offset=${offset}`)
+
+    const fetchStart = Date.now();
+    const response = await fetch(url, {
+      headers: await getHeaders(),
+    });
+    const raw = await handleResponse(response);
+    const fetchDuration = Date.now() - fetchStart;
+
+    // Pour la version light, on retourne les données brutes sans mapping complet
+    // car on n'a pas toutes les relations nécessaires pour le mapping complet
+    const refs = await getReferenceCache();
+    const transformedData = Array.isArray(raw?.data)
+      ? raw.data.map((item: any) => {
+          // Mapping minimal pour les champs disponibles
+          const userInfo = buildUserDisplay(
+            refs.usersById.get(item.assigned_user_id ?? "")
+          );
+          const agency = item.agence_id
+            ? refs.agenciesById.get(item.agence_id)
+            : undefined;
+          const status = item.statut_id
+            ? refs.interventionStatusesById.get(item.statut_id)
+            : undefined;
+          const metier = item.metier_id
+            ? refs.metiersById.get(item.metier_id)
+            : undefined;
+
+          return {
+            id: item.id,
+            id_inter: item.id_inter,
+            statut_id: item.statut_id,
+            date: item.date,
+            date_prevue: item.date_prevue,
+            agence_id: item.agence_id,
+            assigned_user_id: item.assigned_user_id,
+            metier_id: item.metier_id,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            // Champs minimaux pour compatibilité avec InterventionView
+            statusValue: status?.code || null,
+            agence: agency?.label || null,
+            attribueA: userInfo.fullName || null,
+            metier: metier?.label || null,
+          } as Partial<InterventionView> as InterventionView;
+        })
+      : [];
+
+    const mapDuration = Date.now() - fetchStart - fetchDuration;
+    console.log(`🚀 [interventionsApiV2.getAllLight] Fetch: ${fetchDuration}ms, Map: ${mapDuration}ms, Total: ${transformedData.length} items`);
+
+    const total =
+      typeof raw?.pagination?.total === "number"
+        ? raw.pagination.total
+        : transformedData.length;
+
+    return { data: transformedData, total };
+  },
+
+  /**
+   * Obtient un résumé des interventions pour une vue donnée (métadonnées sans données complètes)
+   */
+  async getSummary(params: GetAllParams = {}): Promise<{
+    total: number;
+    countsByStatus: Record<string, number>;
+    filters: {
+      statut: string[];
+      agence: string[];
+      metier: string[];
+      user: string[];
+      userIsNull: boolean;
+      startDate: string | null;
+      endDate: string | null;
+      search: string | null;
+    };
+  }> {
+    const searchParams = new URLSearchParams();
+
+    const appendFilterParam = (key: string, value: FilterValue) => {
+      if (!value) {
+        return;
+      }
+      const values = Array.isArray(value) ? value : [value];
+      values.forEach((v) => {
+        if (v) {
+          searchParams.append(key, v);
+        }
+      });
+    };
+
+    appendFilterParam("statut", params.statut);
+    appendFilterParam("agence", params.agence);
+    appendFilterParam("artisan", params.artisan);
+    appendFilterParam("metier", params.metier);
+    appendFilterParam("user", params.user);
+
+    if (params.startDate) {
+      searchParams.set("startDate", params.startDate);
+    }
+    if (params.endDate) {
+      searchParams.set("endDate", params.endDate);
+    }
+    if (params.search) {
+      searchParams.set("search", params.search);
+    }
+
+    const queryString = searchParams.toString();
+    const url = `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/summary${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    console.log(`[interventionsApiV2.getSummary] URL: ${url}`)
+
+    const response = await fetch(url, {
+      headers: await getHeaders(),
+    });
+    const raw = await handleResponse(response);
+
+    return {
+      total: raw.total ?? 0,
+      countsByStatus: raw.countsByStatus ?? {},
+      filters: raw.filters ?? {
+        statut: [],
+        agence: [],
+        metier: [],
+        user: [],
+        userIsNull: false,
+        startDate: null,
+        endDate: null,
+        search: null,
+      },
+    };
   },
 
   // Récupérer une intervention par ID

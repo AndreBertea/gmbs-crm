@@ -53,7 +53,10 @@ export function convertViewFiltersToServerFilters(
 
     // Filtre sur attribueA → user (serveur)
     if (filter.property === "attribueA") {
-      if (filter.operator === "eq" && typeof filter.value === "string") {
+      if (filter.operator === "is_empty") {
+        // Filtre pour les interventions sans assignation (vue Market)
+        serverFilters.user = null
+      } else if (filter.operator === "eq" && typeof filter.value === "string") {
         // Gérer CURRENT_USER_PLACEHOLDER
         if (filter.value === "CURRENT_USER" || filter.value === context.currentUserId) {
           if (context.currentUserId) {

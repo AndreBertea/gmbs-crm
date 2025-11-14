@@ -862,27 +862,235 @@ serve(async (req: Request) => {
     // Parsing plus robuste pour gérer les sous-ressources
     let resource = pathSegments[pathSegments.length - 1];
     let resourceId: string | null = null;
+    let subResource: string | null = null;
     
     // Pour /interventions-v2/interventions/{id}/artisans
     if (pathSegments.length >= 4 && pathSegments[pathSegments.length - 3] === 'interventions') {
       resourceId = pathSegments[pathSegments.length - 2];
       resource = pathSegments[pathSegments.length - 1];
     }
-    // Pour /interventions-v2/interventions/{id}
+    // Pour /interventions-v2/interventions/light ou /interventions-v2/interventions/summary
+    // Vérifier AVANT les IDs pour éviter de confondre 'light' ou 'summary' avec un ID
     else if (pathSegments.length >= 3 && pathSegments[pathSegments.length - 2] === 'interventions') {
-      resourceId = pathSegments[pathSegments.length - 1];
-      resource = 'interventions';
+      const lastSegment = pathSegments[pathSegments.length - 1];
+      if (lastSegment === 'light' || lastSegment === 'summary') {
+        resource = 'interventions';
+        subResource = lastSegment;
+      } else {
+        // Sinon c'est probablement un ID
+        resourceId = lastSegment;
+        resource = 'interventions';
+      }
     }
     // Pour /interventions-v2/interventions
     else if (pathSegments.length >= 2 && pathSegments[pathSegments.length - 1] === 'interventions') {
       resource = 'interventions';
     }
 
+    // ===== GET /interventions/light - Liste légère pour warm-up =====
+    if (req.method === 'GET' && resource === 'interventions' && subResource === 'light') {
+      const rawLimit = Number.parseInt(url.searchParams.get('limit') ?? '100', 10);
+      const clampedLimit = Math.max(1, Math.min(Number.isFinite(rawLimit) ? rawLimit : 100, 50000));
+      const rawOffset = Number.parseInt(url.searchParams.get('offset') ?? '0', 10);
+      const clampedOffset = Math.max(0, Number.isFinite(rawOffset) ? rawOffset : 0);
+
+      const statutFilters = parseListParam(url.searchParams.getAll('statut'));
+      const agenceFilters = parseListParam(url.searchParams.getAll('agence'));
+      const metierFilters = parseListParam(url.searchParams.getAll('metier'));
+
+      const userValues = url.searchParams.getAll('user');
+      const userIds = parseListParam(
+        userValues.filter((value) => value !== 'null' && value !== '__null__' && value !== 'undefined'),
+      );
+      const userIsNull = userValues.some((value) => value === 'null' || value === '__null__');
+
+      const searchRaw = url.searchParams.get('search')?.trim() ?? null;
+      const startDateRaw = url.searchParams.get('startDate')?.trim() ?? null;
+      const endDateRaw = url.searchParams.get('endDate')?.trim() ?? null;
+
+      const filters: FilterParams = {
+        search: searchRaw && searchRaw.length > 0 ? searchRaw : null,
+        startDate: startDateRaw && startDateRaw.length > 0 ? startDateRaw : null,
+        endDate: endDateRaw && endDateRaw.length > 0 ? endDateRaw : null,
+      };
+
+      if (statutFilters.length > 0) {
+        filters.statut = statutFilters;
+      }
+      if (agenceFilters.length > 0) {
+        filters.agence = agenceFilters;
+      }
+      if (metierFilters.length > 0) {
+        filters.metier = metierFilters;
+      }
+      if (userIds.length > 0) {
+        filters.user = userIds;
+      } else if (userIsNull) {
+        filters.userIsNull = true;
+      }
+
+      // Sélection minimale pour le warm-up : uniquement les champs essentiels
+      const lightSelect = 'id,id_inter,statut_id,date,date_prevue,agence_id,assigned_user_id,metier_id,created_at,updated_at';
+
+      let query = supabase
+        .from('interventions')
+        .select(lightSelect, { count: 'exact' })
+        .eq('is_active', true)
+        .order('date', { ascending: false })
+        .order('id', { ascending: false });
+
+      query = applyFilters(query, filters);
+      query = query.range(clampedOffset, clampedOffset + clampedLimit - 1);
+
+      const fetchStart = Date.now();
+      const { data, error, count } = await query;
+      const fetchDuration = Date.now() - fetchStart;
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      const filteredData = Array.isArray(data) ? data : [];
+      const totalCount = count ?? await getCachedCount(supabase, filters);
+
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          requestId,
+          endpoint: 'light',
+          responseTime: fetchDuration,
+          dataCount: filteredData.length,
+          totalCount,
+          offset: clampedOffset,
+          limit: clampedLimit,
+          timestamp: new Date().toISOString(),
+          message: 'Light interventions retrieved successfully',
+        }),
+      );
+
+      return new Response(
+        JSON.stringify({
+          data: filteredData,
+          pagination: {
+            total: totalCount,
+            limit: clampedLimit,
+            offset: clampedOffset,
+            hasMore: clampedOffset + clampedLimit < totalCount,
+          },
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // ===== GET /interventions/summary - Résumé par vue =====
+    if (req.method === 'GET' && resource === 'interventions' && subResource === 'summary') {
+      const statutFilters = parseListParam(url.searchParams.getAll('statut'));
+      const agenceFilters = parseListParam(url.searchParams.getAll('agence'));
+      const metierFilters = parseListParam(url.searchParams.getAll('metier'));
+
+      const userValues = url.searchParams.getAll('user');
+      const userIds = parseListParam(
+        userValues.filter((value) => value !== 'null' && value !== '__null__' && value !== 'undefined'),
+      );
+      const userIsNull = userValues.some((value) => value === 'null' || value === '__null__');
+
+      const searchRaw = url.searchParams.get('search')?.trim() ?? null;
+      const startDateRaw = url.searchParams.get('startDate')?.trim() ?? null;
+      const endDateRaw = url.searchParams.get('endDate')?.trim() ?? null;
+
+      const filters: FilterParams = {
+        search: searchRaw && searchRaw.length > 0 ? searchRaw : null,
+        startDate: startDateRaw && startDateRaw.length > 0 ? startDateRaw : null,
+        endDate: endDateRaw && endDateRaw.length > 0 ? endDateRaw : null,
+      };
+
+      if (statutFilters.length > 0) {
+        filters.statut = statutFilters;
+      }
+      if (agenceFilters.length > 0) {
+        filters.agence = agenceFilters;
+      }
+      if (metierFilters.length > 0) {
+        filters.metier = metierFilters;
+      }
+      if (userIds.length > 0) {
+        filters.user = userIds;
+      } else if (userIsNull) {
+        filters.userIsNull = true;
+      }
+
+      // Obtenir le total avec cache
+      const totalCount = await getCachedCount(supabase, filters);
+
+      // Obtenir les compteurs par statut si aucun filtre de statut n'est appliqué
+      let countsByStatus: Record<string, number> = {};
+      if (!filters.statut || filters.statut.length === 0) {
+        // Construire une requête avec les mêmes filtres mais sans filtre de statut
+        let countQuery = supabase
+          .from('interventions')
+          .select('statut_id', { count: 'exact' })
+          .eq('is_active', true);
+
+        // Appliquer les autres filtres (agence, metier, user, dates, search)
+        const filtersWithoutStatut: FilterParams = { ...filters };
+        delete filtersWithoutStatut.statut;
+        countQuery = applyFilters(countQuery, filtersWithoutStatut);
+
+        const { data: interventions, error: statusError } = await countQuery;
+
+        if (!statusError && interventions) {
+          // Compter par statut
+          const statusMap = new Map<string, number>();
+          for (const item of interventions) {
+            const statusId = item.statut_id;
+            if (statusId) {
+              statusMap.set(statusId, (statusMap.get(statusId) || 0) + 1);
+            }
+          }
+          countsByStatus = Object.fromEntries(statusMap);
+        }
+      }
+
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          requestId,
+          endpoint: 'summary',
+          totalCount,
+          countsByStatus,
+          timestamp: new Date().toISOString(),
+          message: 'Interventions summary retrieved successfully',
+        }),
+      );
+
+      return new Response(
+        JSON.stringify({
+          total: totalCount,
+          countsByStatus,
+          filters: {
+            statut: filters.statut || [],
+            agence: filters.agence || [],
+            metier: filters.metier || [],
+            user: filters.user || [],
+            userIsNull: filters.userIsNull || false,
+            startDate: filters.startDate || null,
+            endDate: filters.endDate || null,
+            search: filters.search || null,
+          },
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     // ===== GET /interventions - Liste toutes les interventions =====
-    // ✅ SIMPLIFIÉ : Load-all sans pagination/cursor pour performances maximales
+    // ✅ Pagination avec offset et limit
     if (req.method === 'GET' && resource === 'interventions') {
-      const rawLimit = Number.parseInt(url.searchParams.get('limit') ?? '10000', 10);
-      const clampedLimit = Math.max(1, Math.min(Number.isFinite(rawLimit) ? rawLimit : 10000, 50000));
+      const rawLimit = Number.parseInt(url.searchParams.get('limit') ?? '100', 10);
+      const clampedLimit = Math.max(1, Math.min(Number.isFinite(rawLimit) ? rawLimit : 100, 50000));
+      const rawOffset = Number.parseInt(url.searchParams.get('offset') ?? '0', 10);
+      const clampedOffset = Math.max(0, Number.isFinite(rawOffset) ? rawOffset : 0);
+      
+      console.log(`[Edge Function] Pagination - rawOffset: ${rawOffset}, clampedOffset: ${clampedOffset}, rawLimit: ${rawLimit}, clampedLimit: ${clampedLimit}`);
       
       const include = parseListParam(url.searchParams.getAll('include'));
       const extraSelect = url.searchParams.get('select');
@@ -927,17 +1135,27 @@ serve(async (req: Request) => {
 
       let query = supabase
         .from('interventions')
-        .select(selectClause)
+        .select(selectClause, { count: 'exact' })
         .eq('is_active', true)
         .order('date', { ascending: false })
-        .order('id', { ascending: false })
-        .limit(clampedLimit);
+        .order('id', { ascending: false });
 
       query = applyFilters(query, filters);
+      
+      // Appliquer la pagination APRÈS les filtres
+      query = query.range(clampedOffset, clampedOffset + clampedLimit - 1);
+      
+      console.log(`[Edge Function] Requête avec range(${clampedOffset}, ${clampedOffset + clampedLimit - 1})`);
 
       const fetchStart = Date.now();
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       const fetchDuration = Date.now() - fetchStart;
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log(`[Edge Function] Résultats - Premier ID: ${data[0].id}, Dernier ID: ${data[data.length - 1].id}, Total: ${data.length}`);
+      } else {
+        console.log(`[Edge Function] Résultats - Aucune donnée retournée`);
+      }
 
       if (error) {
         throw new Error(`Database error: ${error.message}`);
@@ -972,7 +1190,8 @@ serve(async (req: Request) => {
         }
       }
 
-      const totalCount = await getCachedCount(supabase, filters);
+      const totalCount = count ?? await getCachedCount(supabase, filters);
+      const hasMore = clampedOffset + clampedLimit < totalCount;
 
       console.log(
         JSON.stringify({
@@ -981,8 +1200,11 @@ serve(async (req: Request) => {
           responseTime: fetchDuration,
           dataCount: filteredData.length,
           totalCount,
+          offset: clampedOffset,
+          limit: clampedLimit,
+          hasMore,
           timestamp: new Date().toISOString(),
-          message: 'Interventions load-all retrieved successfully',
+          message: 'Interventions retrieved successfully',
         }),
       );
 
@@ -991,7 +1213,9 @@ serve(async (req: Request) => {
           data: filteredData,
           pagination: {
             total: totalCount,
-            hasMore: false,
+            limit: clampedLimit,
+            offset: clampedOffset,
+            hasMore,
           },
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

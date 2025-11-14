@@ -188,7 +188,7 @@ export function useUltraInterventions() {
       await interventionsManager.loadPage(page, async () => {
         // Import dynamique pour éviter les bundles lourds
         const { interventionsApiV2 } = await import('@/lib/supabase-api-v2');
-        const result = await interventionsApiV2.getAll({ limit: 10000 });
+        const result = await interventionsApiV2.getAll({ limit: 100 });
         return {
           data: result.data,
           total: result.total,

@@ -47,7 +47,8 @@ import { ModeIcons } from "@/components/ui/mode-selector/ModeIcons"
 import { MODE_OPTIONS } from "@/components/ui/mode-selector/ModeSelector"
 import { useModalDisplay } from "@/contexts/ModalDisplayContext"
 import { useInterventionViews } from "@/hooks/useInterventionViews"
-import { useInterventions } from "@/hooks/useInterventions"
+import { usePreloadDefaultViews } from "@/hooks/usePreloadDefaultViews"
+import { useInterventionsQuery } from "@/hooks/useInterventionsQuery"
 import { DEFAULT_WORKFLOW_CONFIG, INTERVENTION_STATUS, SCROLL_CONFIG } from "@/config/interventions"
 import { runQuery } from "@/lib/query-engine"
 import { validateTransition } from "@/lib/workflow-engine"
@@ -134,7 +135,10 @@ const VIEW_LAYOUT_ICONS: Record<ViewLayout, ComponentType<{ className?: string }
   timeline: GanttChart,
 }
 
-const NEW_VIEW_MENU_CHOICES: Array<{ layout: ViewLayout; label: string; Icon: ComponentType<{ className?: string }> }> = VISIBLE_VIEW_LAYOUTS.map(
+// Vues disponibles pour la création de nouvelles vues (menu "Nouvelle vue")
+const CREATABLE_VIEW_LAYOUTS: ViewLayout[] = ["table"]
+
+const NEW_VIEW_MENU_CHOICES: Array<{ layout: ViewLayout; label: string; Icon: ComponentType<{ className?: string }> }> = CREATABLE_VIEW_LAYOUTS.map(
   (layout) => ({
     layout,
     label: VIEW_LAYOUT_LABELS[layout],
@@ -191,6 +195,9 @@ export default function Page() {
     registerExternalView,
   } = useInterventionViews()
 
+  // Précharger les vues par défaut en arrière-plan
+  usePreloadDefaultViews()
+
   const [statusError, setStatusError] = useState<string | null>(null)
   const [columnConfigViewId, setColumnConfigViewId] = useState<string | null>(null)
 
@@ -202,6 +209,7 @@ export default function Page() {
   const [selectedStatuses, setSelectedStatuses] = useState<InterventionStatusValue[]>([])
   const [isReorderMode, setIsReorderMode] = useState(false)
   const [workflowConfig, setWorkflowConfig] = useState<WorkflowConfig>(DEFAULT_WORKFLOW_CONFIG)
+  const [page, setPage] = useState(1)
   
   // Hooks pour mapper CODE/USERNAME → UUID
   const { codeToId: statusCodeToId } = useInterventionStatusMap()
@@ -326,7 +334,10 @@ export default function Page() {
         }
 
         if (filter.property === "attribueA") {
-          if (filter.operator === "eq" && typeof filter.value === "string") {
+          if (filter.operator === "is_empty") {
+            // Filtre pour les interventions sans assignation (vue Market)
+            params.user = null
+          } else if (filter.operator === "eq" && typeof filter.value === "string") {
             if (filter.value === "CURRENT_USER" || filter.value === currentUserId) {
               if (currentUserId) params.user = currentUserId
             } else {
@@ -420,21 +431,65 @@ export default function Page() {
     }
   }, [views, isReady, convertFiltersToApiParams])
 
+  // Utiliser TanStack Query pour toutes les vues (migration progressive complétée)
   const {
     interventions: fetchedInterventions,
     loading: remoteLoading,
     error: remoteError,
     totalCount,
+    currentPage,
+    totalPages,
     refresh,
     updateInterventionOptimistic,
-  } = useInterventions({
+  } = useInterventionsQuery({
     viewId: activeViewId ?? undefined,
     fields: viewFields,
-    serverFilters, // ✅ Passer les filtres serveur ici
+    serverFilters,
+    limit: 100,
+    page,
   })
 
-  const normalizedInterventions = useMemo(
-    () => fetchedInterventions.map((item) => {
+  // Handlers de pagination qui mettent à jour l'état local
+  const handleGoToPage = useCallback((newPage: number) => {
+    const validPage = Math.max(1, Math.min(newPage, totalPages ?? 1))
+    setPage(validPage)
+  }, [totalPages])
+
+  const handleNextPage = useCallback(() => {
+    setPage((prev) => Math.min(prev + 1, totalPages ?? 1))
+  }, [totalPages])
+
+  const handlePreviousPage = useCallback(() => {
+    setPage((prev) => Math.max(1, prev - 1))
+  }, [])
+
+  // Réinitialiser la page à 1 quand les filtres changent
+  useEffect(() => {
+    setPage(1)
+  }, [serverFilters, activeViewId])
+
+  // Détecter le changement de vue pour afficher le loading même avec des données existantes
+  const previousViewIdRef = useRef<string | undefined>(undefined)
+  const [isViewChanging, setIsViewChanging] = useState(false)
+  
+  useEffect(() => {
+    const wasChanging = previousViewIdRef.current !== undefined && previousViewIdRef.current !== activeViewId
+    if (wasChanging) {
+      setIsViewChanging(true)
+    }
+    previousViewIdRef.current = activeViewId
+  }, [activeViewId])
+  
+  // Réinitialiser isViewChanging une fois que les nouvelles données sont chargées
+  useEffect(() => {
+    if (isViewChanging && !remoteLoading && fetchedInterventions.length > 0) {
+      setIsViewChanging(false)
+    }
+  }, [isViewChanging, remoteLoading, fetchedInterventions.length])
+
+  const normalizedInterventions = useMemo(() => {
+    console.log(`[page.tsx] normalizedInterventions recalculé - fetchedInterventions.length: ${fetchedInterventions.length}`)
+    return fetchedInterventions.map((item) => {
       const statusCode = item.status?.code ?? item.statusValue ?? (item as any).statut
       const normalizedStatus = mapStatusFromDb(statusCode)
       const datePrevue = (item as any).date_prevue || (item as any).datePrevue || null
@@ -447,10 +502,11 @@ export default function Page() {
         datePrevue: datePrevue,
         isCheck: isCheckStatus(statusCode, datePrevue),
       } as InterventionEntity & { datePrevue: string | null; isCheck: boolean }
-    }),
-    [fetchedInterventions],
-  )
-  const loading = remoteLoading && normalizedInterventions.length === 0
+    })
+  }, [fetchedInterventions])
+  
+  // Afficher le loading si on charge OU si on change de vue (même avec des données existantes)
+  const loading = remoteLoading || (isViewChanging && normalizedInterventions.length > 0)
   const error = remoteError ?? statusError
 
   const filteredInterventions = useMemo(() => {
@@ -589,29 +645,47 @@ export default function Page() {
     [],
   )
 
+  // Référence pour éviter les boucles de synchronisation
+  const isSyncingFromViewRef = useRef(false)
+
+  // Extraire les valeurs de tri de activeView de manière stable
+  const activeViewSortKey = useMemo(() => {
+    if (!activeView?.sorts?.[0]) return null
+    const sort = activeView.sorts[0]
+    return `${sort.property}:${sort.direction}`
+  }, [activeView?.id, activeView?.sorts?.[0]?.property, activeView?.sorts?.[0]?.direction])
+
+  // Synchroniser sortField et sortDir depuis activeView (lecture seule)
+  // Ne se déclenche QUE quand activeView change, pas quand sortField/sortDir changent
   useEffect(() => {
-    if (!activeView) return
+    if (!activeView || !activeViewSortKey || isSyncingFromViewRef.current) return
     const primarySort = activeView.sorts[0]
     if (primarySort) {
       const mappedField = PROPERTY_TO_SORT_FIELD[primarySort.property]
-      if (mappedField && mappedField !== sortField) {
-        setSortField(mappedField)
+      if (mappedField) {
+        // Utiliser une fonction de mise à jour pour éviter les dépendances
+        setSortField((prev) => prev !== mappedField ? mappedField : prev)
       }
       const direction = primarySort.direction === "asc" ? "asc" : "desc"
-      if (direction !== sortDir) {
-        setSortDir(direction)
-      }
+      setSortDir((prev) => prev !== direction ? direction : prev)
     }
-  }, [activeView, sortDir, sortField])
+  }, [activeViewSortKey]) // Ne dépendre QUE de activeViewSortKey
 
+  // Synchroniser activeView depuis sortField et sortDir (écriture)
   useEffect(() => {
-    if (!isReady || !activeView) return
+    if (!isReady || !activeView || isSyncingFromViewRef.current) return
     const property = SORT_FIELD_TO_PROPERTY[sortField]
     if (!property) return
     const currentSort = activeView.sorts[0]
+    // Éviter la boucle : ne mettre à jour que si vraiment différent
     if (currentSort && currentSort.property === property && currentSort.direction === sortDir) return
+    isSyncingFromViewRef.current = true
     updateSorts(activeView.id, [{ property, direction: sortDir }])
-  }, [sortField, sortDir, activeView, isReady, updateSorts])
+    // Réinitialiser le flag après la mise à jour
+    requestAnimationFrame(() => {
+      isSyncingFromViewRef.current = false
+    })
+  }, [sortField, sortDir, activeView?.id, isReady, updateSorts])
 
   const updateFilterForProperty = useCallback(
     (property: string, nextFilter: ViewFilter | null) => {
@@ -719,6 +793,11 @@ export default function Page() {
   }, [filteredInterventions])
 
   const viewInterventions = searchedInterventions
+  
+  // Log pour debug
+  useEffect(() => {
+    console.log(`[page.tsx] viewInterventions mis à jour - length: ${viewInterventions.length}, fetchedInterventions.length: ${fetchedInterventions.length}`)
+  }, [viewInterventions.length, fetchedInterventions.length])
 
   // Remplacer localViewCounts par viewCounts (counts réels depuis BDD)
   const combinedViewCounts = useMemo(() => viewCounts, [viewCounts])
@@ -954,7 +1033,7 @@ export default function Page() {
 
   const handleCreateView = useCallback(
     (layout: ViewLayout) => {
-      if (!VISIBLE_VIEW_LAYOUTS.includes(layout)) return
+      if (!CREATABLE_VIEW_LAYOUTS.includes(layout)) return
       const label = VIEW_LAYOUT_LABELS[layout]
       const fallbackTitle = `${label} personnalisée`
       const title = window.prompt("Nom de la nouvelle vue", fallbackTitle)
@@ -1042,6 +1121,11 @@ export default function Page() {
             onLayoutOptionsChange={(options) => handleLayoutOptionsPatch(options)}
             onPropertyFilterChange={updateFilterForProperty}
             totalCount={totalCount ?? undefined}
+            currentPage={page}
+            totalPages={totalPages ?? 1}
+            onPageChange={handleGoToPage}
+            onNextPage={handleNextPage}
+            onPreviousPage={handlePreviousPage}
           />
         )
       case "kanban":

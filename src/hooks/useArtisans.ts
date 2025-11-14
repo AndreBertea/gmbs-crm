@@ -4,11 +4,11 @@
 
 import { artisansApiV2, type Artisan } from '@/lib/supabase-api-v2';
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 
 interface UseArtisansOptions {
   limit?: number;
-  offset?: number;
+  page?: number;
   autoLoad?: boolean;
   filters?: {
     statut?: string;
@@ -27,9 +27,12 @@ interface UseArtisansReturn {
   setArtisans: React.Dispatch<React.SetStateAction<Artisan[]>>;
   loading: boolean;
   error: string | null;
-  hasMore: boolean;
   totalCount: number | null;
-  loadMore: () => Promise<void>;
+  currentPage: number;
+  totalPages: number;
+  goToPage: (page: number) => void;
+  nextPage: () => void;
+  previousPage: () => void;
   refresh: () => Promise<void>;
   setFilters: (filters: UseArtisansOptions['filters']) => void;
 }
@@ -37,7 +40,7 @@ interface UseArtisansReturn {
 export function useArtisans(options: UseArtisansOptions = {}): UseArtisansReturn {
   const {
     limit = 100,
-    offset = 0,
+    page = 1,
     autoLoad = true,
     filters = {},
     serverFilters
@@ -46,30 +49,36 @@ export function useArtisans(options: UseArtisansOptions = {}): UseArtisansReturn
   const [artisans, setArtisans] = useState<Artisan[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(page);
   const [currentFilters, setCurrentFilters] = useState(filters);
 
-  const loadArtisans = useCallback(async (reset = false) => {
+  // Calculer l'offset depuis la page courante
+  const offset = useMemo(() => {
+    return (currentPage - 1) * limit;
+  }, [currentPage, limit]);
+
+  // Calculer le nombre total de pages
+  const totalPages = useMemo(() => {
+    return totalCount ? Math.max(1, Math.ceil(totalCount / limit)) : 1;
+  }, [totalCount, limit]);
+
+  const loadArtisans = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const params = {
         limit,
-        offset: reset ? 0 : artisans.length,
+        offset,
         ...(serverFilters || currentFilters)
       };
 
       const result = await artisansApiV2.getAll(params);
       
-      if (reset) {
-        setArtisans(result.data);
-      } else {
-        setArtisans(prev => [...prev, ...result.data]);
-      }
+      // Remplacer au lieu d'accumuler
+      setArtisans(result.data);
 
-      setHasMore(result.pagination.hasMore);
       setTotalCount(result.pagination.total);
 
     } catch (err) {
@@ -78,39 +87,54 @@ export function useArtisans(options: UseArtisansOptions = {}): UseArtisansReturn
     } finally {
       setLoading(false);
     }
-  }, [limit, artisans.length, currentFilters, serverFilters]);
-
-  const loadMore = useCallback(async () => {
-    if (!loading && hasMore) {
-      await loadArtisans(false);
-    }
-  }, [loading, hasMore, loadArtisans]);
+  }, [limit, offset, currentFilters, serverFilters]);
 
   const refresh = useCallback(async () => {
-    await loadArtisans(true);
+    await loadArtisans();
   }, [loadArtisans]);
+
+  const goToPage = useCallback((newPage: number) => {
+    const validPage = Math.max(1, Math.min(newPage, totalPages));
+    setCurrentPage(validPage);
+  }, [totalPages]);
+
+  const nextPage = useCallback(() => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  }, [totalPages]);
+
+  const previousPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  }, []);
 
   const setFilters = useCallback((newFilters: UseArtisansOptions['filters'] = {}) => {
     setCurrentFilters(newFilters ?? {});
     setArtisans([]);
-    setHasMore(true);
+    setCurrentPage(1); // Réinitialiser à la page 1
   }, []);
 
-  // Chargement automatique
+  // Réinitialiser à la page 1 quand les filtres serveur changent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [serverFilters]);
+
+  // Chargement automatique quand la page ou les filtres changent
   useEffect(() => {
     if (autoLoad) {
-      loadArtisans(true);
+      loadArtisans();
     }
-  }, [autoLoad, currentFilters, loadArtisans]);
+  }, [autoLoad, loadArtisans]);
 
   return {
     artisans,
     setArtisans,
     loading,
     error,
-    hasMore,
     totalCount,
-    loadMore,
+    currentPage,
+    totalPages,
+    goToPage,
+    nextPage,
+    previousPage,
     refresh,
     setFilters
   };

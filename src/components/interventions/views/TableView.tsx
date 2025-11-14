@@ -79,6 +79,7 @@ import { TABLE_ALIGNMENT_OPTIONS } from "./column-alignment-options"
 import type { InterventionModalOpenOptions } from "@/hooks/useInterventionModal"
 import { iconForStatus } from "@/lib/interventions/status-icons"
 import { getStatusDisplay } from "@/lib/interventions/status-display"
+import { Pagination } from "@/components/ui/pagination"
 
 const DEFAULT_TABLE_HEIGHT = "calc(100vh - var(--table-view-offset))"
 
@@ -121,6 +122,11 @@ type TableViewProps = {
   allInterventions?: InterventionEntity[]
   loadDistinctValues?: (property: string) => Promise<string[]>
   totalCount?: number
+  currentPage?: number
+  totalPages?: number
+  onPageChange?: (page: number) => void
+  onNextPage?: () => void
+  onPreviousPage?: () => void
 }
 
 
@@ -431,8 +437,18 @@ export function TableView({
   onPropertyFilterChange,
   allInterventions,
   loadDistinctValues,
-  totalCount,
+  totalCount = 0,
+  currentPage = 1,
+  totalPages = 1,
+  onPageChange,
+  onNextPage,
+  onPreviousPage,
 }: TableViewProps) {
+  // Log pour debug pagination
+  useEffect(() => {
+    console.log(`[TableView] Props pagination - currentPage: ${currentPage}, totalPages: ${totalPages}, totalCount: ${totalCount}, onPageChange: ${typeof onPageChange}`)
+  }, [currentPage, totalPages, totalCount, onPageChange])
+  
   const dataset = useMemo(() => {
     // ⚠️ NE PAS réappliquer les filtres/sorts de la vue !
     // Ils sont déjà appliqués côté serveur + residualFilters dans page.tsx
@@ -514,6 +530,15 @@ export function TableView({
     scrollMargin: tableContainerRef.current?.offsetTop ?? 0,
     getItemKey: (index) => dataset[index]?.id ?? index,
   })
+  
+  // Réinitialiser le scroll en haut quand on change de page
+  useEffect(() => {
+    if (tableContainerRef.current && currentPage > 1) {
+      console.log(`[TableView] Réinitialisation du scroll pour la page ${currentPage}`)
+      tableContainerRef.current.scrollTop = 0
+      rowVirtualizer.scrollToIndex(0, { align: 'start' })
+    }
+  }, [currentPage, rowVirtualizer])
   const virtualItems = rowVirtualizer.getVirtualItems()
   const totalHeight = rowVirtualizer.getTotalSize()
 
@@ -1390,6 +1415,23 @@ export function TableView({
           }
         `}</style>
       </Card>
+      
+      {/* Pagination */}
+      {totalCount > 0 && onPageChange ? (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={100}
+          onPageChange={onPageChange}
+          onNext={onNextPage}
+          onPrevious={onPreviousPage}
+          canGoNext={currentPage < totalPages}
+          canGoPrevious={currentPage > 1}
+          className="border-t bg-background"
+        />
+      ) : null}
+      
       {quickStylePanel}
 
       <AlertDialog open={showNoteDialog} onOpenChange={handleNoteDialogOpenChange}>

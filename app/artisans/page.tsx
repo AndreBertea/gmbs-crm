@@ -28,6 +28,7 @@ import { getArtisanTotalCount } from "@/lib/supabase-api-v2"
 import { convertArtisanFiltersToServerFilters } from "@/lib/filter-converter"
 import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Wrench, X } from "lucide-react"
 import Loader from "@/components/ui/Loader"
+import { Pagination } from "@/components/ui/pagination"
 
 // Helper pour convertir hex en rgba
 function hexToRgba(hex: string, alpha: number): string | null {
@@ -392,9 +393,12 @@ export default function ArtisansPage(): ReactElement {
     artisans,
     loading: artisansLoading,
     error: artisansError,
-    hasMore,
     totalCount,
-    loadMore,
+    currentPage,
+    totalPages,
+    goToPage,
+    nextPage,
+    previousPage,
     refresh,
   } = useArtisans({
     limit: 100, // ✅ Limite fixe de 100
@@ -416,7 +420,6 @@ export default function ArtisansPage(): ReactElement {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [artisanStatuses, setArtisanStatuses] = useState<any[]>([])
   const [metierFilter, setMetierFilter] = useState<string>("all")
-  const [loadingMore, setLoadingMore] = useState(false)
 
   // Appliquer les filtres depuis sessionStorage (pour les liens du dashboard)
   useEffect(() => {
@@ -574,18 +577,6 @@ export default function ArtisansPage(): ReactElement {
   )
 
   const allMetiers = Array.from(new Set(contacts.flatMap((c) => c.metiers || [])))
-
-  const handleLoadMoreArtisans = useCallback(async () => {
-    if (loadingMore || !hasMore) return
-    try {
-      setLoadingMore(true)
-      await loadMore()
-    } catch (err) {
-      console.error("Erreur lors du chargement de plus d'artisans:", err)
-    } finally {
-      setLoadingMore(false)
-    }
-  }, [hasMore, loadMore, loadingMore])
 
   if (error) {
     return (
@@ -823,30 +814,20 @@ export default function ArtisansPage(): ReactElement {
               ))}
             </div>
 
-            {hasMore && (
-              <div className="flex justify-center pt-4">
-                <Button
-                  onClick={handleLoadMoreArtisans}
-                  disabled={loadingMore}
-                  variant="outline"
-                  className="w-full max-w-xs"
-                >
-                  {loadingMore ? (
-                    <>
-                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-500"></div>
-                      Chargement...
-                    </>
-                  ) : (
-                    `Charger plus d'artisans (${contacts.length}${totalCount ? ` / ${totalCount}` : ""})`
-                  )}
-                </Button>
-              </div>
-            )}
-
-            {!hasMore && contacts.length > 0 && (
-              <div className="py-4 text-center text-muted-foreground">
-                <p>Tous les artisans ont été chargés ({totalCount || contacts.length} artisans)</p>
-              </div>
+            {/* Pagination */}
+            {totalCount && totalCount > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                pageSize={100}
+                onPageChange={goToPage}
+                onNext={nextPage}
+                onPrevious={previousPage}
+                canGoNext={currentPage < totalPages}
+                canGoPrevious={currentPage > 1}
+                className="border-t bg-background mt-4"
+              />
             )}
           </TabsContent>
 
@@ -965,6 +946,22 @@ export default function ArtisansPage(): ReactElement {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Pagination pour la vue liste */}
+            {totalCount && totalCount > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                pageSize={100}
+                onPageChange={goToPage}
+                onNext={nextPage}
+                onPrevious={previousPage}
+                canGoNext={currentPage < totalPages}
+                canGoPrevious={currentPage > 1}
+                className="border-t bg-background mt-4"
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>
