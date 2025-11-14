@@ -58,6 +58,12 @@ export function convertViewFiltersToServerFilters(
         // Filtre pour les interventions sans assignation (vue Market)
         serverFilters.user = null
       } else if (filter.operator === "eq" && typeof filter.value === "string") {
+        // Ignorer le placeholder __NO_USER_USERNAME__ qui ne peut pas être converti
+        if (filter.value === "__NO_USER_USERNAME__") {
+          // Ne pas appliquer le filtre si l'utilisateur n'est pas connu
+          // Cela évite de filtrer pour une valeur impossible
+          continue
+        }
         // Gérer CURRENT_USER_PLACEHOLDER
         if (filter.value === "CURRENT_USER" || filter.value === context.currentUserId) {
           if (context.currentUserId) {
@@ -75,7 +81,9 @@ export function convertViewFiltersToServerFilters(
         }
       } else if (filter.operator === "in" && Array.isArray(filter.value)) {
         // Convertir le tableau en string[] pour userCodeToId
-        const stringValues = filter.value.filter((v): v is string => typeof v === "string")
+        // Filtrer le placeholder __NO_USER_USERNAME__ qui ne peut pas être converti
+        const stringValues = filter.value
+          .filter((v): v is string => typeof v === "string" && v !== "__NO_USER_USERNAME__")
         if (stringValues.length > 0) {
           const userIds = stringValues
             .map((v) => {
@@ -91,7 +99,8 @@ export function convertViewFiltersToServerFilters(
             clientFilters.push(filter)
           }
         } else {
-          clientFilters.push(filter)
+          // Si tous les valeurs étaient __NO_USER_USERNAME__, ne pas appliquer le filtre
+          continue
         }
       } else {
         clientFilters.push(filter)

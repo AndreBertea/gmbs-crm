@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { referenceApi } from "@/lib/reference-api"
 
 /**
@@ -47,13 +47,13 @@ export function useUserMap() {
    * @param name - Username(s) (ex: "andrea" ou ["andrea", "olivier"])
    * @returns UUID(s) correspondant(s)
    */
-  const nameToId = (name: string | string[] | undefined): string | string[] | undefined => {
+  const nameToId = useCallback((name: string | string[] | undefined): string | string[] | undefined => {
     if (!name) return undefined
     if (Array.isArray(name)) {
       return name.map((n) => userMap[n.toLowerCase()]).filter(Boolean)
     }
     return userMap[name.toLowerCase()]
-  }
+  }, [userMap])
 
   return { userMap, loading, error, nameToId }
 }

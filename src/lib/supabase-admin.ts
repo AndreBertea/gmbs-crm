@@ -1,7 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { serverEnv } from './env.server'
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const serviceKey = serverEnv.SUPABASE_SERVICE_ROLE_KEY
 
 // Vérification plus stricte des variables d'environnement
 const hasValidConfig = supabaseUrl && serviceKey && supabaseUrl !== '' && serviceKey !== ''

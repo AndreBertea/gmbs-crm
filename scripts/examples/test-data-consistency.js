@@ -33,7 +33,7 @@ try {
 // Import du client Supabase existant
 let supabaseAdmin;
 try {
-  const { supabaseAdmin: adminClient } = require('../../src/lib/supabase-client');
+  const { supabaseAdmin: adminClient } = require('../lib/supabase-client');
   supabaseAdmin = adminClient;
 } catch (error) {
   console.log('⚠️  Client Supabase non disponible, tests DB ignorés');

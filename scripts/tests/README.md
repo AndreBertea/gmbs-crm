@@ -161,7 +161,7 @@ supabase status
 
 ```bash
 # Vérifier qu'il y a des données
-npx tsx -e "import {supabaseAdmin} from './src/lib/supabase-client.js'; \
+npx tsx -e "import {supabaseAdmin} from './src/lib/supabase-admin.js'; \
   supabaseAdmin.from('interventions').select('count').then(console.log)"
 ```
 

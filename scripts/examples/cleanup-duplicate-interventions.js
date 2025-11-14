@@ -7,7 +7,7 @@
  * en gardant la version la plus récente.
  */
 
-const { supabaseAdmin } = require('../../src/lib/supabase-client');
+const { supabaseAdmin } = require('../lib/supabase-client');
 
 class DuplicateInterventionCleaner {
   constructor(options = {}) {

@@ -271,36 +271,36 @@ export async function preloadCriticalData(queryClient: QueryClient) {
       // Précharger le batch en parallèle
       await Promise.all(
         batch.map(async (view) => {
-          try {
-            // Convertir les filtres de la vue en filtres serveur
-            const { serverFilters } = convertViewFiltersToServerFilters(view.filters, {
-              statusCodeToId,
-              userCodeToId,
-              currentUserId,
-            })
+      try {
+        // Convertir les filtres de la vue en filtres serveur
+        const { serverFilters } = convertViewFiltersToServerFilters(view.filters, {
+          statusCodeToId,
+          userCodeToId,
+          currentUserId,
+        })
 
-            // Créer les paramètres de requête
-            const params: GetAllParams = {
-              limit: 100,
-              offset: 0,
-              ...serverFilters,
-            }
+        // Créer les paramètres de requête
+        const params: GetAllParams = {
+          limit: 100,
+          offset: 0,
+          ...serverFilters,
+        }
 
-            // Précharger avec TanStack Query (utilise le dedup automatique)
-            const queryKey = interventionKeys.lightList(params)
-            const fullQueryKey = view.id ? [...queryKey, view.id] : queryKey
+        // Précharger avec TanStack Query (utilise le dedup automatique)
+        const queryKey = interventionKeys.lightList(params)
+        const fullQueryKey = view.id ? [...queryKey, view.id] : queryKey
 
             await queryClient.prefetchQuery({
-              queryKey: fullQueryKey,
-              queryFn: async () => {
-                return await interventionsApiV2.getAllLight(params)
-              },
-              staleTime: 30 * 1000, // 30 secondes
-            })
+          queryKey: fullQueryKey,
+          queryFn: async () => {
+            return await interventionsApiV2.getAllLight(params)
+          },
+          staleTime: 30 * 1000, // 30 secondes
+        })
 
-            console.log(`[preloadCriticalData] ✅ Vue "${view.title}" préchargée`)
-          } catch (err) {
-            console.warn(`[preloadCriticalData] ⚠️ Erreur lors du préchargement vue "${view.title}":`, err)
+        console.log(`[preloadCriticalData] ✅ Vue "${view.title}" préchargée`)
+      } catch (err) {
+        console.warn(`[preloadCriticalData] ⚠️ Erreur lors du préchargement vue "${view.title}":`, err)
           }
         })
       )

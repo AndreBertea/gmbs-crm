@@ -13,9 +13,10 @@ interface CurrentUser {
   nom?: string | null
   surnom?: string | null
   color?: string | null
+  status?: string | null
 }
 
-export function useCurrentUser() {
+export function useCurrentUser(options?: { enabled?: boolean }) {
   // Le listener onAuthStateChange est maintenant géré par AuthStateListenerProvider
   // pour éviter les listeners multiples quand plusieurs composants utilisent ce hook
   // IMPORTANT: On n'utilise plus supabase.auth.getSession() qui lit depuis localStorage
@@ -51,6 +52,8 @@ export function useCurrentUser() {
     refetchOnWindowFocus: true,
     // Refetch automatique quand la connexion réseau revient
     refetchOnReconnect: true,
+    // Permettre de désactiver la query sur les pages publiques
+    enabled: options?.enabled !== false,
   })
 }
 

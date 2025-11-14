@@ -439,7 +439,13 @@ function applyUserScopedFilters(view: InterventionViewDefinition, username: stri
     return view
   }
 
-  const targetValue = username ?? NO_USER_PLACEHOLDER
+  // Ne pas appliquer le filtre si le username n'est pas connu
+  // Cela évite d'injecter __NO_USER_USERNAME__ qui ne peut pas être converti en ID utilisateur
+  if (username === null) {
+    return view
+  }
+
+  const targetValue = username
   let changed = false
   let hasAssignmentFilter = false
 

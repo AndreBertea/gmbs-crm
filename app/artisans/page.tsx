@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils"
 import Loader from "@/components/ui/Loader"
 import { Pagination } from "@/components/ui/pagination"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 // Helper pour convertir hex en rgba
 function hexToRgba(hex: string, alpha: number): string | null {
@@ -259,8 +260,8 @@ export default function ArtisansPage(): ReactElement {
   const artisanModal = useArtisanModal()
   const { views, activeView, activeViewId, setActiveView, isReady } = useArtisanViews()
   
-  // Récupérer l'utilisateur actuel depuis useArtisanViews (qui le gère déjà)
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
+  const { data: currentUser } = useCurrentUser()
+  const currentUserId = currentUser?.id ?? undefined
   
   // État pour stocker les counts réels de chaque vue
   const [viewCounts, setViewCounts] = useState<Record<string, number>>({})
@@ -275,45 +276,6 @@ export default function ArtisansPage(): ReactElement {
   const [selectedMetiers, setSelectedMetiers] = useState<string[]>([])
   const [metiers, setMetiers] = useState<Array<{ id: string; code: string; label: string }>>([])
   
-  // Récupérer l'utilisateur actuel (même logique que dans useArtisanViews)
-  useEffect(() => {
-    let cancelled = false
-    
-    const resolveUser = async () => {
-      try {
-        const { supabase } = await import("@/lib/supabase-client")
-        const { data: session } = await supabase.auth.getSession()
-        const token = session?.session?.access_token
-        if (!token) {
-          if (!cancelled) {
-            setCurrentUserId(undefined)
-          }
-          return
-        }
-        
-        const response = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: "no-store",
-        })
-        if (!response.ok) {
-          throw new Error("Unable to fetch current user")
-        }
-        const payload = await response.json()
-        const user = payload?.user ?? null
-        const userId: string | undefined = user?.id ?? undefined
-        if (!cancelled) {
-          setCurrentUserId(userId)
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setCurrentUserId(undefined)
-        }
-      }
-    }
-    
-    resolveUser()
-  }, [])
-
   // Convertir les filtres de la vue active en filtres serveur et y ajouter recherche + filtres UI
   const { serverFilters, clientFilters } = useMemo(() => {
     const baseFilters = activeView && activeView.filters.length > 0
@@ -403,9 +365,29 @@ export default function ArtisansPage(): ReactElement {
     [currentUserId]
   )
 
+  const viewsSignature = useMemo(() => {
+    return views.map((view) => ({
+      id: view.id,
+      filters: JSON.stringify(view.filters ?? []),
+    }))
+  }, [views])
+
+  const requiresCurrentUserForCounts = useMemo(() => {
+    return views.some((view) =>
+      view.filters?.some(
+        (filter) =>
+          filter.property === "gestionnaire_id" &&
+          (filter.value === "CURRENT_USER" || filter.value === "__CURRENT_USER__"),
+      ),
+    )
+  }, [views])
+
   // Charger les counts réels pour toutes les vues
   useEffect(() => {
     if (!isReady || views.length === 0) return
+    if (requiresCurrentUserForCounts && !currentUserId) {
+      return
+    }
 
     let cancelled = false
     setViewCountsLoading(true)
@@ -446,7 +428,7 @@ export default function ArtisansPage(): ReactElement {
     return () => {
       cancelled = true
     }
-  }, [views, isReady, convertFiltersToApiParams])
+  }, [viewsSignature, isReady, convertFiltersToApiParams, requiresCurrentUserForCounts, currentUserId])
 
   const {
     artisans,

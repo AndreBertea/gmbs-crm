@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { referenceApi } from "@/lib/reference-api"
 
 /**
@@ -69,13 +69,13 @@ export function useInterventionStatusMap() {
    * @param code - Code(s) de statut (ex: "EN_COURS" ou ["EN_COURS", "TERMINE"])
    * @returns UUID(s) correspondant(s)
    */
-  const codeToId = (code: string | string[] | undefined): string | string[] | undefined => {
+  const codeToId = useCallback((code: string | string[] | undefined): string | string[] | undefined => {
     if (!code) return undefined
     if (Array.isArray(code)) {
       return code.map((c) => statusMap[c]).filter(Boolean)
     }
     return statusMap[code]
-  }
+  }, [statusMap])
 
   return { statusMap, loading, error, codeToId }
 }

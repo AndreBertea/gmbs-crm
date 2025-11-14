@@ -10,7 +10,7 @@
  *   npx tsx scripts/tests/inspect-intervention.js --last  (dernière intervention)
  */
 
-import { supabaseAdmin } from '../../src/lib/supabase-client.js';
+import { supabaseAdmin } from '../../src/lib/supabase-admin.js';
 
 const interventionId = process.argv[2];
 

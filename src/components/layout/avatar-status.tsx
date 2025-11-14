@@ -6,6 +6,7 @@ import Link from "next/link"
 import { LogOut, Settings as SettingsIcon, User as UserIcon } from "lucide-react"
 import { supabase } from '@/lib/supabase-client'
 import { useQueryClient } from "@tanstack/react-query"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 type Me = {
   id: string
@@ -22,32 +23,32 @@ type Me = {
 
 export function AvatarStatus() {
   const queryClient = useQueryClient()
-  const [me, setMe] = React.useState<Me | null>(null)
-  const [loading, setLoading] = React.useState(true)
   const [isMounted, setIsMounted] = React.useState(false)
+  
+  // Utiliser useCurrentUser pour consommer la query partagée
+  // Cela évite les fetchs parallèles et profite du cache TanStack Query
+  const { data: currentUser, isLoading } = useCurrentUser()
+  
+  // Adapter les données de useCurrentUser au format attendu par le composant
+  const me: Me | null = React.useMemo(() => {
+    if (!currentUser) return null
+    return {
+      id: currentUser.id,
+      firstname: currentUser.firstname ?? null,
+      lastname: currentUser.lastname ?? null,
+      prenom: currentUser.prenom ?? null,
+      name: currentUser.nom ?? null,
+      email: currentUser.email ?? null,
+      status: currentUser.status || null,
+      color: currentUser.color ?? null,
+      code_gestionnaire: currentUser.code_gestionnaire ?? null,
+      username: currentUser.username ?? null,
+    }
+  }, [currentUser])
 
   React.useEffect(() => {
     setIsMounted(true)
   }, [])
-
-  const load = React.useCallback(async () => {
-    try {
-      // Utiliser directement /api/auth/me qui lit depuis les cookies HTTP-only
-      // Cela garantit que chaque navigateur/fenêtre a sa propre session isolée
-      const res = await fetch('/api/auth/me', { 
-        cache: 'no-store', 
-        credentials: 'include' // Inclure les cookies dans la requête
-      })
-      const j = await res.json()
-      setMe(j?.user || null)
-    } catch {
-      setMe(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  React.useEffect(() => { load() }, [load])
 
   const status = (me?.status || 'offline') as 'connected' | 'busy' | 'dnd' | 'offline'
   const label = status === 'connected' ? 'En ligne' : status === 'busy' ? 'Occupé' : status === 'dnd' ? 'Ne pas déranger' : 'Hors ligne'
@@ -62,7 +63,8 @@ export function AvatarStatus() {
       credentials: 'include', // Inclure les cookies dans la requête
       body: JSON.stringify({ status: next }) 
     })
-    setMe((m) => (m ? { ...m, status: next } : m))
+    // Invalider la query currentUser pour forcer un refetch avec le nouveau status
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] })
   }
 
   async function logout() {
@@ -117,7 +119,7 @@ export function AvatarStatus() {
     return 'U'
   }, [me])
 
-  if (!isMounted) {
+  if (!isMounted || isLoading) {
     return (
       <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
     )

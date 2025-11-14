@@ -73,7 +73,7 @@ import useInterventionModal, { InterventionModalOpenOptions } from "@/hooks/useI
 import { convertViewFiltersToServerFilters } from "@/lib/filter-converter"
 import { useInterventionStatusMap } from "@/hooks/useInterventionStatusMap"
 import { useUserMap } from "@/hooks/useUserMap"
-import { supabase } from "@/lib/supabase-client"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 type GalleryViewConfig = Parameters<typeof GalleryView>[0]["view"]
 type CalendarViewConfig = Parameters<typeof CalendarView>[0]["view"]
@@ -213,59 +213,16 @@ export default function Page() {
   const [page, setPage] = useState(1)
   
   // Hooks pour mapper CODE/USERNAME → UUID
-  const { codeToId: statusCodeToId } = useInterventionStatusMap()
-  const { nameToId: userCodeToId } = useUserMap()
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
+  const { codeToId: statusCodeToId, statusMap, loading: statusMapLoading } = useInterventionStatusMap()
+  const { nameToId: userCodeToId, userMap, loading: userMapLoading } = useUserMap()
+  const { data: currentUser } = useCurrentUser()
+  const currentUserId = currentUser?.id ?? undefined
   
   // État pour stocker les counts réels de chaque vue
   const [viewCounts, setViewCounts] = useState<Record<string, number>>({})
   const [countsLoading, setCountsLoading] = useState(false)
   
-  // Récupérer l'utilisateur actuel
-  useEffect(() => {
-    let cancelled = false
-    
-    const resolveUser = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession()
-        const token = session?.session?.access_token
-        if (!token) {
-          if (!cancelled) {
-            setCurrentUserId(undefined)
-          }
-          return
-        }
-        
-        const response = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: "no-store",
-        })
-        if (!response.ok) {
-          throw new Error("Unable to fetch current user")
-        }
-        const payload = await response.json()
-        const user = payload?.user ?? null
-        const userId: string | undefined = user?.id ?? undefined
-        if (!cancelled) {
-          setCurrentUserId(userId)
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setCurrentUserId(undefined)
-        }
-      }
-    }
-    
-    resolveUser()
-    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
-      resolveUser()
-    })
-    
-    return () => {
-      cancelled = true
-      authListener?.subscription.unsubscribe()
-    }
-  }, [])
+  // currentUserId est maintenant récupéré via useCurrentUser() ci-dessus
   
   const showStatusFilter = useMemo(() => {
     if (activeView?.layout !== "table") return false
@@ -305,6 +262,14 @@ export default function Page() {
       currentUserId: currentUserId,
     })
   }, [activeView, statusCodeToId, userCodeToId, currentUserId])
+
+  // Créer une signature stable de serverFilters pour éviter les re-renders inutiles
+  // Cette signature ne change que lorsque les valeurs réelles des filtres changent
+  const serverFiltersSignature = useMemo(() => {
+    if (!serverFilters) return "no-filters"
+    // Sérialiser les filtres de manière stable pour détecter les vrais changements
+    return JSON.stringify(serverFilters, Object.keys(serverFilters).sort())
+  }, [serverFilters])
 
   // Réutiliser convertViewFiltersToServerFilters pour éviter la duplication de logique
   // Cette fonction convertit les filtres de vue en paramètres API pour le comptage
@@ -409,7 +374,6 @@ export default function Page() {
   }
 
   // Créer une signature stable des filtres pour éviter les re-renders inutiles
-  // Inclure les dépendances nécessaires pour détecter les changements de mappers
   const viewsSignature = useMemo(() => {
     return views.map((v) => ({
       id: v.id,
@@ -417,21 +381,25 @@ export default function Page() {
     }))
   }, [views])
   
-  // Signature des mappers pour détecter quand ils sont résolus
-  const mappersSignature = useMemo(() => {
+  // Signature des mappers pour détecter quand ils sont réellement prêts
+  // Vérifier que les maps ont des données (pas juste que les fonctions existent)
+  const mappersReady = useMemo(() => {
     return {
-      statusCodeToIdReady: Boolean(statusCodeToId),
-      userCodeToIdReady: Boolean(userCodeToId),
-      currentUserId,
+      statusMapReady: !statusMapLoading && Object.keys(statusMap).length > 0,
+      userMapReady: !userMapLoading && Object.keys(userMap).length > 0,
+      currentUserIdReady: currentUserId !== undefined,
     }
-  }, [statusCodeToId, userCodeToId, currentUserId])
+  }, [statusMapLoading, statusMap, userMapLoading, userMap, currentUserId])
+  
+  // Tous les mappers doivent être prêts avant de charger les comptages
+  const allMappersReady = mappersReady.statusMapReady && mappersReady.userMapReady && mappersReady.currentUserIdReady
 
   // Charger les counts réels pour toutes les vues avec debouncing et limitation de concurrence
-  // Attendre que les mappers soient prêts avant de charger les comptages
+  // Attendre que les mappers soient réellement prêts avant de charger les comptages
   useEffect(() => {
     if (!isReady || views.length === 0) return
-    // Attendre que les mappers soient résolus pour éviter les comptages sans filtres utilisateur
-    if (!mappersSignature.statusCodeToIdReady || !mappersSignature.userCodeToIdReady) {
+    // Attendre que tous les mappers soient résolus pour éviter les comptages sans filtres
+    if (!allMappersReady) {
       return
     }
 
@@ -461,7 +429,7 @@ export default function Page() {
       cancelled = true
       clearTimeout(timeoutId)
     }
-  }, [viewsSignature, isReady, mappersSignature]) // Inclure mappersSignature pour relancer quand les mappers sont résolus
+  }, [viewsSignature, isReady, allMappersReady, mappersReady]) // Inclure allMappersReady pour relancer quand les mappers sont prêts
 
   // Utiliser TanStack Query pour toutes les vues (migration progressive complétée)
   const {
@@ -495,10 +463,12 @@ export default function Page() {
     setPage((prev) => Math.max(1, prev - 1))
   }, [])
 
-  // Réinitialiser la page à 1 quand les filtres changent
+  // Réinitialiser la page à 1 quand les filtres changent vraiment
+  // Utiliser serverFiltersSignature au lieu de serverFilters pour éviter les réinitialisations
+  // causées par la recréation de l'objet à chaque rendu
   useEffect(() => {
     setPage(1)
-  }, [serverFilters, activeViewId])
+  }, [serverFiltersSignature, activeViewId])
 
   // Détecter le changement de vue pour afficher le loading même avec des données existantes
   const previousViewIdRef = useRef<string | undefined>(undefined)
