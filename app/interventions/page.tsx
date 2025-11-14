@@ -62,6 +62,7 @@ import type { InterventionStatusValue } from "@/types/interventions"
 import { getDistinctInterventionValues, getInterventionTotalCount, type GetAllParams } from "@/lib/supabase-api-v2"
 import type { InterventionView as InterventionEntity } from "@/types/intervention-view"
 import type {
+  InterventionViewDefinition,
   LayoutOptions,
   TableLayoutOptions,
   TableRowDensity,
@@ -386,50 +387,133 @@ export default function Page() {
     [statusCodeToId, userCodeToId, currentUserId]
   )
 
-  // Charger les counts réels pour toutes les vues
+  // Fonction de retry avec backoff exponentiel pour les erreurs réseau/Supabase
+  const retryWithBackoff = async <T,>(
+    fn: () => Promise<T>,
+    maxRetries = 3,
+    baseDelay = 1000
+  ): Promise<T> => {
+    let lastError: Error | null = null
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn()
+      } catch (error: any) {
+        lastError = error as Error
+        
+        // Extraire le code d'erreur depuis différents formats Supabase
+        // Supabase peut retourner: error.status, error.code, error.statusCode
+        // ou dans error.message pour les erreurs HTTP
+        let status: number | null = null
+        
+        if (error?.status) {
+          status = error.status
+        } else if (error?.code) {
+          status = typeof error.code === 'number' ? error.code : null
+        } else if (error?.statusCode) {
+          status = error.statusCode
+        } else if (error?.message) {
+          // Chercher dans le message pour les erreurs HTTP
+          const message = String(error.message)
+          if (message.includes('503') || message.includes('Service Unavailable')) {
+            status = 503
+          } else if (message.includes('500') || message.includes('Internal Server Error')) {
+            status = 500
+          } else if (message.includes('429') || message.includes('Too Many Requests')) {
+            status = 429
+          }
+        }
+        
+        // Ne retry que pour les erreurs 503/500/429 (rate limit/service unavailable)
+        const shouldRetry = attempt < maxRetries && (status === 503 || status === 500 || status === 429)
+        
+        if (shouldRetry) {
+          const delay = baseDelay * Math.pow(2, attempt)
+          console.log(`[retryWithBackoff] Tentative ${attempt + 1}/${maxRetries + 1} après ${delay}ms pour erreur ${status}`)
+          await new Promise((resolve) => setTimeout(resolve, delay))
+          continue
+        }
+        throw error
+      }
+    }
+    throw lastError || new Error("Unknown error")
+  }
+
+  // Fonction pour charger un comptage avec retry
+  const loadViewCount = async (view: InterventionViewDefinition): Promise<[string, number]> => {
+    try {
+      const apiParams = convertFiltersToApiParams(view.filters)
+      const count = await retryWithBackoff(() => getInterventionTotalCount(apiParams))
+      return [view.id, count]
+    } catch (error) {
+      console.error(`Erreur lors du comptage pour la vue ${view.id}:`, error)
+      return [view.id, 0]
+    }
+  }
+
+  // Fonction pour charger les comptages par batch (limite de concurrence)
+  const loadCountsInBatches = async (
+    views: InterventionViewDefinition[],
+    batchSize = 2
+  ): Promise<Record<string, number>> => {
+    const counts: Record<string, number> = {}
+    
+    // Traiter par batch pour limiter la concurrence
+    for (let i = 0; i < views.length; i += batchSize) {
+      const batch = views.slice(i, i + batchSize)
+      const batchResults = await Promise.all(batch.map(loadViewCount))
+      
+      batchResults.forEach(([viewId, count]) => {
+        counts[viewId] = count
+      })
+      
+      // Petit délai entre les batches pour éviter de surcharger le serveur
+      if (i + batchSize < views.length) {
+        await new Promise((resolve) => setTimeout(resolve, 200))
+      }
+    }
+    
+    return counts
+  }
+
+  // Créer une signature stable des filtres pour éviter les re-renders inutiles
+  const viewsSignature = useMemo(() => {
+    return views.map((v) => ({
+      id: v.id,
+      filters: JSON.stringify(v.filters),
+    }))
+  }, [views])
+
+  // Charger les counts réels pour toutes les vues avec debouncing et limitation de concurrence
   useEffect(() => {
     if (!isReady || views.length === 0) return
 
     let cancelled = false
     setCountsLoading(true)
 
-    const loadCounts = async () => {
-      const counts: Record<string, number> = {}
+    // Debounce: attendre 500ms avant de charger les comptages
+    const timeoutId = setTimeout(async () => {
+      if (cancelled) return
 
-      // Charger les counts en parallèle pour toutes les vues
-      const countPromises = views.map(async (view) => {
-        try {
-          // Convertir les filtres de la vue en paramètres API
-          const apiParams = convertFiltersToApiParams(view.filters)
+      try {
+        const counts = await loadCountsInBatches(views, 2) // Limiter à 2 requêtes parallèles
 
-          // Appeler getInterventionTotalCount avec les filtres
-          const count = await getInterventionTotalCount(apiParams)
-
-          if (!cancelled) {
-            counts[view.id] = count
-          }
-        } catch (error) {
-          console.error(`Erreur lors du comptage pour la vue ${view.id}:`, error)
-          if (!cancelled) {
-            counts[view.id] = 0
-          }
+        if (!cancelled) {
+          setViewCounts(counts)
+          setCountsLoading(false)
         }
-      })
-
-      await Promise.all(countPromises)
-
-      if (!cancelled) {
-        setViewCounts(counts)
-        setCountsLoading(false)
+      } catch (error) {
+        console.error("Erreur lors du chargement des comptages:", error)
+        if (!cancelled) {
+          setCountsLoading(false)
+        }
       }
-    }
-
-    loadCounts()
+    }, 500)
 
     return () => {
       cancelled = true
+      clearTimeout(timeoutId)
     }
-  }, [views, isReady, convertFiltersToApiParams])
+  }, [viewsSignature, isReady]) // Utiliser viewsSignature au lieu de views pour éviter les re-renders
 
   // Utiliser TanStack Query pour toutes les vues (migration progressive complétée)
   const {

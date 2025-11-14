@@ -125,11 +125,18 @@ export function usePreloadViews(
 
     console.log(`[usePreloadViews] 🚀 Démarrage préchargement de ${views.length} vues avec TanStack Query`)
 
-    // Précharger chaque vue avec un délai progressif pour ne pas surcharger
-    views.forEach((view, index) => {
-      const delay = index * 500 // Délai progressif : 0ms, 500ms, 1000ms, etc.
+    let cancelled = false
 
-      setTimeout(() => {
+    // Précharger par batch pour limiter la charge
+    const batchSize = 2 // Limiter à 2 requêtes parallèles
+    const batchDelay = 800 // Délai entre les batches (augmenté de 500ms à 800ms)
+
+    const preloadBatch = async (batch: InterventionViewDefinition[], batchIndex: number) => {
+      if (cancelled) return
+
+      const batchPromises = batch.map(async (view) => {
+        if (cancelled) return
+
         try {
           // Convertir les filtres de la vue en filtres serveur
           const { serverFilters } = convertViewFiltersToServerFilters(view.filters, {
@@ -153,7 +160,7 @@ export function usePreloadViews(
           // Ajouter viewId à la clé
           const fullQueryKey = view.id ? [...queryKey, view.id] : queryKey
 
-          queryClient.prefetchQuery({
+          await queryClient.prefetchQuery({
             queryKey: fullQueryKey,
             queryFn: async () => {
               if (useLight) {
@@ -168,8 +175,31 @@ export function usePreloadViews(
         } catch (err) {
           console.warn(`[usePreloadViews] ⚠️ Erreur lors du préchargement vue "${view.title}":`, err)
         }
-      }, delay)
-    })
+      })
+
+      await Promise.all(batchPromises)
+    }
+
+    // Traiter les vues par batch avec délai entre chaque batch
+    const processBatches = async () => {
+      for (let i = 0; i < views.length; i += batchSize) {
+        if (cancelled) break
+        
+        const batch = views.slice(i, i + batchSize)
+        await preloadBatch(batch, Math.floor(i / batchSize))
+        
+        // Attendre avant le prochain batch (sauf pour le dernier)
+        if (i + batchSize < views.length && !cancelled) {
+          await new Promise((resolve) => setTimeout(resolve, batchDelay))
+        }
+      }
+    }
+
+    processBatches()
+
+    return () => {
+      cancelled = true
+    }
   }, [views, queryClient, useLight, options])
 }
 
