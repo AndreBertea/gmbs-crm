@@ -306,83 +306,16 @@ export default function Page() {
     })
   }, [activeView, statusCodeToId, userCodeToId, currentUserId])
 
-  // Fonction pour convertir ViewFilter en paramètres API pour le comptage
+  // Réutiliser convertViewFiltersToServerFilters pour éviter la duplication de logique
+  // Cette fonction convertit les filtres de vue en paramètres API pour le comptage
   const convertFiltersToApiParams = useCallback(
     (filters: ViewFilter[]): Partial<GetAllParams> => {
-      const params: Partial<GetAllParams> = {}
-
-      for (const filter of filters) {
-        // Même logique que convertViewFiltersToServerFilters mais retourne directement les params
-        if (filter.property === "statusValue") {
-          if (filter.operator === "eq" && typeof filter.value === "string") {
-            const statusId = statusCodeToId(filter.value)
-            if (statusId && typeof statusId === "string") {
-              params.statut = statusId
-            }
-          } else if (filter.operator === "in" && Array.isArray(filter.value)) {
-            // Convertir le tableau en string[] pour statusCodeToId
-            const stringValues = filter.value.filter((v): v is string => typeof v === "string")
-            if (stringValues.length > 0) {
-              const statusIdsResult = statusCodeToId(stringValues)
-              if (statusIdsResult && Array.isArray(statusIdsResult)) {
-                const statusIds = statusIdsResult.filter(Boolean) as string[]
-                if (statusIds.length > 0) {
-                  params.statut = statusIds
-                }
-              }
-            }
-          }
-        }
-
-        if (filter.property === "attribueA") {
-          if (filter.operator === "is_empty") {
-            // Filtre pour les interventions sans assignation (vue Market)
-            params.user = null
-          } else if (filter.operator === "eq" && typeof filter.value === "string") {
-            if (filter.value === "CURRENT_USER" || filter.value === currentUserId) {
-              if (currentUserId) params.user = currentUserId
-            } else {
-              const userId = userCodeToId(filter.value)
-              if (userId && typeof userId === "string") {
-                params.user = userId
-              }
-            }
-          } else if (filter.operator === "in" && Array.isArray(filter.value)) {
-            // Convertir le tableau en string[] pour userCodeToId
-            const stringValues = filter.value.filter((v): v is string => typeof v === "string")
-            if (stringValues.length > 0) {
-              const userIds = stringValues
-                .map((v) => {
-                  if (v === "CURRENT_USER" || v === currentUserId) return currentUserId
-                  return userCodeToId(v)
-                })
-                .filter((id): id is string => Boolean(id))
-              if (userIds.length > 0) {
-                params.user = userIds
-              }
-            }
-          }
-        }
-
-        if (filter.property === "dateIntervention" || filter.property === "date") {
-          if (filter.operator === "between") {
-            if (filter.value && typeof filter.value === "object" && !Array.isArray(filter.value)) {
-              const { from, to } = filter.value as { from?: string; to?: string }
-              if (from) params.startDate = from
-              if (to) params.endDate = to
-            } else if (Array.isArray(filter.value) && filter.value.length >= 2) {
-              if (filter.value[0]) params.startDate = String(filter.value[0])
-              if (filter.value[1]) params.endDate = String(filter.value[1])
-            }
-          } else if (filter.operator === "gte" && filter.value) {
-            params.startDate = String(filter.value)
-          } else if (filter.operator === "lte" && filter.value) {
-            params.endDate = String(filter.value)
-          }
-        }
-      }
-
-      return params
+      const { serverFilters } = convertViewFiltersToServerFilters(filters, {
+        statusCodeToId,
+        userCodeToId,
+        currentUserId,
+      })
+      return serverFilters ?? {}
     },
     [statusCodeToId, userCodeToId, currentUserId]
   )
@@ -476,16 +409,31 @@ export default function Page() {
   }
 
   // Créer une signature stable des filtres pour éviter les re-renders inutiles
+  // Inclure les dépendances nécessaires pour détecter les changements de mappers
   const viewsSignature = useMemo(() => {
     return views.map((v) => ({
       id: v.id,
       filters: JSON.stringify(v.filters),
     }))
   }, [views])
+  
+  // Signature des mappers pour détecter quand ils sont résolus
+  const mappersSignature = useMemo(() => {
+    return {
+      statusCodeToIdReady: Boolean(statusCodeToId),
+      userCodeToIdReady: Boolean(userCodeToId),
+      currentUserId,
+    }
+  }, [statusCodeToId, userCodeToId, currentUserId])
 
   // Charger les counts réels pour toutes les vues avec debouncing et limitation de concurrence
+  // Attendre que les mappers soient prêts avant de charger les comptages
   useEffect(() => {
     if (!isReady || views.length === 0) return
+    // Attendre que les mappers soient résolus pour éviter les comptages sans filtres utilisateur
+    if (!mappersSignature.statusCodeToIdReady || !mappersSignature.userCodeToIdReady) {
+      return
+    }
 
     let cancelled = false
     setCountsLoading(true)
@@ -513,7 +461,7 @@ export default function Page() {
       cancelled = true
       clearTimeout(timeoutId)
     }
-  }, [viewsSignature, isReady]) // Utiliser viewsSignature au lieu de views pour éviter les re-renders
+  }, [viewsSignature, isReady, mappersSignature]) // Inclure mappersSignature pour relancer quand les mappers sont résolus
 
   // Utiliser TanStack Query pour toutes les vues (migration progressive complétée)
   const {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { interventionsApiV2, type GetAllParams } from "@/lib/supabase-api-v2"
 import { interventionKeys } from "@/lib/react-query/queryKeys"
@@ -118,7 +118,14 @@ export function usePreloadViews(
   }
 ) {
   const queryClient = useQueryClient()
-  const { useLight = true } = options
+  const { useLight = true, statusCodeToId, userCodeToId, currentUserId } = options
+
+  // Mémoriser les dépendances réelles pour éviter les re-renders inutiles
+  const stableOptions = useMemo(() => ({
+    statusCodeToId,
+    userCodeToId,
+    currentUserId,
+  }), [statusCodeToId, userCodeToId, currentUserId])
 
   useEffect(() => {
     if (!views || views.length === 0) return
@@ -140,9 +147,9 @@ export function usePreloadViews(
         try {
           // Convertir les filtres de la vue en filtres serveur
           const { serverFilters } = convertViewFiltersToServerFilters(view.filters, {
-            statusCodeToId: options.statusCodeToId,
-            userCodeToId: options.userCodeToId,
-            currentUserId: options.currentUserId,
+            statusCodeToId: stableOptions.statusCodeToId,
+            userCodeToId: stableOptions.userCodeToId,
+            currentUserId: stableOptions.currentUserId,
           })
 
           // Créer les paramètres de requête
@@ -200,6 +207,6 @@ export function usePreloadViews(
     return () => {
       cancelled = true
     }
-  }, [views, queryClient, useLight, options])
+  }, [views, queryClient, useLight, stableOptions])
 }
 

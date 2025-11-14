@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase-client"
 import { preloadCriticalDataAsync } from "@/lib/preload-critical-data"
+import { resetPreloadFlag } from "@/lib/preload-flag"
 
 /**
  * Provider qui gère un seul listener onAuthStateChange global
@@ -18,6 +19,8 @@ export function AuthStateListenerProvider({ children }: { children: ReactNode })
       if (event === 'SIGNED_OUT') {
         // Déconnexion : supprimer complètement le cache
         queryClient.removeQueries({ queryKey: ["currentUser"] })
+        // Réinitialiser le flag de préchargement pour permettre un nouveau préchargement à la prochaine connexion
+        resetPreloadFlag()
         // Nettoyer aussi sessionStorage pour l'animation
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem('revealTransition')
@@ -28,6 +31,7 @@ export function AuthStateListenerProvider({ children }: { children: ReactNode })
         
         // Précharger les données critiques après connexion pour une réactivité optimale
         // On le fait de manière asynchrone pour ne pas bloquer le rendu
+        // Le flag global empêche les appels multiples
         if (event === 'SIGNED_IN') {
           // Utiliser un délai court pour laisser le temps aux cookies d'être définis
           setTimeout(() => {

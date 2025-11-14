@@ -9,6 +9,7 @@ import { referenceApi } from "@/lib/reference-api"
 import { convertViewFiltersToServerFilters, convertArtisanFiltersToServerFilters } from "@/lib/filter-converter"
 import type { InterventionViewDefinition } from "@/types/intervention-views"
 import type { ArtisanViewDefinition } from "@/hooks/useArtisanViews"
+import { getHasPreloaded, setHasPreloaded } from "@/lib/preload-flag"
 
 const CURRENT_USER_PLACEHOLDER = "__CURRENT_USER_USERNAME__"
 
@@ -199,8 +200,15 @@ async function createMappers() {
  * précharger les données les plus utilisées avant même que l'utilisateur navigue
  */
 export async function preloadCriticalData(queryClient: QueryClient) {
+  // Vérifier si le préchargement a déjà été fait
+  if (getHasPreloaded()) {
+    console.log("[preloadCriticalData] ⏭️ Préchargement déjà effectué, skip")
+    return
+  }
+  
   try {
     console.log("[preloadCriticalData] 🚀 Démarrage du préchargement des données critiques")
+    setHasPreloaded(true)
 
     // 1. Précharger currentUser (déjà invalidé, mais on peut le précharger explicitement)
     // Note: La query currentUser sera automatiquement déclenchée par useCurrentUser,
@@ -251,40 +259,55 @@ export async function preloadCriticalData(queryClient: QueryClient) {
       staleTime: 30 * 1000, // 30 secondes
     })
 
-    // 5. Précharger toutes les vues par défaut (excluant calendar)
+    // 5. Précharger toutes les vues par défaut (excluant calendar) avec limitation de concurrence
     console.log(`[preloadCriticalData] 📋 Préchargement de ${defaultViews.length} vues par défaut`)
     
-    for (const view of defaultViews) {
-      try {
-        // Convertir les filtres de la vue en filtres serveur
-        const { serverFilters } = convertViewFiltersToServerFilters(view.filters, {
-          statusCodeToId,
-          userCodeToId,
-          currentUserId,
+    const batchSize = 2 // Limiter à 2 requêtes parallèles
+    const batchDelay = 300 // Délai entre les batches
+    
+    for (let i = 0; i < defaultViews.length; i += batchSize) {
+      const batch = defaultViews.slice(i, i + batchSize)
+      
+      // Précharger le batch en parallèle
+      await Promise.all(
+        batch.map(async (view) => {
+          try {
+            // Convertir les filtres de la vue en filtres serveur
+            const { serverFilters } = convertViewFiltersToServerFilters(view.filters, {
+              statusCodeToId,
+              userCodeToId,
+              currentUserId,
+            })
+
+            // Créer les paramètres de requête
+            const params: GetAllParams = {
+              limit: 100,
+              offset: 0,
+              ...serverFilters,
+            }
+
+            // Précharger avec TanStack Query (utilise le dedup automatique)
+            const queryKey = interventionKeys.lightList(params)
+            const fullQueryKey = view.id ? [...queryKey, view.id] : queryKey
+
+            await queryClient.prefetchQuery({
+              queryKey: fullQueryKey,
+              queryFn: async () => {
+                return await interventionsApiV2.getAllLight(params)
+              },
+              staleTime: 30 * 1000, // 30 secondes
+            })
+
+            console.log(`[preloadCriticalData] ✅ Vue "${view.title}" préchargée`)
+          } catch (err) {
+            console.warn(`[preloadCriticalData] ⚠️ Erreur lors du préchargement vue "${view.title}":`, err)
+          }
         })
-
-        // Créer les paramètres de requête
-        const params: GetAllParams = {
-          limit: 100,
-          offset: 0,
-          ...serverFilters,
-        }
-
-        // Précharger avec TanStack Query (utilise le dedup automatique)
-        const queryKey = interventionKeys.lightList(params)
-        const fullQueryKey = view.id ? [...queryKey, view.id] : queryKey
-
-        queryClient.prefetchQuery({
-          queryKey: fullQueryKey,
-          queryFn: async () => {
-            return await interventionsApiV2.getAllLight(params)
-          },
-          staleTime: 30 * 1000, // 30 secondes
-        })
-
-        console.log(`[preloadCriticalData] ✅ Vue "${view.title}" préchargée`)
-      } catch (err) {
-        console.warn(`[preloadCriticalData] ⚠️ Erreur lors du préchargement vue "${view.title}":`, err)
+      )
+      
+      // Attendre avant le prochain batch (sauf pour le dernier)
+      if (i + batchSize < defaultViews.length) {
+        await new Promise((resolve) => setTimeout(resolve, batchDelay))
       }
     }
 
@@ -370,6 +393,8 @@ export async function preloadCriticalData(queryClient: QueryClient) {
 
     console.log("[preloadCriticalData] ✅ Données critiques préchargées")
   } catch (error) {
+    // En cas d'erreur, réinitialiser le flag pour permettre un nouveau préchargement
+    setHasPreloaded(false)
     // Ne pas bloquer la navigation en cas d'erreur de préchargement
     console.warn("[preloadCriticalData] ⚠️ Erreur lors du préchargement:", error)
   }
