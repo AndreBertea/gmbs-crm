@@ -572,7 +572,7 @@ export default function Page() {
   }, [isViewChanging, remoteLoading, fetchedInterventions.length])
 
   const normalizedInterventions = useMemo(() => {
-    console.log(`[page.tsx] normalizedInterventions recalculé - fetchedInterventions.length: ${fetchedInterventions.length}`)
+    console.log(`[page.tsx] normalizedInterventions recalculé - fetchedInterventions.length: ${fetchedInterventions.length}, page: ${page}, currentPage: ${currentPage}`)
     return fetchedInterventions.map((item) => {
       const statusCode = item.status?.code ?? item.statusValue ?? (item as any).statut
       const normalizedStatus = mapStatusFromDb(statusCode)
@@ -854,8 +854,8 @@ export default function Page() {
   
   // Log pour debug
   useEffect(() => {
-    console.log(`[page.tsx] viewInterventions mis à jour - length: ${viewInterventions.length}, fetchedInterventions.length: ${fetchedInterventions.length}`)
-  }, [viewInterventions.length, fetchedInterventions.length])
+    console.log(`[page.tsx] viewInterventions mis à jour - length: ${viewInterventions.length}, fetchedInterventions.length: ${fetchedInterventions.length}, page: ${page}, currentPage: ${currentPage}, totalPages: ${totalPages}`)
+  }, [viewInterventions.length, fetchedInterventions.length, page, currentPage, totalPages])
 
   // Remplacer localViewCounts par viewCounts (counts réels depuis BDD)
   const combinedViewCounts = useMemo(() => viewCounts, [viewCounts])

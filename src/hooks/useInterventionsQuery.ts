@@ -148,12 +148,17 @@ export function useInterventionsQuery(
     enabled,
     // Stale time spécifique : 30s pour revalidation silencieuse
     staleTime: 30 * 1000,
-    // Garder les données précédentes pendant le chargement (pagination fluide)
-    placeholderData: (previousData) => previousData,
+    // Ne pas utiliser placeholderData pour forcer le chargement des nouvelles données lors du changement de page
+    // Cela garantit que les données se mettent à jour correctement lors de la pagination
+    placeholderData: undefined,
   })
 
   // Extraire les données de la réponse
-  const interventions = useMemo(() => data?.data ?? [], [data?.data])
+  const interventions = useMemo(() => {
+    const result = data?.data ?? []
+    console.log(`[useInterventionsQuery] interventions mis à jour - length: ${result.length}, page: ${page}, offset: ${offset}, queryKey:`, queryKey)
+    return result
+  }, [data?.data, page, offset, queryKey])
   const totalCount = useMemo(() => data?.total ?? 0, [data?.total])
 
   // Calculer le nombre total de pages
