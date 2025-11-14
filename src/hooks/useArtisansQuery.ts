@@ -10,6 +10,10 @@ export interface UseArtisansQueryOptions {
   serverFilters?: {
     gestionnaire?: string
     statut?: string
+    statuts?: string[]
+    metier?: string
+    metiers?: string[]
+    search?: string
   }
   page?: number
   /**
@@ -52,19 +56,24 @@ export function useArtisansQuery(
     if (!serverFilters) return {}
 
     const result: Partial<ArtisanGetAllParams> = {}
-    const entries = Object.entries(serverFilters) as Array<
-      [keyof typeof serverFilters, typeof serverFilters[keyof typeof serverFilters]]
-    >
 
-    for (const [key, value] of entries) {
-      if (value !== undefined && value !== null) {
-        // Mapper gestionnaire vers le paramètre API
-        if (key === "gestionnaire") {
-          result.gestionnaire = value
-        } else if (key === "statut") {
-          result.statut = value
-        }
-      }
+    if (serverFilters.gestionnaire) {
+      result.gestionnaire = serverFilters.gestionnaire
+    }
+    if (serverFilters.statut) {
+      result.statut = serverFilters.statut
+    }
+    if (serverFilters.statuts && serverFilters.statuts.length > 0) {
+      result.statuts = serverFilters.statuts
+    }
+    if (serverFilters.metier) {
+      result.metier = serverFilters.metier
+    }
+    if (serverFilters.metiers && serverFilters.metiers.length > 0) {
+      result.metiers = serverFilters.metiers
+    }
+    if (serverFilters.search && serverFilters.search.trim()) {
+      result.search = serverFilters.search.trim()
     }
 
     return result
@@ -202,4 +211,3 @@ export function useArtisansQuery(
     updateArtisanOptimistic,
   }
 }
-

@@ -1,5 +1,6 @@
 import type { ViewFilter } from "@/types/intervention-views"
 import type { GetAllParams } from "@/lib/supabase-api-v2"
+import type { ArtisanGetAllParams } from "@/lib/react-query/queryKeys"
 import type { ArtisanViewFilter } from "@/hooks/useArtisanViews"
 
 interface FilterConversionContext {
@@ -137,16 +138,10 @@ export function convertArtisanFiltersToServerFilters(
   filters: ArtisanViewFilter[],
   context: { currentUserId?: string }
 ): {
-  serverFilters: {
-    gestionnaire?: string
-    statut?: string
-  }
+  serverFilters: Partial<ArtisanGetAllParams>
   clientFilters: ArtisanViewFilter[]
 } {
-  const serverFilters: {
-    gestionnaire?: string
-    statut?: string
-  } = {}
+  const serverFilters: Partial<ArtisanGetAllParams> = {}
   const clientFilters: ArtisanViewFilter[] = []
 
   for (const filter of filters) {
@@ -182,4 +177,3 @@ export function convertArtisanFiltersToServerFilters(
 
   return { serverFilters, clientFilters }
 }
-

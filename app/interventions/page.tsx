@@ -1175,40 +1175,42 @@ export default function Page() {
   }, [isReorderMode])
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="space-y-2">
-        {isReorderMode && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsReorderMode(false)}
-              className="animate-pulse bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-            >
-              ESC
-            </Button>
-            <span>Réorganisez vos vues, puis appuyez sur ESC</span>
-          </div>
-        )}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-0">
-            <ViewTabs
-              views={views}
-              activeViewId={activeViewId}
-              onSelect={setActiveView}
-              onReorder={reorderViews}
-              onRenameView={handleRenameView}
-              onDuplicateView={handleDuplicateView}
-              onDeleteView={handleDeleteView}
-              onResetDefault={resetViewToDefault}
-              onConfigureColumns={setColumnConfigViewId}
-              onToggleBadge={(id) => updateViewConfig(id, { showBadge: !views.find(v => v.id === id)?.showBadge })}
-              isReorderMode={isReorderMode}
-              onEnterReorderMode={() => setIsReorderMode(true)}
-              interventionCounts={combinedViewCounts}
-            />
-          </div>
-          {!isReorderMode && (
+    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 64px - 2px)', maxHeight: 'calc(100vh - 64px - 2px)', boxSizing: 'border-box' }}>
+      <div className="flex-1 space-y-4 p-6 overflow-hidden flex flex-col min-h-0" style={{ maxHeight: '100%', boxSizing: 'border-box' }}>
+        {/* Zone des vues et filtres */}
+        <div className="space-y-2 flex-shrink-0">
+          {isReorderMode && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsReorderMode(false)}
+                className="animate-pulse bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+              >
+                ESC
+              </Button>
+              <span>Réorganisez vos vues, puis appuyez sur ESC</span>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <ViewTabs
+                views={views}
+                activeViewId={activeViewId}
+                onSelect={setActiveView}
+                onReorder={reorderViews}
+                onRenameView={handleRenameView}
+                onDuplicateView={handleDuplicateView}
+                onDeleteView={handleDeleteView}
+                onResetDefault={resetViewToDefault}
+                onConfigureColumns={setColumnConfigViewId}
+                onToggleBadge={(id) => updateViewConfig(id, { showBadge: !views.find(v => v.id === id)?.showBadge })}
+                isReorderMode={isReorderMode}
+                onEnterReorderMode={() => setIsReorderMode(true)}
+                interventionCounts={combinedViewCounts}
+              />
+            </div>
+            {!isReorderMode && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="shrink-0">
@@ -1615,103 +1617,107 @@ export default function Page() {
         />
       )}
 
-      {/* DESIGN v1.4 - FiltersBar Status affichée conditionnellement */}
-      {showStatusFilter && (
-        <div className="flex items-center gap-2 flex-wrap pb-4 border-b">
-          <div className="text-sm text-muted-foreground">Statut:</div>
-          <button
-            onClick={() => handleSelectStatus(null)}
-            className={`status-chip ${selectedStatuses.length === 0 ? "bg-foreground/90 text-background ring-2 ring-foreground/20" : "bg-transparent border border-border text-foreground hover:bg-muted/50"} transition-[opacity,transform,shadow] duration-150 ease-out`}
-          >
-            Toutes ({getCountByStatus(null)})
-          </button>
-          {displayedStatuses.map((status) => {
-            const label = INTERVENTION_STATUS[status]?.label ?? mapStatusToDb(status)
-            const Icon = INTERVENTION_STATUS[status]?.icon ?? Settings
-            const isSelected = selectedStatuses.includes(status)
-            const statusColor = workflowConfig.statuses.find((s) => s.key === status)?.color ?? INTERVENTION_STATUS[status]?.color ?? "#666"
-            const statusDisplay = getStatusDisplay(status, { workflow: workflowConfig })
-            const finalColor = statusDisplay.color
-            
-            return (
-              <button
-                key={status}
-                onClick={() => handleSelectStatus(status)}
-                className={`status-chip transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5 ${
-                  isSelected
-                    ? "ring-2 ring-foreground/20"
-                    : "hover:shadow-card border border-border bg-transparent"
-                }`}
-                style={isSelected ? { 
-                  backgroundColor: `${finalColor}15`, 
-                  borderColor: finalColor,
-                  color: finalColor 
-                } : {}}
-                title={label}
-              >
-                <span className="inline-flex items-center">
-                  <Icon className="h-3.5 w-3.5 mr-1" />
-                  {label}
-                </span>
-                <span className="text-muted-foreground">({getCountByStatus(status)})</span>
-              </button>
-            )
-          })}
-          {/* Bouton CHECK rouge - Multi-sélection avec les autres statuts */}
-          <button
-            onClick={() => {
-              if (isCheckFilterActive) {
-                // Désactiver le filtre CHECK
-                updateFilterForProperty("isCheck", null)
-              } else {
-                // Activer le filtre CHECK (peut être combiné avec d'autres statuts)
-                updateFilterForProperty("isCheck", { property: "isCheck", operator: "eq", value: true })
-              }
-            }}
-            className={`status-chip transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5 ${
-              isCheckFilterActive
-                ? "ring-2 ring-foreground/20"
-                : "hover:shadow-card border border-border bg-transparent"
-            }`}
-            style={isCheckFilterActive ? { 
-              backgroundColor: "#EF444415", 
-              borderColor: "#EF4444",
-              color: "#EF4444" 
-            } : {}}
-            title="Interventions avec date d'échéance dépassée (peut être combiné avec d'autres statuts)"
-          >
-            <span className="inline-flex items-center">
-              <span className="h-3.5 w-3.5 mr-1 rounded-full bg-red-500" />
-              CHECK
-            </span>
-            <span className="text-muted-foreground">({getCheckCount()})</span>
-          </button>
-          {(selectedStatuses.length > 0 || isCheckFilterActive) && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              onClick={() => {
-                handleSelectStatus(null)
-                updateFilterForProperty("isCheck", null)
-              }}
-              title="Réinitialiser tous les filtres"
+        {/* DESIGN v1.4 - FiltersBar Status affichée conditionnellement */}
+        {showStatusFilter && (
+          <div className="flex items-center gap-2 flex-wrap pb-4 border-b flex-shrink-0">
+            <div className="text-sm text-muted-foreground">Statut:</div>
+            <button
+              onClick={() => handleSelectStatus(null)}
+              className={`status-chip ${selectedStatuses.length === 0 ? "bg-foreground/90 text-background ring-2 ring-foreground/20" : "bg-transparent border border-border text-foreground hover:bg-muted/50"} transition-[opacity,transform,shadow] duration-150 ease-out`}
             >
-              <X className="h-4 w-4" />
-            </Button>
+              Toutes ({getCountByStatus(null)})
+            </button>
+            {displayedStatuses.map((status) => {
+              const label = INTERVENTION_STATUS[status]?.label ?? mapStatusToDb(status)
+              const Icon = INTERVENTION_STATUS[status]?.icon ?? Settings
+              const isSelected = selectedStatuses.includes(status)
+              const statusColor = workflowConfig.statuses.find((s) => s.key === status)?.color ?? INTERVENTION_STATUS[status]?.color ?? "#666"
+              const statusDisplay = getStatusDisplay(status, { workflow: workflowConfig })
+              const finalColor = statusDisplay.color
+              
+              return (
+                <button
+                  key={status}
+                  onClick={() => handleSelectStatus(status)}
+                  className={`status-chip transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5 ${
+                    isSelected
+                      ? "ring-2 ring-foreground/20"
+                      : "hover:shadow-card border border-border bg-transparent"
+                  }`}
+                  style={isSelected ? { 
+                    backgroundColor: `${finalColor}15`, 
+                    borderColor: finalColor,
+                    color: finalColor 
+                  } : {}}
+                  title={label}
+                >
+                  <span className="inline-flex items-center">
+                    <Icon className="h-3.5 w-3.5 mr-1" />
+                    {label}
+                  </span>
+                  <span className="text-muted-foreground">({getCountByStatus(status)})</span>
+                </button>
+              )
+            })}
+            {/* Bouton CHECK rouge - Multi-sélection avec les autres statuts */}
+            <button
+              onClick={() => {
+                if (isCheckFilterActive) {
+                  // Désactiver le filtre CHECK
+                  updateFilterForProperty("isCheck", null)
+                } else {
+                  // Activer le filtre CHECK (peut être combiné avec d'autres statuts)
+                  updateFilterForProperty("isCheck", { property: "isCheck", operator: "eq", value: true })
+                }
+              }}
+              className={`status-chip transition-[opacity,transform,shadow] duration-150 ease-out inline-flex items-center gap-1.5 ${
+                isCheckFilterActive
+                  ? "ring-2 ring-foreground/20"
+                  : "hover:shadow-card border border-border bg-transparent"
+              }`}
+              style={isCheckFilterActive ? { 
+                backgroundColor: "#EF444415", 
+                borderColor: "#EF4444",
+                color: "#EF4444" 
+              } : {}}
+              title="Interventions avec date d'échéance dépassée (peut être combiné avec d'autres statuts)"
+            >
+              <span className="inline-flex items-center">
+                <span className="h-3.5 w-3.5 mr-1 rounded-full bg-red-500" />
+                CHECK
+              </span>
+              <span className="text-muted-foreground">({getCheckCount()})</span>
+            </button>
+            {(selectedStatuses.length > 0 || isCheckFilterActive) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={() => {
+                  handleSelectStatus(null)
+                  updateFilterForProperty("isCheck", null)
+                }}
+                title="Réinitialiser tous les filtres"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Zone de contenu avec scroll */}
+        <div className="flex flex-col flex-1 min-h-0">
+          {loading && normalizedInterventions.length === 0 ? (
+            <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
+              <div style={{ transform: 'scale(1.25)' }}>
+                <Loader />
+              </div>
+            </div>
+          ) : (
+            renderActiveView()
           )}
         </div>
-      )}
-
-      {loading && normalizedInterventions.length === 0 ? (
-        <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
-          <div style={{ transform: 'scale(1.25)' }}>
-            <Loader />
-          </div>
-        </div>
-      ) : (
-        renderActiveView()
-      )}
+      </div>
 
       <ColumnConfigurationModal
         view={views.find((view) => view.id === columnConfigViewId) ?? null}

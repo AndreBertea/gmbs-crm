@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/artisans/Avatar"
 import { useArtisansQuery } from "@/hooks/useArtisansQuery"
+import type { ArtisanGetAllParams } from "@/lib/react-query/queryKeys"
 import { useReferenceData } from "@/hooks/useReferenceData"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
 import { useArtisanViews } from "@/hooks/useArtisanViews"
 import { ArtisanViewTabs } from "@/components/artisans/ArtisanViewTabs"
 import type { Artisan as ApiArtisan } from "@/lib/supabase-api-v2"
-import { getArtisanTotalCount } from "@/lib/supabase-api-v2"
+import { getArtisanTotalCount, getArtisanCountWithFilters } from "@/lib/supabase-api-v2"
 import { convertArtisanFiltersToServerFilters } from "@/lib/filter-converter"
 import { Search, Eye, Edit, Trash2, Mail, Phone, X, Filter, ChevronDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -263,10 +264,16 @@ export default function ArtisansPage(): ReactElement {
   
   // État pour stocker les counts réels de chaque vue
   const [viewCounts, setViewCounts] = useState<Record<string, number>>({})
-  const [countsLoading, setCountsLoading] = useState(false)
+  const [viewCountsLoading, setViewCountsLoading] = useState(false)
   
   // État pour la pagination
   const [currentPage, setCurrentPage] = useState(1)
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
+  const [artisanStatuses, setArtisanStatuses] = useState<any[]>([])
+  const [selectedMetiers, setSelectedMetiers] = useState<string[]>([])
+  const [metiers, setMetiers] = useState<Array<{ id: string; code: string; label: string }>>([])
   
   // Récupérer l'utilisateur actuel (même logique que dans useArtisanViews)
   useEffect(() => {
@@ -307,21 +314,68 @@ export default function ArtisansPage(): ReactElement {
     resolveUser()
   }, [])
 
-  // Convertir les filtres de la vue active en filtres serveur
+  // Convertir les filtres de la vue active en filtres serveur et y ajouter recherche + filtres UI
   const { serverFilters, clientFilters } = useMemo(() => {
-    if (!activeView || !activeView.filters.length) {
-      return { serverFilters: undefined, clientFilters: [] }
+    const baseFilters = activeView && activeView.filters.length > 0
+      ? convertArtisanFiltersToServerFilters(activeView.filters, {
+          currentUserId: currentUserId,
+        })
+      : { serverFilters: {}, clientFilters: [] }
+
+    const combinedServerFilters: Partial<ArtisanGetAllParams> = {
+      ...(baseFilters.serverFilters ?? {}),
     }
 
-    return convertArtisanFiltersToServerFilters(activeView.filters, {
-      currentUserId: currentUserId,
-    })
-  }, [activeView, currentUserId])
+    const normalizedSearch = searchTerm.trim()
+    if (normalizedSearch) {
+      combinedServerFilters.search = normalizedSearch
+    }
+
+    if (selectedStatuses.length > 0) {
+      const statusIds = artisanStatuses
+        .filter((status) => selectedStatuses.includes(status.label))
+        .map((status) => status.id)
+        .filter((statusId): statusId is string => Boolean(statusId))
+
+      if (statusIds.length > 0) {
+        combinedServerFilters.statuts = statusIds
+      }
+    }
+
+    if (selectedMetiers.length > 0 && metiers.length > 0) {
+      // Convertir les labels de métiers en IDs
+      const metierIds = metiers
+        .filter((metier) => metier.label && selectedMetiers.includes(metier.label))
+        .map((metier) => metier.id)
+        .filter((metierId): metierId is string => Boolean(metierId))
+
+      if (metierIds.length > 0) {
+        combinedServerFilters.metiers = metierIds
+      } else {
+        // Debug: vérifier pourquoi la conversion échoue
+        console.warn("[ArtisansPage] Aucun ID trouvé pour les métiers sélectionnés:", {
+          selectedMetiers,
+          availableMetiers: metiers.map(m => ({ id: m.id, label: m.label })),
+        })
+      }
+    }
+
+    const hasServerFilters = Object.keys(combinedServerFilters).length > 0
+
+    return {
+      serverFilters: hasServerFilters ? combinedServerFilters : undefined,
+      clientFilters: baseFilters.clientFilters,
+    }
+  }, [activeView, currentUserId, searchTerm, selectedStatuses, selectedMetiers, artisanStatuses, metiers])
 
   // Réinitialiser à la page 1 quand la vue active change
   useEffect(() => {
     setCurrentPage(1)
   }, [activeViewId])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedStatuses, selectedMetiers])
 
   // Fonction pour convertir ArtisanViewFilter en paramètres API pour le comptage
   const convertFiltersToApiParams = useCallback(
@@ -354,7 +408,7 @@ export default function ArtisansPage(): ReactElement {
     if (!isReady || views.length === 0) return
 
     let cancelled = false
-    setCountsLoading(true)
+    setViewCountsLoading(true)
 
     const loadCounts = async () => {
       const counts: Record<string, number> = {}
@@ -383,7 +437,7 @@ export default function ArtisansPage(): ReactElement {
 
       if (!cancelled) {
         setViewCounts(counts)
-        setCountsLoading(false)
+        setViewCountsLoading(false)
       }
     }
 
@@ -432,12 +486,6 @@ export default function ArtisansPage(): ReactElement {
   const loading = artisansLoading || referenceLoading
   const error = artisansError || referenceError
 
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
-  const [artisanStatuses, setArtisanStatuses] = useState<any[]>([])
-  const [selectedMetiers, setSelectedMetiers] = useState<string[]>([])
-
   // Appliquer les filtres depuis sessionStorage (pour les liens du dashboard)
   useEffect(() => {
     if (!isReady || artisanStatuses.length === 0) return
@@ -476,6 +524,8 @@ export default function ArtisansPage(): ReactElement {
     if (!referenceData) return
     const statuses = referenceData.artisanStatuses || []
     setArtisanStatuses(statuses)
+    const metiersData = referenceData.metiers || []
+    setMetiers(metiersData)
     
     // Trier d'abord les artisans par created_at (du plus récent au plus ancien)
     const sortedArtisans = [...artisans].sort((a, b) => {
@@ -524,16 +574,6 @@ export default function ArtisansPage(): ReactElement {
     })
   }, [contacts, activeView, isReady, clientFilters])
 
-  const filteredContacts = viewFilteredContacts.filter((contact) => {
-    const matchesSearch =
-      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.position.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(contact.statutArtisan || "")
-    const matchesMetier = selectedMetiers.length === 0 || contact.metiers?.some((m) => selectedMetiers.includes(m))
-    return matchesSearch && matchesStatus && matchesMetier
-  })
-
   // Utiliser viewCounts (counts réels depuis BDD) au lieu de calculer localement
 
   const handleEditContact = useCallback((contact: Contact) => {
@@ -558,24 +598,127 @@ export default function ArtisansPage(): ReactElement {
     console.log("Call:", contact.phone)
   }, [])
 
+  // Compteurs avec filtres serveur appliqués
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({})
+  const [metierCounts, setMetierCounts] = useState<Record<string, number>>({})
+  const [filterCountsLoading, setFilterCountsLoading] = useState(false)
+
+  // Charger les compteurs pour chaque statut avec les filtres appliqués
+  useEffect(() => {
+    if (!isReady || !referenceData || artisanStatuses.length === 0) return
+
+    let cancelled = false
+    setFilterCountsLoading(true)
+
+    const loadCounts = async () => {
+      try {
+        // Base filters (vue active)
+        const baseFilters = activeView && activeView.filters.length > 0
+          ? convertArtisanFiltersToServerFilters(activeView.filters, {
+              currentUserId: currentUserId,
+            })
+          : { serverFilters: {}, clientFilters: [] }
+
+        const baseServerFilters = baseFilters.serverFilters ?? {}
+        const searchFilter = searchTerm.trim() ? { search: searchTerm.trim() } : {}
+        
+        // Inclure les filtres de métier sélectionnés dans les compteurs de statut
+        const metierFilter = selectedMetiers.length > 0
+          ? {
+              metiers: metiers
+                .filter((metier) => selectedMetiers.includes(metier.label))
+                .map((metier) => metier.id)
+                .filter((metierId): metierId is string => Boolean(metierId)),
+            }
+          : {}
+
+        // Compter pour chaque statut
+        const statusCountPromises = artisanStatuses
+          .filter((s) => s.is_active !== false)
+          .map(async (status) => {
+            const countParams = {
+              ...baseServerFilters,
+              ...searchFilter,
+              ...metierFilter,
+              statuts: [status.id],
+            }
+            const count = await getArtisanCountWithFilters(countParams)
+            return { statusLabel: status.label, count }
+          })
+
+        const statusCountResults = await Promise.all(statusCountPromises)
+        const statusCountsMap: Record<string, number> = {}
+        statusCountResults.forEach(({ statusLabel, count }) => {
+          statusCountsMap[statusLabel] = count
+        })
+
+        if (!cancelled) {
+          setStatusCounts(statusCountsMap)
+        }
+
+        // Inclure les filtres de statut sélectionnés dans les compteurs de métier
+        const statusFilter = selectedStatuses.length > 0
+          ? {
+              statuts: artisanStatuses
+                .filter((status) => selectedStatuses.includes(status.label))
+                .map((status) => status.id)
+                .filter((statusId): statusId is string => Boolean(statusId)),
+            }
+          : {}
+
+        // Compter pour chaque métier
+        const metierCountPromises = metiers.map(async (metier) => {
+          const countParams = {
+            ...baseServerFilters,
+            ...searchFilter,
+            ...statusFilter,
+            metiers: [metier.id],
+          }
+          const count = await getArtisanCountWithFilters(countParams)
+          return { metierLabel: metier.label, count }
+        })
+
+        const metierCountResults = await Promise.all(metierCountPromises)
+        const metierCountsMap: Record<string, number> = {}
+        metierCountResults.forEach(({ metierLabel, count }) => {
+          metierCountsMap[metierLabel] = count
+        })
+
+        if (!cancelled) {
+          setMetierCounts(metierCountsMap)
+          setFilterCountsLoading(false)
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des compteurs:", error)
+        if (!cancelled) {
+          setFilterCountsLoading(false)
+        }
+      }
+    }
+
+    loadCounts()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isReady, referenceData, artisanStatuses, metiers, activeView, currentUserId, searchTerm, selectedMetiers, selectedStatuses])
+
   const getContactCountByStatus = useCallback(
     (status: string) => {
-      if (status === "all") {
-        return contacts.length
-      }
-      return contacts.filter((contact) => contact.statutArtisan === status).length
+      return statusCounts[status] ?? 0
     },
-    [contacts],
+    [statusCounts],
   )
 
   const getContactCountByMetier = useCallback(
     (metier: string) => {
-      return contacts.filter((contact) => contact.metiers?.some((m) => m === metier)).length
+      return metierCounts[metier] ?? 0
     },
-    [contacts],
+    [metierCounts],
   )
 
-  const allMetiers = Array.from(new Set(contacts.flatMap((c) => c.metiers || [])))
+  // Utiliser les métiers de referenceData au lieu de ceux des contacts
+  const allMetiers = metiers.map((m) => m.label)
 
   // États pour les filtres
   const [statusFilterOpen, setStatusFilterOpen] = useState(false)
@@ -695,7 +838,11 @@ export default function ArtisansPage(): ReactElement {
               views={views}
               activeViewId={activeViewId}
               onSelect={setActiveView}
-              artisanCounts={viewCounts}
+              artisanCounts={{
+                ...viewCounts,
+                // Mettre à jour le count de la vue active avec le totalCount filtré
+                ...(activeViewId && totalCount !== undefined ? { [activeViewId]: totalCount } : {}),
+              }}
             />
             
             {/* Barre de recherche et filtres */}
@@ -730,7 +877,7 @@ export default function ArtisansPage(): ReactElement {
                           className="pl-8"
                         />
                       </div>
-                      <ScrollArea className="max-h-64 rounded-md border">
+                      <ScrollArea className="h-[400px] w-full rounded-md border">
                         <div className="space-y-1 p-1">
                           {filteredStatuses.length === 0 ? (
                             <div className="px-2 py-1 text-xs text-muted-foreground">Aucun résultat</div>
@@ -827,7 +974,7 @@ export default function ArtisansPage(): ReactElement {
                           className="pl-8"
                         />
                       </div>
-                      <ScrollArea className="max-h-64 rounded-md border">
+                      <ScrollArea className="h-[400px] w-full rounded-md border">
                         <div className="space-y-1 p-1">
                           {filteredMetiers.length === 0 ? (
                             <div className="px-2 py-1 text-xs text-muted-foreground">Aucun résultat</div>
@@ -924,7 +1071,7 @@ export default function ArtisansPage(): ReactElement {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border bg-background">
-                    {filteredContacts.map((contact, index) => (
+                    {viewFilteredContacts.map((contact, index) => (
                       <tr key={contact.id} className={`hover:bg-slate-100/60 dark:hover:bg-muted/30 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50 dark:bg-muted/10'}`}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -1036,7 +1183,7 @@ export default function ArtisansPage(): ReactElement {
               onPrevious={previousPage}
               canGoNext={currentPage < totalPages}
               canGoPrevious={currentPage > 1}
-              className="border-t bg-background mt-4"
+              className="border-t bg-background mt-2"
             />
           )}
         </div>

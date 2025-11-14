@@ -147,9 +147,12 @@ export type ArtisanGetAllParams = {
   limit?: number
   offset?: number
   statut?: string
+  statuts?: string[]
   metier?: string
+  metiers?: string[]
   zone?: string
   gestionnaire?: string
+  search?: string
 }
 
 /**
@@ -365,4 +368,3 @@ export const dashboardKeys = {
    */
   invalidateStats: () => [...dashboardKeys.all, "stats", "margin", "period"],
 } as const
-

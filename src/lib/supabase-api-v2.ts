@@ -62,6 +62,102 @@ const REFERENCE_CACHE_DURATION = 5 * 60 * 1000;
 let referenceCache: ReferenceCache | null = null;
 let referenceCachePromise: Promise<ReferenceCache> | null = null;
 
+// Taille maximale des lots pour les requêtes .in() pour éviter les erreurs de longueur d'URL
+const MAX_BATCH_SIZE = 100;
+
+/**
+ * Divise un tableau en lots de taille maximale
+ */
+function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+/**
+ * Filtre les artisans par métiers en divisant les requêtes en lots pour éviter les erreurs de longueur d'URL
+ */
+async function filterArtisansByMetiers(
+  artisanIds: string[],
+  metierIds: string[]
+): Promise<Set<string>> {
+  if (artisanIds.length === 0 || metierIds.length === 0) {
+    return new Set();
+  }
+
+  const filteredIds = new Set<string>();
+
+  // Diviser les artisanIds en lots
+  const artisanIdChunks = chunkArray(artisanIds, MAX_BATCH_SIZE);
+
+  // Pour chaque lot d'artisanIds, faire une requête
+  for (const artisanIdChunk of artisanIdChunks) {
+    const { data: artisansWithMetiers, error: metierError } = await supabase
+      .from("artisan_metiers")
+      .select("artisan_id")
+      .in("metier_id", metierIds)
+      .in("artisan_id", artisanIdChunk);
+
+    if (metierError) {
+      console.error("Erreur lors du filtrage par métiers:", metierError);
+      throw metierError;
+    }
+
+    if (artisansWithMetiers) {
+      artisansWithMetiers.forEach((am: any) => {
+        if (am.artisan_id) {
+          filteredIds.add(am.artisan_id);
+        }
+      });
+    }
+  }
+
+  return filteredIds;
+}
+
+/**
+ * Filtre les artisans par un seul métier en divisant les requêtes en lots
+ */
+async function filterArtisansByMetier(
+  artisanIds: string[],
+  metierId: string
+): Promise<Set<string>> {
+  if (artisanIds.length === 0) {
+    return new Set();
+  }
+
+  const filteredIds = new Set<string>();
+
+  // Diviser les artisanIds en lots
+  const artisanIdChunks = chunkArray(artisanIds, MAX_BATCH_SIZE);
+
+  // Pour chaque lot d'artisanIds, faire une requête
+  for (const artisanIdChunk of artisanIdChunks) {
+    const { data: artisansWithMetier, error: metierError } = await supabase
+      .from("artisan_metiers")
+      .select("artisan_id")
+      .eq("metier_id", metierId)
+      .in("artisan_id", artisanIdChunk);
+
+    if (metierError) {
+      console.error("Erreur lors du filtrage par métier:", metierError);
+      throw metierError;
+    }
+
+    if (artisansWithMetier) {
+      artisansWithMetier.forEach((am: any) => {
+        if (am.artisan_id) {
+          filteredIds.add(am.artisan_id);
+        }
+      });
+    }
+  }
+
+  return filteredIds;
+}
+
 export const invalidateReferenceCache = () => {
   referenceCache = null;
   referenceCachePromise = null;
@@ -1436,9 +1532,12 @@ export const artisansApiV2 = {
     limit?: number;
     offset?: number;
     statut?: string;
+    statuts?: string[];
     metier?: string;
+    metiers?: string[];
     zone?: string;
     gestionnaire?: string;
+    search?: string;
   }): Promise<PaginatedResponse<Artisan>> {
     // Version ultra-rapide avec jointures pour métiers, zones et attachments
     let query = supabase
@@ -1477,11 +1576,26 @@ export const artisansApiV2 = {
       .order("created_at", { ascending: true });
 
     // Appliquer les filtres si nécessaire
-    if (params?.statut) {
+    if (params?.statuts && params.statuts.length > 0) {
+      query = query.in("statut_id", params.statuts);
+    } else if (params?.statut) {
       query = query.eq("statut_id", params.statut);
     }
     if (params?.gestionnaire) {
       query = query.eq("gestionnaire_id", params.gestionnaire);
+    }
+    if (params?.search && params.search.trim()) {
+      const term = params.search.trim();
+      query = query.or(
+        [
+          `prenom.ilike.%${term}%`,
+          `nom.ilike.%${term}%`,
+          `raison_sociale.ilike.%${term}%`,
+          `email.ilike.%${term}%`,
+          `telephone.ilike.%${term}%`,
+          `telephone2.ilike.%${term}%`,
+        ].join(",")
+      );
     }
 
     // Pagination
@@ -1495,17 +1609,132 @@ export const artisansApiV2 = {
 
     const refs = await getReferenceCache();
 
-    const transformedData = (data || []).map((item) =>
+    // Filtrer par métiers AVANT le mapping pour avoir accès aux IDs
+    let filteredData = data || [];
+    
+    if (params?.metiers && params.metiers.length > 0) {
+      const metierFilters = params.metiers;
+      filteredData = filteredData.filter((item: any) => {
+        const artisanMetiers = Array.isArray(item.artisan_metiers) 
+          ? item.artisan_metiers 
+          : [];
+        return metierFilters.some((metierId) =>
+          artisanMetiers.some(
+            (am: any) => am.metier_id === metierId || am.metiers?.id === metierId
+          )
+        );
+      });
+    } else if (params?.metier) {
+      const metierFilter = params.metier;
+      filteredData = filteredData.filter((item: any) => {
+        const artisanMetiers = Array.isArray(item.artisan_metiers) 
+          ? item.artisan_metiers 
+          : [];
+        return artisanMetiers.some(
+          (am: any) => am.metier_id === metierFilter || am.metiers?.id === metierFilter
+        );
+      });
+    }
+
+    // Mapper les données filtrées
+    let transformedData = filteredData.map((item) =>
       mapArtisanRecord(item, refs)
     );
+
+    // Pour les métiers, le count de Supabase ne reflète pas le filtrage
+    // car c'est une relation many-to-many. Il faut recalculer le count total.
+    let finalCount = count || 0;
+    if (params?.metiers && params.metiers.length > 0) {
+      // Compter tous les artisans correspondants (sans pagination)
+      let countQuery = supabase
+        .from("artisans")
+        .select("id", { count: "exact", head: false })
+        .eq("is_active", true);
+
+      if (params?.statuts && params.statuts.length > 0) {
+        countQuery = countQuery.in("statut_id", params.statuts);
+      } else if (params?.statut) {
+        countQuery = countQuery.eq("statut_id", params.statut);
+      }
+      if (params?.gestionnaire) {
+        countQuery = countQuery.eq("gestionnaire_id", params.gestionnaire);
+      }
+      if (params?.search && params.search.trim()) {
+        const term = params.search.trim();
+        countQuery = countQuery.or(
+          [
+            `prenom.ilike.%${term}%`,
+            `nom.ilike.%${term}%`,
+            `raison_sociale.ilike.%${term}%`,
+            `email.ilike.%${term}%`,
+            `telephone.ilike.%${term}%`,
+            `telephone2.ilike.%${term}%`,
+          ].join(",")
+        );
+      }
+
+      const { data: allArtisans, error: countError } = await countQuery;
+      if (!countError && allArtisans) {
+        // Filtrer par métiers en utilisant la fonction utilitaire qui divise en lots
+        const artisanIds = allArtisans.map((a: any) => a.id).filter(Boolean);
+        try {
+          const filteredIds = await filterArtisansByMetiers(artisanIds, params.metiers);
+          finalCount = filteredIds.size;
+        } catch (metierError) {
+          console.error("Erreur lors du filtrage par métiers pour le count:", metierError);
+          // En cas d'erreur, on garde le count initial (sans filtrage métier)
+        }
+      }
+    } else if (params?.metier) {
+      // Même logique pour un seul métier
+      let countQuery = supabase
+        .from("artisans")
+        .select("id", { count: "exact", head: false })
+        .eq("is_active", true);
+
+      if (params?.statuts && params.statuts.length > 0) {
+        countQuery = countQuery.in("statut_id", params.statuts);
+      } else if (params?.statut) {
+        countQuery = countQuery.eq("statut_id", params.statut);
+      }
+      if (params?.gestionnaire) {
+        countQuery = countQuery.eq("gestionnaire_id", params.gestionnaire);
+      }
+      if (params?.search && params.search.trim()) {
+        const term = params.search.trim();
+        countQuery = countQuery.or(
+          [
+            `prenom.ilike.%${term}%`,
+            `nom.ilike.%${term}%`,
+            `raison_sociale.ilike.%${term}%`,
+            `email.ilike.%${term}%`,
+            `telephone.ilike.%${term}%`,
+            `telephone2.ilike.%${term}%`,
+          ].join(",")
+        );
+      }
+
+      const { data: allArtisans, error: countError } = await countQuery;
+      if (!countError && allArtisans) {
+        // Filtrer par métier en utilisant la fonction utilitaire qui divise en lots
+        const artisanIds = allArtisans.map((a: any) => a.id).filter(Boolean);
+        try {
+          const filteredIds = await filterArtisansByMetier(artisanIds, params.metier);
+          finalCount = filteredIds.size;
+        } catch (metierError) {
+          console.error("Erreur lors du filtrage par métier pour le count:", metierError);
+          // En cas d'erreur, on garde le count initial (sans filtrage métier)
+        }
+      }
+    }
 
     return {
       data: transformedData,
       pagination: {
-        total: count || 0,
+        total: finalCount,
         limit,
         offset,
-        hasMore: offset + limit < (count || 0),
+        hasMore: offset + limit < finalCount,
       },
     };
   },
@@ -3401,6 +3630,155 @@ export async function getArtisanTotalCount(
 
   const { count, error } = await query
   if (error) throw error
+
+  return count ?? 0
+}
+
+/**
+ * Obtient le nombre total d'artisans avec tous les filtres appliqués
+ * @param params - Filtres à appliquer (gestionnaire, statuts, metiers, search)
+ * @returns Nombre total d'artisans correspondant
+ */
+export async function getArtisanCountWithFilters(
+  params?: {
+    gestionnaire?: string
+    statut?: string
+    statuts?: string[]
+    metier?: string
+    metiers?: string[]
+    search?: string
+  }
+): Promise<number> {
+  let query = supabase
+    .from("artisans")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true)
+
+  if (params?.gestionnaire) {
+    query = query.eq("gestionnaire_id", params.gestionnaire)
+  }
+
+  if (params?.statuts && params.statuts.length > 0) {
+    query = query.in("statut_id", params.statuts)
+  } else if (params?.statut) {
+    query = query.eq("statut_id", params.statut)
+  }
+
+  if (params?.search && params.search.trim()) {
+    const term = params.search.trim()
+    query = query.or(
+      [
+        `prenom.ilike.%${term}%`,
+        `nom.ilike.%${term}%`,
+        `raison_sociale.ilike.%${term}%`,
+        `email.ilike.%${term}%`,
+        `telephone.ilike.%${term}%`,
+        `telephone2.ilike.%${term}%`,
+      ].join(",")
+    )
+  }
+
+  const { count, error } = await query
+  if (error) throw error
+
+  // Pour les métiers, on doit filtrer après car c'est une relation many-to-many
+  // On récupère d'abord les IDs des artisans qui correspondent aux autres filtres,
+  // puis on filtre par métiers parmi ceux-là
+  if (params?.metiers && params.metiers.length > 0) {
+    // Récupérer les IDs des artisans qui correspondent aux autres filtres (sans métiers)
+    let idsQuery = supabase
+      .from("artisans")
+      .select("id")
+      .eq("is_active", true)
+
+    if (params?.gestionnaire) {
+      idsQuery = idsQuery.eq("gestionnaire_id", params.gestionnaire)
+    }
+
+    if (params?.statuts && params.statuts.length > 0) {
+      idsQuery = idsQuery.in("statut_id", params.statuts)
+    } else if (params?.statut) {
+      idsQuery = idsQuery.eq("statut_id", params.statut)
+    }
+
+    if (params?.search && params.search.trim()) {
+      const term = params.search.trim()
+      idsQuery = idsQuery.or(
+        [
+          `prenom.ilike.%${term}%`,
+          `nom.ilike.%${term}%`,
+          `raison_sociale.ilike.%${term}%`,
+          `email.ilike.%${term}%`,
+          `telephone.ilike.%${term}%`,
+          `telephone2.ilike.%${term}%`,
+        ].join(",")
+      )
+    }
+
+    const { data: filteredArtisans, error: idsError } = await idsQuery
+    if (idsError) throw idsError
+
+    if (!filteredArtisans || filteredArtisans.length === 0) {
+      return 0
+    }
+
+    const artisanIds = filteredArtisans.map((a: any) => a.id).filter(Boolean)
+    if (artisanIds.length === 0) {
+      return 0
+    }
+
+    // Filtrer par métiers parmi ces artisans en utilisant la fonction utilitaire qui divise en lots
+    const filteredIds = await filterArtisansByMetiers(artisanIds, params.metiers)
+
+    return filteredIds.size
+  } else if (params?.metier) {
+    // Même logique pour un seul métier
+    let idsQuery = supabase
+      .from("artisans")
+      .select("id")
+      .eq("is_active", true)
+
+    if (params?.gestionnaire) {
+      idsQuery = idsQuery.eq("gestionnaire_id", params.gestionnaire)
+    }
+
+    if (params?.statuts && params.statuts.length > 0) {
+      idsQuery = idsQuery.in("statut_id", params.statuts)
+    } else if (params?.statut) {
+      idsQuery = idsQuery.eq("statut_id", params.statut)
+    }
+
+    if (params?.search && params.search.trim()) {
+      const term = params.search.trim()
+      idsQuery = idsQuery.or(
+        [
+          `prenom.ilike.%${term}%`,
+          `nom.ilike.%${term}%`,
+          `raison_sociale.ilike.%${term}%`,
+          `email.ilike.%${term}%`,
+          `telephone.ilike.%${term}%`,
+          `telephone2.ilike.%${term}%`,
+        ].join(",")
+      )
+    }
+
+    const { data: filteredArtisans, error: idsError } = await idsQuery
+    if (idsError) throw idsError
+
+    if (!filteredArtisans || filteredArtisans.length === 0) {
+      return 0
+    }
+
+    const artisanIds = filteredArtisans.map((a: any) => a.id).filter(Boolean)
+    if (artisanIds.length === 0) {
+      return 0
+    }
+
+    // Filtrer par métier parmi ces artisans en utilisant la fonction utilitaire qui divise en lots
+    const filteredIds = await filterArtisansByMetier(artisanIds, params.metier)
+
+    return filteredIds.size
+  }
 
   return count ?? 0
 }

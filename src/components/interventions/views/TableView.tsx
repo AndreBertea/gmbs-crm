@@ -81,8 +81,6 @@ import { iconForStatus } from "@/lib/interventions/status-icons"
 import { getStatusDisplay } from "@/lib/interventions/status-display"
 import { Pagination } from "@/components/ui/pagination"
 
-const DEFAULT_TABLE_HEIGHT = "calc(100vh - var(--table-view-offset))"
-
 const numberFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 })
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" })
 
@@ -510,15 +508,6 @@ export function TableView({
         ? "!py-2 !pl-3 !pr-3"
         : "py-3"
   const rowHeight = getRowHeight(rowDensity)
-  const computeTableHeight = useCallback(() => {
-    if (typeof window === "undefined") {
-      return DEFAULT_TABLE_HEIGHT
-    }
-
-    const offset = 225
-    return `calc(${window.innerHeight}px - ${offset}px)`
-  }, [])
-  const [tableViewportHeight, setTableViewportHeight] = useState<string>(DEFAULT_TABLE_HEIGHT)
   const isBrowser = typeof window !== "undefined"
   const isFirefox = isBrowser && typeof navigator !== "undefined" ? /firefox/i.test(navigator.userAgent) : false
   const rowVirtualizer = useVirtualizer({
@@ -562,7 +551,6 @@ export function TableView({
     virtualItems[virtualItems.length - 1]?.index ??
     0
   const totalRows = totalCount ?? dataset.length
-  const showPositionIndicator = totalRows > SCROLL_CONFIG.SHOW_POSITION_THRESHOLD
 
   const tableInlineStyle: CSSProperties & Record<string, any> = {
     ...(statusBorderEnabled ? { "--table-status-border-width": statusBorderWidthPx } : {}),
@@ -623,19 +611,9 @@ export function TableView({
 
   useEffect(() => {
     handleScrollWithFades()
-  }, [handleScrollWithFades, dataset.length, expandedRowId, tableViewportHeight])
+  }, [handleScrollWithFades, dataset.length, expandedRowId])
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-
-    const handleResize = () => {
-      setTableViewportHeight(computeTableHeight())
-    }
-
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [computeTableHeight])
+  // Plus besoin de gérer le resize, on utilise flex-1
 
   useEffect(() => {
     if (typeof document === "undefined" || typeof window === "undefined") return
@@ -1061,110 +1039,102 @@ export function TableView({
 
   return (
     <>
-      {showPositionIndicator && (
-        <div className="fixed right-6 bottom-6 z-40 rounded-lg border border-border bg-card/95 px-3 py-2 shadow-lg backdrop-blur-sm">
-          <div className="flex flex-col items-end text-xs">
-            <span className="font-medium text-foreground">
-              {(firstVisible + 1).toLocaleString()} - {(lastVisible + 1).toLocaleString()}
-            </span>
-            <span className="text-muted-foreground">sur {totalRows.toLocaleString()}</span>
-          </div>
-        </div>
-      )}
-
-      <Card className="card-table-wrapper">
+      <div className="flex flex-col flex-1 min-h-0">
+        <Card className="border-2 shadow-sm flex flex-col flex-1 min-h-0">
         <div
           className={cn(
-            "table-horizontal-wrapper overflow-x-auto",
+            "table-horizontal-wrapper overflow-x-auto flex-1 min-h-0",
             densityTableClass,
             statusBorderEnabled && "table-has-status-border",
           )}
         >
-          <div className="min-w-fit" style={tableInlineStyle}>
-            <table
-              className={cn(
-                "data-table shadcn-table border-separate border-spacing-0 caption-bottom text-sm",
-                densityTableClass,
-                statusBorderEnabled && "table-has-status-border",
-              )}
-              style={{
-                ...tableInlineStyle,
-                tableLayout: "fixed",
-                width: "max-content",
-                minWidth: "100%",
-              }}
-            >
-              <thead className="z-20">
-                <tr className="border-b border-border/60 bg-muted/30">
-                  {view.visibleProperties.map((property) => {
-                    const width = columnWidths[property] ?? 150 // Largeur par défaut si non définie
-                    const schema = getPropertySchema(property)
-                    const activeFilter = view.filters.find((filter) => filter.property === property)
-                    const headerStyle: CSSProperties = {
-                      width,
-                      minWidth: width,
-                      maxWidth: width,
-                    }
-                    return (
-                      <th
-                        key={property}
-                        style={headerStyle}
-                        className={cn(
-                          "z-20 border-b border-border bg-muted/95 px-4 py-4 text-left text-sm font-semibold text-foreground",
-                          "whitespace-nowrap backdrop-blur-sm align-middle relative select-none",
-                          densityHeaderClass,
-                        )}
-                        onContextMenu={(event) => handleHeaderContextMenu(event, property)}
-                      >
-                        <div className="relative flex items-center gap-2">
-                          {schema?.filterable && onPropertyFilterChange ? (
-                            <ColumnFilter
-                              property={property}
-                              schema={schema}
-                              activeFilter={activeFilter}
-                              interventions={allInterventions ?? interventions}
-                              loadDistinctValues={loadDistinctValues}
-                              onFilterChange={onPropertyFilterChange}
-                            />
-                          ) : (
-                            <span>{getPropertyLabel(property)}</span>
+          <div className="min-w-fit h-full flex flex-col" style={tableInlineStyle}>
+            {/* En-tête fixe */}
+            <div className="flex-shrink-0">
+              <table
+                className={cn(
+                  "data-table shadcn-table border-separate border-spacing-0 caption-bottom text-sm",
+                  densityTableClass,
+                  statusBorderEnabled && "table-has-status-border",
+                )}
+                style={{
+                  ...tableInlineStyle,
+                  tableLayout: "fixed",
+                  width: "max-content",
+                  minWidth: "100%",
+                }}
+              >
+                <thead className="z-20">
+                  <tr className="border-b border-border/60 bg-muted/30">
+                    {view.visibleProperties.map((property) => {
+                      const width = columnWidths[property] ?? 150 // Largeur par défaut si non définie
+                      const schema = getPropertySchema(property)
+                      const activeFilter = view.filters.find((filter) => filter.property === property)
+                      const headerStyle: CSSProperties = {
+                        width,
+                        minWidth: width,
+                        maxWidth: width,
+                      }
+                      return (
+                        <th
+                          key={property}
+                          style={headerStyle}
+                          className={cn(
+                            "z-20 border-b border-border bg-muted/95 px-4 py-4 text-left text-sm font-semibold text-foreground",
+                            "whitespace-nowrap backdrop-blur-sm align-middle relative select-none",
+                            densityHeaderClass,
                           )}
-                          <div
-                            className={cn(
-                              "absolute top-0 right-0 h-full w-1 cursor-col-resize transition-colors duration-150",
-                              activeColumn === property
-                                ? "bg-primary"
-                                : "opacity-0 hover:opacity-100 hover:bg-primary/70",
+                          onContextMenu={(event) => handleHeaderContextMenu(event, property)}
+                        >
+                          <div className="relative flex items-center gap-2">
+                            {schema?.filterable && onPropertyFilterChange ? (
+                              <ColumnFilter
+                                property={property}
+                                schema={schema}
+                                activeFilter={activeFilter}
+                                interventions={allInterventions ?? interventions}
+                                loadDistinctValues={loadDistinctValues}
+                                onFilterChange={onPropertyFilterChange}
+                              />
+                            ) : (
+                              <span>{getPropertyLabel(property)}</span>
                             )}
-                            onPointerDown={(event) => handlePointerDown(event, property)}
-                          />
-                        </div>
-                      </th>
-                    )
-                  })}
-                  <th
-                    style={{ width: 100, minWidth: 100, maxWidth: 100 }}
-                    className={cn(
-                      "z-20 border-b border-border bg-muted/95 px-4 py-4 text-left text-sm font-semibold text-foreground",
-                      "whitespace-nowrap backdrop-blur-sm align-middle relative select-none",
-                      densityHeaderClass,
-                    )}
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-            </table>
+                            <div
+                              className={cn(
+                                "absolute top-0 right-0 h-full w-1 cursor-col-resize transition-colors duration-150",
+                                activeColumn === property
+                                  ? "bg-primary"
+                                  : "opacity-0 hover:opacity-100 hover:bg-primary/70",
+                              )}
+                              onPointerDown={(event) => handlePointerDown(event, property)}
+                            />
+                          </div>
+                        </th>
+                      )
+                    })}
+                    <th
+                      style={{ width: 100, minWidth: 100, maxWidth: 100 }}
+                      className={cn(
+                        "z-20 border-b border-border bg-muted/95 px-4 py-4 text-left text-sm font-semibold text-foreground",
+                        "whitespace-nowrap backdrop-blur-sm align-middle relative select-none",
+                        densityHeaderClass,
+                      )}
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+              </table>
+            </div>
 
-            <div className="relative">
+            {/* Zone de scroll pour le corps */}
+            <div className="relative flex-1 min-h-0">
               <div
                 ref={tableContainerRef}
                 className="table-scroll-wrapper relative h-full overflow-y-auto overflow-x-hidden"
                 onScroll={handleScrollWithFades}
                 style={{
-                  height: tableViewportHeight,
-                  maxHeight: tableViewportHeight,
-                  minHeight: "320px",
+                  height: "100%",
                   scrollbarWidth: "thin",
                   scrollbarColor:
                     themeMode === "dark"
@@ -1414,23 +1384,24 @@ export function TableView({
             background: ${themeMode === "dark" ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"};
           }
         `}</style>
-      </Card>
-      
-      {/* Pagination */}
-      {totalCount > 0 && onPageChange ? (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          pageSize={100}
-          onPageChange={onPageChange}
-          onNext={onNextPage}
-          onPrevious={onPreviousPage}
-          canGoNext={currentPage < totalPages}
-          canGoPrevious={currentPage > 1}
-          className="border-t bg-background"
-        />
-      ) : null}
+        </Card>
+        
+        {/* Pagination en bas */}
+        {totalCount > 0 && onPageChange ? (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={100}
+            onPageChange={onPageChange}
+            onNext={onNextPage}
+            onPrevious={onPreviousPage}
+            canGoNext={currentPage < totalPages}
+            canGoPrevious={currentPage > 1}
+            className="border-t bg-background mt-2"
+          />
+        ) : null}
+      </div>
       
       {quickStylePanel}
 
