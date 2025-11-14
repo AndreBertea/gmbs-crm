@@ -20,7 +20,7 @@ import {
 
 // ✅ Import des hooks personnalisés
 import { useArtisans } from '@/hooks/useArtisans';
-import { useInterventions } from '@/hooks/useInterventions';
+import { useInterventionsQuery } from '@/hooks/useInterventionsQuery';
 import type { InterventionView } from '@/types/intervention-view';
 
 interface InterventionManagerProps {
@@ -39,7 +39,7 @@ export function InterventionManager({ agenceId }: InterventionManagerProps) {
     error: interventionsError,
     refresh: refreshInterventions,
     updateInterventionOptimistic,
-  } = useInterventions({
+  } = useInterventionsQuery({
     serverFilters,
   });
 
@@ -434,7 +434,7 @@ export function InterventionManager({ agenceId }: InterventionManagerProps) {
 // ===== POINTS CLÉS DE CET EXEMPLE =====
 //
 // ✅ 1. Imports corrects de l'API v2 et des hooks
-// ✅ 2. Utilisation des hooks personnalisés pour la gestion d'état
+// ✅ 2. Utilisation de TanStack Query via useInterventionsQuery pour la gestion d'état
 // ✅ 3. Mise à jour optimiste pour une meilleure UX
 // ✅ 4. Gestion d'erreurs avec rollback
 // ✅ 5. Fonctions useCallback pour les performances

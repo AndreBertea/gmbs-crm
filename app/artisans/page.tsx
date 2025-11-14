@@ -2,23 +2,12 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from "react"
 import type { ReactElement } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/artisans/Avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useArtisans } from "@/hooks/useArtisans"
+import { useArtisansQuery } from "@/hooks/useArtisansQuery"
 import { useReferenceData } from "@/hooks/useReferenceData"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
 import { useArtisanViews } from "@/hooks/useArtisanViews"
@@ -26,7 +15,15 @@ import { ArtisanViewTabs } from "@/components/artisans/ArtisanViewTabs"
 import type { Artisan as ApiArtisan } from "@/lib/supabase-api-v2"
 import { getArtisanTotalCount } from "@/lib/supabase-api-v2"
 import { convertArtisanFiltersToServerFilters } from "@/lib/filter-converter"
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Mail, Phone, Building, MapPin, Wrench, X } from "lucide-react"
+import { Search, Eye, Edit, Trash2, Mail, Phone, X, Filter, ChevronDown } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 import Loader from "@/components/ui/Loader"
 import { Pagination } from "@/components/ui/pagination"
 
@@ -268,6 +265,9 @@ export default function ArtisansPage(): ReactElement {
   const [viewCounts, setViewCounts] = useState<Record<string, number>>({})
   const [countsLoading, setCountsLoading] = useState(false)
   
+  // État pour la pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  
   // Récupérer l'utilisateur actuel (même logique que dans useArtisanViews)
   useEffect(() => {
     let cancelled = false
@@ -317,6 +317,11 @@ export default function ArtisansPage(): ReactElement {
       currentUserId: currentUserId,
     })
   }, [activeView, currentUserId])
+
+  // Réinitialiser à la page 1 quand la vue active change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeViewId])
 
   // Fonction pour convertir ArtisanViewFilter en paramètres API pour le comptage
   const convertFiltersToApiParams = useCallback(
@@ -394,17 +399,29 @@ export default function ArtisansPage(): ReactElement {
     loading: artisansLoading,
     error: artisansError,
     totalCount,
-    currentPage,
     totalPages,
-    goToPage,
-    nextPage,
-    previousPage,
     refresh,
-  } = useArtisans({
+  } = useArtisansQuery({
     limit: 100, // ✅ Limite fixe de 100
     autoLoad: true,
     serverFilters, // ✅ Passer les filtres serveur ici
+    page: currentPage,
+    viewId: activeViewId,
   })
+
+  // Gestion de la pagination
+  const goToPage = useCallback((page: number) => {
+    const validPage = Math.max(1, Math.min(page, totalPages))
+    setCurrentPage(validPage)
+  }, [totalPages])
+
+  const nextPage = useCallback(() => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+  }, [totalPages])
+
+  const previousPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(prev - 1, 1))
+  }, [])
 
   const {
     data: referenceData,
@@ -419,7 +436,7 @@ export default function ArtisansPage(): ReactElement {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [artisanStatuses, setArtisanStatuses] = useState<any[]>([])
-  const [metierFilter, setMetierFilter] = useState<string>("all")
+  const [selectedMetiers, setSelectedMetiers] = useState<string[]>([])
 
   // Appliquer les filtres depuis sessionStorage (pour les liens du dashboard)
   useEffect(() => {
@@ -481,24 +498,9 @@ export default function ArtisansPage(): ReactElement {
     setContacts(mapped)
   }, [artisans, referenceData])
 
-  useEffect(() => {
-    const handleArtisanUpdated = () => {
-      void refresh()
-    }
-
-    const handleInterventionUpdated = () => {
-      // Rafraîchir les artisans quand une intervention est mise à jour
-      // car cela peut affecter le statut de l'artisan
-      void refresh()
-    }
-
-    window.addEventListener("artisan-updated", handleArtisanUpdated)
-    window.addEventListener("intervention-updated", handleInterventionUpdated)
-    return () => {
-      window.removeEventListener("artisan-updated", handleArtisanUpdated)
-      window.removeEventListener("intervention-updated", handleInterventionUpdated)
-    }
-  }, [refresh])
+  // Note: Les mises à jour d'artisans sont maintenant gérées automatiquement par TanStack Query
+  // via les mutations qui invalident les queries appropriées
+  // Le cache React Query sera automatiquement mis à jour lors des modifications
 
   // Appliquer les filtres de la vue active (uniquement les filtres client)
   const viewFilteredContacts = useMemo(() => {
@@ -528,7 +530,7 @@ export default function ArtisansPage(): ReactElement {
       contact.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.position.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(contact.statutArtisan || "")
-    const matchesMetier = metierFilter === "all" || contact.metiers?.some((m) => m === metierFilter)
+    const matchesMetier = selectedMetiers.length === 0 || contact.metiers?.some((m) => selectedMetiers.includes(m))
     return matchesSearch && matchesStatus && matchesMetier
   })
 
@@ -568,15 +570,91 @@ export default function ArtisansPage(): ReactElement {
 
   const getContactCountByMetier = useCallback(
     (metier: string) => {
-      if (metier === "all") {
-        return contacts.length
-      }
       return contacts.filter((contact) => contact.metiers?.some((m) => m === metier)).length
     },
     [contacts],
   )
 
   const allMetiers = Array.from(new Set(contacts.flatMap((c) => c.metiers || [])))
+
+  // États pour les filtres
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false)
+  const [statusSearchQuery, setStatusSearchQuery] = useState("")
+  const [metierFilterOpen, setMetierFilterOpen] = useState(false)
+  const [metierSearchQuery, setMetierSearchQuery] = useState("")
+
+  // Filtres calculés
+  const hasStatusFilter = selectedStatuses.length > 0
+  const activeStatuses = useMemo(() => 
+    artisanStatuses.filter(s => selectedStatuses.includes(s.label)),
+    [artisanStatuses, selectedStatuses]
+  )
+  
+  const filteredStatuses = useMemo(() => {
+    if (!statusSearchQuery.trim()) return artisanStatuses.filter(s => s.is_active !== false)
+    const query = statusSearchQuery.toLowerCase()
+    return artisanStatuses.filter(s => 
+      s.is_active !== false && s.label.toLowerCase().includes(query)
+    )
+  }, [statusSearchQuery, artisanStatuses])
+
+  const filteredMetiers = useMemo(() => {
+    if (!metierSearchQuery.trim()) return allMetiers
+    const query = metierSearchQuery.toLowerCase()
+    return allMetiers.filter((m) => m.toLowerCase().includes(query))
+  }, [metierSearchQuery, allMetiers])
+
+  const hasMetierFilter = selectedMetiers.length > 0
+  const activeMetiers = useMemo(() => 
+    allMetiers.filter((m) => selectedMetiers.includes(m)),
+    [allMetiers, selectedMetiers]
+  )
+
+  const statusSelectionSummary = useMemo(() => {
+    if (activeStatuses.length === 0) return "Choisir…"
+    if (activeStatuses.length <= 2) {
+      return activeStatuses.map((s) => s.label).join(", ")
+    }
+    const [first, second] = activeStatuses
+    return `${first.label}, ${second.label} (+${activeStatuses.length - 2})`
+  }, [activeStatuses])
+
+  const metierSelectionSummary = useMemo(() => {
+    if (activeMetiers.length === 0) return "Choisir…"
+    if (activeMetiers.length <= 2) {
+      return activeMetiers.join(", ")
+    }
+    const [first, second] = activeMetiers
+    return `${first}, ${second} (+${activeMetiers.length - 2})`
+  }, [activeMetiers])
+
+  const handleToggleStatus = useCallback((statusLabel: string, checked: boolean) => {
+    setSelectedStatuses((prev) => {
+      if (checked) {
+        return [...prev, statusLabel]
+      } else {
+        return prev.filter((s) => s !== statusLabel)
+      }
+    })
+  }, [])
+
+  const handleClearStatus = useCallback(() => {
+    setSelectedStatuses([])
+  }, [])
+
+  const handleToggleMetier = useCallback((metier: string, checked: boolean) => {
+    setSelectedMetiers((prev) => {
+      if (checked) {
+        return [...prev, metier]
+      } else {
+        return prev.filter((m) => m !== metier)
+      }
+    })
+  }, [])
+
+  const handleClearMetier = useCallback(() => {
+    setSelectedMetiers([])
+  }, [])
 
   if (error) {
     return (
@@ -610,360 +688,358 @@ export default function ArtisansPage(): ReactElement {
   return (
     <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 64px - 2px)', maxHeight: 'calc(100vh - 64px - 2px)', boxSizing: 'border-box' }}>
       <div className="flex-1 space-y-4 p-6 overflow-hidden flex flex-col min-h-0" style={{ maxHeight: '100%', boxSizing: 'border-box' }}>
-        {/* Boutons de vue */}
-        <Tabs defaultValue="list" className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          {isReady && (
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <ArtisanViewTabs
-                views={views}
-                activeViewId={activeViewId}
-                onSelect={setActiveView}
-                artisanCounts={viewCounts}
-              />
-              <TabsList className="flex-shrink-0">
-                <TabsTrigger value="list">Vue Liste</TabsTrigger>
-                <TabsTrigger value="grid">Vue Grille</TabsTrigger>
-              </TabsList>
-            </div>
-          )}
-
-          <Card className="border-2 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col space-y-4">
-                  <div className="flex flex-wrap items-center gap-6">
-                    <div className="relative flex-1 max-w-md">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-                      <Input
-                        placeholder="Rechercher artisans..."
-                        className="pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-muted-foreground">Statut:</span>
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={() => setSelectedStatuses([])}
-                          className={`
-                            flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm
-                            ${
-                              selectedStatuses.length === 0
-                                ? "border-gray-500 bg-gray-500 text-white"
-                                : "border-gray-200 bg-transparent text-gray-700 hover:bg-gray-50"
-                            }
-                          `}
-                        >
-                          <span>Tous ({getContactCountByStatus("all")})</span>
-                        </button>
-
-                        {artisanStatuses.filter(s => s.is_active !== false).map((status) => {
-                          const isSelected = selectedStatuses.includes(status.label)
-                          const statusColor = status.color || "#666"
-                          
-                          return (
-                            <button
-                              key={status.id}
-                              onClick={() => {
-                                setSelectedStatuses((prev) => {
-                                  if (prev.includes(status.label)) {
-                                    return prev.filter((s) => s !== status.label)
-                                  } else {
-                                    return [...prev, status.label]
-                                  }
-                                })
-                              }}
-                              className={`flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-all duration-200 hover:shadow-sm ${
-                                isSelected
-                                  ? ""
-                                  : "border-border bg-transparent hover:bg-muted/50"
-                              }`}
-                              style={isSelected ? {
-                                backgroundColor: `${statusColor}15`,
-                                borderColor: statusColor,
-                                color: statusColor
-                              } : {}}
-                            >
-                              {status.label} ({getContactCountByStatus(status.label)})
-                            </button>
-                          )
-                        })}
-                        
-                        {selectedStatuses.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => setSelectedStatuses([])}
-                            title="Réinitialiser les filtres"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
+        {/* Sélection des vues et filtres sur la même ligne */}
+        {isReady && (
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <ArtisanViewTabs
+              views={views}
+              activeViewId={activeViewId}
+              onSelect={setActiveView}
+              artisanCounts={viewCounts}
+            />
+            
+            {/* Barre de recherche et filtres */}
+            <div className="flex items-center gap-3">
+              {/* Filtre Statut */}
+              <DropdownMenu open={statusFilterOpen} onOpenChange={setStatusFilterOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex items-center gap-1 rounded px-2 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      hasStatusFilter ? "bg-primary/10 text-primary" : "hover:bg-muted/80",
+                    )}
+                  >
+                    <span className="truncate">Statut</span>
+                    <span className="ml-auto flex items-center gap-0.5 text-muted-foreground">
+                      {hasStatusFilter ? <Filter className="h-3.5 w-3.5" /> : null}
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="bottom" align="start" className="w-72">
+                  <div className="space-y-3 p-2">
+                    <div className="text-sm font-semibold text-foreground">Filtrer par statut</div>
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={statusSearchQuery}
+                          onChange={(e) => setStatusSearchQuery(e.target.value)}
+                          placeholder="Rechercher..."
+                          className="pl-8"
+                        />
                       </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-muted-foreground">Métier:</span>
-                      <Select value={metierFilter} onValueChange={setMetierFilter}>
-                        <SelectTrigger className="w-48">
-                          <SelectValue placeholder="Filtrer par métier" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tous les métiers ({getContactCountByMetier("all")})</SelectItem>
-                          {allMetiers.map((metier) => (
-                            <SelectItem key={metier} value={metier}>
-                              {metier} ({getContactCountByMetier(metier)})
-                            </SelectItem>
+                      <ScrollArea className="max-h-64 rounded-md border">
+                        <div className="space-y-1 p-1">
+                          {filteredStatuses.length === 0 ? (
+                            <div className="px-2 py-1 text-xs text-muted-foreground">Aucun résultat</div>
+                          ) : (
+                            filteredStatuses.map((status) => {
+                              const isSelected = selectedStatuses.includes(status.label)
+                              return (
+                                <label
+                                  key={status.id}
+                                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted/70"
+                                >
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={(checked) => handleToggleStatus(status.label, Boolean(checked))}
+                                  />
+                                  <span className="truncate flex-1">{status.label}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({getContactCountByStatus(status.label)})
+                                  </span>
+                                </label>
+                              )
+                            })
+                          )}
+                        </div>
+                        <ScrollBar orientation="vertical" />
+                      </ScrollArea>
+                      {activeStatuses.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 pt-2 border-t">
+                          {activeStatuses.map((status) => (
+                            <Badge key={status.id} variant="secondary" className="flex items-center gap-1">
+                              <span className="truncate max-w-[120px]">{status.label}</span>
+                              <button
+                                type="button"
+                                className="rounded-full p-0.5 hover:bg-secondary-foreground/10"
+                                onClick={() => handleToggleStatus(status.label, false)}
+                                aria-label={`Retirer ${status.label}`}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
                           ))}
-                        </SelectContent>
-                      </Select>
+                          <Button variant="link" size="sm" className="h-auto px-1 text-xs" onClick={handleClearStatus}>
+                            Tout effacer
+                          </Button>
+                        </div>
+                      )}
+                      {activeStatuses.length > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          {activeStatuses.length} {activeStatuses.length === 1 ? "élément sélectionné" : "éléments sélectionnés"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-end pt-2 border-t">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setStatusFilterOpen(false)}
+                      >
+                        Fermer
+                      </Button>
                     </div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-          <TabsContent value="grid" className="space-y-4">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredContacts.map((contact) => (
-                <Card key={contact.id} className="border-2 transition-all hover:shadow-lg hover:border-primary/30">
-                  <CardHeader className="pb-3 bg-muted/10 border-b">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <Avatar
-                          photoProfilMetadata={contact.photoProfilMetadata}
-                          initials={contact.artisanInitials || "??"}
-                          name={contact.name}
-                          size={40}
+              {/* Filtre Métier */}
+              <DropdownMenu open={metierFilterOpen} onOpenChange={setMetierFilterOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex items-center gap-1 rounded px-2 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      hasMetierFilter ? "bg-primary/10 text-primary" : "hover:bg-muted/80",
+                    )}
+                  >
+                    <span className="truncate">Métier</span>
+                    <span className="ml-auto flex items-center gap-0.5 text-muted-foreground">
+                      {hasMetierFilter ? <Filter className="h-3.5 w-3.5" /> : null}
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="bottom" align="start" className="w-72">
+                  <div className="space-y-3 p-2">
+                    <div className="text-sm font-semibold text-foreground">Filtrer par métier</div>
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={metierSearchQuery}
+                          onChange={(e) => setMetierSearchQuery(e.target.value)}
+                          placeholder="Rechercher..."
+                          className="pl-8"
                         />
-                        <div className="space-y-1">
-                          <CardTitle className="text-lg">{contact.name}</CardTitle>
-                          <CardDescription>{contact.company}</CardDescription>
+                      </div>
+                      <ScrollArea className="max-h-64 rounded-md border">
+                        <div className="space-y-1 p-1">
+                          {filteredMetiers.length === 0 ? (
+                            <div className="px-2 py-1 text-xs text-muted-foreground">Aucun résultat</div>
+                          ) : (
+                            filteredMetiers.map((metier) => {
+                              const isSelected = selectedMetiers.includes(metier)
+                              return (
+                                <label
+                                  key={metier}
+                                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted/70"
+                                >
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={(checked) => handleToggleMetier(metier, Boolean(checked))}
+                                  />
+                                  <span className="truncate flex-1">{metier}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({getContactCountByMetier(metier)})
+                                  </span>
+                                </label>
+                              )
+                            })
+                          )}
                         </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
+                        <ScrollBar orientation="vertical" />
+                      </ScrollArea>
+                      {activeMetiers.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 pt-2 border-t">
+                          {activeMetiers.map((metier) => (
+                            <Badge key={metier} variant="secondary" className="flex items-center gap-1">
+                              <span className="truncate max-w-[120px]">{metier}</span>
+                              <button
+                                type="button"
+                                className="rounded-full p-0.5 hover:bg-secondary-foreground/10"
+                                onClick={() => handleToggleMetier(metier, false)}
+                                aria-label={`Retirer ${metier}`}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                          <Button variant="link" size="sm" className="h-auto px-1 text-xs" onClick={handleClearMetier}>
+                            Tout effacer
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleViewDetails(contact)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Voir Détails
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEditContact(contact)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Modifier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSendEmail(contact)}>
-                            <Mail className="mr-2 h-4 w-4" />
-                            Envoyer Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleCall(contact)}>
-                            <Phone className="mr-2 h-4 w-4" />
-                            Appeler
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteContact(contact)}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        </div>
+                      )}
+                      {activeMetiers.length > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          {activeMetiers.length} {activeMetiers.length === 1 ? "élément sélectionné" : "éléments sélectionnés"}
+                        </div>
+                      )}
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b">
-                      <Badge className={getStatusColor(contact.status)}>{contact.status}</Badge>
-                      <Badge variant="outline" className={getDossierStatusColor(contact.statutDossier || "" )}>
-                        {contact.statutDossier}
-                      </Badge>
+                    <div className="flex items-center justify-end pt-2 border-t">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setMetierFilterOpen(false)}
+                      >
+                        Fermer
+                      </Button>
                     </div>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-3 w-3" />
-                        <span className="font-medium">Métiers:</span>
-                        <span>{contact.metiers?.join(", ") || "Non renseigné"}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Building className="h-3 w-3" />
-                        <span className="font-medium">Entreprise:</span>
-                        <span>{contact.company}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-3 w-3" />
-                        <span>{contact.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-3 w-3" />
-                        <span>{contact.phone}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3" />
-                        <span>{contact.adresseIntervention || contact.adresse}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Barre de recherche */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher artisans..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
+          </div>
+        )}
 
-            {/* Pagination */}
-            {totalCount && totalCount > 0 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalCount={totalCount}
-                pageSize={100}
-                onPageChange={goToPage}
-                onNext={nextPage}
-                onPrevious={previousPage}
-                canGoNext={currentPage < totalPages}
-                canGoPrevious={currentPage > 1}
-                className="border-t bg-background mt-4"
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="list" className="flex flex-col flex-1 min-h-0">
-            <Card className="border-2 shadow-sm flex flex-col flex-1 min-h-0">
-              <CardContent className="p-0 flex flex-col flex-1 min-h-0">
-                <div className="overflow-auto flex-1 min-h-0">
-                  <table className="min-w-full divide-y-2 divide-border">
-                    <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-muted/50 border-b-2">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Artisan</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Entreprise</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Contact</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Gest.</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Adresse siège</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border bg-background">
-                      {filteredContacts.map((contact, index) => (
-                        <tr key={contact.id} className={`hover:bg-slate-100/60 dark:hover:bg-muted/30 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50 dark:bg-muted/10'}`}>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <Avatar 
-                                photoProfilMetadata={contact.photoProfilMetadata}
-                                initials={contact.artisanInitials || "??"}
-                                name={contact.name}
-                                size={40}
-                                priority={index < 3}
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{contact.name}</span>
-                                    <span className="text-sm text-muted-foreground">Zone {contact.zoneIntervention ?? "—"}</span>
-                                  </div>
-                                  <div className="flex items-center">
-                                    {contact.statutArtisan && contact.statutArtisanColor && (
-                                      <Badge 
-                                        variant="outline" 
-                                        className="border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
-                                        style={{
-                                          backgroundColor: hexToRgba(contact.statutArtisanColor, 0.15) || contact.statutArtisanColor + '20',
-                                          color: contact.statutArtisanColor,
-                                          borderColor: contact.statutArtisanColor,
-                                        }}
-                                      >
-                                        {contact.statutArtisan}
-                                      </Badge>
-                                    )}
-                                    {contact.statutArtisan && !contact.statutArtisanColor && (
-                                      <Badge 
-                                        variant="outline" 
-                                        className="border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-700 border-gray-300"
-                                      >
-                                        {contact.statutArtisan}
-                                      </Badge>
-                                    )}
-                                  </div>
+        <div className="flex flex-col flex-1 min-h-0">
+          <Card className="border-2 shadow-sm flex flex-col flex-1 min-h-0">
+            <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+              <div className="overflow-auto flex-1 min-h-0">
+                <table className="min-w-full divide-y-2 divide-border">
+                  <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-muted/50 border-b-2">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Artisan</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Entreprise</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Contact</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Gest.</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Adresse siège</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-background">
+                    {filteredContacts.map((contact, index) => (
+                      <tr key={contact.id} className={`hover:bg-slate-100/60 dark:hover:bg-muted/30 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50 dark:bg-muted/10'}`}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar 
+                              photoProfilMetadata={contact.photoProfilMetadata}
+                              initials={contact.artisanInitials || "??"}
+                              name={contact.name}
+                              size={40}
+                              priority={index < 3}
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{contact.name}</span>
+                                  <span className="text-sm text-muted-foreground">Zone {contact.zoneIntervention ?? "—"}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  {contact.statutArtisan && contact.statutArtisanColor && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className="border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+                                      style={{
+                                        backgroundColor: hexToRgba(contact.statutArtisanColor, 0.15) || contact.statutArtisanColor + '20',
+                                        color: contact.statutArtisanColor,
+                                        borderColor: contact.statutArtisanColor,
+                                      }}
+                                    >
+                                      {contact.statutArtisan}
+                                    </Badge>
+                                  )}
+                                  {contact.statutArtisan && !contact.statutArtisanColor && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className="border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-700 border-gray-300"
+                                    >
+                                      {contact.statutArtisan}
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                             </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="space-y-1">
-                              <div className="font-medium">
-                                {contact.company}
-                                {contact.statutJuridique && (
-                                  <span className="text-muted-foreground"> / {contact.statutJuridique}</span>
-                                )}
-                              </div>
-                              <div className="text-sm text-muted-foreground">{contact.position}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="space-y-1">
+                            <div className="font-medium">
+                              {contact.company}
+                              {contact.statutJuridique && (
+                                <span className="text-muted-foreground"> / {contact.statutJuridique}</span>
+                              )}
                             </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-3 w-3" />
-                                <span>{contact.email}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-3 w-3" />
-                                <span>{contact.phone}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-center">
-                              <UserBadge 
-                                initials={contact.gestionnaireInitials || '—'}
-                                color={contact.gestionnaireColor}
-                                name={contact.attribueA}
-                              />
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {contact.adresse || "—"}
-                          </td>
-                          <td className="px-4 py-3">
+                            <div className="text-sm text-muted-foreground">{contact.position}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="space-y-1 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="icon" onClick={() => handleViewDetails(contact)}>
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleEditContact(contact)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDeleteContact(contact)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <Mail className="h-3 w-3" />
+                              <span>{contact.email}</span>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Pagination pour la vue liste */}
-            {totalCount && totalCount > 0 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalCount={totalCount}
-                pageSize={100}
-                onPageChange={goToPage}
-                onNext={nextPage}
-                onPrevious={previousPage}
-                canGoNext={currentPage < totalPages}
-                canGoPrevious={currentPage > 1}
-                className="border-t bg-background mt-4"
-              />
-            )}
-          </TabsContent>
-        </Tabs>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-3 w-3" />
+                              <span>{contact.phone}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center">
+                            <UserBadge 
+                              initials={contact.gestionnaireInitials || '—'}
+                              color={contact.gestionnaireColor}
+                              name={contact.attribueA}
+                            />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                          {contact.adresse || "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleViewDetails(contact)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleEditContact(contact)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-red-600" onClick={() => handleDeleteContact(contact)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Pagination */}
+          {totalCount && totalCount > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalCount={totalCount}
+              pageSize={100}
+              onPageChange={goToPage}
+              onNext={nextPage}
+              onPrevious={previousPage}
+              canGoNext={currentPage < totalPages}
+              canGoPrevious={currentPage > 1}
+              className="border-t bg-background mt-4"
+            />
+          )}
+        </div>
       </div>
     </div>
   )

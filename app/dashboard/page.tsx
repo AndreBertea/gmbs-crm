@@ -18,6 +18,7 @@ import { useRevealTransition } from "@/hooks/useRevealTransition"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
 import useModal from "@/hooks/useModal"
 import { useArtisanModal } from "@/hooks/useArtisanModal"
+import { useDashboardStats } from "@/hooks/useDashboardStats"
 import { AvatarGroup, AvatarGroupTooltip } from "@/components/ui/avatar-group"
 import { GestionnaireBadge } from "@/components/ui/gestionnaire-badge"
 import { useGestionnaires, type Gestionnaire } from "@/hooks/useGestionnaires"
@@ -49,7 +50,6 @@ export default function DashboardPage() {
   const [periodType, setPeriodType] = useState<PeriodType>("month")
   const [selectedPeriod, setSelectedPeriod] = useState<string>("") // Format: "yyyy-MM" pour month, "yyyy-MM-dd" pour week, "yyyy" pour year
   const [isMounted, setIsMounted] = useState(false)
-  const [totalInterventions, setTotalInterventions] = useState<number | null>(null)
   const [showTransition, setShowTransition] = useState(false)
   const [showBienvenue, setShowBienvenue] = useState(false)
   const [selectedGestionnaireId, setSelectedGestionnaireId] = useState<string | null>(null)
@@ -80,6 +80,64 @@ export default function DashboardPage() {
   
   // Filtrer les données selon le gestionnaire sélectionné
   const effectiveUserId = selectedGestionnaireId || currentUser?.id || null
+
+  // Calculer les dates selon la période sélectionnée (doit être défini avant son utilisation dans les hooks)
+  const period = useMemo(() => {
+    let startDate: Date
+    let endDate: Date
+
+    if (selectedPeriod) {
+      // Utiliser la période sélectionnée
+      if (periodType === "month") {
+        const [year, month] = selectedPeriod.split("-").map(Number)
+        startDate = new Date(year, month - 1, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(year, month, 0, 23, 59, 59, 999)
+      } else if (periodType === "week") {
+        const selectedDate = parseISO(selectedPeriod)
+        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 })
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(startDate)
+        endDate.setDate(startDate.getDate() + 4) // Vendredi
+        endDate.setHours(23, 59, 59, 999)
+      } else {
+        const year = parseInt(selectedPeriod)
+        startDate = new Date(year, 0, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(year, 11, 31, 23, 59, 59, 999)
+      }
+    } else {
+      // Comportement par défaut (période courante)
+      const now = new Date()
+      if (periodType === "week") {
+        const day = now.getDay()
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1)
+        startDate = new Date(now.getFullYear(), now.getMonth(), diff)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(startDate)
+        endDate.setDate(startDate.getDate() + 4)
+        endDate.setHours(23, 59, 59, 999)
+      } else if (periodType === "month") {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+      } else {
+        startDate = new Date(now.getFullYear(), 0, 1)
+        startDate.setHours(0, 0, 0, 0)
+        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+      }
+    }
+
+    return {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    }
+  }, [periodType, selectedPeriod])
+
+  // Utiliser TanStack Query pour charger les stats (cache partagé et déduplication automatique)
+  // On récupère le total depuis les stats pour éviter un appel API supplémentaire
+  const { data: statsData } = useDashboardStats(period, effectiveUserId)
+  const totalInterventions = statsData?.total ?? null
   
   // Références pour l'animation
   const dashboardContentRef = useRef<HTMLDivElement>(null)
@@ -310,59 +368,6 @@ export default function DashboardPage() {
     setSelectedPeriod("")
   }, [periodType])
 
-  // Calculer les dates selon la période sélectionnée
-  const period = useMemo(() => {
-    let startDate: Date
-    let endDate: Date
-
-    if (selectedPeriod) {
-      // Utiliser la période sélectionnée
-      if (periodType === "month") {
-        const [year, month] = selectedPeriod.split("-").map(Number)
-        startDate = new Date(year, month - 1, 1)
-        startDate.setHours(0, 0, 0, 0)
-        endDate = new Date(year, month, 0, 23, 59, 59, 999)
-      } else if (periodType === "week") {
-        const selectedDate = parseISO(selectedPeriod)
-        startDate = startOfWeek(selectedDate, { weekStartsOn: 1 })
-        startDate.setHours(0, 0, 0, 0)
-        endDate = new Date(startDate)
-        endDate.setDate(startDate.getDate() + 4) // Vendredi
-        endDate.setHours(23, 59, 59, 999)
-      } else {
-        const year = parseInt(selectedPeriod)
-        startDate = new Date(year, 0, 1)
-        startDate.setHours(0, 0, 0, 0)
-        endDate = new Date(year, 11, 31, 23, 59, 59, 999)
-      }
-    } else {
-      // Comportement par défaut (période courante)
-      const now = new Date()
-      if (periodType === "week") {
-        const day = now.getDay()
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1)
-        startDate = new Date(now.getFullYear(), now.getMonth(), diff)
-        startDate.setHours(0, 0, 0, 0)
-        endDate = new Date(startDate)
-        endDate.setDate(startDate.getDate() + 4)
-        endDate.setHours(23, 59, 59, 999)
-      } else if (periodType === "month") {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-        startDate.setHours(0, 0, 0, 0)
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
-      } else {
-        startDate = new Date(now.getFullYear(), 0, 1)
-        startDate.setHours(0, 0, 0, 0)
-        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
-      }
-    }
-
-    return {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    }
-  }, [periodType, selectedPeriod])
-
   const periodLabel = useMemo(() => {
     if (selectedPeriod) {
       const option = periodOptions.find((opt) => opt.value === selectedPeriod)
@@ -386,35 +391,6 @@ export default function DashboardPage() {
     }
   }, [periodType, selectedPeriod, periodOptions])
 
-  // Charger le nombre total d'interventions pour la période
-  useEffect(() => {
-    if (!effectiveUserId || isLoadingUser || !period.startDate || !period.endDate) {
-      setTotalInterventions(null)
-      return
-    }
-
-    let cancelled = false
-
-    const loadTotalInterventions = async () => {
-      try {
-        const statsData = await interventionsApi.getStatsByUser(effectiveUserId, period.startDate, period.endDate)
-        if (!cancelled) {
-          setTotalInterventions(statsData.total)
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          console.error("Erreur lors du chargement du total d'interventions:", err)
-          setTotalInterventions(null)
-        }
-      }
-    }
-
-    loadTotalInterventions()
-
-    return () => {
-      cancelled = true
-    }
-  }, [effectiveUserId, isLoadingUser, period.startDate, period.endDate])
 
   return (
     <>

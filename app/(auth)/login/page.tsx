@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from "@tanstack/react-query"
+import { preloadCriticalDataAsync } from "@/lib/preload-critical-data"
 
 export default function LoginPage() {
   const queryClient = useQueryClient()
@@ -60,6 +61,10 @@ export default function LoginPage() {
       
       // Invalider le cache pour forcer un refetch avec le nouvel utilisateur
       queryClient.invalidateQueries({ queryKey: ["currentUser"] })
+      
+      // Précharger les données critiques avant la navigation pour une réactivité optimale
+      // On utilise une fonction async non-bloquante pour ne pas ralentir la redirection
+      preloadCriticalDataAsync(queryClient)
       
       // Calculer la position du bouton AVANT navigation
       if (buttonRef.current) {

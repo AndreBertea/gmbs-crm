@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase-client"
 import type { WeeklyStats, MonthlyStats, YearlyStats, StatsPeriod } from "@/lib/api/v2"
 import Loader from "@/components/ui/Loader"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
+import { useDashboardPeriodStats } from "@/hooks/useDashboardStats"
 
 interface WeeklyStatsTableProps {
   weekStartDate?: string
@@ -43,80 +44,30 @@ export function WeeklyStatsTable({ weekStartDate, period: externalPeriod, userId
       setPeriod(newPeriod)
     }
   }, [externalPeriod])
-  const [stats, setStats] = useState<WeeklyStats | MonthlyStats | YearlyStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
   // Utiliser le hook React Query pour charger l'utilisateur (cache partagé)
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
   // Utiliser le prop userId s'il est fourni, sinon utiliser currentUser
   const userId = propUserId ?? currentUser?.id ?? null
 
-  // Charger les statistiques selon la période choisie
+  // Utiliser la date de début de la période externe si disponible
+  const startDateForQuery = externalPeriod?.startDate || (period === "week" ? weekStartDate : undefined)
+
+  // Utiliser TanStack Query pour charger les stats par période (cache partagé et déduplication automatique)
+  const { data: stats, isLoading: loading, error: queryError } = useDashboardPeriodStats(
+    userId && period ? { period, startDate: startDateForQuery } : null,
+    userId
+  )
+  const error = queryError ? (queryError instanceof Error ? queryError.message : String(queryError)) : null
+
+  // Debug en développement
   useEffect(() => {
-    if (!userId || isLoadingUser) {
-      setLoading(isLoadingUser)
-      return
-    }
-
-    let cancelled = false
-
-    const loadStats = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[WeeklyStatsTable] Chargement stats pour userId: ${userId}, période: ${period}`)
-        }
-
-        // Vérifier d'abord si l'utilisateur a des interventions (sans filtre de date)
-        const { data: allInterventions } = await supabase
-          .from("interventions")
-          .select("id, date, assigned_user_id")
-          .eq("assigned_user_id", userId)
-          .eq("is_active", true)
-          .limit(5)
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[WeeklyStatsTable] Total interventions pour cet utilisateur (échantillon):`, allInterventions?.length || 0)
-          if (allInterventions && allInterventions.length > 0) {
-            console.log(`[WeeklyStatsTable] Exemples de dates:`, allInterventions.map(i => i.date))
-          }
-        }
-
-        // Utiliser la date de début de la période externe si disponible
-        const startDateForQuery = externalPeriod?.startDate || (period === "week" ? weekStartDate : undefined)
-        
-        const statsData = await interventionsApi.getPeriodStatsByUser(
-          userId,
-          period,
-          startDateForQuery
-        )
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[WeeklyStatsTable] Stats chargées:`, statsData)
-        }
-
-        if (!cancelled) {
-          setStats(statsData)
-          setLoading(false)
-        }
-      } catch (err: any) {
-        console.error(`[WeeklyStatsTable] Erreur:`, err)
-        if (!cancelled) {
-          setError(err.message || "Erreur lors du chargement des statistiques")
-          setLoading(false)
-        }
+    if (process.env.NODE_ENV === 'development' && userId && period) {
+      console.log(`[WeeklyStatsTable] Chargement stats pour userId: ${userId}, période: ${period}`)
+      if (stats) {
+        console.log(`[WeeklyStatsTable] Stats chargées:`, stats)
       }
     }
-
-    loadStats()
-
-    return () => {
-      cancelled = true
-    }
-  }, [userId, isLoadingUser, period, weekStartDate, externalPeriod?.startDate, externalPeriod?.endDate])
+  }, [userId, period, stats])
 
   if (loading) {
     return (

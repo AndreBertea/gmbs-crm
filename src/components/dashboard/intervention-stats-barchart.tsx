@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { interventionsApi } from "@/lib/api/v2"
 import type { InterventionStatsByStatus } from "@/lib/api/v2"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
+import { useDashboardStats } from "@/hooks/useDashboardStats"
 import { AlertCircle } from "lucide-react"
 import Loader from "@/components/ui/Loader"
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Cell } from "recharts"
@@ -128,9 +129,6 @@ const CustomNameLabel = (props: any) => {
 }
 
 export function InterventionStatsBarChart({ period, userId: propUserId }: InterventionStatsBarChartProps) {
-  const [stats, setStats] = useState<InterventionStatsByStatus | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const { open: openModal } = useModal()
   const { open: openInterventionModal } = useInterventionModal()
   const [hoveredStatus, setHoveredStatus] = useState<string | null>(null)
@@ -164,6 +162,15 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
   // Utiliser le prop userId s'il est fourni, sinon utiliser currentUser
   const userId = propUserId ?? currentUser?.id ?? null
+
+  // Normaliser period pour correspondre au type attendu par useDashboardStats
+  const normalizedPeriod = period?.startDate && period?.endDate
+    ? { startDate: period.startDate, endDate: period.endDate }
+    : null
+
+  // Utiliser TanStack Query pour charger les stats (cache partagé et déduplication automatique)
+  const { data: stats, isLoading: loading, error: queryError } = useDashboardStats(normalizedPeriod, userId)
+  const error = queryError ? (queryError instanceof Error ? queryError.message : String(queryError)) : null
 
   // Charger les statuts depuis la DB pour avoir les couleurs exactes
   const { statuses: dbStatuses, statusesByCode, statusesByLabel } = useInterventionStatuses()
@@ -207,55 +214,6 @@ export function InterventionStatsBarChart({ period, userId: propUserId }: Interv
       }
     }
   }, [])
-
-  // Charger les statistiques une fois l'utilisateur chargé
-  useEffect(() => {
-    if (!userId || isLoadingUser) {
-      setLoading(isLoadingUser)
-      return
-    }
-
-    let cancelled = false
-
-    const loadStats = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-
-        // Calculer les dates si non fournies (mois en cours par défaut)
-        let startDate = period?.startDate
-        let endDate = period?.endDate
-
-        if (!startDate || !endDate) {
-          const now = new Date()
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-
-          startDate = startDate || startOfMonth.toISOString()
-          endDate = endDate || endOfMonth.toISOString()
-        }
-
-        // Charger les stats
-        const statsData = await interventionsApi.getStatsByUser(userId, startDate, endDate)
-
-        if (!cancelled) {
-          setStats(statsData)
-          setLoading(false)
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setError(err.message || "Erreur lors du chargement des statistiques")
-          setLoading(false)
-        }
-      }
-    }
-
-    loadStats()
-
-    return () => {
-      cancelled = true
-    }
-  }, [userId, isLoadingUser, period?.startDate, period?.endDate])
 
   // Créer une version stable de la liste des statuts pour éviter les boucles infinies
   // Utiliser une sérialisation JSON pour comparer le contenu plutôt que la référence

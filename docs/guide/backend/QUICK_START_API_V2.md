@@ -12,7 +12,7 @@ import {
 } from '@/lib/supabase-api-v2';
 
 // ✅ Hooks personnalisés
-import { useInterventions } from '@/hooks/useInterventions';
+import { useInterventionsQuery } from '@/hooks/useInterventionsQuery';
 import { useArtisans } from '@/hooks/useArtisans';
 
 // ✅ Types
@@ -34,7 +34,7 @@ const intervention = await interventionsApiV2.create({
 
 ### Récupérer les interventions
 ```typescript
-const { interventions, loading, error } = useInterventions({
+const { interventions, loading, error } = useInterventionsQuery({
   limit: 50,
   autoLoad: true
 });
@@ -75,19 +75,24 @@ const comment = await commentsApi.create({
 
 ## 🎣 Hooks Disponibles
 
-### useInterventions
+### useInterventionsQuery
 ```typescript
 const {
   interventions,      // Liste des interventions
-  setInterventions,    // Modifier la liste
   loading,            // État de chargement
   error,              // Erreur éventuelle
-  hasMore,            // Y a-t-il plus de données ?
   totalCount,         // Nombre total
-  loadMore,           // Charger plus
+  currentPage,         // Page courante
+  totalPages,         // Nombre total de pages
   refresh,            // Rafraîchir
-  setFilters          // Appliquer des filtres
-} = useInterventions({ limit: 50 });
+  goToPage,           // Aller à une page
+  nextPage,           // Page suivante
+  previousPage,       // Page précédente
+  updateInterventionOptimistic  // Mise à jour optimiste
+} = useInterventionsQuery({ 
+  limit: 50,
+  serverFilters: { statut: 'DEMANDE' }
+});
 ```
 
 ### useArtisans

@@ -1,12 +1,14 @@
 "use client"
 
 import React, { useCallback, useRef, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ModeIcons } from "@/components/ui/mode-selector"
 import { LegacyInterventionForm } from "@/components/interventions/LegacyInterventionForm"
 import type { ModalDisplayMode } from "@/types/modal-display"
+import { interventionKeys } from "@/lib/react-query/queryKeys"
 
 type Props = {
   mode: ModalDisplayMode
@@ -15,21 +17,19 @@ type Props = {
 }
 
 export function NewInterventionModalContent({ mode, onClose, onCycleMode }: Props) {
+  const queryClient = useQueryClient()
+  
   const handleSuccess = useCallback(
-    (data: { id: string }) => {
-      if (typeof window !== "undefined" && data?.id) {
-        window.dispatchEvent(
-          new CustomEvent("intervention-updated", {
-            detail: {
-              id: data.id,
-              data,
-            },
-          }),
-        )
-      }
+    async (data: { id: string }) => {
+      if (!data?.id) return
+      
+      // Invalider toutes les listes d'interventions pour recharger avec la nouvelle intervention
+      await queryClient.invalidateQueries({ queryKey: interventionKeys.invalidateLists() })
+      
+      // Fermer le modal
       onClose()
     },
-    [onClose],
+    [queryClient, onClose],
   )
 
   const ModeIcon = ModeIcons[mode]

@@ -21,7 +21,7 @@ supabase/functions/
 └── comments/                       # Edge Function commentaires
 
 src/hooks/
-├── useInterventions.ts             # Hook interventions
+├── useInterventionsQuery.ts        # Hook interventions (TanStack Query)
 ├── useArtisans.ts                  # Hook artisans
 ├── useSmartFilters.ts              # Hook filtres intelligents
 └── useReferenceData.ts             # Hook données de référence
@@ -46,7 +46,8 @@ npm run test:api-v2:help
 
 ### 3. Utiliser dans votre code
 ```typescript
-import { interventionsApiV2, useInterventions } from '@/lib/supabase-api-v2';
+import { interventionsApiV2 } from '@/lib/supabase-api-v2';
+import { useInterventionsQuery } from '@/hooks/useInterventionsQuery';
 
 // Avec l'API directe
 const intervention = await interventionsApiV2.create({
@@ -55,8 +56,8 @@ const intervention = await interventionsApiV2.create({
   ville: 'Paris'
 });
 
-// Avec les hooks
-const { interventions, loading, error } = useInterventions();
+// Avec TanStack Query
+const { interventions, loading, error } = useInterventionsQuery();
 ```
 
 ## 📚 Documentation
@@ -97,19 +98,24 @@ const { interventions, loading, error } = useInterventions();
 
 ## 🎣 Hooks Disponibles
 
-### useInterventions
+### useInterventionsQuery
 ```typescript
 const {
   interventions,      // Liste des interventions
-  setInterventions,   // Modifier la liste
   loading,            // État de chargement
   error,              // Erreur éventuelle
-  hasMore,            // Y a-t-il plus de données ?
   totalCount,         // Nombre total
-  loadMore,           // Charger plus
+  currentPage,         // Page courante
+  totalPages,         // Nombre total de pages
   refresh,            // Rafraîchir
-  setFilters          // Appliquer des filtres
-} = useInterventions({ limit: 50 });
+  goToPage,           // Aller à une page
+  nextPage,           // Page suivante
+  previousPage,       // Page précédente
+  updateInterventionOptimistic  // Mise à jour optimiste
+} = useInterventionsQuery({ 
+  limit: 50,
+  serverFilters: { statut: 'DEMANDE' }
+});
 ```
 
 ### useArtisans

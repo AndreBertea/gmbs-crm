@@ -355,20 +355,8 @@ export const interventionsApi = {
       }
     }
 
-    // Émettre un événement pour notifier que l'intervention a été mise à jour
-    // Cela permet aux autres composants (comme la page artisans) de rafraîchir leurs données
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("intervention-updated", {
-          detail: {
-            id: mapped.id,
-            data: mapped,
-            optimistic: false,
-            type: "update",
-          },
-        }),
-      );
-    }
+    // Note: L'invalidation des queries TanStack Query est gérée par useInterventionsMutations
+    // Les composants utilisant TanStack Query seront automatiquement mis à jour via invalidateQueries
 
     return mapped;
   },

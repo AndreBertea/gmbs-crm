@@ -337,19 +337,9 @@ export function ArtisanModalContent({
 
   // Écouter les mises à jour d'interventions pour rafraîchir les données de l'artisan
   // car le statut de l'artisan peut changer quand une intervention est terminée
-  useEffect(() => {
-    const handleInterventionUpdated = () => {
-      // Rafraîchir les données de l'artisan après un court délai pour laisser le temps au trigger SQL de s'exécuter
-      setTimeout(() => {
-        void refetchArtisan()
-      }, 500)
-    }
-
-    window.addEventListener("intervention-updated", handleInterventionUpdated)
-    return () => {
-      window.removeEventListener("intervention-updated", handleInterventionUpdated)
-    }
-  }, [refetchArtisan])
+  // Note: Les mises à jour d'interventions sont maintenant gérées automatiquement par TanStack Query
+  // via useInterventionsMutations qui invalide les queries appropriées
+  // Si cette page utilise TanStack Query pour les interventions de l'artisan, elle sera automatiquement mise à jour
 
   // Charger les interventions de l'artisan pour les graphiques et le tableau
   const {

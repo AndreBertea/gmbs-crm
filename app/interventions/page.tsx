@@ -549,35 +549,9 @@ export default function Page() {
     }
   }, [])
 
-  // Écouter les mises à jour d'interventions depuis le modal
-  useEffect(() => {
-    const handleInterventionUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent<{ id: string; data: any; optimistic?: boolean }>
-      const { id, data, optimistic } = customEvent.detail || {}
-      
-      if (optimistic && id && data) {
-        // Mise à jour optimiste immédiate (sans rechargement)
-        console.log('⚡ Mise à jour optimiste détectée pour', id)
-        updateInterventionOptimistic(id, data)
-        
-        // Rafraîchir quand même en arrière-plan après un délai plus long pour éviter les rafraîchissements trop fréquents
-        // Le délai de 2000ms permet d'éviter les multiples rafraîchissements si plusieurs mises à jour arrivent rapidement
-        setTimeout(() => {
-          console.log('🔄 Rafraîchissement en arrière-plan après mise à jour optimiste')
-          refresh()
-        }, 2000)
-      } else {
-        // Mise à jour normale : rafraîchir immédiatement
-        console.log('🔄 Rafraîchissement complet suite à mise à jour')
-        refresh()
-      }
-    }
-
-    window.addEventListener("intervention-updated", handleInterventionUpdate)
-    return () => {
-      window.removeEventListener("intervention-updated", handleInterventionUpdate)
-    }
-  }, [refresh, updateInterventionOptimistic])
+  // Note: Les mises à jour d'interventions sont maintenant gérées automatiquement par TanStack Query
+  // via useInterventionsMutations qui invalide les queries appropriées
+  // Plus besoin d'écouter l'événement intervention-updated
 
   useEffect(() => {
     if (typeof window === "undefined") return

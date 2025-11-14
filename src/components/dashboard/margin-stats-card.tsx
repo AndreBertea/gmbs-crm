@@ -8,6 +8,7 @@ import { TrendingUp, TrendingDown } from "lucide-react"
 import Loader from "@/components/ui/Loader"
 import { Speedometer } from "./speedometer"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
+import { useDashboardMargin } from "@/hooks/useDashboardStats"
 
 interface MarginStatsCardProps {
   period?: {
@@ -35,11 +36,8 @@ function getPeriodTypeFromDates(startDate?: string, endDate?: string): TargetPer
 }
 
 export function MarginStatsCard({ period, userId: propUserId, compact = false }: MarginStatsCardProps) {
-  const [stats, setStats] = useState<MarginStats | null>(null)
   const [performanceTarget, setPerformanceTarget] = useState<number>(DEFAULT_PERFORMANCE_TARGET)
   const [showPercentage, setShowPercentage] = useState<boolean>(true)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   // Déterminer le type de période
   const periodType = useMemo(() => {
@@ -50,6 +48,15 @@ export function MarginStatsCard({ period, userId: propUserId, compact = false }:
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser()
   // Utiliser le prop userId s'il est fourni, sinon utiliser currentUser
   const userId = propUserId ?? currentUser?.id ?? null
+
+  // Normaliser period pour correspondre au type attendu par useDashboardMargin
+  const normalizedPeriod = period?.startDate && period?.endDate
+    ? { startDate: period.startDate, endDate: period.endDate }
+    : null
+
+  // Utiliser TanStack Query pour charger les stats de marge (cache partagé et déduplication automatique)
+  const { data: stats, isLoading: loading, error: queryError } = useDashboardMargin(normalizedPeriod, userId)
+  const error = queryError ? (queryError instanceof Error ? queryError.message : String(queryError)) : null
 
   // Charger l'objectif de performance et les préférences pour l'utilisateur et la période
   useEffect(() => {
@@ -83,54 +90,6 @@ export function MarginStatsCard({ period, userId: propUserId, compact = false }:
       cancelled = true
     }
   }, [userId, isLoadingUser, periodType])
-
-  // Charger les statistiques de marge une fois l'utilisateur chargé
-  useEffect(() => {
-    if (!userId || isLoadingUser) {
-      setLoading(isLoadingUser)
-      return
-    }
-
-    let cancelled = false
-
-    const loadStats = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-
-        // Calculer les dates si non fournies (mois en cours par défaut)
-        let startDate = period?.startDate
-        let endDate = period?.endDate
-
-        if (!startDate || !endDate) {
-          const now = new Date()
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
-
-          startDate = startDate || startOfMonth.toISOString()
-          endDate = endDate || endOfMonth.toISOString()
-        }
-
-        const statsData = await interventionsApi.getMarginStatsByUser(userId, startDate, endDate)
-
-        if (!cancelled) {
-          setStats(statsData)
-          setLoading(false)
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setError(err.message || "Erreur lors du chargement des statistiques de marge")
-          setLoading(false)
-        }
-      }
-    }
-
-    loadStats()
-
-    return () => {
-      cancelled = true
-    }
-  }, [userId, isLoadingUser, period?.startDate, period?.endDate])
 
   if (loading) {
     return (

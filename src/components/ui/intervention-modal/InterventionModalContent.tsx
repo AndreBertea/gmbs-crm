@@ -107,20 +107,22 @@ export function InterventionModalContent({
 
   const handleSuccess = useCallback(
     async (data: any) => {
-      // 1. Mise à jour optimiste immédiate dans React Query
+      // 1. Mise à jour optimiste immédiate dans React Query pour le détail
       queryClient.setQueryData(['intervention', interventionId], data)
       
-      // 2. Émettre l'événement de mise à jour IMMÉDIATEMENT (avant la fermeture du modal)
-      // Cela permet une mise à jour optimiste dans la TableView
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('intervention-updated', { 
-          detail: { 
-            id: interventionId, 
-            data,
-            optimistic: true // Indique que c'est une mise à jour optimiste
-          } 
-        }))
-      }
+      // 2. Mise à jour optimiste dans toutes les listes qui contiennent cette intervention
+      queryClient.setQueriesData(
+        { queryKey: ['interventions'] },
+        (oldData: any) => {
+          if (!oldData?.data || !Array.isArray(oldData.data)) {
+            return oldData
+          }
+          const updatedData = oldData.data.map((intervention: any) =>
+            intervention.id === interventionId ? { ...intervention, ...data } : intervention
+          )
+          return { ...oldData, data: updatedData }
+        }
+      )
       
       // 3. Fermer le modal pour démarrer l'animation
       onClose()
@@ -128,7 +130,7 @@ export function InterventionModalContent({
       // 4. Attendre un court délai pour l'animation (300ms suffit)
       await new Promise(resolve => setTimeout(resolve, 300))
       
-      // 5. Invalider les caches React Query en arrière-plan
+      // 5. Invalider les caches React Query en arrière-plan pour recharger les données à jour
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['intervention', interventionId] }),
         queryClient.invalidateQueries({ queryKey: ['interventions'] }),

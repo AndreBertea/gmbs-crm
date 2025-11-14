@@ -1,34 +1,25 @@
 import { useCallback, useMemo } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { interventionsApiV2, type GetAllParams } from "@/lib/supabase-api-v2"
-import type { InterventionView } from "@/types/intervention-view"
-import { interventionKeys } from "@/lib/react-query/queryKeys"
+import { artisansApiV2, type Artisan } from "@/lib/supabase-api-v2"
+import { artisanKeys, type ArtisanGetAllParams } from "@/lib/react-query/queryKeys"
 
-type ServerFilters = Pick<
-  GetAllParams,
-  "statut" | "agence" | "artisan" | "metier" | "user" | "startDate" | "endDate" | "search"
->
-
-export interface UseInterventionsQueryOptions {
+export interface UseArtisansQueryOptions {
   viewId?: string
   autoLoad?: boolean
   limit?: number
-  fields?: string[]
-  serverFilters?: ServerFilters
+  serverFilters?: {
+    gestionnaire?: string
+    statut?: string
+  }
   page?: number
-  /**
-   * Utiliser l'endpoint léger pour le warm-up (données minimales)
-   * Par défaut: false (utilise l'endpoint complet)
-   */
-  useLight?: boolean
   /**
    * Désactiver la requête (pour contrôle manuel)
    */
   enabled?: boolean
 }
 
-export interface UseInterventionsQueryReturn {
-  interventions: InterventionView[]
+export interface UseArtisansQueryReturn {
+  artisans: Artisan[]
   loading: boolean
   error: string | null
   totalCount: number
@@ -38,23 +29,21 @@ export interface UseInterventionsQueryReturn {
   goToPage: (page: number) => void
   nextPage: () => void
   previousPage: () => void
-  updateInterventionOptimistic: (id: string, updates: Partial<InterventionView>) => void
+  updateArtisanOptimistic: (id: string, updates: Partial<Artisan>) => void
 }
 
 const DEFAULT_LIMIT = 100
 
-export function useInterventionsQuery(
-  options: UseInterventionsQueryOptions = {}
-): UseInterventionsQueryReturn {
+export function useArtisansQuery(
+  options: UseArtisansQueryOptions = {}
+): UseArtisansQueryReturn {
   const queryClient = useQueryClient()
   const {
     viewId,
     autoLoad = true,
     limit = DEFAULT_LIMIT,
-    fields,
     serverFilters,
     page = 1,
-    useLight = false,
     enabled: enabledOption,
   } = options
 
@@ -62,32 +51,24 @@ export function useInterventionsQuery(
   const normalizedFilters = useMemo(() => {
     if (!serverFilters) return {}
 
-    const result: Partial<ServerFilters> = {}
+    const result: Partial<ArtisanGetAllParams> = {}
     const entries = Object.entries(serverFilters) as Array<
-      [keyof ServerFilters, ServerFilters[keyof ServerFilters]]
+      [keyof typeof serverFilters, typeof serverFilters[keyof typeof serverFilters]]
     >
 
     for (const [key, value] of entries) {
       if (value !== undefined && value !== null) {
-        ;(result as any)[key] = value
+        // Mapper gestionnaire vers le paramètre API
+        if (key === "gestionnaire") {
+          result.gestionnaire = value
+        } else if (key === "statut") {
+          result.statut = value
+        }
       }
     }
 
-    return result as ServerFilters
+    return result
   }, [serverFilters])
-
-  // Normaliser les champs
-  const normalizedFields = useMemo(() => {
-    if (!fields || fields.length === 0) return undefined
-    const unique = Array.from(
-      new Set(
-        fields
-          .map((field) => field?.trim())
-          .filter((field): field is string => Boolean(field)),
-      ),
-    )
-    return unique.length > 0 ? unique : undefined
-  }, [fields])
 
   // Calculer l'offset depuis la page courante
   const offset = useMemo(() => {
@@ -96,13 +77,9 @@ export function useInterventionsQuery(
 
   // Construire les paramètres de requête
   const requestParams = useMemo(() => {
-    const params: GetAllParams = {
+    const params: ArtisanGetAllParams = {
       limit: Math.max(1, limit),
       offset,
-    }
-
-    if (normalizedFields) {
-      params.fields = normalizedFields
     }
 
     Object.entries(normalizedFilters).forEach(([key, value]) => {
@@ -113,28 +90,23 @@ export function useInterventionsQuery(
     })
 
     return params
-  }, [limit, offset, normalizedFields, normalizedFilters])
+  }, [limit, offset, normalizedFilters])
 
   // Déterminer si la requête doit être activée
   const enabled = enabledOption !== undefined ? enabledOption : autoLoad
 
-  // Utiliser l'endpoint approprié (light ou complet)
+  // Fonction de requête
   const queryFn = useCallback(async () => {
-    if (useLight) {
-      return await interventionsApiV2.getAllLight(requestParams)
-    }
-    return await interventionsApiV2.getAll(requestParams)
-  }, [requestParams, useLight])
+    return await artisansApiV2.getAll(requestParams)
+  }, [requestParams])
 
   // Clé de requête avec viewId pour permettre l'invalidation par vue
   const queryKey = useMemo(() => {
-    const baseKey = useLight
-      ? interventionKeys.lightList(requestParams)
-      : interventionKeys.list(requestParams)
+    const baseKey = artisanKeys.list(requestParams)
     
     // Ajouter viewId à la clé si fourni pour permettre l'invalidation ciblée
     return viewId ? [...baseKey, viewId] : baseKey
-  }, [requestParams, useLight, viewId])
+  }, [requestParams, viewId])
 
   // Requête TanStack Query
   const {
@@ -153,8 +125,8 @@ export function useInterventionsQuery(
   })
 
   // Extraire les données de la réponse
-  const interventions = useMemo(() => data?.data ?? [], [data?.data])
-  const totalCount = useMemo(() => data?.total ?? 0, [data?.total])
+  const artisans = useMemo(() => data?.data ?? [], [data?.data])
+  const totalCount = useMemo(() => data?.pagination?.total ?? 0, [data?.pagination?.total])
 
   // Calculer le nombre total de pages
   const totalPages = useMemo(() => {
@@ -169,32 +141,32 @@ export function useInterventionsQuery(
   // Navigation de pagination (sera gérée par le composant parent via le paramètre page)
   const goToPage = useCallback((newPage: number) => {
     // Cette fonction sera gérée par le composant parent qui contrôle le paramètre page
-    console.warn("[useInterventionsQuery] goToPage doit être géré par le composant parent via le paramètre page")
+    console.warn("[useArtisansQuery] goToPage doit être géré par le composant parent via le paramètre page")
   }, [])
 
   const nextPage = useCallback(() => {
-    console.warn("[useInterventionsQuery] nextPage doit être géré par le composant parent via le paramètre page")
+    console.warn("[useArtisansQuery] nextPage doit être géré par le composant parent via le paramètre page")
   }, [])
 
   const previousPage = useCallback(() => {
-    console.warn("[useInterventionsQuery] previousPage doit être géré par le composant parent via le paramètre page")
+    console.warn("[useArtisansQuery] previousPage doit être géré par le composant parent via le paramètre page")
   }, [])
 
   // Mise à jour optimiste : met à jour le cache TanStack Query directement
-  const updateInterventionOptimistic = useCallback(
-    (id: string, updates: Partial<InterventionView>) => {
+  const updateArtisanOptimistic = useCallback(
+    (id: string, updates: Partial<Artisan>) => {
       if (!id || !updates) return
 
-      // Mettre à jour toutes les queries de listes qui contiennent cette intervention
+      // Mettre à jour toutes les queries de listes qui contiennent cet artisan
       queryClient.setQueriesData(
-        { queryKey: interventionKeys.invalidateLists() },
+        { queryKey: artisanKeys.invalidateLists() },
         (oldData: any) => {
           if (!oldData?.data || !Array.isArray(oldData.data)) {
             return oldData
           }
 
-          const updatedData = oldData.data.map((intervention: InterventionView) =>
-            intervention.id === id ? { ...intervention, ...updates } : intervention
+          const updatedData = oldData.data.map((artisan: Artisan) =>
+            artisan.id === id ? { ...artisan, ...updates } : artisan
           )
 
           return {
@@ -206,7 +178,7 @@ export function useInterventionsQuery(
 
       // Mettre à jour aussi la query de détail si elle existe
       queryClient.setQueryData(
-        interventionKeys.detail(id),
+        artisanKeys.detail(id),
         (oldData: any) => {
           if (!oldData) return oldData
           return { ...oldData, ...updates }
@@ -217,7 +189,7 @@ export function useInterventionsQuery(
   )
 
   return {
-    interventions,
+    artisans,
     loading: isLoading,
     error: queryError ? (queryError instanceof Error ? queryError.message : String(queryError)) : null,
     totalCount,
@@ -227,7 +199,7 @@ export function useInterventionsQuery(
     goToPage,
     nextPage,
     previousPage,
-    updateInterventionOptimistic,
+    updateArtisanOptimistic,
   }
 }
 

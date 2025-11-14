@@ -36,7 +36,7 @@ import {
 } from '@/lib/supabase-api-v2';
 
 // ✅ CORRECT - Import des hooks personnalisés
-import { useInterventions } from '@/hooks/useInterventions';
+import { useInterventionsQuery } from '@/hooks/useInterventionsQuery';
 import { useArtisans } from '@/hooks/useArtisans';
 ```
 
@@ -201,33 +201,45 @@ const addComment = async (interventionId: string, content: string) => {
 
 #### Hook Interventions
 ```typescript
-import { useInterventions } from '@/hooks/useInterventions';
+import { useInterventionsQuery } from '@/hooks/useInterventionsQuery';
+import { useState } from 'react';
 
 function InterventionsPage() {
+  const [page, setPage] = useState(1);
+  const [serverFilters, setServerFilters] = useState({});
+
   const {
     interventions,
-    setInterventions,
     loading,
     error,
-    hasMore,
     totalCount,
-    loadMore,
+    currentPage,
+    totalPages,
     refresh,
-    setFilters
-  } = useInterventions({
+    updateInterventionOptimistic
+  } = useInterventionsQuery({
     limit: 50,
+    page,
+    serverFilters,
     autoLoad: true
   });
 
   // Filtrage
   const handleFilterChange = (filters: any) => {
-    setFilters(filters);
+    setServerFilters(filters);
+    setPage(1); // Réinitialiser à la page 1 lors du changement de filtres
   };
 
-  // Chargement de plus de données
-  const handleLoadMore = () => {
-    if (hasMore && !loading) {
-      loadMore();
+  // Navigation de pagination
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setPage(currentPage - 1);
     }
   };
 
@@ -237,11 +249,15 @@ function InterventionsPage() {
         <InterventionCard key={intervention.id} intervention={intervention} />
       ))}
       
-      {hasMore && (
-        <Button onClick={handleLoadMore} disabled={loading}>
-          Charger plus
+      <div>
+        <Button onClick={handlePreviousPage} disabled={currentPage === 1 || loading}>
+          Précédent
         </Button>
-      )}
+        <span>Page {currentPage} sur {totalPages}</span>
+        <Button onClick={handleNextPage} disabled={currentPage === totalPages || loading}>
+          Suivant
+        </Button>
+      </div>
     </div>
   );
 }
@@ -692,8 +708,8 @@ function InterventionForm() {
 
 ### 2. Optimisation des Requêtes
 ```typescript
-// ✅ CORRECT - Utilisation du cache
-const { interventions, refresh } = useInterventions({
+// ✅ CORRECT - Utilisation de TanStack Query (cache automatique)
+const { interventions, refresh } = useInterventionsQuery({
   limit: 50,
   autoLoad: true
 });
@@ -765,33 +781,42 @@ const handleCreate = async (data: Partial<Intervention>) => {
 ### 1. Page de Liste avec Filtres
 ```typescript
 function InterventionsPage() {
+  const [page, setPage] = useState(1);
+  const [serverFilters, setServerFilters] = useState<Record<string, any>>({});
+  
   const {
     interventions,
     loading,
     error,
-    hasMore,
-    loadMore,
-    setFilters
-  } = useInterventions({ limit: 50 });
+    totalPages,
+    currentPage,
+    refresh
+  } = useInterventionsQuery({ 
+    limit: 50,
+    page,
+    serverFilters
+  });
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
-    setFilters({
+    setServerFilters({
       search: term,
       statut: statusFilter === 'all' ? undefined : statusFilter
     });
-  }, [statusFilter, setFilters]);
+    setPage(1); // Réinitialiser à la page 1
+  }, [statusFilter]);
   
   const handleStatusFilter = useCallback((status: string) => {
     setStatusFilter(status);
-    setFilters({
+    setServerFilters({
       search: searchTerm,
       statut: status === 'all' ? undefined : status
     });
-  }, [searchTerm, setFilters]);
+    setPage(1); // Réinitialiser à la page 1
+  }, [searchTerm]);
   
   return (
     <div>
@@ -802,11 +827,15 @@ function InterventionsPage() {
         <InterventionCard key={intervention.id} intervention={intervention} />
       ))}
       
-      {hasMore && (
-        <Button onClick={loadMore} disabled={loading}>
-          Charger plus
+      <div>
+        <Button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || loading}>
+          Précédent
         </Button>
-      )}
+        <span>Page {currentPage} sur {totalPages}</span>
+        <Button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || loading}>
+          Suivant
+        </Button>
+      </div>
     </div>
   );
 }
@@ -814,8 +843,12 @@ function InterventionsPage() {
 
 ### 2. Formulaire de Création
 ```typescript
+import { interventionsApiV2 } from '@/lib/supabase-api-v2';
+import { useInterventionsQuery } from '@/hooks/useInterventionsQuery';
+
 function CreateInterventionForm() {
-  const { create, loading } = useInterventions();
+  const { refresh } = useInterventionsQuery();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     contexte_intervention: '',
     adresse: '',
@@ -826,13 +859,18 @@ function CreateInterventionForm() {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
     try {
-      const intervention = await create(formData);
+      const intervention = await interventionsApiV2.create(formData);
       console.log('Intervention créée:', intervention);
+      // Rafraîchir la liste pour afficher la nouvelle intervention
+      await refresh();
       // Redirection ou mise à jour de l'état
     } catch (error) {
       console.error('Erreur:', error);
+    } finally {
+      setLoading(false);
     }
   };
   
