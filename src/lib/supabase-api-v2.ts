@@ -1066,6 +1066,9 @@ export const interventionsApiV2 = {
       searchParams.set("search", params.search);
     }
 
+    if (process.env.NODE_ENV === "production") {
+      searchParams.set("_ts", Date.now().toString());
+    }
     const queryString = searchParams.toString();
     const url = `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions${
       queryString ? `?${queryString}` : ""
@@ -1163,6 +1166,9 @@ export const interventionsApiV2 = {
       searchParams.set("search", params.search);
     }
 
+    if (process.env.NODE_ENV === "production") {
+      searchParams.set("_ts", Date.now().toString());
+    }
     const queryString = searchParams.toString();
     const url = `${SUPABASE_FUNCTIONS_URL}/interventions-v2/interventions/light${
       queryString ? `?${queryString}` : ""

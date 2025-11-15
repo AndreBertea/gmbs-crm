@@ -19,6 +19,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Max-Age': '86400',
+  'Cache-Control': 'no-store, no-cache, must-revalidate',
 };
 
 // Types pour la validation
