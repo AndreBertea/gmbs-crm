@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { interventionsApiV2, type GetAllParams } from "@/lib/supabase-api-v2"
 import type { InterventionView } from "@/types/intervention-view"
@@ -136,6 +136,13 @@ export function useInterventionsQuery(
     return viewId ? [...baseKey, viewId] : baseKey
   }, [requestParams, useLight, viewId])
 
+  // Construire la clé pour les données light (pour placeholder)
+  const lightQueryKey = useMemo(() => {
+    if (useLight) return null // Pas besoin si on utilise déjà light
+    const baseKey = interventionKeys.lightList(requestParams)
+    return viewId ? [...baseKey, viewId] : baseKey
+  }, [requestParams, useLight, viewId])
+
   // Requête TanStack Query
   const {
     data,
@@ -148,9 +155,21 @@ export function useInterventionsQuery(
     enabled,
     // Stale time spécifique : 30s pour revalidation silencieuse
     staleTime: 30 * 1000,
-    // Ne pas utiliser placeholderData pour forcer le chargement des nouvelles données lors du changement de page
-    // Cela garantit que les données se mettent à jour correctement lors de la pagination
-    placeholderData: undefined,
+    // Utiliser les données light préchargées comme placeholder si disponibles
+    // Cela permet d'afficher instantanément les données préchargées pendant le chargement des données complètes
+    placeholderData: (previousData) => {
+      // Si on utilise l'endpoint complet (useLight: false),
+      // chercher les données light préchargées comme placeholder
+      if (!useLight && lightQueryKey) {
+        const lightData = queryClient.getQueryData(lightQueryKey)
+        if (lightData) {
+          // Les données light sont disponibles, les utiliser comme placeholder
+          return lightData as any
+        }
+      }
+      // Sinon, utiliser les données précédentes si disponibles (pour la pagination)
+      return previousData
+    },
   })
 
   // Extraire les données de la réponse
@@ -190,6 +209,75 @@ export function useInterventionsQuery(
   const previousPage = useCallback(() => {
     console.warn("[useInterventionsQuery] previousPage doit être géré par le composant parent via le paramètre page")
   }, [])
+
+  // Préchargement automatique de la page suivante et précédente
+  useEffect(() => {
+    if (!enabled || !data) return
+
+    // Précharger la page suivante si elle existe
+    if (page < totalPages) {
+      const nextPageNum = page + 1
+      const nextOffset = (nextPageNum - 1) * limit
+      
+      const nextPageParams: GetAllParams = {
+        ...requestParams,
+        offset: nextOffset,
+      }
+
+      const nextPageQueryKey = useLight
+        ? interventionKeys.lightList(nextPageParams)
+        : interventionKeys.list(nextPageParams)
+      
+      const fullNextPageQueryKey = viewId ? [...nextPageQueryKey, viewId] : nextPageQueryKey
+
+      // Précharger en arrière-plan (fire-and-forget)
+      queryClient.prefetchQuery({
+        queryKey: fullNextPageQueryKey,
+        queryFn: async () => {
+          if (useLight) {
+            return await interventionsApiV2.getAllLight(nextPageParams)
+          }
+          return await interventionsApiV2.getAll(nextPageParams)
+        },
+        staleTime: 30 * 1000, // 30 secondes
+      }).catch((err) => {
+        // Ignorer les erreurs de préchargement silencieusement
+        console.debug(`[useInterventionsQuery] Préchargement page ${nextPageNum} échoué:`, err)
+      })
+    }
+
+    // Précharger la page précédente si on est sur la page 2 ou plus
+    if (page > 1) {
+      const prevPageNum = page - 1
+      const prevOffset = (prevPageNum - 1) * limit
+      
+      const prevPageParams: GetAllParams = {
+        ...requestParams,
+        offset: prevOffset,
+      }
+
+      const prevPageQueryKey = useLight
+        ? interventionKeys.lightList(prevPageParams)
+        : interventionKeys.list(prevPageParams)
+      
+      const fullPrevPageQueryKey = viewId ? [...prevPageQueryKey, viewId] : prevPageQueryKey
+
+      // Précharger en arrière-plan (fire-and-forget)
+      queryClient.prefetchQuery({
+        queryKey: fullPrevPageQueryKey,
+        queryFn: async () => {
+          if (useLight) {
+            return await interventionsApiV2.getAllLight(prevPageParams)
+          }
+          return await interventionsApiV2.getAll(prevPageParams)
+        },
+        staleTime: 30 * 1000, // 30 secondes
+      }).catch((err) => {
+        // Ignorer les erreurs de préchargement silencieusement
+        console.debug(`[useInterventionsQuery] Préchargement page ${prevPageNum} échoué:`, err)
+      })
+    }
+  }, [page, totalPages, limit, requestParams, useLight, viewId, enabled, data, queryClient])
 
   // Mise à jour optimiste : met à jour le cache TanStack Query directement
   const updateInterventionOptimistic = useCallback(
