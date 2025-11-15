@@ -448,20 +448,34 @@ export default function Page() {
     limit: 100,
     page,
   })
+  const [stableTotalCount, setStableTotalCount] = useState(0)
+  const [stableTotalPages, setStableTotalPages] = useState(1)
+
+  useEffect(() => {
+    if (remoteLoading) return
+    setStableTotalCount(totalCount)
+    setStableTotalPages(totalPages ?? 1)
+  }, [remoteLoading, totalCount, totalPages])
+
+  const effectiveTotalCount = remoteLoading ? stableTotalCount : totalCount
+  const effectiveTotalPages = remoteLoading ? stableTotalPages : (totalPages ?? 1)
 
   // Handlers de pagination qui mettent à jour l'état local
   const handleGoToPage = useCallback((newPage: number) => {
-    const validPage = Math.max(1, Math.min(newPage, totalPages ?? 1))
+    if (remoteLoading) return
+    const validPage = Math.max(1, Math.min(newPage, effectiveTotalPages))
     setPage(validPage)
-  }, [totalPages])
+  }, [effectiveTotalPages, remoteLoading])
 
   const handleNextPage = useCallback(() => {
-    setPage((prev) => Math.min(prev + 1, totalPages ?? 1))
-  }, [totalPages])
+    if (remoteLoading) return
+    setPage((prev) => Math.min(prev + 1, effectiveTotalPages))
+  }, [effectiveTotalPages, remoteLoading])
 
   const handlePreviousPage = useCallback(() => {
+    if (remoteLoading) return
     setPage((prev) => Math.max(1, prev - 1))
-  }, [])
+  }, [remoteLoading])
 
   // Réinitialiser la page à 1 quand les filtres changent vraiment
   // Utiliser serverFiltersSignature au lieu de serverFilters pour éviter les réinitialisations
@@ -1096,9 +1110,9 @@ export default function Page() {
             onInterventionClick={handleNavigateToDetail}
             onLayoutOptionsChange={(options) => handleLayoutOptionsPatch(options)}
             onPropertyFilterChange={updateFilterForProperty}
-            totalCount={totalCount ?? undefined}
+            totalCount={effectiveTotalCount ?? undefined}
             currentPage={page}
-            totalPages={totalPages ?? 1}
+            totalPages={effectiveTotalPages}
             onPageChange={handleGoToPage}
             onNextPage={handleNextPage}
             onPreviousPage={handlePreviousPage}
