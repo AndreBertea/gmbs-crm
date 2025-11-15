@@ -451,8 +451,11 @@ export function TableView({
     // ⚠️ NE PAS réappliquer les filtres/sorts de la vue !
     // Ils sont déjà appliqués côté serveur + residualFilters dans page.tsx
     // Si on les réapplique ici, on filtre 2 fois les mêmes données !
+    const firstId = interventions[0]?.id ?? 'none'
+    const lastId = interventions[interventions.length - 1]?.id ?? 'none'
+    console.log(`[TableView] dataset recalculé - length: ${interventions.length}, firstId: ${firstId}, lastId: ${lastId}, currentPage: ${currentPage}`)
     return interventions;
-  }, [interventions])
+  }, [interventions, currentPage])
   const orderedIds = useMemo(() => dataset.map((item) => item.id), [dataset])
   const tableContainerRef = useRef<HTMLDivElement>(null)
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null)
@@ -510,6 +513,15 @@ export function TableView({
   const rowHeight = getRowHeight(rowDensity)
   const isBrowser = typeof window !== "undefined"
   const isFirefox = isBrowser && typeof navigator !== "undefined" ? /firefox/i.test(navigator.userAgent) : false
+  
+  // Créer une signature stable du dataset pour détecter les changements réels
+  const datasetSignature = useMemo(() => {
+    if (dataset.length === 0) return `empty-${currentPage}`
+    const firstId = dataset[0]?.id ?? 'none'
+    const lastId = dataset[dataset.length - 1]?.id ?? 'none'
+    return `${currentPage}-${dataset.length}-${firstId}-${lastId}`
+  }, [dataset, currentPage])
+  
   const rowVirtualizer = useVirtualizer({
     count: dataset.length,
     getScrollElement: () => tableContainerRef.current,
@@ -517,17 +529,35 @@ export function TableView({
     overscan: SCROLL_CONFIG.OVERSCAN,
     measureElement: isBrowser && !isFirefox ? (element) => element.getBoundingClientRect().height : undefined,
     scrollMargin: tableContainerRef.current?.offsetTop ?? 0,
-    getItemKey: (index) => dataset[index]?.id ?? index,
+    getItemKey: (index) => {
+      const item = dataset[index]
+      // Utiliser une clé unique qui inclut l'ID et l'index pour éviter les collisions entre pages
+      return item?.id ? `${item.id}-${index}` : `index-${index}`
+    },
   })
   
-  // Réinitialiser le scroll en haut quand on change de page
+  // Réinitialiser le scroll en haut quand on change de page OU quand les données changent significativement
   useEffect(() => {
-    if (tableContainerRef.current && currentPage > 1) {
-      console.log(`[TableView] Réinitialisation du scroll pour la page ${currentPage}`)
+    if (tableContainerRef.current && dataset.length > 0) {
+      console.log(`[TableView] Réinitialisation du scroll pour la page ${currentPage}, dataset.length: ${dataset.length}, signature: ${datasetSignature}`)
       tableContainerRef.current.scrollTop = 0
-      rowVirtualizer.scrollToIndex(0, { align: 'start' })
+      // Utiliser requestAnimationFrame pour s'assurer que le DOM est prêt
+      requestAnimationFrame(() => {
+        if (tableContainerRef.current) {
+          rowVirtualizer.scrollToIndex(0, { align: 'start' })
+        }
+      })
     }
-  }, [currentPage, rowVirtualizer])
+  }, [currentPage, datasetSignature, rowVirtualizer])
+  
+  // Forcer la mise à jour du virtualizer quand les données changent
+  useEffect(() => {
+    if (dataset.length > 0) {
+      console.log(`[TableView] Forcer la mise à jour du virtualizer - dataset.length: ${dataset.length}, signature: ${datasetSignature}`)
+      // Mesurer à nouveau les éléments pour s'assurer que le virtualizer est à jour
+      rowVirtualizer.measure()
+    }
+  }, [datasetSignature, rowVirtualizer])
   const virtualItems = rowVirtualizer.getVirtualItems()
   const totalHeight = rowVirtualizer.getTotalSize()
 

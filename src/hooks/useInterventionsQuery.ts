@@ -154,10 +154,16 @@ export function useInterventionsQuery(
   })
 
   // Extraire les données de la réponse
+  // IMPORTANT: Toujours créer un nouveau tableau pour forcer la détection de changement par React
+  // En production, React Query peut réutiliser la même référence même si les données changent
   const interventions = useMemo(() => {
     const result = data?.data ?? []
-    console.log(`[useInterventionsQuery] interventions mis à jour - length: ${result.length}, page: ${page}, offset: ${offset}, queryKey:`, queryKey)
-    return result
+    // Créer un nouveau tableau pour forcer la détection de changement
+    const newArray = [...result]
+    const firstId = newArray[0]?.id ?? 'none'
+    const lastId = newArray[newArray.length - 1]?.id ?? 'none'
+    console.log(`[useInterventionsQuery] interventions mis à jour - length: ${newArray.length}, page: ${page}, offset: ${offset}, firstId: ${firstId}, lastId: ${lastId}`)
+    return newArray
   }, [data?.data, page, offset, queryKey])
   const totalCount = useMemo(() => data?.total ?? 0, [data?.total])
 
